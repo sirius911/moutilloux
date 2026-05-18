@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Choix Résultats Live</title>
+  <style>
+    body{font-family:system-ui,sans-serif;background:#0b0b0b;color:#fff;margin:0;padding:22px;}
+    .wrap{max-width:980px;margin:0 auto;}
+    h1{margin:0 0 6px;}
+    .sub{opacity:.75;margin-bottom:18px;}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;}
+    @media (min-width:900px){.grid{grid-template-columns:1fr 1fr;}}
+    .btn{
+      display:block;padding:18px;border-radius:12px;text-decoration:none;color:#fff;
+      border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-weight:800;
+    }
+    .btn:hover{background:rgba(255,255,255,.1);}
+    .note{font-size:13px;opacity:.8;margin-top:4px;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Résultats Live</h1>
+    <div class="sub">{% if edition %}Édition {{ edition.year }}{% else %}Aucune édition active{% endif %}</div>
+    <div class="grid">
+      <a class="btn" href="{% url 'results' %}" target="_blank" rel="noopener">
+        Terrain (score en cours / prochain match)
+      </a>
+      <a class="btn" href="{% url 'results_poules_start' %}" target="_blank" rel="noopener">
+        Scores Des Poules (rotation events)
+      </a>
+      <a class="btn" href="{% url 'results_final_start' %}" target="_blank" rel="noopener">
+        Tableaux Finaux (rotation events)
+      </a>
+      <a class="btn" href="{% url 'results_mix_start' %}" target="_blank" rel="noopener">
+        Poules + Tableau Final (1 event à la fois)
+        <div class="note">Rotation toutes les 10 secondes.</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tournoi des Moutilloux</title>
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;background:#f6f7fb;margin:0;padding:24px;}
+    .wrap{max-width:900px;margin:0 auto;}
+    h1{margin:0 0 18px 0;}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;}
+    @media (min-width:700px){.grid{grid-template-columns:1fr 1fr;}}
+    .btn{
+      display:flex;align-items:center;justify-content:center;
+      padding:28px 18px;border-radius:16px;border:1px solid #ddd;
+      background:white;text-decoration:none;color:#111;
+      font-size:22px;font-weight:700;box-shadow:0 8px 20px rgba(0,0,0,.06);
+    }
+    .btn:hover{transform:translateY(-1px);box-shadow:0 12px 26px rgba(0,0,0,.10);}
+    .span2{grid-column:1/-1;}
+    .sub{color:#666;margin-top:6px;font-size:14px;font-weight:500;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Tournoi des Moutilloux</h1>
+    {% if user.is_authenticated %}
+    <div style="
+        margin-bottom:18px;
+        padding:12px 16px;
+        border-radius:12px;
+        background:#eef6ff;
+        border:1px solid #cfe4ff;
+        font-weight:700;
+        text-align:center;">
+        Connecté en tant que :
+        {% if user.is_superuser %}
+        <span style="color:#b00020;">Administrateur</span>
+        {% else %}
+        <span style="color:#0a7;">Arbitre</span>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <div style="text-align:center;margin-bottom:16px;">
+        <form method="post" action="/accounts/logout/" style="margin-top:10px;">
+          {% csrf_token %}
+          <button type="submit" style="width:100%;">Se déconnecter</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="grid">
+      <!-- ADMIN : login Django admin -->
+      <a class="btn" href="/panel/">
+        Administration
+      </a>
+
+      <!-- ARBITRE : ton module arbitre (protégé par login) -->
+      <a class="btn" href="/arbitre/">
+        Arbitre
+      </a>
+
+      <!-- RESULTATS : ouvrir dans un autre onglet -->
+      <a class="btn span2" href="{% url 'results_live_menu' %}" target="_blank" rel="noopener">
+        Résultats
+      </a>
+
+      <!-- LIVE : on l’ajoutera après -->
+      <!--
+      <a class="btn span2" href="/live/" target="_blank" rel="noopener">
+        Live (score)
+      </a>
+      -->
+    </div>
+  </div>
+</body>
+</html>

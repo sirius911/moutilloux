@@ -1,0 +1,176 @@
+/* =========================
+   TV PAGE (full screen)
+   + Scoreboard overlay
+   ========================= */
+
+/* Reset */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Fullscreen stage (image/video background) */
+.tv {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+
+.tv-stage {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+
+.tv-stage img,
+.tv-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Optional top-left title */
+.tv-top-left {
+  position: fixed;
+  left: 14px;
+  top: 10px;
+  padding: 6px 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  background: rgba(0,0,0,.35);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+
+.tv-top-right {
+  position: fixed;
+  right: 14px;
+  top: 10px;
+  padding: 6px 10px;
+  color: #fff;
+  font-size: 12px;
+  background: rgba(0,0,0,.30);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  opacity: .9;
+}
+
+/* =========================
+   SCOREBOARD TV (compact)
+   ========================= */
+.tv-scoreboard{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 24px;
+
+  width: min(920px, calc(100vw - 48px));
+  border: 3px solid #00b7c6;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(200, 240, 242, .92);
+  color: #000;
+  box-shadow: 0 12px 28px rgba(0,0,0,.35);
+  font-family: system-ui, sans-serif;
+}
+
+.tv-scoreboard-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap: 12px;
+  padding: 8px 12px;
+  font-weight: 800;
+  font-size: 18px;
+  background: rgba(27, 83, 204, 0.95);
+  border-bottom: 2px solid rgba(0,0,0,.15);
+}
+#match-desc{
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2 rows: A and B */
+.tv-score-row{
+  display:grid;
+  grid-template-columns: 44px 44px 44px 1fr 64px 74px;
+  align-items:center;
+  min-height: 44px;
+  border-top: 2px solid rgba(0,0,0,.12);
+}
+
+/* Cells */
+.tv-score-cell{
+  text-align:center;
+  font-size: 18px;
+  font-weight: 800;
+  padding: 6px 6px;
+}
+
+/* Name + server ball */
+.tv-score-name{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: .2px;
+}
+
+/* Games / points a bit bigger */
+.tv-score-games{ font-size: 22px; font-weight: 900; }
+.tv-score-points{ font-size: 22px; font-weight: 900; }
+
+/* Server ball */
+.tv-ball{
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f0e000;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.2) inset;
+}
+.tv-ball.hidden{ visibility:hidden; }
+
+#scoreboard{
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  right: auto !important;
+  bottom: 24px !important;
+}
+
+
+/* Small screens */
+@media (max-width: 700px){
+  .tv-scoreboard{ left:12px; bottom:12px; width: calc(100vw - 24px); }
+  .tv-scoreboard-top{ font-size: 16px; }
+  .tv-score-name{ font-size: 18px; }
+  .tv-score-row{ grid-template-columns: 36px 36px 36px 1fr 54px 62px; }
+}
+
+/* 4K / very large displays: slightly bigger */
+@media (min-width: 2400px){
+  .tv-scoreboard{ width: min(1200px, calc(100vw - 60px)); border-width: 4px; border-radius: 12px; }
+  .tv-scoreboard-top{ font-size: 22px; padding: 10px 14px; }
+  .tv-score-row{ grid-template-columns: 56px 56px 56px 1fr 84px 94px; min-height: 56px; }
+  .tv-score-cell{ font-size: 22px; }
+  .tv-score-name{ font-size: 28px; }
+  .tv-score-games, .tv-score-points{ font-size: 28px; }
+  .tv-ball{ width: 18px; height: 18px; }
+}

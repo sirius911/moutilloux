@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Panel - {{ event }}</title>
+  <style>
+    body{font-family:sans-serif;margin:16px}
+    .tabs a{margin-right:10px}
+    .card{border:1px solid #ddd;border-radius:10px;padding:12px;margin:12px 0}
+    table{border-collapse:collapse;width:100%}
+    th,td{border-bottom:1px solid #eee;padding:6px 8px;text-align:left}
+    .right{text-align:right}
+  </style>
+</head>
+<body>
+  <h1>Panel — {{ event.category.name }} ({{ event.edition.year }})</h1>
+  <p>
+    <a href="{% url 'panel_select' %}">Changer d’event</a> |
+    <a href="/accounts/logout/">Logout</a> |
+    <a href="{% url 'results' %}">Voir page Résultats</a>
+  </p>
+
+  {% if messages %}
+    <ul>
+      {% for m in messages %}<li>{{ m }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  <div class="tabs">
+    <a href="#players">Joueurs / Équipes</a>
+    <a href="#groups">Poules</a>
+    <a href="#matches">Matchs</a>
+  </div>
+
+  <!-- Joueurs / équipes -->
+  <div class="card" id="players">
+    <h2>Joueurs</h2>
+    <p><a href="{% url 'panel_player_create' event.id %}">+ Créer un joueur</a></p>
+
+    <div style="max-width:720px;">
+    <label><b>Liste des joueurs (scroll)</b></label><br>
+    <select size="12" style="width:100%; overflow:auto;">
+        {% for p in players %}
+        <option>{{ p.last_name }} {{ p.first_name }} {% if p.license_number %}({{ p.license_number }}){% endif %}</option>
+        {% endfor %}
+    </select>
+    </div>
+    {% if event.category.mode == "S" %}
+  <h3>Ajouter des joueurs à cet event (multi-sélection)</h3>
+
+  {% if available_players %}
+      <form method="post" action="{% url 'panel_entry_add_players' event.id %}">
+        {% csrf_token %}
+
+        <select name="player_ids" multiple size="10" style="width:100%; max-width:720px;">
+          {% for p in available_players %}
+            <option value="{{ p.id }}">{{ p.last_name }} {{ p.first_name }}{% if p.license_number %} ({{ p.license_number }}){% endif %}</option>
+          {% endfor %}
+        </select>
+
+        <div style="margin-top:8px;">
+          <button type="submit">Ajouter à l’event</button>
+        </div>
+
+        <p style="color:#666; margin-top:6px;">
+          Astuce : Ctrl (ou Cmd) pour sélectionner plusieurs, Shift pour une plage.
+        </p>
+      </form>
+    {% else %}
+      <p style="color:#666;">Tous les joueurs sont déjà inscrits à cet event.</p>
+    {% endif %}
+  {% endif %}
+
+    <h3>Inscriptions (Entries) dans cet event</h3>
+
+    {% if entries %}
+      <table>
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th class="right">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in entries %}
+            <tr>
+              <td>{{ e }}</td>
+              <td class="right">
+                <form method="post"
+                      action="{% url 'panel_entry_remove' event.id e.id %}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Retirer {{ e }} de l’event ?');">
+                  {% csrf_token %}
+                  <button type="submit">Retirer</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p style="color:#666;">Aucune inscription</p>
+    {% endif %}
+
+    {% if event.category.mode == "D" %}
+      <h2>Équipes (double)</h2>
+      <p><a href="{% url 'panel_team_create' event.id %}">+ Créer une équipe (et l’inscrire)</a></p>
+    {% else %}
+      <p style="color:#666;">Event en simple : création d’équipe désactivée.</p>
+    {% endif %}
+  </div>
+
+  <!-- Poules -->
+  <div class="card" id="groups">
+    <h2>Poules</h2>
+    <p>
+      <a href="{% url 'panel_group_create' event.id %}">+ Créer une poule</a> |
+      <a href="{% url 'panel_group_fill' event.id %}">Remplir automatiquement</a> |
+      <a href="{% url 'panel_generate_group_matches' event.id %}">Le tournoi peut commencer : générer matchs de poule</a>
+    </p>
+
+    {% for g in groups %}
+      <h3>Poule {{ g.name }}</h3>
+      <ul>
+        {% for m in g.memberships.all %}
+          <li>{{ m.entry }}</li>
+        {% empty %}
+          <li style="color:#666;">Vide</li>
+        {% endfor %}
+      </ul>
+    {% empty %}
+      <p style="color:#666;">Aucune poule</p>
+    {% endfor %}
+  </div>
+
+  <!-- Matchs -->
+  <div class="card" id="matches">
+    <h2>Matchs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Match</th>
+          <th>Score</th>
+          <th>Statut</th>
+          <th>En cours</th>
+          <th class="right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in matches %}
+          <tr>
+            <td>
+              {% if m.stage == "GROUP" %}Poule {{ m.group.name }}{% else %}{{ m.get_stage_display }}{% endif %}
+            </td>
+            <td>{{ m.side_a }} vs {{ m.side_b }}</td>
+            <td>Sets {{ m.sets_a }}-{{ m.sets_b }} • Jeux {{ m.games_a }}-{{ m.games_b }}</td>
+            <td>{{ m.get_status_display }}</td>
+            <td>{% if m.is_featured %}✅{% endif %}</td>
+            <td class="right">
+              <a href="{% url 'panel_match_edit' event.id m.id %}">éditer</a> |
+              <a href="{% url 'panel_match_feature' event.id m.id %}">mettre en cours</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" style="color:#666;">Aucun match</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

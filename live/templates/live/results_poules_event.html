@@ -1,0 +1,88 @@
+{% load dict_tools %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Poules - {{ event.category.name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    html, body { margin:0; padding:0; background:#0b0b0b; color:#fff; font-family:system-ui,sans-serif; }
+    .wrap { padding: 18px; }
+    h1 { margin:0 0 6px; font-size: 32px; }
+    .muted { opacity:.75; margin-bottom: 16px; font-size: 14px; }
+    .card { background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:14px; margin:14px 0; }
+    h2 { margin: 10px 0 8px; font-size: 22px; }
+
+    table { width:100%; border-collapse: collapse; background: rgba(0,0,0,.25); border-radius: 10px; overflow: hidden; }
+    th, td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,.10); }
+    th { background: rgba(0,229,238,.18); text-align: left; }
+    .center { text-align:center; }
+    .poule-name { font-weight: 800; }
+  </style>
+</head>
+
+<body>
+{% if not edition %}
+  <div class="wrap">Aucune édition active.</div>
+{% else %}
+  <div class="wrap">
+    <h1>{{ event.category.name }}</h1>
+    <div class="muted">Poules — {{ edition.year }} • rotation 10s</div>
+
+    {% with group_tables=event_group_tables|get_item:event.id %}
+      {% if group_tables %}
+        {% for gt in group_tables %}
+          <div class="card">
+            <h2>Poule {{ gt.group.name }}</h2>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>Équipe/Joueur</th>
+                  {% for m in gt.match_cols %}
+                    <th class="center">M{{ forloop.counter }}</th>
+                  {% endfor %}
+                  <th class="center">Pt</th>
+                  <th class="center">nb Jeux</th>
+                  <th class="center">Qualif</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for row_entry in gt.entries %}
+                  <tr>
+                    <td class="poule-name">{{ row_entry }}</td>
+
+                    {% for m in gt.match_cols %}
+                      <td class="center">{% get_pair gt.cell row_entry.id m.id %}</td>
+                    {% endfor %}
+
+                    {% with s=gt.standing_by_entry_id|get_item:row_entry.id %}
+                      <td class="center">{% if s %}{{ s.points }}{% endif %}</td>
+                      <td class="center">{% if s %}{{ s.games_won }}{% endif %}</td>
+                    {% endwith %}
+
+                    <td class="center">{{ gt.qualif|get_item:row_entry.id }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="muted">Aucune poule.</div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  {% if next_event %}
+  <script>
+    setTimeout(() => {
+      window.location.href = "{% url 'results_poules_event' next_event.id %}";
+    }, 10000);
+  </script>
+  {% endif %}
+{% endif %}
+</body>
+</html>

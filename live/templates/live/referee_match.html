@@ -1,0 +1,384 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arbitrage</title>
+  <style>
+    body{font-family:sans-serif;margin:12px}
+    .card{max-width:900px;margin:auto;border:1px solid #ddd;border-radius:16px;padding:14px}
+    .hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+    .muted{color:#666}
+    .row{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        align-items:center;
+        justify-content:center;   /* 👈 CENTRAGE */
+    }
+
+    .col{flex:1;min-width:240px}
+    .name{font-size:22px;font-weight:700;display:flex;align-items:center;gap:10px}
+    .ball{width:28px;height:28px;cursor:pointer}
+    .switch{padding:10px 14px;border-radius:12px;border:1px solid #ddd;background:#fff;cursor:pointer}
+    .big{
+        width:100%;
+        padding:22px;
+        border-radius:18px;
+        border:1px solid #9ec9ff;
+        background:#d9ecff;           /* bleu clair */
+        font-size:20px;
+        font-weight:800;
+        cursor:pointer;
+    }
+    .big:hover{
+        background:#c7e2ff;
+    }
+    .big:active{
+        transform:scale(0.98);
+    }
+    .small{padding:12px;border-radius:14px;border:1px solid #ddd;background:#fff;cursor:pointer}
+    .scoreTop{font-size:28px;font-weight:800}
+    .box{border:1px solid #eee;border-radius:14px;padding:10px}
+    .scoreBottomTitle{font-weight:700;text-align:center;margin:10px 0 6px}
+    .scoreBottom{
+      display:flex;justify-content:center;align-items:center;
+      gap:18px;border:1px solid #222;border-radius:12px;padding:12px;
+      font-size:44px;font-weight:900;
+      justify-content:center;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .scoreBottom span.sep{font-size:36px;font-weight:700}
+    .danger{border-color:#c00}
+    .match-finished-banner{
+        background:#b00020;
+        color:white;
+        text-align:center;
+        font-size:28px;
+        font-weight:900;
+        padding:18px;
+        border-radius:12px;
+        margin-bottom:16px;
+        letter-spacing:2px;
+        box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+    .sim-toggle{
+      position:fixed;top:10px;right:10px;z-index:50;
+      width:auto;padding:8px 12px;border-radius:10px;border:1px solid #333;background:#111;color:#fff;cursor:pointer;
+    }
+    .sim-wrap{max-width:unset;}
+    body.tablet-sim{background:#e8e8e8;margin:0;padding:16px;}
+    body.tablet-sim .sim-wrap{
+      width:834px;height:1112px;max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);
+      margin:0 auto;background:#fff;border:10px solid #1f1f1f;border-radius:18px;overflow:auto;
+      box-shadow:0 18px 40px rgba(0,0,0,.25);padding:12px;box-sizing:border-box;
+    }
+  </style>
+</head>
+<body>
+    <button id="simToggle" class="sim-toggle" type="button">Mode tablette: OFF</button>
+    <div class="sim-wrap">
+    {% if match.status == "FINISHED" %}
+    <div class="match-finished-banner">
+        MATCH TERMINÉ
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="row" style="margin-top:10px;">
+            <label class="muted">Format :</label>
+            <select id="fmt" onchange="setFormat()" style="padding:10px;border-radius:12px;border:1px solid #ddd;">
+              <option value="MANUAL" {% if match.match_format == "MANUAL" %}selected{% endif %}>Manuel (aucune règle auto)</option>
+
+              <option value="POULE" {% if match.match_format == "G_SET5_TB44" %}selected{% endif %}>
+                Poule (1 set à 5, TB à 4-4)
+              </option>
+
+              <option value="QUART" {% if match.match_format == "QF_SET5_TB55" %}selected{% endif %}>
+                Quart (1 set à 6, TB à 5-5)
+              </option>
+
+              <option value="DEMI" {% if match.match_format == "NORMAL_1SET" %}selected{% endif %}>
+                Demi (1 set normal)
+              </option>
+
+              <option value="FINALE" {% if match.match_format == "BO3" and match.deciding_set_mode != "SUPER_TB" %}selected{% endif %}>
+                Finale (2 sets gagnants)
+              </option>
+              <option value="FINALE_TB" {% if match.match_format == "BO3" and match.deciding_set_mode == "SUPER_TB" %}selected{% endif %}>
+                Finale (2 sets gagnants + super tie-break au 3e set)
+              </option>
+            </select>
+        </div>
+        <div class="muted" style="text-align:center;">
+          Format actuel : <b>{{ match.get_match_format_display }}</b>
+        </div>
+    </div>
+
+  <!-- HEADER -->
+  <div class="hdr">
+
+    <!-- LEFT -->
+    <div class="col">
+      <div class="muted">Joueur / Équipe (gauche)</div>
+      <div class="name">
+        {# Balle = service. On affiche la balle côté SERVEUR (gauche/droite), mais clic = toggle_service #}
+        {% if match.server == "A" %}
+          {% if not swap %}
+            <img class="ball" src="{% static 'live/img/balle.jpg' %}" alt="Service" title="Changer le service (uniquement à 0-0)" onclick="toggleService()">
+          {% endif %}
+        {% endif %}
+        {% if match.server == "B" %}
+          {% if swap %}
+            <img class="ball" src="{% static 'live/img/balle.jpg' %}" alt="Service" title="Changer le service (uniquement à 0-0)" onclick="toggleService()">
+          {% endif %}
+        {% endif %}
+
+        <span>{{ left }}</span>
+      </div>
+      <div class="box" style="margin-top:10px;">
+        <div class="row" style="justify-content:space-between;align-items:center;">
+            <div>Set</div>
+            <div class="row" style="gap:8px;align-items:center;">
+                <button class="small" type="button" onclick="act('set_left_minus')">−</button>
+                <div class="scoreTop">{% if swap %}{{ match.sets_b }}{% else %}{{ match.sets_a }}{% endif %}</div>
+                <button class="small" type="button" onclick="act('set_left_plus')">+</button>
+            </div>
+        </div>
+        <div class="row" style="justify-content:space-between;align-items:center;">
+            <div>Jeux</div>
+            <div class="row" style="gap:8px;align-items:center;">
+                <button class="small" type="button" onclick="act('game_left_minus')">−</button>
+                <div class="scoreTop">{% if swap %}{{ match.games_b }}{% else %}{{ match.games_a }}{% endif %}</div>
+                <button class="small" type="button" onclick="act('game_left_plus')">+</button>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SWITCH -->
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center;">
+      <button class="switch" type="button" onclick="act('swap')">↔ Switch</button>
+      <div class="muted" style="text-align:center;">Statut : {{ match.get_status_display }}</div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col" style="text-align:right;">
+      <div class="muted">Joueur / Équipe (droite)</div>
+      <div class="name" style="justify-content:flex-end;">
+        <span>{{ right }}</span>
+
+        {% if match.server == "A" %}
+          {% if swap %}
+            <img class="ball" src="{% static 'live/img/balle.jpg' %}" alt="Service" title="Changer le service (uniquement à 0-0)" onclick="toggleService()">
+          {% endif %}
+        {% endif %}
+        {% if match.server == "B" %}
+          {% if not swap %}
+            <img class="ball" src="{% static 'live/img/balle.jpg' %}" alt="Service" title="Changer le service (uniquement à 0-0)" onclick="toggleService()">
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <div class="box" style="margin-top:10px;">
+        <div class="row" style="justify-content:space-between;align-items:center;">
+            <div>Set</div>
+            <div class="row" style="gap:8px;align-items:center;">
+                <button class="small" type="button" onclick="act('set_right_minus')">−</button>
+                <div class="scoreTop">{% if swap %}{{ match.sets_a }}{% else %}{{ match.sets_b }}{% endif %}</div>
+                <button class="small" type="button" onclick="act('set_right_plus')">+</button>
+            </div>
+        </div>
+
+        <div class="row" style="justify-content:space-between;align-items:center;">
+            <div>Jeux</div>
+            <div class="row" style="gap:8px;align-items:center;">
+                <button class="small" type="button" onclick="act('game_right_minus')">−</button>
+                <div class="scoreTop">{% if swap %}{{ match.games_a }}{% else %}{{ match.games_b }}{% endif %}</div>
+                <button class="small" type="button" onclick="act('game_right_plus')">+</button>
+            </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;">
+    <input type="checkbox" {% if match.tb_active %}checked{% endif %} onchange="toggleTB(this.checked)">
+    Tie-break (manuel)
+  </label>
+
+  <hr>
+
+  <!-- ACTION BUTTONS -->
+  <div class="row">
+    <button class="big" type="button" onclick="act('point_left')">Point {{ left }}</button>
+    <button class="big" type="button" onclick="act('point_right')">Point {{ right }}</button>
+  </div>
+
+  <hr>
+   <div class="scoreBottomTitle">
+    {% if match.tb_active %}
+        Tie-break
+    {% else %}
+        Score Jeux en cours
+    {% endif %}
+  </div>
+
+  <div class="scoreBottom">
+  {% if match.tb_active %}
+    {# TB : on annonce tb_points du serveur puis du receveur #}
+    {% if match.server == "A" %}
+      <span>{{ match.tb_points_a }}</span><span class="sep">-</span><span>{{ match.tb_points_b }}</span>
+    {% else %}
+      <span>{{ match.tb_points_b }}</span><span class="sep">-</span><span>{{ match.tb_points_a }}</span>
+    {% endif %}
+  {% else %}
+    {# Jeu normal : 0/15/30/40/AV avec tennis_point_display #}
+    {% with p=match.tennis_point_display %}
+      {% if match.server == "A" %}
+        <span>{{ p.0 }}</span><span class="sep">-</span><span>{{ p.1 }}</span>
+      {% else %}
+        <span>{{ p.1 }}</span><span class="sep">-</span><span>{{ p.0 }}</span>
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+  </div>
+
+  <hr>
+
+  <div class="row" style="margin-top:10px;">
+    <button class="small" type="button" onclick="act('game_left')">Jeu {{ left }}</button>
+    <button class="small" type="button" onclick="act('game_right')">Jeu {{ right }}</button>
+  </div>
+  <div class="row" style="margin-top:10px;">
+    <button class="small" type="button" onclick="act('set_left')">Set {{ left }}</button>
+    <button class="small" type="button" onclick="act('set_right')">Set {{ right }}</button>
+  </div>
+
+    <hr>
+
+  <div class="row" style="margin-top:10px;">  
+    <button class="small" type="button" onclick="act('reset_points')">Remise à 0 des points</button>
+    <button class="small" type="button" onclick="act('start')">Mettre en Live</button>
+    <button class="small" type="button" onclick="reopenMatch()">Réouvrir</button>
+    <button class="small" type="button" onclick="resetAll()">Reset (tout)</button>
+  </div>
+
+    <hr>
+
+  <div class="row" style="margin-top:10px;">
+    <button class="small danger" type="button" onclick="finishLeft()">Victoire {{ left }}</button>
+    <button class="small danger" type="button" onclick="finishRight()">Victoire {{ right }}</button>    
+  </div>
+  <div class="row">
+    <a class="small" href="{% url 'referee_home' %}" style="text-decoration:none;display:inline-block;">Changer de match</a>
+    <form id="logoutForm" method="post" action="{% url 'logout' %}" style="display:inline;">
+      {% csrf_token %}
+      <button class="small" type="button" onclick="doLogout()" >Déconnexion</button>
+    </form>  
+</div>
+
+  <div id="msg" class="muted" style="margin-top:10px;"></div>
+
+</div>
+</div>
+
+<script>
+function getCookie(name){
+  let v=null;
+  if(document.cookie && document.cookie!==''){
+    const c=document.cookie.split(';');
+    for(let i=0;i<c.length;i++){
+      const x=c[i].trim();
+      if(x.substring(0,name.length+1)===(name+'=')){
+        v=decodeURIComponent(x.substring(name.length+1));
+        break;
+      }
+    }
+  }
+  return v;
+}
+const csrftoken = getCookie('csrftoken');
+
+async function act(action, extra={}) {
+  const form = new FormData();
+  form.append("action", action);
+  for (const [k,v] of Object.entries(extra)) form.append(k, v);
+
+  const r = await fetch("{% url 'referee_action' match.id %}", {
+    method: "POST",
+    headers: {"X-CSRFToken": csrftoken},
+    body: form
+  });
+
+  const data = await r.json().catch(()=>({}));
+  document.getElementById("msg").textContent = data.ok ? "OK" : (data.error || "Erreur");
+  if (data.ok) location.reload();
+}
+
+function toggleService(){
+  if(confirm("Changer le service ?\n(Autorisé uniquement si le score du jeu est 0-0)")){
+    act("toggle_service");
+  }
+}
+
+function finishLeft(){
+  if(confirm("Confirmer la FIN du match ?\nVainqueur : côté gauche")){
+    act("finish_left");
+  }
+}
+function finishRight(){
+  if(confirm("Confirmer la FIN du match ?\nVainqueur : côté droite")){
+    act("finish_right");
+  }
+}
+
+function reopenMatch(){
+  if(confirm("Réouvrir ce match (il ne sera plus terminé) ?")){
+    act("reopen");
+  }
+}
+
+function resetAll(){
+  if(confirm("Réinitialiser TOUT (sets, jeux, points, tie-break) ?")){
+    act("reset_all");
+  }
+}
+
+function doLogout(){
+  if(confirm("Se déconnecter ?")){
+    document.getElementById("logoutForm").submit();
+  }
+}
+
+function setFormat(){
+  const v = document.getElementById("fmt").value;
+  if(confirm("Appliquer ce format au match ?")) act("set_format", {format: v});
+}
+
+function toggleTB(on){
+  if(on){
+    if(confirm("Activer le tie-break maintenant ? (remise à 0 des points)")) act("tb_on");
+  }else{
+    if(confirm("Désactiver le tie-break ?")) act("tb_off");
+  }
+}
+
+// Simulation tablette (persistante)
+const SIM_KEY = "referee_tablet_sim";
+const simBtn = document.getElementById("simToggle");
+function applyTabletSim(enabled){
+  document.body.classList.toggle("tablet-sim", enabled);
+  simBtn.textContent = `Mode tablette: ${enabled ? "ON" : "OFF"}`;
+}
+applyTabletSim(localStorage.getItem(SIM_KEY) === "1");
+simBtn.addEventListener("click", () => {
+  const next = !document.body.classList.contains("tablet-sim");
+  localStorage.setItem(SIM_KEY, next ? "1" : "0");
+  applyTabletSim(next);
+});
+</script>
+</body>
+</html>

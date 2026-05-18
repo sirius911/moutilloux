@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Panel - Sélection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:sans-serif;margin:24px}
+    .card{max-width:520px;border:1px solid #ddd;border-radius:10px;padding:16px}
+    label{display:block;margin-top:10px}
+    select{width:100%;padding:8px;margin-top:4px}
+    button{margin-top:14px;padding:10px 14px}
+    .muted{color:#666;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Panel admin (superuser)</h1>
+    <p>
+        <form method="post" action="/accounts/logout/" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" style="background:none;border:none;color:#06c;text-decoration:underline;cursor:pointer;padding:0;">
+            Logout
+        </button>
+</form>
+
+    </p>
+
+    <!-- Étape 1 : choisir l'édition (GET) -->
+    <form method="get" action="">
+      <label>Édition</label>
+      {{ edition_form.edition }}
+      <button type="submit">Choisir cette édition</button>
+    </form>
+
+    <hr>
+
+    <!-- Étape 2 : choisir l'event (POST) -->
+    {% if edition %}
+      <h2>Édition {{ edition.year }}</h2>
+      {% if event_form %}
+        <form method="post">
+          {% csrf_token %}
+          <label>Event</label>
+          {{ event_form.event }}
+          <button type="submit">Ouvrir</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <p class="muted">Choisis d’abord une édition.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

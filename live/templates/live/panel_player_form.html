@@ -1,0 +1,20 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>{% if mode == "edit" %}Modifier joueur{% else %}Créer joueur{% endif %}</title>
+</head>
+<body style="font-family:sans-serif;margin:16px">
+  <h1>
+    {% if mode == "edit" %}
+      Modifier joueur : {{ player.last_name }} {{ player.first_name }}
+    {% else %}
+      Créer un joueur
+    {% endif %}
+  </h1>
+
+  <p><a href="{% url 'panel_players' event.id %}">← Retour</a></p>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% if mode == "edit" %}Enregistrer{% else %}Créer{% endif %}</button>
+  </form>
+</body></html>

@@ -1,0 +1,6 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Créer poule</title></head>
+<body>
+<h1>Créer une poule</h1>
+<p><a href="{% url 'panel_event' event.id %}">← Retour</a></p>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Créer</button></form>
+</body></html>

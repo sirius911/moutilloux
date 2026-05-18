@@ -1,0 +1,152 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Résultats - Tournois des Moutilloux</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- <meta http-equiv="refresh" content="60"> -->
+  <link rel="stylesheet" href="{% static 'live/css/tv.css' %}">
+</head>
+
+<body>
+{% if not edition %}
+  <div style="padding:24px;color:#fff;background:#000;">
+    Aucune édition active.
+  </div>
+{% else %}
+  <div class="tv">
+
+    <!-- Background -->
+    <div class="tv-stage">
+      <img src="{% static 'live/img/cours.jpg' %}" alt="Court">
+    </div>
+
+    <!-- Small labels -->
+    <div class="tv-top-left">
+      Tournois des Moutilloux — {{ edition.year }}
+    </div>
+    <div class="tv-top-right">
+      Maj auto (F11 pour plein écran)
+    </div>
+
+    <!-- SCOREBOARD UNIQUE (VIDE, REMPLI PAR JS) -->
+    <div class="tv-scoreboard" id="scoreboard">
+
+      <div class="tv-scoreboard-top">
+        <div id="clock-left">--:--</div>
+        <div id="match-desc"></div>
+        <div id="clock-right"></div>
+      </div>
+
+      <!-- CONTENU DYNAMIQUE -->
+      <div id="scoreboard-body" style="padding: 12px 14px;">
+        <!-- JS injecte LIVE / NEXT / RIEN -->
+      </div>
+
+    </div>
+
+  </div>
+{% endif %}
+
+<script>
+function renderLive(hero){
+  const right = document.getElementById("clock-right");
+  const desc = document.getElementById("match-desc");
+  const body = document.getElementById("scoreboard-body");
+
+  right.textContent = hero.clock || "LIVE";
+  desc.textContent = hero.stage_event_label || hero.stage_label || hero.event || "";
+
+  body.innerHTML = `
+    <div class="tv-score-row">
+      <div class="tv-score-cell">0</div>
+      <div class="tv-score-cell">0</div>
+      <div class="tv-score-cell">0</div>
+
+      <div class="tv-score-name">
+        <span class="tv-ball" style="visibility:${hero.server === "A" ? "visible":"hidden"}"></span>
+        <span>${hero.side_a}</span>
+      </div>
+
+      <div class="tv-score-cell tv-score-games">${hero.games_a}</div>
+      <div class="tv-score-cell tv-score-points">${hero.points_a}</div>
+    </div>
+
+    <div class="tv-score-row">
+      <div class="tv-score-cell">0</div>
+      <div class="tv-score-cell">0</div>
+      <div class="tv-score-cell">0</div>
+
+      <div class="tv-score-name">
+        <span class="tv-ball" style="visibility:${hero.server === "B" ? "visible":"hidden"}"></span>
+        <span>${hero.side_b}</span>
+      </div>
+
+      <div class="tv-score-cell tv-score-games">${hero.games_b}</div>
+      <div class="tv-score-cell tv-score-points">${hero.points_b}</div>
+    </div>
+  `;
+}
+
+function renderNext(nxt){
+  const right = document.getElementById("clock-right");
+  const desc = document.getElementById("match-desc");
+  const body = document.getElementById("scoreboard-body");
+
+  right.textContent = "PROCHAIN MATCH";
+  desc.textContent = nxt.stage_event_label || nxt.stage_label || nxt.event || "";
+
+  const whenTxt = nxt.scheduled_str ? `à ${nxt.scheduled_str}` : "horaire à définir";
+  const stageTxt = nxt.stage_event_label || nxt.stage_label || nxt.event || "";
+
+  body.innerHTML = `
+    <div style="font-weight:900;font-size:22px;">
+      Prochain match <span style="opacity:.95;">${nxt.side_a} vs ${nxt.side_b}</span>
+    </div>
+    <div style="opacity:.92;margin-top:4px;font-weight:800;">
+      ${stageTxt}
+    </div>
+    <div style="opacity:.8;margin-top:6px;font-weight:800;">
+      ${whenTxt}
+    </div>
+  `;
+}
+
+function renderNone(){
+  const right = document.getElementById("clock-right");
+  const desc = document.getElementById("match-desc");
+  const body = document.getElementById("scoreboard-body");
+
+  right.textContent = "";
+  desc.textContent = "";
+  body.innerHTML = `<div style="opacity:.7;font-weight:800;">Aucun match</div>`;
+}
+
+async function refreshScore(){
+  try{
+    const r = await fetch("{% url 'score_state' %}", {cache:"no-store"});
+    const data = await r.json();
+
+    // horloge (à gauche)
+    document.getElementById("clock-left").textContent = data.now || "--:--";
+
+    if (data.hero){
+      renderLive(data.hero);
+    } else if (data.next){
+      renderNext(data.next);
+    } else {
+      renderNone();
+    }
+  } catch(e) {
+    // silencieux (TV)
+  }
+}
+
+setInterval(refreshScore, 1000);
+refreshScore();
+</script>
+
+
+</body>
+</html>

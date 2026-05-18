@@ -1,0 +1,151 @@
+{% load static %}
+{% load dict_tools %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Tableau final — {{ event.category.name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="{% static 'live/css/final.css' %}">
+</head>
+<body>
+{% if not edition %}
+  <div class="screen">Aucune édition active.</div>
+{% else %}
+  <div class="screen">
+    {% if has_bracket %}
+      <div class="top">
+        <div class="title">{{ event.category.name }}</div>
+        <div class="sub">Tableau final — {{ edition.year }}</div>
+      </div>
+
+      <div class="bracket {% if not show_qf %}sf-only{% endif %}">
+
+        <!-- COL 1 : QUARTS -->
+        {% if show_qf %}
+          <div class="col col-qf">
+            {% for m in qf %}
+              <div class="match qf {% if not m %}empty{% endif %}">
+                {% if m %}
+                <div class="row">
+                  <div class="name">
+                    {% if m.side_a %}
+                      {{ m.side_a }}
+                    {% elif m.side_a_label %}
+                      <span class="seed-label">{{ m.side_a_label }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="score">
+                    {% if m.status == "FINISHED" %}{% endif %}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="name">
+                    {% if m.side_b %}
+                      {{ m.side_b }}
+                    {% elif m.side_b_label %}
+                      <span class="seed-label">{{ m.side_b_label }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="score">
+                    {% if m.status == "FINISHED" %}{% endif %}
+                  </div>
+                </div>
+                {% else %}
+                  <div class="row ghost"><div class="name"></div><div class="score"></div></div>
+                  <div class="row ghost"><div class="name"></div><div class="score"></div></div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- COL 2 : DEMIS -->
+        <div class="col col-sf {% if not show_qf %}col-sf-first{% endif %}">
+          {% for m in sf %}
+            <div class="match sf {% if not m %}empty{% endif %}">
+              {% if m %}
+                <div class="row {% if m.winner_side == 'A' %}win{% endif %}">
+                <div class="name">
+                  {% if m.side_a %}{{ m.side_a }}{% endif %}
+                </div>
+                <div class="score">
+                  {{ carry_scores_a|get_item:m.id|default_if_none:"" }}
+                </div>
+              </div>
+              <div class="row {% if m.winner_side == 'B' %}win{% endif %}">
+                <div class="name">
+                  {% if m.side_b %}{{ m.side_b }}{% endif %}
+                </div>
+                <div class="score">
+                  {{ carry_scores_b|get_item:m.id|default_if_none:"" }}
+                </div>
+              </div>
+              {% else %}
+                <div class="row ghost"><div class="name"></div><div class="score"></div></div>
+                <div class="row ghost"><div class="name"></div><div class="score"></div></div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- COL 3 : FINALE -->
+        <div class="col col-f">
+          <div class="match f">
+            {% if final %}
+              <div class="row {% if final.winner_side == 'A' %}win{% endif %}">
+                <div class="name">
+                  {% if final.side_a %}{{ final.side_a }}{% endif %}
+                </div>
+                <div class="score">
+                  {{ carry_scores_a|get_item:final.id|default_if_none:"" }}
+                </div>
+              </div>
+              <div class="row {% if final.winner_side == 'B' %}win{% endif %}">
+                <div class="name">
+                  {% if final.side_b %}{{ final.side_b }}{% endif %}
+                </div>
+                <div class="score">
+                  {{ carry_scores_b|get_item:final.id|default_if_none:"" }}
+                </div>
+              </div>
+            {% else %}
+              <div class="row ghost"><div class="name"></div><div class="score"></div></div>
+              <div class="row ghost"><div class="name"></div><div class="score"></div></div>
+            {% endif %}
+          </div>
+
+          {% if final and final.status == "FINISHED" %}
+            <div class="winner">
+              Vainqueur :
+          <span>
+            {% if final.winner_side == "A" %}
+            {% if final.side_a %}{{ final.side_a }}{% else %}—{% endif %}
+            {% elif final.winner_side == "B" %}
+            {% if final.side_b %}{{ final.side_b }}{% else %}—{% endif %}
+                {% else %}
+              —
+            {% endif %}
+          </span>
+          {% if final_winner_scores %}
+            <div class="winner-scores">{{ final_winner_scores }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+        </div>
+
+      </div>
+    {% endif %}
+  </div>
+
+  {% if next_event %}
+    <script>
+      setTimeout(() => {
+        window.location.href = "{% url 'results_final_event' next_event.id %}";
+      }, 10000);
+    </script>
+  {% endif %}
+{% endif %}
+</body>
+</html>
