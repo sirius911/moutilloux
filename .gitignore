@@ -38,3 +38,6 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+#image affiches
+media/generated_match_posters/
