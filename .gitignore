@@ -43,3 +43,6 @@ htmlcov/
 
 backlog/
 roadmap/
+
+# Claude
+.claude/settings.local.json
