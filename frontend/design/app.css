@@ -1,0 +1,136 @@
+/* App-level shell styles: top nav, stage scaler */
+
+.app {
+  display: flex; flex-direction: column;
+  height: 100vh; overflow: hidden;
+  background: #000;
+}
+
+/* ── Top nav ─────────────────────────────────────────────────────── */
+.nav {
+  flex: 0 0 64px;
+  display: flex; align-items: stretch;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--line-1);
+  padding: 0 16px;
+  gap: 24px;
+  position: relative;
+  z-index: 10;
+}
+.nav-left { display: flex; align-items: center; min-width: 0; flex-shrink: 0; }
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--accent);
+}
+.nav-logo svg { color: var(--accent); flex-shrink: 0; }
+.nav-logo-name {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--ink-0);
+}
+.nav-logo-sub {
+  font-size: 9px; color: var(--ink-2); letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.nav-tabs {
+  display: flex; align-items: stretch;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-start;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  appearance: none; background: transparent; border: 0;
+  color: var(--ink-2);
+  padding: 0 11px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: color .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nav-tab-label { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; }
+.nav-tab-target { font-size: 10px; color: var(--ink-3); letter-spacing: 0.04em; font-family: var(--font-mono); }
+.nav-tab:hover { color: var(--ink-0); }
+.nav-tab[data-active="true"] { color: var(--ink-0); }
+.nav-tab[data-active="true"]::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+.nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-2);
+  padding: 6px 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-1);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.nav-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  box-shadow: 0 0 8px currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.nav-demo {
+  appearance: none; border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--ink-1);
+  font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.nav-demo:hover { background: var(--bg-3); }
+.nav-demo.on {
+  background: var(--accent);
+  color: #001215;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft), 0 0 16px var(--accent-glow);
+}
+
+/* ── Stage scaler ────────────────────────────────────────────────── */
+.stage {
+  flex: 1; position: relative; overflow: hidden;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, #0a0c12, #000);
+}
+.stage-inner {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform-origin: center center;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.stage-badge {
+  position: absolute; left: 16px; bottom: 14px;
+  background: rgba(0,0,0,0.5);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 10px; color: var(--ink-2);
+  display: flex; align-items: center; gap: 8px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  pointer-events: none;
+  z-index: 50;
+}
+.stage-badge em {
+  font-style: normal;
+  font-family: var(--font-mono);
+  color: var(--ink-3);
+}

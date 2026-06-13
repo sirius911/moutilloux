@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Moutilloux — Gestion de tournoi de tennis</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="scoreboard.css" />
+  <link rel="stylesheet" href="arbitre.css" />
+  <link rel="stylesheet" href="spectator.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="modals.css" />
+  <link rel="stylesheet" href="extras.css" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="state.jsx"></script>
+  <script type="text/babel" src="nav.jsx"></script>
+  <script type="text/babel" src="scoreboard.jsx"></script>
+  <script type="text/babel" src="arbitre.jsx"></script>
+  <script type="text/babel" src="poules.jsx"></script>
+  <script type="text/babel" src="bracket.jsx"></script>
+  <script type="text/babel" src="admin.jsx"></script>
+  <script type="text/babel" src="modals.jsx"></script>
+  <script type="text/babel" src="extras.jsx"></script>
+
+  <script type="text/babel" data-presets="env,react">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accent": "#FFC83D",
+      "font": "inter",
+      "scoreboardVariant": "editorial",
+      "arbitreVariant": "split",
+      "bracketVariant": "lines",
+      "adminModal": "none",
+      "adminPage": "joueurs",
+      "tvState": "live"
+    }/*EDITMODE-END*/;
+
+    const ACCENT_PRESETS = {
+      "#00E5EE": { name: "Cyan", soft: "rgba(0,229,238,0.16)", glow: "rgba(0,229,238,0.45)", a2: "#00B8C2" },
+      "#FFC83D": { name: "Or",   soft: "rgba(255,200,61,0.18)", glow: "rgba(255,200,61,0.45)", a2: "#D6A621" },
+      "#22E27F": { name: "Vert", soft: "rgba(34,226,127,0.18)", glow: "rgba(34,226,127,0.45)", a2: "#0FB060" },
+      "#FF2E92": { name: "Magenta", soft: "rgba(255,46,146,0.18)", glow: "rgba(255,46,146,0.45)", a2: "#D81F77" },
+    };
+
+    const FONT_PRESETS = {
+      system: { ui: 'system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif',
+                display: 'system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif' },
+      inter:  { ui: '"Inter",system-ui,sans-serif', display: '"Inter",system-ui,sans-serif' },
+      broadcast: { ui: 'system-ui,sans-serif',
+                   display: '"Bebas Neue","Oswald","Impact",system-ui,sans-serif' },
+    };
+
+    function App() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const [screen, setScreen] = React.useState("scoreboard");
+      const [demoOn, setDemoOn] = React.useState(false);
+      const ctrl = useMatch();
+      const { match } = ctrl;
+
+      // Apply accent to CSS variables
+      React.useEffect(() => {
+        const accent = t.accent;
+        const preset = ACCENT_PRESETS[accent] || ACCENT_PRESETS["#00E5EE"];
+        document.documentElement.style.setProperty("--accent", accent);
+        document.documentElement.style.setProperty("--accent-2", preset.a2);
+        document.documentElement.style.setProperty("--accent-soft", preset.soft);
+        document.documentElement.style.setProperty("--accent-glow", preset.glow);
+      }, [t.accent]);
+
+      // Apply fonts
+      React.useEffect(() => {
+        const f = FONT_PRESETS[t.font] || FONT_PRESETS.system;
+        document.documentElement.style.setProperty("--font-ui", f.ui);
+        document.documentElement.style.setProperty("--font-display", f.display);
+      }, [t.font]);
+
+      // Demo auto-play: award random points every 1.6s
+      React.useEffect(() => {
+        if (!demoOn) return;
+        const tick = setInterval(() => {
+          if (match.status === "TERMINÉ") {
+            ctrl.reset();
+            return;
+          }
+          if (Math.random() < 0.55) ctrl.pointA(); else ctrl.pointB();
+        }, 1400);
+        return () => clearInterval(tick);
+      }, [demoOn, match.status]);
+
+      const currentScreen = SCREENS.find((s) => s.id === screen);
+      const isAdmin = screen === "admin";
+
+      let inner;
+      if (screen === "scoreboard") inner = t.tvState === "idle"
+        ? <TvIdle accent={t.accent} />
+        : <Scoreboard match={match} variant={t.scoreboardVariant} accent={t.accent} demoOn={demoOn} />;
+      else if (screen === "arbitre")      inner = <Arbitre match={match} ctrl={ctrl} variant={t.arbitreVariant} accent={t.accent} />;
+      else if (screen === "arbitre-home") inner = <ArbitreHome accent={t.accent} />;
+      else if (screen === "poules")  inner = <Poules accent={t.accent} />;
+      else if (screen === "bracket") inner = <Bracket variant={t.bracketVariant} accent={t.accent} />;
+      else if (screen === "admin")   inner = <AdminPanel accent={t.accent}
+                                                  modal={t.adminModal === "none" ? null : t.adminModal}
+                                                  onModal={(m) => setTweak("adminModal", m || "none")}
+                                                  initialPage={t.adminPage} />;
+      else if (screen === "login")   inner = <LoginScreen accent={t.accent} />;
+
+      return (
+        <div className="app">
+          <NavBar
+            current={screen}
+            onChange={setScreen}
+            status={match.status}
+            demoOn={demoOn}
+            onToggleDemo={() => setDemoOn((d) => !d)}
+            accent={t.accent}
+          />
+          <StageFrame screen={currentScreen}>
+            {inner}
+          </StageFrame>
+
+          <TweaksPanel title="Tweaks · Moutilloux">
+            <TweakSection label="Affichage TV" />
+            <TweakRadio
+              label="État du tournoi"
+              value={t.tvState}
+              options={[
+                { value: "live", label: "Match en cours" },
+                { value: "idle", label: "Attente · carrousel" },
+              ]}
+              onChange={(v) => setTweak("tvState", v)}
+            />
+
+            <TweakSection label="Variantes" />
+            <TweakRadio
+              label="Scoreboard TV"
+              value={t.scoreboardVariant}
+              options={[
+                { value: "classic",   label: "Classic" },
+                { value: "glass",     label: "Glass" },
+                { value: "editorial", label: "Edito" },
+              ]}
+              onChange={(v) => setTweak("scoreboardVariant", v)}
+            />
+            <TweakRadio
+              label="Arbitre"
+              value={t.arbitreVariant}
+              options={[
+                { value: "columns", label: "3 colonnes" },
+                { value: "split",   label: "Split" },
+              ]}
+              onChange={(v) => setTweak("arbitreVariant", v)}
+            />
+            <TweakRadio
+              label="Tableau final"
+              value={t.bracketVariant}
+              options={[
+                { value: "lines",    label: "Lignes" },
+                { value: "floating", label: "Cards" },
+              ]}
+              onChange={(v) => setTweak("bracketVariant", v)}
+            />
+
+            <TweakSection label="Admin" />
+            <TweakSelect
+              label="Onglet"
+              value={t.adminPage}
+              options={[
+                { value: "joueurs", label: "Joueurs" },
+                { value: "poules",  label: "Poules" },
+                { value: "matchs",  label: "Matchs" },
+                { value: "tableau", label: "Tableau final" },
+                { value: "tournoi", label: "Tournoi" },
+              ]}
+              onChange={(v) => setTweak("adminPage", v)}
+            />
+            <TweakSelect
+              label="Modale ouverte"
+              value={t.adminModal}
+              options={[
+                { value: "none",        label: "— Aucune —" },
+                { value: "addPlayer",   label: "Ajouter un joueur" },
+                { value: "editPlayer",  label: "Éditer un joueur" },
+                { value: "createTeam",  label: "Créer une équipe" },
+                { value: "autoFill",    label: "Auto-remplir poules" },
+                { value: "generate",    label: "Générer matchs de poule" },
+                { value: "confirm",     label: "Confirmation (retirer)" },
+                { value: "editMatch",   label: "Édition match (slide-out)" },
+              ]}
+              onChange={(v) => setTweak("adminModal", v)}
+            />
+
+            <TweakSection label="Apparence" />
+            <TweakColor
+              label="Accent"
+              value={t.accent}
+              options={["#00E5EE", "#FFC83D", "#22E27F", "#FF2E92"]}
+              onChange={(v) => setTweak("accent", v)}
+            />
+            <TweakSelect
+              label="Police"
+              value={t.font}
+              options={[
+                { value: "system", label: "System (Helvetica)" },
+                { value: "inter", label: "Inter" },
+                { value: "broadcast", label: "Display condensed" },
+              ]}
+              onChange={(v) => setTweak("font", v)}
+            />
+
+            <TweakSection label="Démo" />
+            <TweakToggle
+              label="Mode démo (points aléatoires)"
+              value={demoOn}
+              onChange={setDemoOn}
+            />
+            <TweakButton
+              label="Réinitialiser le match"
+              secondary
+              onClick={() => { setDemoOn(false); ctrl.reset(); }}
+            />
+          </TweaksPanel>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</body>
+</html>

@@ -309,6 +309,26 @@ def player_create(request, event_id: int):
     return render(request, "live/panel_player_form.html", {"event": event, "form": form, "mode": "create"})
 
 
+def create_team_with_entry(event, player1, player2, name=""):
+    """
+    Service : crée un Team (double) puis l'inscrit dans l'event (Entry).
+    `player1`/`player2` sont des instances Player distinctes.
+    Refuse si l'event n'est pas en DOUBLE (ValueError).
+    Retourne (team, entry).
+    """
+    if event.category.mode != Category.Mode.DOUBLE:
+        raise ValueError("Cet event n'est pas en double.")
+    if player1 == player2:
+        raise ValueError("Les deux joueurs doivent être différents.")
+    team = Team.objects.create(
+        name=name or "",
+        player1=player1,
+        player2=player2,
+    )
+    entry, _ = Entry.objects.get_or_create(event=event, team=team)
+    return team, entry
+
+
 @superuser_required
 def team_create(request, event_id: int):
     event = get_object_or_404(Event.objects.select_related("category"), id=event_id)
@@ -318,13 +338,12 @@ def team_create(request, event_id: int):
 
     form = TeamForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        t = Team.objects.create(
-            name=form.cleaned_data["name"] or "",
-            player1=form.cleaned_data["player1"],
-            player2=form.cleaned_data["player2"],
+        t, _ = create_team_with_entry(
+            event,
+            form.cleaned_data["player1"],
+            form.cleaned_data["player2"],
+            form.cleaned_data["name"],
         )
-        # auto-inscription dans l'event
-        Entry.objects.get_or_create(event=event, team=t)
         messages.success(request, f"Équipe créée + inscrite: {t}")
         return redirect("panel_event", event_id=event.id)
 
@@ -335,15 +354,59 @@ def team_create(request, event_id: int):
 # Actions : Poules
 # -----------------------
 
+def create_group(event, name):
+    """
+    Service : crée (ou récupère) une poule par son nom dans l'event.
+    Retourne (group, created).
+    """
+    clean = (name or "").strip()
+    if not clean:
+        raise ValueError("Le nom de la poule est obligatoire.")
+    return Group.objects.get_or_create(event=event, name=clean)
+
+
 @superuser_required
 def group_create(request, event_id: int):
     event = get_object_or_404(Event, id=event_id)
     form = GroupCreateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        Group.objects.get_or_create(event=event, name=form.cleaned_data["name"].strip())
+        create_group(event, form.cleaned_data["name"])
         messages.success(request, "Poule créée.")
         return redirect("panel_event", event_id=event.id)
     return render(request, "live/panel_group_form.html", {"event": event, "form": form})
+
+
+def autofill_groups(event, shuffle, group_size, num_groups=None):
+    """
+    Service : réinitialise les poules et répartit toutes les Entries de l'event
+    en round-robin sur `num_groups` poules (A, B, C…). Réinitialise memberships
+    et standings. Lève ValueError s'il n'y a aucune inscription.
+    Retourne la liste des Group créés/utilisés.
+    """
+    entries = list(Entry.objects.filter(event=event))
+    if not entries:
+        raise ValueError("Aucune inscription (Entry) dans cet event.")
+
+    if shuffle:
+        random.shuffle(entries)
+
+    group_size = int(group_size)
+    if not num_groups:
+        num_groups = max(1, (len(entries) + group_size - 1) // group_size)
+
+    names = [chr(ord("A") + i) for i in range(int(num_groups))]
+    groups = []
+    for name in names:
+        g, _ = Group.objects.get_or_create(event=event, name=name)
+        groups.append(g)
+        GroupMembership.objects.filter(group=g).delete()
+        GroupStanding.objects.filter(group=g).delete()
+
+    for idx, entry in enumerate(entries):
+        g = groups[idx % len(groups)]
+        GroupMembership.objects.create(group=g, entry=entry)
+
+    return groups
 
 
 @superuser_required
@@ -352,37 +415,19 @@ def group_fill(request, event_id: int):
     event = get_object_or_404(Event, id=event_id)
     form = GroupFillForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        entries = list(Entry.objects.filter(event=event))
-        if not entries:
-            messages.error(request, "Aucune inscription (Entry) dans cet event.")
+        try:
+            groups = autofill_groups(
+                event,
+                shuffle=form.cleaned_data["shuffle"],
+                group_size=form.cleaned_data["group_size"],
+                num_groups=form.cleaned_data.get("num_groups"),
+            )
+        except ValueError as e:
+            messages.error(request, str(e))
             return redirect("panel_event", event_id=event.id)
 
-        if form.cleaned_data["shuffle"]:
-            random.shuffle(entries)
-
-        group_size = int(form.cleaned_data["group_size"])
-        num_groups = form.cleaned_data.get("num_groups")
-
-        if not num_groups:
-            # calcul auto : suffisamment de poules pour mettre ~group_size par poule
-            num_groups = max(1, (len(entries) + group_size - 1) // group_size)
-
-        # Crée des poules A, B, C... si pas assez
-        names = [chr(ord("A") + i) for i in range(num_groups)]
-        groups = []
-        for name in names:
-            g, _ = Group.objects.get_or_create(event=event, name=name)
-            groups.append(g)
-            # reset memberships
-            GroupMembership.objects.filter(group=g).delete()
-            GroupStanding.objects.filter(group=g).delete()
-
-        # Répartition round-robin (A,B,C,D,A,B...)
-        for idx, entry in enumerate(entries):
-            g = groups[idx % len(groups)]
-            GroupMembership.objects.create(group=g, entry=entry)
-
-        messages.success(request, f"Poules remplies: {len(groups)} poules, {len(entries)} participants.")
+        n_entries = Entry.objects.filter(event=event).count()
+        messages.success(request, f"Poules remplies: {len(groups)} poules, {n_entries} participants.")
         return redirect("panel_event", event_id=event.id)
 
     return render(request, "live/panel_group_fill.html", {"event": event, "form": form})
@@ -392,13 +437,16 @@ def group_fill(request, event_id: int):
 # Actions : Générer matchs de poule
 # -----------------------
 
-@superuser_required
-@transaction.atomic
-def generate_group_matches(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
+def generate_group_matches_for_event(event):
+    """
+    Service : génère le round-robin de chaque poule (≥2 entries) de l'event.
+    Idempotent (ignore les paires déjà créées dans les deux sens). Format par
+    défaut G_SET5_TB44, statut SCHEDULED. Retourne (created, matches).
+    """
     groups = Group.objects.filter(event=event).prefetch_related("memberships__entry")
 
     created = 0
+    matches = []
     for g in groups:
         entries = [m.entry for m in g.memberships.all()]
         if len(entries) < 2:
@@ -425,7 +473,7 @@ def generate_group_matches(request, event_id: int):
                 if exists:
                     continue
 
-                Match.objects.create(
+                m = Match.objects.create(
                     event=event,
                     group=g,
                     stage=Match.Stage.GROUP,
@@ -434,8 +482,17 @@ def generate_group_matches(request, event_id: int):
                     match_format="G_SET5_TB44",
                     status=Match.Status.SCHEDULED,
                 )
+                matches.append(m)
                 created += 1
 
+    return created, matches
+
+
+@superuser_required
+@transaction.atomic
+def generate_group_matches(request, event_id: int):
+    event = get_object_or_404(Event, id=event_id)
+    created, _ = generate_group_matches_for_event(event)
     messages.success(request, f"Matchs de poule générés: {created} créés.")
     return redirect("panel_event", event_id=event.id)
 
@@ -443,6 +500,36 @@ def generate_group_matches(request, event_id: int):
 # -----------------------
 # Actions : Matches (edit + feature)
 # -----------------------
+
+def finalize_match_edit(match):
+    """
+    Service : logique post-sauvegarde commune à l'édition d'un match
+    (sanitisation des valeurs négatives, cohérence du tie-break, retrait
+    featured/file si terminé, puis synchronisation des gagnants du bracket).
+    Le match est supposé déjà passé par MatchEditForm.save().
+    Retourne le match.
+    """
+    for f in ["points_a", "points_b", "games_a", "games_b", "sets_a", "sets_b", "tb_points_a", "tb_points_b"]:
+        val = getattr(match, f, 0)
+        if val is None or val < 0:
+            setattr(match, f, 0)
+
+    if not match.tb_active:
+        match.tb_points_a = 0
+        match.tb_points_b = 0
+
+    if match.status == Match.Status.FINISHED:
+        match.is_featured = False
+        match.order_index = None
+
+    match.save()
+
+    if match.status == Match.Status.FINISHED and match.stage in (Match.Stage.QF, Match.Stage.SF):
+        from live.bracket import sync_final_winners_for_event
+        sync_final_winners_for_event(match.event)
+
+    return match
+
 
 @superuser_required
 def match_edit(request, event_id: int, match_id: int):
@@ -453,34 +540,26 @@ def match_edit(request, event_id: int, match_id: int):
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        match = form.instance
-
-        # --- Sécurités simples sur valeurs ---
-        for f in ["points_a", "points_b", "games_a", "games_b", "sets_a", "sets_b", "tb_points_a", "tb_points_b"]:
-            val = getattr(match, f, 0)
-            if val is None or val < 0:
-                setattr(match, f, 0)
-
-        # --- Cohérence TB ---
-        if not match.tb_active:
-            match.tb_points_a = 0
-            match.tb_points_b = 0
-
-        # --- Si match terminé : pas featured + pas dans la file ---
-        if match.status == Match.Status.FINISHED:
-            match.is_featured = False
-            match.order_index = None
-
-        match.save()
-
-        if match.status == Match.Status.FINISHED and match.stage in (Match.Stage.QF, Match.Stage.SF):
-            from live.bracket import sync_final_winners_for_event
-            sync_final_winners_for_event(match.event)
-
+        finalize_match_edit(form.instance)
         messages.success(request, "Match mis à jour.")
         return redirect("panel_matches", event_id=event.id)
 
     return render(request, "live/panel_match_form.html", {"event": event, "match": match, "form": form})
+
+
+def feature_match(match):
+    """
+    Service : met un match « en avant » et le démarre. Retire le drapeau des
+    autres matchs de l'event, met is_featured=True, order_index=None, puis
+    mark_live() (status=LIVE + started_at). Source : match_feature.
+    Retourne le match.
+    """
+    Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
+    match.is_featured = True
+    match.order_index = None
+    match.mark_live()  # met status=LIVE + started_at si besoin
+    match.save()
+    return match
 
 
 @superuser_required
@@ -488,17 +567,66 @@ def match_edit(request, event_id: int, match_id: int):
 def match_feature(request, event_id: int, match_id: int):
     event = get_object_or_404(Event, id=event_id)
     match = get_object_or_404(Match, id=match_id, event=event)
-
-    # 1 seul match en cours (si tu n'as qu'un court, c'est parfait)
-    Match.objects.filter(event=event, is_featured=True).update(is_featured=False)
-
-    match.is_featured = True
-    match.order_index = None
-    match.mark_live()  # ✅ met status=LIVE + started_at si besoin
-    match.save()
-
+    feature_match(match)
     messages.success(request, f"Match en cours: {match}")
     return redirect("panel_matches", event_id=event.id)
+
+
+def add_player_entry(event, player):
+    """
+    Service : inscrit un Player (simple) dans l'event via une Entry.
+    Refuse si l'event n'est pas en SINGLE (ValueError).
+    Retourne l'Entry (créée ou déjà existante).
+    """
+    if event.category.mode != Category.Mode.SINGLE:
+        raise ValueError("Ajout joueur direct : uniquement pour un event en simple.")
+    entry, _ = Entry.objects.get_or_create(event=event, player=player)
+    return entry
+
+
+def add_players_entries(event, player_ids):
+    """
+    Service : inscrit plusieurs Players (simple) dans l'event.
+    Refuse si l'event n'est pas en SINGLE (ValueError).
+    Ignore les joueurs déjà inscrits ou inconnus.
+    Retourne (created_entries, skipped_player_ids).
+    """
+    if event.category.mode != Category.Mode.SINGLE:
+        raise ValueError("Ajout de joueurs : uniquement pour un event en simple.")
+
+    existing_player_ids = set(
+        Entry.objects.filter(event=event, player__isnull=False).values_list("player_id", flat=True)
+    )
+    to_add_ids = [pid for pid in player_ids if pid not in existing_player_ids]
+
+    players_by_id = {p.id: p for p in Player.objects.filter(id__in=to_add_ids)}
+
+    created = []
+    for pid in player_ids:
+        player = players_by_id.get(pid)
+        if player is None:
+            continue
+        entry, was_created = Entry.objects.get_or_create(event=event, player=player)
+        if was_created:
+            created.append(entry)
+
+    created_ids = {e.player_id for e in created}
+    skipped = [pid for pid in player_ids if pid not in created_ids]
+    return created, skipped
+
+
+def remove_entry(event, entry):
+    """
+    Service : retire une Entry de l'event.
+    Refuse (ValueError) si l'Entry est déjà engagée dans un match.
+    """
+    used_in_matches = Match.objects.filter(event=event, side_a=entry).exists() or \
+        Match.objects.filter(event=event, side_b=entry).exists()
+    if used_in_matches:
+        raise ValueError(
+            f"Impossible de retirer {entry} : déjà utilisé dans un ou plusieurs matchs."
+        )
+    entry.delete()
 
 
 @superuser_required
@@ -516,7 +644,7 @@ def entry_add_player(request, event_id: int):
     form = AddPlayerToEventForm(request.POST or None, available_players=available_players)
     if request.method == "POST" and form.is_valid():
         p = form.cleaned_data["player"]
-        Entry.objects.get_or_create(event=event, player=p)
+        add_player_entry(event, p)
         messages.success(request, f"Joueur inscrit à l'event : {p}")
         return redirect("panel_event", event_id=event.id)
 
@@ -551,25 +679,12 @@ def entry_add_players(request, event_id: int):
         messages.error(request, "Sélection invalide.")
         return redirect("panel_event", event_id=event.id)
 
-    existing_player_ids = set(
-        Entry.objects.filter(event=event, player__isnull=False).values_list("player_id", flat=True)
-    )
-
-    # on ignore ceux déjà inscrits
-    to_add_ids = [pid for pid in ids if pid not in existing_player_ids]
-    if not to_add_ids:
+    created, _ = add_players_entries(event, ids)
+    if not created:
         messages.info(request, "Tous les joueurs sélectionnés étaient déjà inscrits.")
         return redirect("panel_event", event_id=event.id)
 
-    players = Player.objects.filter(id__in=to_add_ids)
-
-    created = 0
-    for p in players:
-        _, was_created = Entry.objects.get_or_create(event=event, player=p)
-        if was_created:
-            created += 1
-
-    messages.success(request, f"{created} joueur(s) ajouté(s) à l'event.")
+    messages.success(request, f"{len(created)} joueur(s) ajouté(s) à l'event.")
     return redirect("panel_event", event_id=event.id)
 
 
@@ -582,22 +697,12 @@ def entry_remove(request, event_id: int, entry_id: int):
     label = str(entry)
 
     # Sécurité : si déjà utilisé dans des matchs, on empêche (optionnel mais recommandé)
-    used_in_matches = Match.objects.filter(
-        event=event,
-        side_a=entry
-    ).exists() or Match.objects.filter(
-        event=event,
-        side_b=entry
-    ).exists()
-
-    if used_in_matches:
-        messages.error(
-            request,
-            f"Impossible de retirer {label} : déjà utilisé dans un ou plusieurs matchs."
-        )
+    try:
+        remove_entry(event, entry)
+    except ValueError as exc:
+        messages.error(request, str(exc))
         return redirect("panel_event", event_id=event.id)
 
-    entry.delete()
     messages.success(request, f"{label} retiré de l’event.")
     return redirect("panel_event", event_id=event.id)
 
@@ -711,6 +816,70 @@ def _final_matches_qs(event):
     )
 
 
+def assign_bracket_entry(event, match_id: int, entry_id: int, side: str):
+    """
+    Assigne une Entry (entry_id) à un côté (side='A'|'B') d'un match de tableau final.
+    Déplace automatiquement l'Entry si elle est déjà dans un autre slot planifié.
+    Lève ValueError pour tout état invalide.
+    """
+    side = side.upper()
+    if side not in {"A", "B"}:
+        raise ValueError("side doit valoir 'A' ou 'B'.")
+
+    match = get_object_or_404(
+        Match,
+        id=match_id,
+        event=event,
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+    )
+    entry = get_object_or_404(Entry, id=entry_id, event=event)
+
+    if match.status != Match.Status.SCHEDULED:
+        raise ValueError("Match déjà lancé.")
+
+    other_side = match.side_b if side == "A" else match.side_a
+    if other_side and other_side.id == entry.id:
+        raise ValueError("Un participant ne peut pas être des deux côtés.")
+
+    # Retirer l'entrée de tout autre slot planifié du tableau final.
+    _final_matches_qs(event).filter(status=Match.Status.SCHEDULED, side_a=entry).update(side_a=None)
+    _final_matches_qs(event).filter(status=Match.Status.SCHEDULED, side_b=entry).update(side_b=None)
+
+    if side == "A":
+        match.side_a = entry
+        match.save(update_fields=["side_a"])
+    else:
+        match.side_b = entry
+        match.save(update_fields=["side_b"])
+
+
+def clear_bracket_entry(event, match_id: int, side: str):
+    """
+    Retire l'Entry du côté (side='A'|'B') d'un match de tableau final planifié.
+    Lève ValueError pour tout état invalide.
+    """
+    side = side.upper()
+    if side not in {"A", "B"}:
+        raise ValueError("side doit valoir 'A' ou 'B'.")
+
+    match = get_object_or_404(
+        Match,
+        id=match_id,
+        event=event,
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+    )
+
+    if match.status != Match.Status.SCHEDULED:
+        raise ValueError("Match déjà lancé.")
+
+    if side == "A":
+        match.side_a = None
+        match.save(update_fields=["side_a"])
+    else:
+        match.side_b = None
+        match.save(update_fields=["side_b"])
+
+
 def _create_final_bracket(event, start_stage: str) -> int:
     """
     Crée un tableau final manuel à partir d'une étape (QF, SF ou F).
@@ -766,6 +935,42 @@ def _create_final_bracket(event, start_stage: str) -> int:
     return created
 
 
+def create_final_bracket_for_event(event, start_stage, force=False):
+    """
+    Service réutilisable : crée (ou recrée) le tableau final manuel à partir
+    d'une étape de départ (QF/SF/F). Lève ``ValueError`` (message FR) si l'étape
+    est invalide, si un tableau existe déjà sans ``force``, ou si une recréation
+    est demandée alors qu'un match est déjà lancé/terminé.
+    Retourne le nombre de matchs créés.
+    """
+    start_stage = (start_stage or "").upper().strip()
+    if start_stage not in {Match.Stage.QF, Match.Stage.SF, Match.Stage.F}:
+        raise ValueError("Étape de départ invalide.")
+
+    existing = _final_matches_qs(event)
+    if existing.exists():
+        if not force:
+            raise ValueError("Un tableau final existe déjà. Utilise 'Recréer' si besoin.")
+        if existing.exclude(status=Match.Status.SCHEDULED).exists():
+            raise ValueError("Impossible de recréer : un match est déjà en cours ou terminé.")
+        existing.delete()
+
+    return _create_final_bracket(event, start_stage)
+
+
+def set_match_bracket_labels(match, a_label, b_label):
+    """
+    Service réutilisable : met à jour les labels (A1, D2, WSF1…) d'un match du
+    tableau final. Lève ``ValueError`` si le match n'est plus ``SCHEDULED``.
+    """
+    if match.status != Match.Status.SCHEDULED:
+        raise ValueError("Impossible de modifier les labels : match déjà lancé.")
+    match.side_a_label = (a_label or "").strip().upper() or None
+    match.side_b_label = (b_label or "").strip().upper() or None
+    match.save(update_fields=["side_a_label", "side_b_label"])
+    return match
+
+
 @superuser_required
 def panel_final(request, event_id: int):
     event = get_object_or_404(Event.objects.select_related("edition", "category"), id=event_id)
@@ -801,26 +1006,14 @@ def panel_final(request, event_id: int):
 @require_POST
 def panel_final_create(request, event_id: int):
     event = get_object_or_404(Event.objects.select_related("edition"), id=event_id)
-    start_stage = (request.POST.get("start_stage") or "").upper().strip()
     force = request.POST.get("force") == "1"
 
-    if start_stage not in {Match.Stage.QF, Match.Stage.SF, Match.Stage.F}:
-        messages.error(request, "Étape de départ invalide.")
+    try:
+        created = create_final_bracket_for_event(event, request.POST.get("start_stage"), force)
+    except ValueError as exc:
+        messages.error(request, str(exc))
         return redirect("panel_final", event_id=event.id)
 
-    existing = _final_matches_qs(event)
-    if existing.exists():
-        if not force:
-            messages.error(request, "Un tableau final existe déjà. Utilise 'Recréer' si besoin.")
-            return redirect("panel_final", event_id=event.id)
-
-        if existing.exclude(status=Match.Status.SCHEDULED).exists():
-            messages.error(request, "Impossible de recréer : un match est déjà en cours ou terminé.")
-            return redirect("panel_final", event_id=event.id)
-
-        existing.delete()
-
-    created = _create_final_bracket(event, start_stage)
     messages.success(request, f"Tableau final créé ({created} matchs).")
     return redirect("panel_final", event_id=event.id)
 
@@ -831,16 +1024,11 @@ def panel_final_label_update(request, event_id: int, match_id: int):
     event = get_object_or_404(Event, id=event_id)
     match = get_object_or_404(Match, id=match_id, event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F])
 
-    if match.status != Match.Status.SCHEDULED:
-        messages.error(request, "Impossible de modifier les labels : match déjà lancé.")
+    try:
+        set_match_bracket_labels(match, request.POST.get("side_a_label"), request.POST.get("side_b_label"))
+    except ValueError as exc:
+        messages.error(request, str(exc))
         return redirect("panel_final", event_id=event.id)
-
-    a_label = (request.POST.get("side_a_label") or "").strip().upper() or None
-    b_label = (request.POST.get("side_b_label") or "").strip().upper() or None
-
-    match.side_a_label = a_label
-    match.side_b_label = b_label
-    match.save(update_fields=["side_a_label", "side_b_label"])
 
     messages.success(request, "Labels mis à jour.")
     return redirect("panel_final", event_id=event.id)
@@ -850,28 +1038,25 @@ def panel_final_label_update(request, event_id: int, match_id: int):
 @require_POST
 def panel_final_clear(request, event_id: int):
     event = get_object_or_404(Event, id=event_id)
-    match_id = request.POST.get("match_id")
-    side = (request.POST.get("side") or "").upper()
+
+    if request.content_type and request.content_type.startswith("application/json"):
+        try:
+            payload = json.loads(request.body or b"{}")
+        except (ValueError, json.JSONDecodeError):
+            return JsonResponse({"ok": False, "error": "Corps JSON invalide."}, status=400)
+    else:
+        payload = request.POST
+
+    match_id = payload.get("match_id")
+    side = (payload.get("side") or "").upper()
 
     if not match_id or side not in {"A", "B"}:
         return JsonResponse({"ok": False, "error": "Paramètres manquants."}, status=400)
 
-    match = get_object_or_404(
-        Match,
-        id=int(match_id),
-        event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
-    )
-
-    if match.status != Match.Status.SCHEDULED:
-        return JsonResponse({"ok": False, "error": "Match déjà lancé."}, status=400)
-
-    if side == "A":
-        match.side_a = None
-        match.save(update_fields=["side_a"])
-    else:
-        match.side_b = None
-        match.save(update_fields=["side_b"])
+    try:
+        clear_bracket_entry(event, int(match_id), side)
+    except ValueError as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
 
     return JsonResponse({"ok": True})
 
@@ -893,31 +1078,10 @@ def panel_final_assign(request, event_id: int):
     if not match_id or not entry_id or side not in {"A", "B"}:
         return JsonResponse({"ok": False, "error": "Paramètres manquants."}, status=400)
 
-    match = get_object_or_404(
-        Match,
-        id=int(match_id),
-        event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
-    )
-    entry = get_object_or_404(Entry, id=int(entry_id), event=event)
-
-    if match.status != Match.Status.SCHEDULED:
-        return JsonResponse({"ok": False, "error": "Match déjà lancé."}, status=400)
-
-    other_side = match.side_b if side == "A" else match.side_a
-    if other_side and other_side.id == entry.id:
-        return JsonResponse({"ok": False, "error": "Un participant ne peut pas être des deux côtés."}, status=400)
-
-    # Retirer l'entrée des autres matchs planifiés du tableau final
-    _final_matches_qs(event).filter(status=Match.Status.SCHEDULED, side_a=entry).update(side_a=None)
-    _final_matches_qs(event).filter(status=Match.Status.SCHEDULED, side_b=entry).update(side_b=None)
-
-    if side == "A":
-        match.side_a = entry
-        match.save(update_fields=["side_a"])
-    else:
-        match.side_b = entry
-        match.save(update_fields=["side_b"])
+    try:
+        assign_bracket_entry(event, int(match_id), int(entry_id), side)
+    except ValueError as exc:
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
 
     return JsonResponse({"ok": True})
 
@@ -941,6 +1105,32 @@ def player_edit(request, event_id: int, player_id: int):
     })
 
 
+def _assert_groups_unlocked(event):
+    """Lève ValueError si des matchs de poule existent déjà (poules verrouillées)."""
+    if Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists():
+        raise ValueError("Matchs de poule déjà générés : poules verrouillées.")
+
+
+def assign_entry_to_group(event, entry, group):
+    """
+    Service : assigne (ou déplace) une Entry dans une poule. Retire d'abord
+    l'entry de toute autre poule de l'event. Lève ValueError si les poules sont
+    verrouillées (matchs déjà générés).
+    """
+    _assert_groups_unlocked(event)
+    GroupMembership.objects.filter(entry=entry, group__event=event).delete()
+    GroupMembership.objects.get_or_create(group=group, entry=entry)
+
+
+def unassign_entry(event, entry):
+    """
+    Service : retire une Entry de sa poule (retour en 'Non affectés').
+    Lève ValueError si les poules sont verrouillées.
+    """
+    _assert_groups_unlocked(event)
+    GroupMembership.objects.filter(entry=entry, group__event=event).delete()
+
+
 @superuser_required
 @require_POST
 @transaction.atomic
@@ -959,15 +1149,10 @@ def group_assign(request, event_id: int):
     entry = get_object_or_404(Entry, id=int(entry_id), event=event)
     group = get_object_or_404(Group, id=int(group_id), event=event)
 
-    # Option sécurité : empêcher si matchs de poule déjà générés
-    if Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists():
-        return JsonResponse({"ok": False, "error": "Matchs de poule déjà générés : poules verrouillées."}, status=400)
-
-    # Retirer de toute autre poule de cet event
-    GroupMembership.objects.filter(entry=entry, group__event=event).delete()
-
-    # Ajouter à cette poule
-    GroupMembership.objects.get_or_create(group=group, entry=entry)
+    try:
+        assign_entry_to_group(event, entry, group)
+    except ValueError as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
     return JsonResponse({"ok": True})
 
@@ -988,31 +1173,22 @@ def group_unassign(request, event_id: int):
 
     entry = get_object_or_404(Entry, id=int(entry_id), event=event)
 
-    if Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists():
-        return JsonResponse({"ok": False, "error": "Matchs de poule déjà générés : poules verrouillées."}, status=400)
+    try:
+        unassign_entry(event, entry)
+    except ValueError as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
-    GroupMembership.objects.filter(entry=entry, group__event=event).delete()
     return JsonResponse({"ok": True})
 
 
-@superuser_required
-@require_POST
-@transaction.atomic
-def matches_reorder(request, event_id: int):
+def reorder_event_matches(event, queue):
     """
-    Reçoit la liste des match_ids dans l'ordre (queue).
-    Met order_index = 1..N pour ceux de la queue,
-    et order_index = NULL pour les autres matchs de l'event.
-    Payload JSON: {"queue": [1,2,3,...]}
+    Service : applique l'ordre de la file pour `event`. `queue` est une liste
+    d'ids de matchs. Met order_index = 1..N (en respectant l'unicité à l'échelle
+    de l'édition) pour ceux de la queue, NULL pour les autres (hors terminés).
+    Ignore le match featured. Lève ValueError si un court est requis mais absent.
     """
-    event = get_object_or_404(Event, id=event_id)
-
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-        queue = payload.get("queue", [])
-        queue = [int(x) for x in queue]
-    except Exception:
-        return JsonResponse({"ok": False, "error": "JSON invalide"}, status=400)
+    queue = [int(x) for x in queue]
 
     # Sécurité : ne garder que les matchs de cet event
     valid_ids = set(Match.objects.filter(event=event).values_list("id", flat=True))
@@ -1028,10 +1204,7 @@ def matches_reorder(request, event_id: int):
     if queue:
         default_court = Court.objects.order_by("id").first()
         if not default_court:
-            return JsonResponse(
-                {"ok": False, "error": "Aucun court disponible. Crée un court avant d’ordonner les matchs."},
-                status=400
-            )
+            raise ValueError("Aucun court disponible. Crée un court avant d’ordonner les matchs.")
 
     # IMPORTANT: order_index est unique à l'échelle de l'édition
     # On réserve tous les order_index déjà pris dans l'édition,
@@ -1059,6 +1232,30 @@ def matches_reorder(request, event_id: int):
         m.save(update_fields=["order_index", "court"])
         used_in_edition.add(next_idx)
         next_idx += 1
+
+
+@superuser_required
+@require_POST
+@transaction.atomic
+def matches_reorder(request, event_id: int):
+    """
+    Reçoit la liste des match_ids dans l'ordre (queue).
+    Met order_index = 1..N pour ceux de la queue,
+    et order_index = NULL pour les autres matchs de l'event.
+    Payload JSON: {"queue": [1,2,3,...]}
+    """
+    event = get_object_or_404(Event, id=event_id)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+        queue = payload.get("queue", [])
+    except Exception:
+        return JsonResponse({"ok": False, "error": "JSON invalide"}, status=400)
+
+    try:
+        reorder_event_matches(event, queue)
+    except ValueError as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
 
     return JsonResponse({"ok": True})
 
@@ -1254,3 +1451,206 @@ def sync_final_bracket_for_event(event):
 
         if changed:
             m.save()
+
+
+# =========================================================================
+# Phase 9 — Administration de la configuration (services réutilisables)
+# Éditions, catégories, courts, épreuves. CRUD neuf : aucune logique
+# existante à extraire d'une vue template, mais on garde le pattern
+# « service réutilisable » exposé par-dessus en endpoint /api/ JSON fin.
+# Toutes les validations métier vivent ici ; les vues lèvent juste 400.
+# =========================================================================
+
+_NOCHANGE = object()  # sentinelle « champ non fourni » pour les éditions partielles
+
+
+def _as_choice_int(value, allowed, label):
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"{label} : valeur invalide.")
+    if v not in allowed:
+        raise ValueError(f"{label} doit valoir {' ou '.join(str(a) for a in allowed)}.")
+    return v
+
+
+def _parse_year(value):
+    try:
+        year = int(value)
+    except (TypeError, ValueError):
+        raise ValueError("Année invalide.")
+    if not (1900 <= year <= 3000):
+        raise ValueError("Année hors plage (1900–3000).")
+    return year
+
+
+# ── Éditions ─────────────────────────────────────────────────────────────
+
+def create_edition(name, year, start_dt=None, end_dt=None, activate=False):
+    """Crée une édition. `year` unique. start/end_dt = datetime|None déjà parsés."""
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("Le nom de l'édition est requis.")
+    year = _parse_year(year)
+    if TournamentEdition.objects.filter(year=year).exists():
+        raise ValueError(f"Une édition existe déjà pour l'année {year}.")
+    edition = TournamentEdition(
+        name=name,
+        year=year,
+        start_dt=start_dt or None,
+        end_dt=end_dt or None,
+        is_active=bool(activate),
+    )
+    edition.save()  # save() force l'exclusivité de is_active
+    return edition
+
+
+def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, end_dt=_NOCHANGE):
+    """Édition partielle : seuls les champs fournis (≠ _NOCHANGE) sont touchés."""
+    if name is not _NOCHANGE:
+        name = (name or "").strip()
+        if not name:
+            raise ValueError("Le nom de l'édition est requis.")
+        edition.name = name
+    if year is not _NOCHANGE:
+        y = _parse_year(year)
+        if TournamentEdition.objects.filter(year=y).exclude(pk=edition.pk).exists():
+            raise ValueError(f"Une édition existe déjà pour l'année {y}.")
+        edition.year = y
+    if start_dt is not _NOCHANGE:
+        edition.start_dt = start_dt or None
+    if end_dt is not _NOCHANGE:
+        edition.end_dt = end_dt or None
+    edition.save()
+    return edition
+
+
+def set_active_edition(edition):
+    """Rend une édition courante. save() désactive automatiquement les autres."""
+    edition.is_active = True
+    edition.save()
+    return edition
+
+
+def delete_edition(edition):
+    """Supprime une édition vide. Refusé si elle contient des épreuves (CASCADE destructif)."""
+    if Event.objects.filter(edition=edition).exists():
+        raise ValueError(
+            "Impossible de supprimer une édition contenant des épreuves. "
+            "Désactive-la plutôt (archive)."
+        )
+    edition.delete()
+
+
+# ── Catégories ─────────────────────────────────────────────────────────────
+
+def create_category(name, mode):
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("Le nom de la catégorie est requis.")
+    if mode not in Category.Mode.values:
+        raise ValueError("Mode invalide (attendu « S » ou « D »).")
+    if Category.objects.filter(name__iexact=name).exists():
+        raise ValueError(f"Une catégorie nommée « {name} » existe déjà.")
+    return Category.objects.create(name=name, mode=mode)
+
+
+def update_category(category, name=_NOCHANGE, mode=_NOCHANGE):
+    if name is not _NOCHANGE:
+        name = (name or "").strip()
+        if not name:
+            raise ValueError("Le nom de la catégorie est requis.")
+        if Category.objects.filter(name__iexact=name).exclude(pk=category.pk).exists():
+            raise ValueError(f"Une catégorie nommée « {name} » existe déjà.")
+        category.name = name
+    if mode is not _NOCHANGE and mode != category.mode:
+        if mode not in Category.Mode.values:
+            raise ValueError("Mode invalide (attendu « S » ou « D »).")
+        # Le mode pilote Entry.clean() (joueur XOR équipe) : on bloque le
+        # changement dès qu'une inscription existe sur une épreuve de la catégorie.
+        if Entry.objects.filter(event__category=category).exists():
+            raise ValueError(
+                "Impossible de changer le mode : des inscriptions existent "
+                "sur des épreuves de cette catégorie."
+            )
+        category.mode = mode
+    category.save()
+    return category
+
+
+def delete_category(category):
+    """Refusé si ≥1 épreuve l'utilise (FK PROTECT → on vérifie avant pour lever un 400 propre)."""
+    events = list(Event.objects.filter(category=category).select_related("edition"))
+    if events:
+        years = ", ".join(sorted({str(e.edition.year) for e in events}))
+        raise ValueError(f"Catégorie utilisée par des épreuves ({years}). Supprime-les d'abord.")
+    category.delete()
+
+
+# ── Courts ───────────────────────────────────────────────────────────────
+
+def create_court(name):
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("Le nom du court est requis.")
+    if Court.objects.filter(name__iexact=name).exists():
+        raise ValueError(f"Un court nommé « {name} » existe déjà.")
+    return Court.objects.create(name=name)
+
+
+def update_court(court, name):
+    name = (name or "").strip()
+    if not name:
+        raise ValueError("Le nom du court est requis.")
+    if Court.objects.filter(name__iexact=name).exclude(pk=court.pk).exists():
+        raise ValueError(f"Un court nommé « {name} » existe déjà.")
+    court.name = name
+    court.save()
+    return court
+
+
+def delete_court(court):
+    """SET_NULL : suppression non bloquante, SAUF si un match ordonné y est attaché
+    (la contrainte court_required_when_ordered lèverait alors une IntegrityError)."""
+    if Match.objects.filter(court=court, order_index__isnull=False).exists():
+        raise ValueError(
+            "Court utilisé par des matchs ordonnés (file). "
+            "Retire-les de la file avant de le supprimer."
+        )
+    court.delete()
+
+
+# ── Épreuves (Event = édition × catégorie) ─────────────────────────────────
+
+def create_event(edition, category, group_size_default=4, qualified_per_group=2, notes=""):
+    if Event.objects.filter(edition=edition, category=category).exists():
+        raise ValueError(f"L'épreuve « {category.name} » existe déjà pour {edition.year}.")
+    gsd = _as_choice_int(group_size_default, (3, 4), "La taille de poule par défaut")
+    qpg = _as_choice_int(qualified_per_group, (1, 2), "Le nombre de qualifiés par poule")
+    return Event.objects.create(
+        edition=edition,
+        category=category,
+        group_size_default=gsd,
+        qualified_per_group=qpg,
+        notes=(notes or ""),
+    )
+
+
+def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHANGE, notes=_NOCHANGE):
+    if group_size_default is not _NOCHANGE:
+        event.group_size_default = _as_choice_int(group_size_default, (3, 4), "La taille de poule par défaut")
+    if qualified_per_group is not _NOCHANGE:
+        event.qualified_per_group = _as_choice_int(qualified_per_group, (1, 2), "Le nombre de qualifiés par poule")
+    if notes is not _NOCHANGE:
+        event.notes = notes or ""
+    event.save()
+    return event
+
+
+def delete_event(event):
+    """CASCADE (inscriptions/poules/matchs/bracket). Refusé si des matchs sont LIVE ou terminés."""
+    if Match.objects.filter(
+        event=event, status__in=[Match.Status.LIVE, Match.Status.FINISHED]
+    ).exists():
+        raise ValueError("Impossible de supprimer une épreuve avec des matchs en cours ou terminés.")
+    event.delete()

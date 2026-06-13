@@ -1,3 +1,5 @@
+import json
+
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django import forms
@@ -100,7 +102,18 @@ def referee_match(request, match_id: int):
 @transaction.atomic
 def referee_action(request, match_id: int):
     match = get_object_or_404(Match, id=match_id)
-    action = request.POST.get("action")
+
+    # Accepte aussi bien un corps JSON (SPA Vue via useApi) qu'un POST form
+    # (template arbitre existant). Les deux supports .get()/in/[] de la même façon.
+    if request.content_type and request.content_type.startswith("application/json"):
+        try:
+            data = json.loads(request.body or b"{}")
+        except (ValueError, json.JSONDecodeError):
+            return JsonResponse({"ok": False, "error": "Corps JSON invalide"}, status=400)
+    else:
+        data = request.POST
+
+    action = data.get("action")
 
     # Garde-fou pour les anciens matchs créés avant les presets complets.
     if match.match_format == Match.Format.BO3 and int(match.best_of or 1) != 3:
@@ -612,6 +625,26 @@ def referee_action(request, match_id: int):
 
         return JsonResponse({"ok": True})
 
+    if action == "finish_winner":
+        winner = data.get("winner")
+        if winner not in ("A", "B"):
+            return JsonResponse({"ok": False, "error": "winner doit être 'A' ou 'B'"}, status=400)
+
+        match.winner_side = winner          # repère modèle direct, pas de swap
+        match.is_featured = False
+        match.order_index = None
+        match.mark_finished()
+        match.save()
+
+        if match.stage == Match.Stage.GROUP and match.group_id:
+            gid = match.group_id
+            transaction.on_commit(lambda: recalc_one_group(gid))
+        if match.stage in (Match.Stage.QF, Match.Stage.SF):
+            from live.bracket import sync_final_winners_for_event
+            transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+
+        return JsonResponse({"ok": True})
+
     if action == "reopen":
         match.status = Match.Status.SCHEDULED
         match.is_featured = False
@@ -651,10 +684,10 @@ def referee_action(request, match_id: int):
     # Edit manuel complet (simple)
     if action == "edit":
         for field in ["points_a", "points_b", "games_a", "games_b", "sets_a", "sets_b"]:
-            if field in request.POST:
-                setattr(match, field, int(request.POST[field]))
-        if "server" in request.POST:
-            match.server = request.POST["server"]  # "A" ou "B"
+            if field in data:
+                setattr(match, field, int(data[field]))
+        if "server" in data:
+            match.server = data["server"]  # "A" ou "B"
         match.save()
         return JsonResponse({"ok": True})
 
@@ -704,7 +737,7 @@ def referee_action(request, match_id: int):
         return JsonResponse({"ok": True})
 
     if action == "set_format":
-        preset = request.POST.get("format")
+        preset = data.get("format")
 
         PRESETS = {
             # Ton modèle actuel:
@@ -730,10 +763,10 @@ def referee_action(request, match_id: int):
         if preset not in PRESETS:
             return JsonResponse({"ok": False, "error": "Preset inconnu"}, status=400)
 
-        data = PRESETS[preset]
+        preset_data = PRESETS[preset]
 
         # applique toujours match_format (utile pour libellé/tri)
-        match.match_format = data["match_format"]
+        match.match_format = preset_data["match_format"]
 
         # si MANUAL, on coupe toute logique auto
         if match.match_format == Match.Format.MANUAL:
@@ -744,15 +777,15 @@ def referee_action(request, match_id: int):
             return JsonResponse({"ok": True})
 
         # applique les champs modulables
-        match.games_to_win = data["games_to_win"]
-        match.tb_at = data["tb_at"]
-        match.best_of = data["best_of"]
+        match.games_to_win = preset_data["games_to_win"]
+        match.tb_at = preset_data["tb_at"]
+        match.best_of = preset_data["best_of"]
 
         # tb classique (tu peux changer plus tard si tu veux)
         match.tb_points_to_win = 7
         match.tb_win_by_two = True
-        match.deciding_set_mode = data.get("deciding_set_mode", Match.DecidingSetMode.FULL_SET)
-        match.deciding_tb_points_to_win = data.get("deciding_tb_points_to_win", 10)
+        match.deciding_set_mode = preset_data.get("deciding_set_mode", Match.DecidingSetMode.FULL_SET)
+        match.deciding_tb_points_to_win = preset_data.get("deciding_tb_points_to_win", 10)
 
         # Sécurité: si on change de preset, on désactive un TB éventuellement actif
         match.tb_active = False

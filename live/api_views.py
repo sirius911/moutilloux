@@ -1,0 +1,1409 @@
+"""
+API JSON — endpoints pour la SPA Vue.js.
+Lectures en GET ; mutations en POST (JSON), par-dessus les fonctions de service
+extraites de admin_views (aucune logique métier dupliquée ici).
+"""
+import json
+from datetime import datetime, time
+
+from django.http import JsonResponse
+from django.db import transaction, IntegrityError
+from django.db.models import Count
+from django.contrib.auth import authenticate, login, logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
+from django.views.decorators.http import require_GET, require_POST
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime, parse_date
+
+from core.models import get_current_edition, TournamentEdition, Player, Team
+from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
+from live.models import Match, Court
+from live.views import build_event_group_tables
+from live.admin_views import (
+    superuser_required,
+    PlayerForm,
+    MatchEditForm,
+    create_team_with_entry,
+    add_player_entry,
+    add_players_entries,
+    remove_entry,
+    create_group,
+    autofill_groups,
+    generate_group_matches_for_event,
+    assign_entry_to_group,
+    unassign_entry,
+    finalize_match_edit,
+    feature_match,
+    reorder_event_matches,
+    create_final_bracket_for_event,
+    set_match_bracket_labels,
+    assign_bracket_entry,
+    clear_bracket_entry,
+    # Phase 9 — services de configuration (éditions, catégories, courts, épreuves)
+    create_edition,
+    update_edition,
+    set_active_edition,
+    delete_edition,
+    create_category,
+    update_category,
+    delete_category,
+    create_court,
+    update_court,
+    delete_court,
+    create_event,
+    update_event,
+    delete_event,
+)
+
+
+# ── CSRF ─────────────────────────────────────────────────────────────────────
+
+@require_GET
+@ensure_csrf_cookie
+def api_csrf(request):
+    """Pose le cookie csrftoken sans exiger d'authentification."""
+    return JsonResponse({"detail": "ok"})
+
+
+@require_POST
+@csrf_protect
+def api_logout(request):
+    """POST /api/auth/logout/ — Déconnexion JSON (symétrique à api_login)."""
+    auth_logout(request)
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@csrf_protect
+def api_login(request):
+    """Authentification JSON pour la SPA Vue. Retourne le rôle de l'utilisateur."""
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+
+    user = authenticate(request, username=username, password=password)
+    if user is None:
+        return JsonResponse({"error": "Identifiants incorrects."}, status=401)
+
+    login(request, user)
+    return JsonResponse({
+        "ok": True,
+        "isAdmin": user.is_superuser,
+        "isReferee": user.groups.filter(name="Arbitre").exists(),
+    })
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+def _entry_display_name(entry):
+    if entry is None:
+        return None
+    if entry.player:
+        p = entry.player
+        return f"{p.last_name} {p.first_name}".strip()
+    if entry.team:
+        t = entry.team
+        return t.name or f"{t.player1} / {t.player2}"
+    return str(entry)
+
+
+def _pack_entry(entry):
+    if entry is None:
+        return None
+    result = {
+        "id": entry.id,
+        "displayName": _entry_display_name(entry),
+        "seedHint": entry.seed_hint,
+        "groupId": None,
+        "groupName": None,
+    }
+    # Groupe assigné (via GroupMembership)
+    membership = getattr(entry, "_membership_cache", None)
+    if membership:
+        result["groupId"] = membership.group_id
+        result["groupName"] = membership.group.name
+    if entry.player:
+        p = entry.player
+        result["player"] = {
+            "id": p.id,
+            "firstName": p.first_name,
+            "lastName": p.last_name,
+            "fullName": str(p),
+            "gender": p.gender,
+            "licenseNumber": p.license_number,
+        }
+    else:
+        result["player"] = None
+    return result
+
+
+def _pack_player(p):
+    if p is None:
+        return None
+    return {
+        "id": p.id,
+        "firstName": p.first_name,
+        "lastName": p.last_name,
+        "fullName": str(p),
+        "gender": p.gender,
+        "birthYear": p.birth_year,
+        "phone": p.phone,
+        "email": p.email,
+        "licenseNumber": p.license_number,
+    }
+
+
+def _pack_team(t):
+    if t is None:
+        return None
+    return {
+        "id": t.id,
+        "name": t.name,
+        "displayName": str(t),
+        "player1": _pack_player(t.player1),
+        "player2": _pack_player(t.player2),
+    }
+
+
+def _pack_match(m):
+    if m is None:
+        return None
+
+    if m.tb_active:
+        display_point_a = str(m.tb_points_a)
+        display_point_b = str(m.tb_points_b)
+    else:
+        pa, pb = m.tennis_point_display()
+        display_point_a, display_point_b = pa, pb
+
+    from django.utils import timezone
+    clock = None
+    if m.started_at:
+        delta = timezone.now() - m.started_at
+        s = int(delta.total_seconds())
+        clock = f"{s // 60:02d}:{s % 60:02d}"
+
+    scheduled_str = None
+    if m.scheduled_time:
+        scheduled_str = timezone.localtime(m.scheduled_time).strftime("%Hh%M")
+
+    def stage_label(match):
+        labels = {
+            Match.Stage.GROUP: "Match de poule",
+            Match.Stage.QF: "Quart de finale",
+            Match.Stage.SF: "Demi-finale",
+            Match.Stage.F: "Finale",
+        }
+        if match.stage == Match.Stage.GROUP and match.group:
+            return f"Match de poule — Poule {match.group.name}"
+        return labels.get(match.stage, match.stage)
+
+    return {
+        "id": m.id,
+        "eventId": m.event_id,
+        "stage": m.stage,
+        "stageLabel": stage_label(m),
+        "status": m.status,
+        "court": m.court.name if m.court else None,
+        "orderIndex": m.order_index,
+        "isFeatured": m.is_featured,
+        "bracketSlot": m.bracket_slot,
+        "sideA": _pack_entry(m.side_a) if m.side_a else None,
+        "sideB": _pack_entry(m.side_b) if m.side_b else None,
+        "sideALabel": m.side_a_label,
+        "sideBLabel": m.side_b_label,
+        "server": m.server,
+        "setsA": m.sets_a,
+        "setsB": m.sets_b,
+        "gamesA": m.games_a,
+        "gamesB": m.games_b,
+        "pointsA": m.points_a,
+        "pointsB": m.points_b,
+        "tbActive": m.tb_active,
+        "tbPointsA": m.tb_points_a,
+        "tbPointsB": m.tb_points_b,
+        "setScores": m.set_scores or [],
+        "displayPointA": display_point_a,
+        "displayPointB": display_point_b,
+        "winnerSide": m.winner_side,
+        "scheduledTime": scheduled_str,
+        "startedAt": m.started_at.isoformat() if m.started_at else None,
+        "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
+        "updatedAt": m.updated_at.isoformat(),
+        "clock": clock,
+    }
+
+
+# ── Packers Phase 9 (config : éditions, catégories, courts, épreuves) ───────────
+
+def _iso_or_none(dt):
+    return dt.isoformat() if dt else None
+
+
+def _pack_edition(edition):
+    """Édition pour l'historique admin (Phase 9)."""
+    return {
+        "id": edition.id,
+        "name": edition.name,
+        "year": edition.year,
+        "isActive": edition.is_active,
+        "startDt": _iso_or_none(edition.start_dt),
+        "endDt": _iso_or_none(edition.end_dt),
+        "eventsCount": Event.objects.filter(edition=edition).count(),
+    }
+
+
+def _pack_category(category):
+    return {
+        "id": category.id,
+        "name": category.name,
+        "mode": category.mode,
+        "eventsCount": Event.objects.filter(category=category).count(),
+    }
+
+
+def _pack_court(court):
+    return {
+        "id": court.id,
+        "name": court.name,
+        "matchCount": Match.objects.filter(court=court).count(),
+    }
+
+
+def _pack_event(event):
+    """Épreuve enrichie (Phase 9). Conserve id/editionId/name/categoryMode pour
+    la compat front, ajoute la config par année + des indicateurs d'état."""
+    return {
+        "id": event.id,
+        "editionId": event.edition_id,
+        "name": str(event.category),
+        "categoryId": event.category_id,
+        "categoryMode": event.category.mode,
+        "groupSizeDefault": event.group_size_default,
+        "qualifiedPerGroup": event.qualified_per_group,
+        "notes": event.notes,
+        "entriesCount": Entry.objects.filter(event=event).count(),
+        "hasGroups": Group.objects.filter(event=event).exists(),
+        "hasBracket": Match.objects.filter(
+            event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F]
+        ).exists(),
+    }
+
+
+def _parse_edition_dt(value, label):
+    """JSON → datetime aware | None. Accepte ISO 8601 ou « AAAA-MM-JJ ». '' / None → None."""
+    if value in (None, ""):
+        return None
+    parsed = parse_datetime(value)
+    if parsed is None:
+        d = parse_date(value)
+        if d is not None:
+            parsed = datetime.combine(d, time.min)
+    if parsed is None:
+        raise ValueError(f"{label} : date invalide (attendu AAAA-MM-JJ ou ISO 8601).")
+    if timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@require_GET
+def api_editions(request):
+    """
+    GET /api/editions/
+    - activeEdition : édition courante (ou null)
+    - events : épreuves de l'édition courante (packer enrichi Phase 9)
+    - editions : historique complet (Phase 9) — alimente le tableau admin
+    """
+    edition = get_current_edition()
+    editions = [_pack_edition(e) for e in TournamentEdition.objects.all()]
+
+    if not edition:
+        return JsonResponse({"activeEdition": None, "events": [], "editions": editions})
+
+    events = (
+        Event.objects.filter(edition=edition)
+        .select_related("category")
+        .order_by("category__name")
+    )
+
+    return JsonResponse({
+        "activeEdition": _pack_edition(edition),
+        "events": [_pack_event(ev) for ev in events],
+        "editions": editions,
+    })
+
+
+@require_GET
+def api_event_players(request, event_id):
+    """
+    GET /api/events/<id>/players/
+    Liste des entries (joueurs/équipes) inscrites à l'épreuve.
+    """
+    event = get_object_or_404(Event, pk=event_id)
+
+    entries = (
+        event.entries
+        .select_related("player", "team", "team__player1", "team__player2")
+        .prefetch_related("group_memberships__group")
+        .order_by("player__last_name", "player__first_name", "id")
+    )
+
+    result = []
+    for entry in entries:
+        membership = entry.group_memberships.first()
+        if membership:
+            entry._membership_cache = membership
+        data = _pack_entry(entry)
+        if membership:
+            data["groupId"] = membership.group_id
+            data["groupName"] = membership.group.name
+        result.append(data)
+
+    return JsonResponse(result, safe=False)
+
+
+@require_GET
+def api_event_groups(request, event_id):
+    """
+    GET /api/events/<id>/groups/
+    Groupes avec standings et grille croisée.
+    """
+    event = get_object_or_404(Event, pk=event_id)
+    edition = event.edition
+
+    tables = build_event_group_tables(edition, [event])
+    groups_data = tables.get(event.id, [])
+
+    result = []
+    for table in groups_data:
+        group = table["group"]
+        entries = table["entries"]
+        standing_by = table["standing_by_entry_id"]
+        cell = table["cell"]
+        match_cols = table["match_cols"]
+        qualif = table["qualif"]
+
+        # Standings
+        standings = []
+        for i, entry in enumerate(entries):
+            s = standing_by.get(entry.id)
+            if s:
+                games_won = s.games_won
+                games_lost = s.games_lost
+                wins = s.wins
+                losses = s.losses
+                points = s.points
+                rank = s.rank or (i + 1)
+            else:
+                games_won = games_lost = wins = losses = points = 0
+                rank = i + 1
+
+            standings.append({
+                "entryId": entry.id,
+                "rank": rank,
+                "name": _entry_display_name(entry),
+                "wins": wins,
+                "losses": losses,
+                "gamesRatio": f"{games_won}/{games_lost}",
+                "points": points,
+                "qualified": qualif.get(entry.id, "-") != "-",
+            })
+
+        # Grille croisée (matrice n×n)
+        # On cherche pour chaque paire (row, col) le score du match
+        n = len(entries)
+        grid = []
+        for ri in range(n):
+            row_cells = []
+            for ci in range(n):
+                if ri == ci:
+                    row_cells.append({"score": None})
+                else:
+                    # Trouver le match entre entries[ri] et entries[ci]
+                    row_entry = entries[ri]
+                    col_entry = entries[ci]
+                    score = None
+                    for m in match_cols:
+                        if m.status == Match.Status.FINISHED:
+                            if m.side_a_id == row_entry.id and m.side_b_id == col_entry.id:
+                                score = f"{m.games_a}-{m.games_b}"
+                                break
+                            elif m.side_a_id == col_entry.id and m.side_b_id == row_entry.id:
+                                score = f"{m.games_b}-{m.games_a}"
+                                break
+                    row_cells.append({"score": score})
+            grid.append(row_cells)
+
+        result.append({
+            "id": group.id,
+            "name": group.name,
+            "standings": standings,
+            "grid": grid,
+        })
+
+    return JsonResponse(result, safe=False)
+
+
+@require_GET
+def api_event_matches(request, event_id):
+    """
+    GET /api/events/<id>/matches/
+    Matchs groupés en backlog / queue / finished pour le kanban admin.
+    """
+    event = get_object_or_404(Event, pk=event_id)
+
+    qs = (
+        Match.objects.filter(event=event)
+        .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "group")
+        .order_by("order_index", "scheduled_time", "id")
+    )
+
+    backlog = []
+    queue = []
+    finished = []
+
+    for m in qs:
+        packed = _pack_match(m)
+        if m.status == Match.Status.FINISHED:
+            finished.append(packed)
+        elif m.status == Match.Status.SCHEDULED and m.order_index is not None:
+            queue.append(packed)
+        elif m.status in (Match.Status.SCHEDULED, Match.Status.LIVE):
+            backlog.append(packed)
+
+    return JsonResponse({"backlog": backlog, "queue": queue, "finished": finished})
+
+
+@require_GET
+def api_match_detail(request, match_id):
+    """
+    GET /api/matches/<id>/
+    État d'un match unique (polling arbitre + scoreboard). Réexpose _pack_match.
+    Lecture publique (cohérent avec les autres GET de match ; utilisé par la TV).
+    """
+    match = get_object_or_404(
+        Match.objects.select_related(
+            "court", "side_a", "side_a__player", "side_b", "side_b__player", "group"
+        ),
+        pk=match_id,
+    )
+    return JsonResponse({"match": _pack_match(match)})
+
+
+def _pack_event_bracket(event):
+    """Structure du tableau final (QF/SF/F) groupée par slot — format partagé."""
+    qs = (
+        Match.objects.filter(event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F])
+        .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player")
+        .order_by("bracket_slot")
+    )
+
+    def make_slot(stage, slot_key, match):
+        return {
+            "slot": slot_key,
+            "stage": stage,
+            "match": _pack_match(match) if match else None,
+        }
+
+    by_slot = {m.bracket_slot: m for m in qs if m.bracket_slot}
+
+    return {
+        "qf": [make_slot("QF", k, by_slot.get(k)) for k in ("QF1", "QF2", "QF3", "QF4")],
+        "sf": [make_slot("SF", k, by_slot.get(k)) for k in ("SF1", "SF2")],
+        "f": [make_slot("F", k, by_slot.get(k)) for k in ("F1",)],
+    }
+
+
+@require_GET
+def api_event_bracket(request, event_id):
+    """
+    GET /api/events/<id>/bracket/
+    Données du tableau final (QF, SF, Finale).
+    """
+    event = get_object_or_404(Event, pk=event_id)
+    return JsonResponse(_pack_event_bracket(event))
+
+
+@require_GET
+@login_required
+def api_arbitre_matches(request):
+    """
+    GET /api/arbitre/matches/
+    Matchs LIVE et SCHEDULED pour l'arbitre (sélection de match).
+    Requiert d'être connecté.
+    """
+    edition = get_current_edition()
+    if not edition:
+        return JsonResponse([], safe=False)
+
+    # Matchs actifs (LIVE + SCHEDULED) — ordre existant préservé
+    active_qs = (
+        Match.objects.filter(
+            edition=edition,
+            status__in=[Match.Status.LIVE, Match.Status.SCHEDULED],
+        )
+        .exclude(side_a__isnull=True)
+        .exclude(side_b__isnull=True)
+        .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
+        .order_by("-status", "order_index", "scheduled_time", "id")
+    )
+
+    # 20 derniers FINISHED
+    finished_qs = (
+        Match.objects.filter(
+            edition=edition,
+            status=Match.Status.FINISHED,
+        )
+        .exclude(side_a__isnull=True)
+        .exclude(side_b__isnull=True)
+        .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
+        .order_by("-id")[:20]
+    )
+
+    matches = list(active_qs) + list(finished_qs)
+    return JsonResponse([_pack_match(m) for m in matches], safe=False)
+
+
+@require_GET
+@login_required
+def api_players(request):
+    """
+    GET /api/players/
+    Retourne tous les joueurs du registre global.
+    """
+    players = Player.objects.all()
+    return JsonResponse([
+        {
+            "id": p.id,
+            "firstName": p.first_name,
+            "lastName": p.last_name,
+            "fullName": str(p),
+            "gender": p.gender,
+            "birthYear": p.birth_year,
+        }
+        for p in players
+    ], safe=False)
+
+
+@require_POST
+@login_required
+def api_player_create(request):
+    """
+    POST /api/players/create/
+    Crée un joueur dans le registre global. Requiert d'être connecté.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    first_name = data.get("first_name", "").strip()
+    last_name = data.get("last_name", "").strip()
+    gender = data.get("gender", "")
+    birth_date = data.get("birth_date")  # "YYYY-MM-DD" ou None
+
+    if not first_name or not last_name:
+        return JsonResponse({"error": "Prénom et nom requis."}, status=400)
+
+    birth_year = None
+    if birth_date:
+        try:
+            birth_year = int(str(birth_date)[:4])
+        except (ValueError, TypeError):
+            pass
+
+    player = Player.objects.create(
+        first_name=first_name,
+        last_name=last_name,
+        gender=gender,
+        birth_year=birth_year,
+    )
+
+    return JsonResponse({"ok": True, "playerId": player.id})
+
+
+@require_GET
+def api_me(request):
+    """
+    GET /api/me/
+    Retourne l'utilisateur courant (ou 401 si non connecté).
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "not authenticated"}, status=401)
+
+    return JsonResponse({
+        "id": request.user.id,
+        "username": request.user.username,
+        "isSuperuser": request.user.is_superuser,
+        "isReferee": request.user.groups.filter(name="Arbitre").exists(),
+    })
+
+
+# ── Phase 2 — Inscriptions (mutations) ─────────────────────────────────────────
+
+@require_POST
+@superuser_required
+def api_player_edit(request, player_id):
+    """
+    POST /api/players/<id>/edit/
+    Édite un joueur du registre via PlayerForm (source : admin_views.player_edit).
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    player = get_object_or_404(Player, pk=player_id)
+
+    # Fusion partielle : on part des valeurs actuelles du joueur et on n'écrase
+    # que les champs réellement fournis. Évite de vider phone/email/license quand
+    # la modale n'envoie que nom/prénom/genre.
+    fields = PlayerForm.Meta.fields
+    merged = {f: getattr(player, f) for f in fields}
+    merged.update({k: v for k, v in data.items() if k in fields})
+
+    form = PlayerForm(merged, instance=player)
+    if not form.is_valid():
+        return JsonResponse({"error": "Données invalides", "fields": form.errors}, status=400)
+
+    form.save()
+    return JsonResponse({"player": _pack_player(player)})
+
+
+@require_POST
+@superuser_required
+def api_team_create(request, event_id):
+    """
+    POST /api/events/<id>/teams/create/
+    Crée une équipe (double) + Entry (source : admin_views.team_create).
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event.objects.select_related("category"), pk=event_id)
+
+    player1 = Player.objects.filter(pk=data.get("player1")).first()
+    player2 = Player.objects.filter(pk=data.get("player2")).first()
+    if player1 is None or player2 is None:
+        return JsonResponse({"error": "player1 et player2 sont requis (IDs de joueurs)."}, status=400)
+
+    try:
+        team, entry = create_team_with_entry(event, player1, player2, data.get("name", ""))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"team": _pack_team(team), "entry": _pack_entry(entry)})
+
+
+@require_POST
+@superuser_required
+def api_registration_add(request, event_id):
+    """
+    POST /api/events/<id>/registrations/add/
+    Inscrit un joueur (simple) via une Entry (source : admin_views.entry_add_player).
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event.objects.select_related("category"), pk=event_id)
+
+    player = Player.objects.filter(pk=data.get("player")).first()
+    if player is None:
+        return JsonResponse({"error": "player requis (ID de joueur)."}, status=400)
+
+    try:
+        entry = add_player_entry(event, player)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"entry": _pack_entry(entry)})
+
+
+@require_POST
+@superuser_required
+def api_registration_add_bulk(request, event_id):
+    """
+    POST /api/events/<id>/registrations/add-bulk/
+    Inscrit plusieurs joueurs (simple) (source : admin_views.entry_add_players).
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    raw_ids = data.get("player_ids") or []
+    try:
+        player_ids = [int(x) for x in raw_ids]
+    except (ValueError, TypeError):
+        return JsonResponse({"error": "player_ids doit être une liste d'entiers."}, status=400)
+
+    event = get_object_or_404(Event.objects.select_related("category"), pk=event_id)
+
+    try:
+        created, skipped = add_players_entries(event, player_ids)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({
+        "created": [_pack_entry(e) for e in created],
+        "skipped": skipped,
+    })
+
+
+@require_POST
+@superuser_required
+def api_registration_remove(request, event_id, entry_id):
+    """
+    POST /api/events/<id>/registrations/<entry_id>/remove/
+    Retire une Entry (source : admin_views.entry_remove).
+    Refuse si l'Entry est engagée dans un match.
+    """
+    event = get_object_or_404(Event, pk=event_id)
+    entry = get_object_or_404(Entry, pk=entry_id, event=event)
+
+    try:
+        remove_entry(event, entry)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
+
+    return JsonResponse({"ok": True})
+
+
+# ── Phase 3 — Poules (mutations) ───────────────────────────────────────────────
+
+@require_POST
+@superuser_required
+def api_group_create(request, event_id):
+    """
+    POST /api/events/<id>/groups/create/
+    Crée une poule (source : admin_views.create_group). Body JSON: {name}.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+
+    try:
+        group, _ = create_group(event, data.get("name", ""))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"group": {"id": group.id, "name": group.name}})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_groups_autofill(request, event_id):
+    """
+    POST /api/events/<id>/groups/autofill/
+    Réinitialise et répartit les inscrits en round-robin
+    (source : admin_views.autofill_groups). Body JSON: {shuffle, group_size, num_groups?}.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+
+    group_size = data.get("group_size", 4)
+    if int(group_size) not in (3, 4):
+        return JsonResponse({"error": "group_size doit valoir 3 ou 4."}, status=400)
+
+    try:
+        groups = autofill_groups(
+            event,
+            shuffle=bool(data.get("shuffle", False)),
+            group_size=group_size,
+            num_groups=data.get("num_groups"),
+        )
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({
+        "groups": [{"id": g.id, "name": g.name} for g in groups],
+    })
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_matches_generate(request, event_id):
+    """
+    POST /api/events/<id>/matches/generate/
+    Génère le round-robin de chaque poule (source : admin_views.generate_group_matches_for_event).
+    Aucun paramètre ; idempotent ; format par défaut G_SET5_TB44.
+    """
+    event = get_object_or_404(Event, pk=event_id)
+    created, matches = generate_group_matches_for_event(event)
+    return JsonResponse({
+        "created": created,
+        "matches": [_pack_match(m) for m in matches],
+    })
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_group_assign(request, event_id):
+    """
+    POST /api/events/<id>/groups/assign/
+    Assigne/déplace une Entry dans une poule (source : admin_views.assign_entry_to_group).
+    Body JSON: {entry_id, group_id}. Verrouillé si des matchs de poule existent.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+
+    entry_id = data.get("entry_id")
+    group_id = data.get("group_id")
+    if not entry_id or not group_id:
+        return JsonResponse({"error": "entry_id et group_id sont requis."}, status=400)
+
+    entry = get_object_or_404(Entry, pk=entry_id, event=event)
+    group = get_object_or_404(Group, pk=group_id, event=event)
+
+    try:
+        assign_entry_to_group(event, entry, group)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_group_unassign(request, event_id):
+    """
+    POST /api/events/<id>/groups/unassign/
+    Retire une Entry de sa poule (source : admin_views.unassign_entry).
+    Body JSON: {entry_id}. Verrouillé si des matchs de poule existent.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+
+    entry_id = data.get("entry_id")
+    if not entry_id:
+        return JsonResponse({"error": "entry_id est requis."}, status=400)
+
+    entry = get_object_or_404(Entry, pk=entry_id, event=event)
+
+    try:
+        unassign_entry(event, entry)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+# ── Phase 4 — Planning (mutations) ─────────────────────────────────────────────
+
+def _resolve_court_pk(value):
+    """
+    Normalise une valeur de court fournie par le front en pk exploitable par
+    MatchEditForm (ModelChoiceField). Accepte :
+      - None / "" → None (aucun court)
+      - un pk entier (ou chaîne de chiffres) → ce pk
+      - un nom libre de court → get_or_create par nom, renvoie son pk
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    s = str(value).strip()
+    if not s:
+        return None
+    if s.isdigit():
+        return int(s)
+    court, _ = Court.objects.get_or_create(name=s)
+    return court.pk
+
+
+@require_POST
+@superuser_required
+def api_match_edit(request, match_id):
+    """
+    POST /api/matches/<id>/edit/
+    Édite un match via MatchEditForm (source : admin_views.match_edit).
+    Fusion partielle : on part des valeurs actuelles puis on n'écrase que les
+    champs fournis. Les champs verrouillés par le form (format quand LIVE,
+    order_index) sont ignorés côté form → la règle de verrouillage est conservée.
+    Le court accepte un pk ou un nom libre (get_or_create).
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    match = get_object_or_404(Match, pk=match_id)
+
+    fields = MatchEditForm.Meta.fields
+    merged = {}
+    for f in fields:
+        merged[f] = match.court_id if f == "court" else getattr(match, f)
+    for k, v in data.items():
+        if k == "court":
+            merged["court"] = _resolve_court_pk(v)
+        elif k in fields:
+            merged[k] = v
+
+    form = MatchEditForm(merged, instance=match)
+    if not form.is_valid():
+        return JsonResponse({"error": "Données invalides", "fields": form.errors}, status=400)
+
+    try:
+        form.save()
+        finalize_match_edit(form.instance)
+    except IntegrityError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"match": _pack_match(form.instance)})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_match_feature(request, match_id):
+    """
+    POST /api/matches/<id>/feature/
+    Met le match en avant (source : admin_views.feature_match). Aucun payload.
+    Effet : is_featured=True, order_index=None, mark_live() → statut LIVE ;
+    devient le hero de /api/score_state/.
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    feature_match(match)
+    return JsonResponse({"match": _pack_match(match)})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_matches_reorder(request, event_id):
+    """
+    POST /api/events/<id>/matches/reorder/
+    Réordonne la file des matchs (source : admin_views.reorder_event_matches).
+    Body JSON: {queue: [match_id, ...]}.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+    queue = data.get("queue", [])
+
+    try:
+        reorder_event_matches(event, queue)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+# ── Phase 7 — Bracket (mutations) ───────────────────────────────────────────────
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_bracket_create(request, event_id):
+    """
+    POST /api/events/<id>/bracket/create/
+    Crée (ou recrée) le tableau final manuel (source : admin_views.create_final_bracket_for_event,
+    le même service que la vue panel_final_create). Body JSON : {start_stage: "QF|SF|F", force: bool}.
+    Réponse : structure du bracket (même format que GET /api/events/<id>/bracket/).
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event.objects.select_related("edition"), pk=event_id)
+
+    try:
+        create_final_bracket_for_event(event, data.get("start_stage"), bool(data.get("force")))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse(_pack_event_bracket(event))
+
+
+@require_POST
+@superuser_required
+def api_bracket_labels(request, match_id):
+    """
+    POST /api/matches/<id>/bracket-labels/
+    Met à jour les labels d'un match du tableau final (source : admin_views.set_match_bracket_labels).
+    Body JSON : {side_a_label, side_b_label}. Refusé (400) si le match n'est plus SCHEDULED.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    match = get_object_or_404(
+        Match,
+        pk=match_id,
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+    )
+
+    try:
+        set_match_bracket_labels(match, data.get("side_a_label"), data.get("side_b_label"))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"match": _pack_match(match)})
+
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_bracket_assign(request, event_id):
+    """
+    POST /api/events/<id>/bracket/assign/
+    Assigne une Entry à un côté d'un match de tableau final
+    (source : admin_views.assign_bracket_entry).
+    Body JSON : {match_id, entry_id, side}.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+
+    match_id = data.get("match_id")
+    entry_id = data.get("entry_id")
+    side = (data.get("side") or "").upper()
+
+    if not match_id or not entry_id or side not in {"A", "B"}:
+        return JsonResponse({"error": "match_id, entry_id et side sont requis."}, status=400)
+
+    try:
+        assign_bracket_entry(event, int(match_id), int(entry_id), side)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_bracket_clear(request, event_id):
+    """
+    POST /api/events/<id>/bracket/clear/
+    Retire l'Entry d'un côté d'un match de tableau final
+    (source : admin_views.clear_bracket_entry).
+    Body JSON : {match_id, side}.
+    """
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    event = get_object_or_404(Event, pk=event_id)
+
+    match_id = data.get("match_id")
+    side = (data.get("side") or "").upper()
+
+    if not match_id or side not in {"A", "B"}:
+        return JsonResponse({"error": "match_id et side sont requis."}, status=400)
+
+    try:
+        clear_bracket_entry(event, int(match_id), side)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 9 — Administration de la configuration
+# Lectures (catégories, courts) + mutations CRUD (éditions, catégories, courts,
+# épreuves). Vues fines par-dessus les services de admin_views ; auth superuser,
+# CSRF sur écritures. Les services lèvent ValueError → 400 ; doublons d'unicité
+# pré-vérifiés côté service (message clair) plutôt que IntegrityError nue.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _json_body(request):
+    """Parse le corps JSON ('' → {}). Renvoie (data, None) ou (None, JsonResponse 400)."""
+    if not request.body:
+        return {}, None
+    try:
+        return json.loads(request.body), None
+    except (json.JSONDecodeError, ValueError):
+        return None, JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+
+# ── Lectures ────────────────────────────────────────────────────────────────
+
+@require_GET
+@superuser_required
+def api_categories(request):
+    """GET /api/categories/ — référentiel des catégories (toutes éditions)."""
+    cats = Category.objects.all().order_by("name")
+    return JsonResponse([_pack_category(c) for c in cats], safe=False)
+
+
+@require_GET
+@superuser_required
+def api_courts(request):
+    """GET /api/courts/ — terrains."""
+    courts = Court.objects.all().order_by("name")
+    return JsonResponse([_pack_court(c) for c in courts], safe=False)
+
+
+# ── Éditions ──────────────────────────────────────────────────────────────────
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_edition_create(request):
+    """POST /api/editions/create/ — {name, year, start_dt?, end_dt?, activate?}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    try:
+        edition = create_edition(
+            name=data.get("name"),
+            year=data.get("year"),
+            start_dt=_parse_edition_dt(data.get("start_dt"), "Date de début"),
+            end_dt=_parse_edition_dt(data.get("end_dt"), "Date de fin"),
+            activate=bool(data.get("activate")),
+        )
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_edition(edition))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_edition_edit(request, edition_id):
+    """POST /api/editions/<id>/edit/ — {name?, year?, start_dt?, end_dt?} (édition partielle)."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    kwargs = {}
+    if "name" in data:
+        kwargs["name"] = data["name"]
+    if "year" in data:
+        kwargs["year"] = data["year"]
+    try:
+        if "start_dt" in data:
+            kwargs["start_dt"] = _parse_edition_dt(data["start_dt"], "Date de début")
+        if "end_dt" in data:
+            kwargs["end_dt"] = _parse_edition_dt(data["end_dt"], "Date de fin")
+        update_edition(edition, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_edition(edition))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_edition_activate(request, edition_id):
+    """POST /api/editions/<id>/activate/ — rend l'édition courante (désactive les autres)."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    set_active_edition(edition)
+    return JsonResponse(_pack_edition(edition))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_edition_delete(request, edition_id):
+    """POST /api/editions/<id>/delete/ — refusé (400) si l'édition contient des épreuves."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    try:
+        delete_edition(edition)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"ok": True})
+
+
+# ── Catégories ────────────────────────────────────────────────────────────────
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_category_create(request):
+    """POST /api/categories/create/ — {name, mode}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    try:
+        category = create_category(name=data.get("name"), mode=data.get("mode"))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_category(category))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_category_edit(request, category_id):
+    """POST /api/categories/<id>/edit/ — {name?, mode?} (mode bloqué si inscriptions)."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    category = get_object_or_404(Category, pk=category_id)
+    kwargs = {}
+    if "name" in data:
+        kwargs["name"] = data["name"]
+    if "mode" in data:
+        kwargs["mode"] = data["mode"]
+    try:
+        update_category(category, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_category(category))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_category_delete(request, category_id):
+    """POST /api/categories/<id>/delete/ — refusé (400, PROTECT) si une épreuve l'utilise."""
+    category = get_object_or_404(Category, pk=category_id)
+    try:
+        delete_category(category)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"ok": True})
+
+
+# ── Courts ──────────────────────────────────────────────────────────────────
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_court_create(request):
+    """POST /api/courts/create/ — {name}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    try:
+        court = create_court(name=data.get("name"))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_court(court))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_court_edit(request, court_id):
+    """POST /api/courts/<id>/edit/ — {name}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    court = get_object_or_404(Court, pk=court_id)
+    try:
+        update_court(court, name=data.get("name"))
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_court(court))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_court_delete(request, court_id):
+    """POST /api/courts/<id>/delete/ — refusé (400) si un match ordonné y est attaché."""
+    court = get_object_or_404(Court, pk=court_id)
+    try:
+        delete_court(court)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"ok": True})
+
+
+# ── Épreuves (Event = édition × catégorie) ──────────────────────────────────────
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_event_create(request, edition_id):
+    """POST /api/editions/<id>/events/create/ —
+    {category_id, group_size_default?, qualified_per_group?, notes?}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    category_id = data.get("category_id")
+    if not category_id:
+        return JsonResponse({"error": "category_id requis."}, status=400)
+    category = get_object_or_404(Category, pk=category_id)
+    try:
+        event = create_event(
+            edition,
+            category,
+            group_size_default=data.get("group_size_default", 4),
+            qualified_per_group=data.get("qualified_per_group", 2),
+            notes=data.get("notes", ""),
+        )
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_event(event))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_event_edit(request, event_id):
+    """POST /api/events/<id>/edit/ — {group_size_default?, qualified_per_group?, notes?}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    kwargs = {}
+    if "group_size_default" in data:
+        kwargs["group_size_default"] = data["group_size_default"]
+    if "qualified_per_group" in data:
+        kwargs["qualified_per_group"] = data["qualified_per_group"]
+    if "notes" in data:
+        kwargs["notes"] = data["notes"]
+    try:
+        update_event(event, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_event(event))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_event_delete(request, event_id):
+    """POST /api/events/<id>/delete/ — refusé (400) si des matchs sont LIVE/terminés."""
+    event = get_object_or_404(Event, pk=event_id)
+    try:
+        delete_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"ok": True})

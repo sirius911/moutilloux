@@ -1,0 +1,767 @@
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useLiveStore } from '@/stores/live'
+import { useEventStore } from '@/stores/event'
+
+const live = useLiveStore()
+const eventStore = useEventStore()
+
+const slide = ref(0)
+const SLIDES = ['hero', 'results', 'groups', 'bracket'] as const
+let timer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  eventStore.fetchEditions()
+  if (eventStore.activeEventId) {
+    eventStore.fetchMatches(eventStore.activeEventId)
+    eventStore.fetchGroups(eventStore.activeEventId)
+    eventStore.fetchBracket(eventStore.activeEventId)
+  }
+  timer = setInterval(() => {
+    slide.value = (slide.value + 1) % SLIDES.length
+  }, 6000)
+})
+
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+})
+
+const recentFinished = computed(() =>
+  (eventStore.kanban?.finished ?? []).slice(0, 5)
+)
+
+const groupsPreview = computed(() =>
+  (eventStore.groups ?? []).slice(0, 2)
+)
+
+function nextPlayerName(side: 'A' | 'B'): string {
+  if (!live.next) return 'À désigner'
+  if (side === 'A') return live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? 'À désigner'
+  return live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? 'À désigner'
+}
+</script>
+
+<template>
+  <div class="tv-idle">
+    <div class="tv-idle-bg" />
+    <div class="tv-idle-glow" />
+
+    <!-- Header -->
+    <header class="tv-idle-top">
+      <div class="tv-idle-mark">
+        <svg viewBox="0 0 24 24" width="48" height="48" style="color: var(--accent)">
+          <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M2 9c5 2.5 15 2.5 20 0M2 15c5-2.5 15-2.5 20 0" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="tv-idle-tournament">OPEN DE MOUTILLOUX</div>
+        <div class="tv-idle-edition">ÉDITION {{ live.editionYear }}</div>
+      </div>
+      <div class="tv-idle-clock tab">{{ live.now }}</div>
+    </header>
+
+    <!-- Slides -->
+    <main class="tv-idle-main">
+      <!-- Slide 0 : Hero -->
+      <section :class="['tv-slide', { on: slide === 0 }]">
+        <div class="tv-idle-hero">
+          <div class="tv-idle-ball">
+            <svg viewBox="0 0 24 24" width="80" height="80">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="0.7"/>
+            </svg>
+          </div>
+          <div class="tv-idle-status">EN ATTENTE DU PROCHAIN MATCH</div>
+          <div class="tv-idle-hero-stats">
+            <div class="tv-idle-hero-stat">
+              <span>MATCHS TERMINÉS</span>
+              <b class="tab">{{ eventStore.kanban?.finished?.length ?? 0 }}</b>
+            </div>
+            <div class="tv-idle-hero-stat">
+              <span>EN FILE D'ATTENTE</span>
+              <b class="tab">{{ eventStore.kanban?.queue?.length ?? 0 }}</b>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 1 : Derniers résultats -->
+      <section :class="['tv-slide', { on: slide === 1 }]">
+        <div class="tv-rotate">
+          <h2 class="tv-rotate-title">
+            DERNIERS RÉSULTATS
+          </h2>
+          <div class="tv-results">
+            <div
+              v-for="m in recentFinished"
+              :key="m.id"
+              class="tv-result-row"
+            >
+              <span class="tv-result-stage">{{ m.stageLabel }}</span>
+              <div class="tv-result-match">
+                <div :class="['tv-result-side', { win: m.winnerSide === 'A' }]">
+                  <span v-if="m.sideA?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'A' }">{{ m.sideA.seedHint }}</span>
+                  <span class="tv-result-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? '—' }}</span>
+                </div>
+                <div :class="['tv-result-side', { win: m.winnerSide === 'B' }]">
+                  <span v-if="m.sideB?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'B' }">{{ m.sideB.seedHint }}</span>
+                  <span class="tv-result-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? '—' }}</span>
+                </div>
+              </div>
+              <span class="tv-result-score tab">
+                {{ m.setScores?.map(s => `${s.a}-${s.b}`).join(' ') ?? `${m.gamesA}-${m.gamesB}` }}
+              </span>
+              <span v-if="m.court" class="tv-result-court">{{ m.court }}</span>
+            </div>
+            <div v-if="recentFinished.length === 0" class="tv-empty">Aucun résultat disponible</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 2 : Classement poules -->
+      <section :class="['tv-slide', { on: slide === 2 }]">
+        <div class="tv-rotate">
+          <h2 class="tv-rotate-title">CLASSEMENT DES POULES</h2>
+          <div class="tv-groups">
+            <div v-for="g in groupsPreview" :key="g.id" class="tv-group">
+              <div class="tv-group-head">
+                <span class="tv-group-letter">{{ g.name }}</span>
+                <span class="tv-group-title">Poule {{ g.name }}</span>
+              </div>
+              <div class="tv-group-rows">
+                <div class="tv-group-row tv-group-row-head">
+                  <span>JOUEUR</span><span>V</span><span>D</span><span>PTS</span>
+                </div>
+                <div
+                  v-for="(s, i) in g.standings"
+                  :key="s.entryId"
+                  :class="['tv-group-row', { q: s.qualified }]"
+                >
+                  <span class="tv-group-name">
+                    <em class="tv-group-rank">{{ i + 1 }}</em>
+                    {{ s.name }}
+                    <i v-if="s.qualified" class="tv-group-q">Q</i>
+                  </span>
+                  <span class="tab">{{ s.wins }}</span>
+                  <span class="tab">{{ s.losses }}</span>
+                  <span class="tab tv-group-pts">{{ s.points }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="groupsPreview.length === 0" class="tv-empty">Aucune poule disponible</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Slide 3 : Mini-bracket -->
+      <section :class="['tv-slide', { on: slide === 3 }]">
+        <div class="tv-rotate">
+          <h2 class="tv-rotate-title">TABLEAU FINAL</h2>
+          <div v-if="eventStore.bracket" class="tv-mini-bracket">
+            <!-- QF -->
+            <div class="tv-mini-col">
+              <div class="tv-mini-col-head">QUARTS</div>
+              <div
+                v-for="slot in eventStore.bracket.qf"
+                :key="slot.slot"
+                :class="['tv-mini-match', { done: slot.match?.winnerSide, live: slot.match?.status === 'LIVE' }]"
+              >
+                <span v-if="slot.match?.status === 'LIVE'" class="tv-mini-live">EN DIRECT</span>
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="tv-mini-seed" :class="{ 'tv-mini-seed--win': slot.match?.winnerSide === 'A' }">{{ slot.match?.sideA?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- SF -->
+            <div class="tv-mini-col">
+              <div class="tv-mini-col-head">DEMI-FINALES</div>
+              <div style="height: 24px" />
+              <div
+                v-for="(slot, i) in eventStore.bracket.sf"
+                :key="slot.slot"
+                :class="['tv-mini-match', { live: slot.match?.status === 'LIVE' }]"
+                :style="{ marginTop: i > 0 ? '60px' : '0' }"
+              >
+                <div class="tv-mini-slot">
+                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div class="tv-mini-slot">
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- F -->
+            <div class="tv-mini-col">
+              <div class="tv-mini-col-head">FINALE</div>
+              <div style="height: 80px" />
+              <div v-for="slot in eventStore.bracket.f" :key="slot.slot" class="tv-mini-match final">
+                <div class="tv-mini-slot">
+                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'Vainqueur SF1' }}</span>
+                </div>
+                <div class="tv-mini-slot">
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'Vainqueur SF2' }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- Trophée -->
+            <div class="tv-mini-col tv-mini-trophy-col">
+              <div class="tv-mini-col-head" style="color: var(--accent)">VAINQUEUR</div>
+              <div style="height: 60px" />
+              <div class="tv-mini-trophy">
+                <svg viewBox="0 0 32 32" width="44" height="44" style="color: var(--accent)">
+                  <path d="M6 4h20v6a8 8 0 01-8 8h-4a8 8 0 01-8-8V4zm0 0H2v3a3 3 0 003 3M26 4h4v3a3 3 0 01-3 3M12 18v4M20 18v4M9 26h14v2H9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                </svg>
+                <div class="tv-mini-trophy-lbl">À DÉSIGNER</div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="tv-empty">Tableau final non disponible</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer : prochain match + paginateur -->
+    <footer class="tv-idle-foot">
+      <div v-if="live.next" class="tv-idle-next-bar">
+        <span class="tv-idle-next-bar-lbl">PROCHAIN MATCH</span>
+        <span v-if="live.next.scheduledTime" class="tv-idle-next-bar-time tab">{{ live.next.scheduledTime }}</span>
+        <span class="tv-idle-next-bar-sep" />
+        <span class="tv-idle-next-bar-side">
+          <em v-if="live.next.sideA?.seedHint" class="tv-idle-next-bar-seed">{{ live.next.sideA.seedHint }}</em>
+          <b>{{ nextPlayerName('A') }}</b>
+        </span>
+        <span class="tv-idle-next-bar-vs">vs</span>
+        <span class="tv-idle-next-bar-side">
+          <em v-if="live.next.sideB?.seedHint" class="tv-idle-next-bar-seed">{{ live.next.sideB.seedHint }}</em>
+          <b>{{ nextPlayerName('B') }}</b>
+        </span>
+        <span v-if="live.next.court" class="tv-idle-next-bar-sep" />
+        <span v-if="live.next.court" class="tv-idle-next-bar-court">{{ live.next.court }}</span>
+      </div>
+      <div v-else class="tv-idle-next-bar tv-idle-next-bar--empty">
+        Programme du tournoi en cours de préparation
+      </div>
+
+      <div class="tv-idle-foot-pager">
+        <i
+          v-for="(_, i) in SLIDES"
+          :key="i"
+          :class="{ on: i === slide }"
+          @click="slide = i"
+        />
+      </div>
+    </footer>
+  </div>
+</template>
+
+<style scoped>
+.tv-idle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tv-idle-bg {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-0);
+}
+
+.tv-idle-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 40% at 50% 50%, rgba(255,200,61,0.08), transparent 70%);
+  pointer-events: none;
+}
+
+/* Header */
+.tv-idle-top {
+  position: relative;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 56px;
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.tv-idle-mark { animation: serveFloat 3s ease-in-out infinite; }
+
+.tv-idle-tournament {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--ink-0);
+}
+
+.tv-idle-edition {
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.tv-idle-clock {
+  margin-left: auto;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink-2);
+  letter-spacing: 0.04em;
+}
+
+/* Main slides */
+.tv-idle-main {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.tv-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 600ms ease;
+  pointer-events: none;
+}
+
+.tv-slide.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Slide Hero */
+.tv-idle-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.tv-idle-ball { animation: serveFloat 2s ease-in-out infinite; }
+
+.tv-idle-status {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.tv-idle-hero-stats {
+  display: flex;
+  gap: 80px;
+}
+
+.tv-idle-hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-idle-hero-stat span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.tv-idle-hero-stat b {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--ink-0);
+}
+
+/* Slide Résultats / Classement / Bracket */
+.tv-rotate {
+  width: 100%;
+  max-width: 1600px;
+  padding: 0 56px;
+}
+
+.tv-rotate-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin: 0 0 32px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.tv-rotate-title em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+/* Résultats */
+.tv-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tv-result-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  padding: 14px 20px;
+}
+
+.tv-result-stage {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  min-width: 160px;
+}
+
+.tv-result-match {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tv-result-side {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  color: var(--ink-2);
+}
+
+.tv-result-side.win { color: var(--ink-0); font-weight: 700; }
+
+.tv-result-seed {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  background: var(--bg-4);
+  color: var(--ink-2);
+}
+
+.tv-result-seed--win { background: var(--accent); color: #000; }
+
+.tv-result-name { flex: 1; }
+
+.tv-result-score {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-0);
+  min-width: 100px;
+  text-align: right;
+}
+
+.tv-result-court {
+  font-size: 12px;
+  color: var(--ink-3);
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Classement poules */
+.tv-groups {
+  display: flex;
+  gap: 40px;
+}
+
+.tv-group { flex: 1; }
+
+.tv-group-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tv-group-letter {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-md);
+  background: var(--accent);
+  color: #000;
+  font-size: 24px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tv-group-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-0);
+}
+
+.tv-group-rows { display: flex; flex-direction: column; gap: 2px; }
+
+.tv-group-row {
+  display: grid;
+  grid-template-columns: 1fr 40px 40px 50px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: var(--ink-1);
+}
+
+.tv-group-row-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.tv-group-row.q {
+  background: linear-gradient(90deg, rgba(255,200,61,0.08), transparent);
+}
+
+.tv-group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.tv-group-rank {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  min-width: 16px;
+}
+
+.tv-group-q {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent);
+  color: #000;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.tv-group-pts { color: var(--accent); font-weight: 700; }
+
+/* Mini-bracket */
+.tv-mini-bracket {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.tv-mini-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tv-mini-col-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.tv-mini-match {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.tv-mini-match.live { border-color: var(--accent-soft); }
+.tv-mini-match.final { border-color: var(--accent-soft); }
+
+.tv-mini-live {
+  position: absolute;
+  top: -10px;
+  left: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  background: var(--danger);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 99px;
+}
+
+.tv-mini-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.tv-mini-slot.win { color: var(--ink-0); font-weight: 700; }
+
+.tv-mini-seed {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-4);
+  color: var(--ink-3);
+}
+
+.tv-mini-seed--win { background: var(--accent); color: #000; }
+.tv-mini-name { flex: 1; }
+
+.tv-mini-trophy-col { align-items: center; }
+
+.tv-mini-trophy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.tv-mini-trophy-lbl {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+/* Footer */
+.tv-idle-foot {
+  position: relative;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 56px;
+  border-top: 1px solid var(--line-1);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.tv-idle-next-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.tv-idle-next-bar--empty {
+  color: var(--ink-4);
+  font-style: italic;
+}
+
+.tv-idle-next-bar-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.tv-idle-next-bar-time {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tv-idle-next-bar-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--line-2);
+}
+
+.tv-idle-next-bar-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.tv-idle-next-bar-seed {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--accent);
+  color: #000;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.tv-idle-next-bar-vs {
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+}
+
+.tv-idle-next-bar-court {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.tv-idle-foot-pager {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.tv-idle-foot-pager i {
+  width: 20px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-3);
+  cursor: pointer;
+  transition: background 300ms, width 300ms;
+  display: block;
+}
+
+.tv-idle-foot-pager i.on {
+  background: var(--accent);
+  width: 32px;
+}
+
+.tv-empty {
+  color: var(--ink-4);
+  font-size: 16px;
+  text-align: center;
+  padding: 40px 0;
+}
+</style>
