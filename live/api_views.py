@@ -247,7 +247,32 @@ def _iso_or_none(dt):
 
 
 def _pack_edition(edition):
-    """Édition pour l'historique admin (Phase 9)."""
+    """Édition pour l'historique admin (Phase 9).
+    Inclut les agrégats sprint-02 : joueurs distincts, matchs terminés/total.
+    """
+    events_qs = Event.objects.filter(edition=edition)
+    events_count = events_qs.count()
+
+    # Joueurs distincts inscrits à au moins une épreuve de l'édition
+    # (les deux membres d'une équipe comptent chacun — spec admin-tournoi.md)
+    player_ids: set[int] = set()
+    for entry in (
+        Entry.objects.filter(event__in=events_qs)
+        .select_related("player", "team__player1", "team__player2")
+    ):
+        if entry.player_id:
+            player_ids.add(entry.player_id)
+        elif entry.team:
+            if entry.team.player1_id:
+                player_ids.add(entry.team.player1_id)
+            if entry.team.player2_id:
+                player_ids.add(entry.team.player2_id)
+
+    # Matchs terminés / total (toutes épreuves de l'édition)
+    matches_qs = Match.objects.filter(event__in=events_qs)
+    matches_total = matches_qs.count()
+    matches_finished = matches_qs.filter(status=Match.Status.FINISHED).count()
+
     return {
         "id": edition.id,
         "name": edition.name,
@@ -255,7 +280,10 @@ def _pack_edition(edition):
         "isActive": edition.is_active,
         "startDt": _iso_or_none(edition.start_dt),
         "endDt": _iso_or_none(edition.end_dt),
-        "eventsCount": Event.objects.filter(edition=edition).count(),
+        "eventsCount": events_count,
+        "distinctPlayersCount": len(player_ids),
+        "matchesFinished": matches_finished,
+        "matchesTotal": matches_total,
     }
 
 

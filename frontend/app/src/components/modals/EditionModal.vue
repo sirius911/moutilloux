@@ -14,7 +14,6 @@ const name = ref(props.editing?.name ?? '')
 const year = ref(String(props.editing?.year ?? new Date().getFullYear()))
 const startDt = ref(props.editing?.startDt ? props.editing.startDt.slice(0, 10) : '')
 const endDt = ref(props.editing?.endDt ? props.editing.endDt.slice(0, 10) : '')
-const activate = ref(false)
 const saving = ref(false)
 const error = ref('')
 
@@ -41,7 +40,8 @@ async function save() {
     if (props.editing) {
       await eventStore.editEdition(props.editing.id, base)
     } else {
-      await eventStore.createEdition({ ...base, activate: activate.value })
+      // Activation automatique si aucune édition active n'existe (spec §modale-édition)
+      await eventStore.createEdition({ ...base, activate: !eventStore.activeEdition })
     }
     emit('saved')
     emit('close')
@@ -86,10 +86,6 @@ async function save() {
         </label>
       </div>
 
-      <label v-if="!editing" class="fld-check">
-        <input v-model="activate" type="checkbox" />
-        <span>Activer immédiatement (devient l'édition courante)</span>
-      </label>
     </div>
 
     <p v-if="error" class="mdl-error">{{ error }}</p>
@@ -124,17 +120,6 @@ async function save() {
   font-family: inherit;
 }
 .inp:focus { border-color: var(--accent); }
-
-.fld-check {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-top: 14px;
-  font-size: 13px;
-  color: var(--ink-1);
-  cursor: pointer;
-}
-.fld-check input { width: 16px; height: 16px; accent-color: var(--accent); }
 
 .mdl-error { margin: 8px 0 0; font-size: 13px; color: var(--danger); }
 

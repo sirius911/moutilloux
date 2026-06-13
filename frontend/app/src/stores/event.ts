@@ -93,20 +93,28 @@ export const useEventStore = defineStore('event', () => {
     allPlayers.value = await get<Player[]>('/api/players/')
   }
 
-  async function fetchPlayers(eventId: number = activeEventId.value!) {
-    players.value = await get<Entry[]>(`/api/events/${eventId}/players/`)
+  async function fetchPlayers(eventId?: number) {
+    const id = eventId ?? activeEventId.value
+    if (!id) return
+    players.value = await get<Entry[]>(`/api/events/${id}/players/`)
   }
 
-  async function fetchGroups(eventId: number = activeEventId.value!) {
-    groups.value = await get<Group[]>(`/api/events/${eventId}/groups/`)
+  async function fetchGroups(eventId?: number) {
+    const id = eventId ?? activeEventId.value
+    if (!id) return
+    groups.value = await get<Group[]>(`/api/events/${id}/groups/`)
   }
 
-  async function fetchMatches(eventId: number = activeEventId.value!) {
-    kanban.value = await get<KanbanData>(`/api/events/${eventId}/matches/`)
+  async function fetchMatches(eventId?: number) {
+    const id = eventId ?? activeEventId.value
+    if (!id) return
+    kanban.value = await get<KanbanData>(`/api/events/${id}/matches/`)
   }
 
-  async function fetchBracket(eventId: number = activeEventId.value!) {
-    bracket.value = await get<Bracket>(`/api/events/${eventId}/bracket/`)
+  async function fetchBracket(eventId?: number) {
+    const id = eventId ?? activeEventId.value
+    if (!id) return
+    bracket.value = await get<Bracket>(`/api/events/${id}/bracket/`)
   }
 
   // ── Mutations — Phase 2 (inscriptions) ────────────────────────────────
@@ -260,9 +268,10 @@ export const useEventStore = defineStore('event', () => {
     await fetchEditions()
   }
 
-  async function createCategory(payload: CategoryPayload) {
-    await post('/api/categories/create/', payload)
+  async function createCategory(payload: CategoryPayload): Promise<Category> {
+    const created = await post<Category>('/api/categories/create/', payload)
     await fetchCategories()
+    return created
   }
 
   async function editCategory(id: number, payload: CategoryPayload) {

@@ -31,6 +31,10 @@ export interface Edition {
   startDt: string | null      // ISO 8601 (ou null)
   endDt: string | null
   eventsCount: number         // nb d'épreuves de l'édition
+  // Agrégats sprint-02 (toutes épreuves de l'édition)
+  distinctPlayersCount: number
+  matchesFinished: number
+  matchesTotal: number
 }
 
 export interface Event {
