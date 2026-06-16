@@ -5,6 +5,7 @@ import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
 import EditionModal from '@/components/modals/EditionModal.vue'
 import EventModal from '@/components/modals/EventModal.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { Edition, Event } from '@/types'
 
 const router = useRouter()
@@ -22,6 +23,11 @@ const events = computed(() => eventStore.events)
 const error = ref('')
 const editionModal = ref<{ editing: Edition | null } | null>(null)
 const eventModal = ref<{ editionId: number; editing: Event | null } | null>(null)
+
+type ConfirmAction =
+  | { type: 'deleteEdition'; payload: Edition }
+  | { type: 'deleteEvent'; payload: Event }
+const confirmState = ref<ConfirmAction | null>(null)
 
 function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : '—'
@@ -42,21 +48,25 @@ async function activate(e: Edition) {
   }
 }
 
-async function removeEdition(e: Edition) {
-  if (!confirm(`Supprimer l'édition « ${e.name} » (${e.year}) ?`)) return
-  error.value = ''
-  try {
-    await eventStore.deleteEdition(e.id)
-  } catch (err) {
-    error.value = extractApiError(err)
-  }
+function removeEdition(e: Edition) {
+  confirmState.value = { type: 'deleteEdition', payload: e }
 }
 
-async function removeEvent(ev: Event) {
-  if (!confirm(`Supprimer l'épreuve « ${ev.name} » ? Cela efface inscriptions, poules et matchs liés.`)) return
+function removeEvent(ev: Event) {
+  confirmState.value = { type: 'deleteEvent', payload: ev }
+}
+
+async function handleConfirm() {
+  if (!confirmState.value) return
+  const action = confirmState.value
+  confirmState.value = null
   error.value = ''
   try {
-    await eventStore.deleteEvent(ev.id)
+    if (action.type === 'deleteEdition') {
+      await eventStore.deleteEdition(action.payload.id)
+    } else {
+      await eventStore.deleteEvent(action.payload.id)
+    }
   } catch (err) {
     error.value = extractApiError(err)
   }
@@ -264,6 +274,24 @@ async function removeEvent(ev: Event) {
       :editing="eventModal.editing"
       @close="eventModal = null"
       @saved="error = ''"
+    />
+
+    <!-- Modale de confirmation destructive -->
+    <ConfirmModal
+      v-if="confirmState?.type === 'deleteEdition'"
+      :title="`Supprimer l'édition « ${(confirmState.payload as Edition).name} » ?`"
+      :body="`Cette action supprimera définitivement l'édition ${(confirmState.payload as Edition).year}. Elle ne peut être supprimée que si elle ne contient aucune épreuve.`"
+      confirm-label="Supprimer l'édition"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
+    />
+    <ConfirmModal
+      v-if="confirmState?.type === 'deleteEvent'"
+      :title="`Supprimer l'épreuve « ${(confirmState.payload as Event).name} » ?`"
+      body="Cela efface inscriptions, poules, matchs et tableau de l'épreuve. Cette action est irréversible."
+      confirm-label="Supprimer l'épreuve"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
     />
   </div>
 </template>
