@@ -5,6 +5,7 @@ import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
 import EditionModal from '@/components/modals/EditionModal.vue'
 import EventModal from '@/components/modals/EventModal.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { Edition, Event } from '@/types'
 
 const router = useRouter()
@@ -12,32 +13,21 @@ const eventStore = useEventStore()
 
 onMounted(async () => {
   await eventStore.fetchEditions()
-  if (eventStore.activeEventId) {
-    await Promise.all([
-      eventStore.fetchPlayers(eventStore.activeEventId),
-      eventStore.fetchMatches(eventStore.activeEventId),
-    ])
-  }
 })
 
 const activeEdition = computed(() => eventStore.activeEdition)
 const editions = computed(() => eventStore.editions)
 const events = computed(() => eventStore.events)
 
-const totalPlayers = computed(() => eventStore.players.length)
-
-const totalMatches = computed(() => {
-  const k = eventStore.kanban
-  if (!k) return 0
-  return (k.backlog.length + k.queue.length + k.finished.length)
-})
-
-const finishedMatches = computed(() => eventStore.kanban?.finished.length ?? 0)
-
 // ── Configuration (Phase 9) ──────────────────────────────────────────────
 const error = ref('')
 const editionModal = ref<{ editing: Edition | null } | null>(null)
 const eventModal = ref<{ editionId: number; editing: Event | null } | null>(null)
+
+type ConfirmAction =
+  | { type: 'deleteEdition'; payload: Edition }
+  | { type: 'deleteEvent'; payload: Event }
+const confirmState = ref<ConfirmAction | null>(null)
 
 function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : '—'
@@ -58,21 +48,25 @@ async function activate(e: Edition) {
   }
 }
 
-async function removeEdition(e: Edition) {
-  if (!confirm(`Supprimer l'édition « ${e.name} » (${e.year}) ?`)) return
-  error.value = ''
-  try {
-    await eventStore.deleteEdition(e.id)
-  } catch (err) {
-    error.value = extractApiError(err)
-  }
+function removeEdition(e: Edition) {
+  confirmState.value = { type: 'deleteEdition', payload: e }
 }
 
-async function removeEvent(ev: Event) {
-  if (!confirm(`Supprimer l'épreuve « ${ev.name} » ? Cela efface inscriptions, poules et matchs liés.`)) return
+function removeEvent(ev: Event) {
+  confirmState.value = { type: 'deleteEvent', payload: ev }
+}
+
+async function handleConfirm() {
+  if (!confirmState.value) return
+  const action = confirmState.value
+  confirmState.value = null
   error.value = ''
   try {
-    await eventStore.deleteEvent(ev.id)
+    if (action.type === 'deleteEdition') {
+      await eventStore.deleteEdition(action.payload.id)
+    } else {
+      await eventStore.deleteEvent(action.payload.id)
+    }
   } catch (err) {
     error.value = extractApiError(err)
   }
@@ -99,39 +93,41 @@ async function removeEvent(ev: Event) {
       <section class="adm-card adm-edition-card">
         <div class="adm-card-head">
           <h3>
-            <span class="edition-dot" />
-            Édition active · {{ activeEdition?.name ?? '—' }} {{ activeEdition?.year ?? '' }}
+            <span v-if="activeEdition" class="edition-dot" />
+            {{ activeEdition ? `Édition active · ${activeEdition.name} ${activeEdition.year}` : 'Édition active' }}
           </h3>
         </div>
 
-        <div class="adm-edition-body">
-          <!-- Stats -->
+        <!-- État vide -->
+        <div v-if="!activeEdition" class="adm-empty adm-edition-empty">
+          <p>Aucune édition active.</p>
+          <p class="adm-edition-empty-hint">
+            Créez une nouvelle édition ou activez-en une depuis l'historique ci-dessous.
+          </p>
+        </div>
+
+        <!-- Contenu édition active -->
+        <div v-else class="adm-edition-body">
+          <!-- Période -->
+          <div v-if="activeEdition.startDt || activeEdition.endDt" class="adm-edition-period">
+            {{ fmtDate(activeEdition.startDt) }} → {{ fmtDate(activeEdition.endDt) }}
+          </div>
+
+          <!-- Stats édition (toutes épreuves confondues) -->
           <div class="adm-edition-stats">
             <div class="adm-stat">
               <span class="adm-stat-lbl">Joueurs inscrits</span>
-              <span class="adm-stat-val tab">{{ totalPlayers }}</span>
+              <span class="adm-stat-val tab">{{ activeEdition.distinctPlayersCount }}</span>
             </div>
             <div class="adm-stat">
               <span class="adm-stat-lbl">Épreuves</span>
-              <span class="adm-stat-val tab">{{ events.length }}</span>
+              <span class="adm-stat-val tab">{{ activeEdition.eventsCount }}</span>
             </div>
             <div class="adm-stat">
               <span class="adm-stat-lbl">Matchs joués</span>
               <span class="adm-stat-val tab">
-                {{ finishedMatches }}<em>/{{ totalMatches }}</em>
+                {{ activeEdition.matchesFinished }}<em>/{{ activeEdition.matchesTotal }}</em>
               </span>
-            </div>
-          </div>
-
-          <!-- Méta -->
-          <div class="adm-edition-meta">
-            <div class="adm-edition-meta-row">
-              <span>Lieu</span>
-              <b>TC Moutilloux</b>
-            </div>
-            <div class="adm-edition-meta-row">
-              <span>Sauvegarde locale</span>
-              <b class="adm-mono">raspberrypi.local · auto</b>
             </div>
           </div>
         </div>
@@ -163,10 +159,18 @@ async function removeEvent(ev: Event) {
                 <h4>{{ ev.name }}</h4>
                 <span>{{ ev.categoryMode === 'S' ? 'Simple' : 'Double' }}</span>
               </div>
+              <span :class="['adm-event-state', ev.hasBracket ? 'state-final' : ev.hasGroups ? 'state-poules' : 'state-prep']">
+                {{ ev.hasBracket ? 'Phase finale' : ev.hasGroups ? 'Poules' : 'À préparer' }}
+              </span>
+            </div>
+            <div class="adm-event-meta">
+              <span>Poules de {{ ev.groupSizeDefault }} · {{ ev.qualifiedPerGroup }} qualifié{{ ev.qualifiedPerGroup > 1 ? 's' : '' }}</span>
+              <span>·</span>
+              <span>{{ ev.entriesCount }} inscrit{{ ev.entriesCount !== 1 ? 's' : '' }}</span>
             </div>
             <div class="adm-event-acts">
-              <button class="adm-btn" type="button" @click="eventStore.activeEventId = ev.id; router.push('/admin/players')">
-                Joueurs
+              <button class="adm-btn" type="button" @click="eventStore.activeEventId = ev.id; router.push('/admin/inscriptions')">
+                Inscriptions
               </button>
               <button class="adm-btn" type="button" @click="eventStore.activeEventId = ev.id; router.push('/admin/groups')">
                 Poules
@@ -271,6 +275,24 @@ async function removeEvent(ev: Event) {
       @close="eventModal = null"
       @saved="error = ''"
     />
+
+    <!-- Modale de confirmation destructive -->
+    <ConfirmModal
+      v-if="confirmState?.type === 'deleteEdition'"
+      :title="`Supprimer l'édition « ${(confirmState.payload as Edition).name} » ?`"
+      :body="`Cette action supprimera définitivement l'édition ${(confirmState.payload as Edition).year}. Elle ne peut être supprimée que si elle ne contient aucune épreuve.`"
+      confirm-label="Supprimer l'édition"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
+    />
+    <ConfirmModal
+      v-if="confirmState?.type === 'deleteEvent'"
+      :title="`Supprimer l'épreuve « ${(confirmState.payload as Event).name} » ?`"
+      body="Cela efface inscriptions, poules, matchs et tableau de l'épreuve. Cette action est irréversible."
+      confirm-label="Supprimer l'épreuve"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
+    />
   </div>
 </template>
 
@@ -334,16 +356,21 @@ async function removeEvent(ev: Event) {
 
 /* ── Edition stats ─────────────────────────────────────────────────── */
 .adm-edition-body {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.adm-edition-period {
+  padding: 10px 20px;
+  font-size: 13px;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--line-1);
 }
 
 .adm-edition-stats {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  border-right: 1px solid var(--line-1);
 }
 
 .adm-stat {
@@ -354,7 +381,7 @@ async function removeEvent(ev: Event) {
   gap: 4px;
 }
 
-.adm-stat:nth-child(odd) { border-right: 1px solid var(--line-1); }
+.adm-stat:not(:last-child) { border-right: 1px solid var(--line-1); }
 
 .adm-stat-lbl {
   font-size: 11px;
@@ -376,28 +403,6 @@ async function removeEvent(ev: Event) {
   font-size: 18px;
   color: var(--ink-3);
 }
-
-/* Edition meta */
-.adm-edition-meta {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  justify-content: center;
-}
-
-.adm-edition-meta-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  gap: 16px;
-}
-
-.adm-edition-meta-row span { color: var(--ink-3); }
-.adm-edition-meta-row b { font-weight: 600; color: var(--ink-0); }
-
-.adm-mono { font-family: var(--font-mono); font-size: 12px; }
 
 /* ── Events list ───────────────────────────────────────────────────── */
 .adm-events {
@@ -444,6 +449,27 @@ async function removeEvent(ev: Event) {
 }
 
 .adm-event-name span { font-size: 12px; color: var(--ink-3); }
+
+.adm-event-state {
+  margin-left: auto;
+  padding: 3px 10px;
+  border-radius: var(--r-xs);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.state-prep  { background: var(--bg-4); color: var(--ink-2); }
+.state-poules { background: var(--accent-soft); color: var(--accent); }
+.state-final { background: var(--accent); color: #000; }
+
+.adm-event-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
 
 .adm-event-acts {
   display: flex;
@@ -525,6 +551,9 @@ async function removeEvent(ev: Event) {
   color: var(--ink-3);
   font-size: 14px;
 }
+
+.adm-edition-empty p { margin: 0 0 6px; }
+.adm-edition-empty-hint { font-size: 12px; color: var(--ink-3); }
 
 /* ── Buttons ───────────────────────────────────────────────────────── */
 .adm-btn {

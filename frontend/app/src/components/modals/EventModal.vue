@@ -4,19 +4,29 @@ import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
-import type { Event } from '@/types'
+import type { Event, CategoryMode } from '@/types'
 
 const props = defineProps<{ editionId: number; editing?: Event | null }>()
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 const eventStore = useEventStore()
 
-const categoryId = ref<number | null>(props.editing?.categoryId ?? null)
+// ── Épreuve ────────────────────────────────────────────────────────────────
+const categoryId = ref<number | 'new' | null>(props.editing?.categoryId ?? null)
 const groupSize = ref<number>(props.editing?.groupSizeDefault ?? 4)
 const qualified = ref<number>(props.editing?.qualifiedPerGroup ?? 2)
 const notes = ref(props.editing?.notes ?? '')
 const saving = ref(false)
 const error = ref('')
+
+// ── Nouvelle catégorie inline ──────────────────────────────────────────────
+const newCategoryName = ref('')
+const newCategoryMode = ref<CategoryMode>('S')
+
+const modeOptions = [
+  { value: 'S', label: 'Simple' },
+  { value: 'D', label: 'Double' },
+]
 
 const sizeOptions = [
   { value: 3, label: '3 par poule' },
@@ -28,14 +38,20 @@ const qualifiedOptions = [
 ]
 
 const categories = computed(() => eventStore.categories)
-const noCategories = computed(() => !props.editing && categories.value.length === 0)
-const canSave = computed(() => !!props.editing || categoryId.value !== null)
+const isNewCategory = computed(() => categoryId.value === 'new')
+
+const canSave = computed(() => {
+  if (props.editing) return true
+  if (categoryId.value === null) return false
+  if (isNewCategory.value) return !!newCategoryName.value.trim()
+  return true
+})
 
 // C3 : baisser qualifiés sous 2 casse l'auto-remplissage du bracket.
 const generated = computed(() => !!props.editing && (props.editing.hasGroups || props.editing.hasBracket))
 
 onMounted(() => {
-  if (!props.editing && categories.value.length === 0) {
+  if (!props.editing) {
     eventStore.fetchCategories()
   }
 })
@@ -45,6 +61,17 @@ async function save() {
   saving.value = true
   error.value = ''
   try {
+    let resolvedCategoryId = typeof categoryId.value === 'number' ? categoryId.value : null
+
+    // Créer la catégorie inline si nécessaire
+    if (isNewCategory.value) {
+      const created = await eventStore.createCategory({
+        name: newCategoryName.value.trim(),
+        mode: newCategoryMode.value,
+      })
+      resolvedCategoryId = created.id
+    }
+
     if (props.editing) {
       await eventStore.editEvent(props.editing.id, {
         group_size_default: groupSize.value,
@@ -53,7 +80,7 @@ async function save() {
       })
     } else {
       await eventStore.createEvent(props.editionId, {
-        category_id: categoryId.value!,
+        category_id: resolvedCategoryId!,
         group_size_default: groupSize.value,
         qualified_per_group: qualified.value,
         notes: notes.value,
@@ -84,20 +111,37 @@ async function save() {
 
     <div class="mdl-section">
       <div class="fld-grid">
-        <label class="fld fld-span-2">
+        <!-- Catégorie -->
+        <div class="fld fld-span-2">
           <span class="fld-lbl">Catégorie <em>*</em></span>
           <input v-if="editing" class="inp" :value="editing.name" disabled />
-          <select v-else v-model.number="categoryId" class="inp">
+          <select v-else v-model="categoryId" class="inp">
             <option :value="null" disabled>Choisir une catégorie…</option>
             <option v-for="c in categories" :key="c.id" :value="c.id">
               {{ c.name }} ({{ c.mode === 'S' ? 'Simple' : 'Double' }})
             </option>
+            <option value="new">+ Nouvelle catégorie</option>
           </select>
-          <span v-if="noCategories" class="fld-hint warn">
-            Aucune catégorie. Créez-en une d'abord (espace Configuration).
-          </span>
-        </label>
+        </div>
 
+        <!-- Création inline catégorie -->
+        <template v-if="isNewCategory">
+          <label class="fld fld-span-2">
+            <span class="fld-lbl">Nom de la catégorie <em>*</em></span>
+            <input
+              v-model="newCategoryName"
+              class="inp"
+              placeholder="ex. Vétérans, Mixte…"
+              :disabled="saving"
+            />
+          </label>
+          <label class="fld fld-span-2">
+            <span class="fld-lbl">Mode</span>
+            <Segmented v-model="newCategoryMode" :options="modeOptions" />
+          </label>
+        </template>
+
+        <!-- Config poule -->
         <label class="fld">
           <span class="fld-lbl">Taille de poule</span>
           <Segmented v-model="groupSize" :options="sizeOptions" />
@@ -122,7 +166,7 @@ async function save() {
 
     <template #footer>
       <button class="adm-btn" type="button" @click="emit('close')">Annuler</button>
-      <button class="adm-btn primary" type="button" :disabled="saving || !canSave || noCategories" @click="save">
+      <button class="adm-btn primary" type="button" :disabled="saving || !canSave" @click="save">
         {{ saving ? 'Enregistrement…' : editing ? 'Sauvegarder' : 'Créer l\'épreuve' }}
       </button>
     </template>
