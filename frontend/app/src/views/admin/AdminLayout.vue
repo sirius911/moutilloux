@@ -47,7 +47,11 @@ const navItems = [
         <select
           v-model="eventStore.activeEventId"
           class="sb-event-select"
+          :disabled="eventStore.events.length === 0"
         >
+          <option v-if="eventStore.events.length === 0" :value="null" disabled>
+            Aucune épreuve
+          </option>
           <option v-for="e in eventStore.events" :key="e.id" :value="e.id">
             {{ e.name }}
           </option>
@@ -162,6 +166,11 @@ const navItems = [
   font-weight: 500;
   color: var(--ink-0);
   cursor: pointer;
+}
+
+.sb-event-select:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* Nav */
