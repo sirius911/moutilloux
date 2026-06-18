@@ -1,7 +1,8 @@
 # SESSION ENGINE — Moutilloux
 
-> **Comment déclencher :** ce fichier est le prompt d'une Routine Claude Code.
-> Routine configurée sur claude.ai/code/routines — repo `moutilloux`, schedule toutes les 5h.
+> **Comment déclencher :** ce fichier est le prompt d'une Routine Claude Code **locale**.
+> Routine configurée sur claude.ai/code/routines → type **Local** — s'exécute sur la machine de l'utilisateur (credentials git locaux + auth GitHub MCP locale).
+> Prompt à utiliser : `Le repo est /Users/maximelorin/Desktop/dev/moutilloux — Lis le fichier backlog/SESSION_ENGINE.md et exécute le protocole complet (étapes 0 à 4).`
 
 ---
 
@@ -17,7 +18,7 @@
 Les specs décrivent ce qui **doit** être. Le code décrit ce qui **est**. La session corrige l'écart.
 
 **Tickets et sprints :** gérés dans GitHub Issues + Milestones (repo sirius911/moutilloux).
-Le GitHub MCP est connecté et disponible.
+Toutes les opérations GitHub passent par le CLI `gh` (authentifié via keyring ArtSkamos).
 
 ---
 
@@ -130,12 +131,15 @@ Pour chaque spec listée dans le `sprint.md` courant (champ `specs:`) :
 **Après la review :**
 
 Pour chaque dérive non encore ticketée dans GitHub Issues :
-- Créer une GitHub Issue sur `sirius911/moutilloux` :
-  - Titre : `NNN — Description courte` (NNN = prochain numéro, déterminé en listant
-    toutes les issues ouvertes et fermées et en prenant le plus grand numéro + 1)
-  - Body : description de la dérive (spec vs code, sévérité, fichiers concernés)
-  - Labels : `majeure` ou `mineure`, `dérive`, `sprint-NN` (où NN = sprint courant)
-  - Milestone : sprint courant
+- Déterminer le prochain numéro : `gh issue list --repo sirius911/moutilloux --state all --json number | jq 'map(.number) | max + 1'`
+- Créer l'issue :
+  ```bash
+  gh issue create --repo sirius911/moutilloux \
+    --title "NNN — Description courte" \
+    --body "description de la dérive (spec vs code, sévérité, fichiers concernés)" \
+    --label "majeure,dérive,sprint-NN" \
+    --milestone "Sprint NN — Nom du sprint"
+  ```
 - Si une dérive correspond à une issue existante encore ouverte → ne pas créer de doublon
 
 **Appender** une ligne dans `backlog/sprints/NN-nom/log.md` :
@@ -143,13 +147,17 @@ Pour chaque dérive non encore ticketée dans GitHub Issues :
 | #N | YYYY-MM-DD | ✅/⚠️/❌ | X dérives | X nouvelles issues | X issues sprint restantes |
 ```
 
-### Étape 2 — Backlog Engine (séquentiel, max 6 tickets)
+### Étape 2 — Backlog Engine (séquentiel, max 2 tickets)
 
-Lister les tickets à traiter via le GitHub MCP :
-- Issues ouvertes sur `sirius911/moutilloux`, milestone = sprint courant
+Lister les tickets à traiter :
+```bash
+gh issue list --repo sirius911/moutilloux \
+  --milestone "Sprint NN — Nom du sprint" \
+  --state open --json number,title,labels
+```
 - Ordre : d'abord les issues avec label `à-reprendre`, ensuite par sévérité (`majeure` avant `mineure`)
 - **Exclure** les issues avec label `en-attente`
-- Max 6 issues par session
+- Max 2 issues par session
 
 Pour chaque issue (une par une, séquentiel) :
 
@@ -203,12 +211,17 @@ Un agent :
 - Verdict : `✅ Approuvé` / `⚠️ Approuvé avec réserves` / `❌ À corriger`
 
 **Si `✅` ou `⚠️` :**
-- Fermer l'issue GitHub (state: closed) avec un commentaire résumant le verdict
-  et les fichiers modifiés
+```bash
+gh issue close NNN --repo sirius911/moutilloux \
+  --comment "Verdict : ✅ Approuvé. Fichiers modifiés : ..."
+```
 
 **Si `❌` :**
-- Ajouter le label `à-reprendre` sur l'issue GitHub
-- Ajouter un commentaire sur l'issue décrivant le problème et la piste de correction
+```bash
+gh issue edit NNN --repo sirius911/moutilloux --add-label "à-reprendre"
+gh issue comment NNN --repo sirius911/moutilloux \
+  --body "Problème : ... Piste : ..."
+```
 - Ajouter à la fin de `backlog/plan/NNN-titre.md` :
 
 ```markdown
@@ -250,7 +263,13 @@ Après les 6 tickets, vérifier :
 - ET aucune issue ouverte avec le milestone du sprint courant (hors label `en-attente`)
 
 **Si les deux conditions sont remplies :**
-- Fermer le Milestone GitHub du sprint courant (state: closed)
+- Fermer le milestone :
+  ```bash
+  MILESTONE_N=$(gh api repos/sirius911/moutilloux/milestones \
+    --jq ".[] | select(.title == \"Sprint NN — Nom\") | .number")
+  gh api repos/sirius911/moutilloux/milestones/$MILESTONE_N \
+    -X PATCH -f state=closed
+  ```
 - Supprimer la ligne du sprint dans `backlog/sprints/roadmap.md`
 - Déplacer le dossier `NN-nom/` dans `backlog/sprints/done/`
 - Écrire dans le log de session : _"Sprint NN terminé — specs conformes, milestone fermé."_
@@ -304,7 +323,7 @@ Créer `backlog/logs/session_YYYY-MM-DD_N.md` :
 
 Mettre à jour la **section 6** de ce fichier (`SESSION_ENGINE.md`).
 
-**Git — push final :**
+**Git — push final (SSH, credentials locaux) :**
 ```bash
 git push origin <branche>
 ```
