@@ -25,7 +25,6 @@ const navItems = [
   { path: '/admin/groups',       label: 'Poules',        icon: '⊞' },
   { path: '/admin/matches',      label: 'Matchs',        icon: '⚡' },
   { path: '/admin/bracket',      label: 'Tableau final', icon: '🏆' },
-  { path: '/admin/config',       label: 'Configuration', icon: '⚙' },
 ]
 </script>
 

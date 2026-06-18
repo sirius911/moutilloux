@@ -5,3 +5,4 @@
 
 | Session | Date | Verdict spec review | Dérives trouvées | Tickets créés | Tickets sprint restants |
 |---------|------|---------------------|-----------------|---------------|------------------------|
+| #1 | 2026-06-18 | ❌ | 5 dérives (055 Config, 056 compteurs, 057 sélecteur vide, 058 sous-titre, 059 try/catch) | 0 | 5 |
