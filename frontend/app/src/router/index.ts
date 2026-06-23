@@ -53,7 +53,6 @@ const router = createRouter({
         { path: 'matches', component: () => import('@/views/admin/AdminMatches.vue') },
         { path: 'bracket', component: () => import('@/views/admin/AdminBracket.vue') },
         { path: 'tournoi', component: () => import('@/views/admin/AdminTournoi.vue') },
-        { path: 'config',  component: () => import('@/views/admin/AdminConfig.vue') },
       ],
     },
   ],
