@@ -2,10 +2,19 @@
 import { ref, computed, watch } from 'vue'
 import { useEventStore } from '@/stores/event'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
+import GenerateMatchesModal from '@/components/modals/GenerateMatchesModal.vue'
 import type { Match } from '@/types'
 
 const eventStore = useEventStore()
 const editingMatch = ref<Match | null>(null)
+const showGenerateMatches = ref(false)
+
+async function onMatchesGenerated() {
+  showGenerateMatches.value = false
+  if (eventStore.activeEventId) {
+    await eventStore.fetchMatches(eventStore.activeEventId)
+  }
+}
 
 watch(() => eventStore.activeEventId, (id) => {
   if (id) eventStore.fetchMatches(id)
@@ -43,7 +52,16 @@ function stageTag(match: Match): string {
         <p class="breadcrumb">Tournoi · {{ eventStore.events.find((ev) => ev.id === eventStore.activeEventId)?.name }}</p>
         <h1 class="page-title">Matchs</h1>
       </div>
+      <div class="header-actions">
+        <button class="adm-btn primary" type="button" @click="showGenerateMatches = true">Générer les matchs</button>
+      </div>
     </header>
+
+    <GenerateMatchesModal
+      v-if="showGenerateMatches"
+      @close="showGenerateMatches = false"
+      @saved="onMatchesGenerated"
+    />
 
     <EditMatchPanel
       v-if="editingMatch"
@@ -156,7 +174,43 @@ function stageTag(match: Match): string {
 .page-header {
   padding: 32px 40px 24px;
   border-bottom: 1px solid var(--line-1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.adm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  cursor: pointer;
+  transition: background 150ms;
+  font-family: inherit;
+}
+
+.adm-btn:hover { background: var(--bg-4); }
+
+.adm-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.adm-btn.primary:hover { opacity: 0.9; }
 
 .breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
