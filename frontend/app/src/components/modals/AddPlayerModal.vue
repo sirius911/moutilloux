@@ -4,15 +4,10 @@ import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useApi } from '@/composables/useApi'
 import { useEventStore } from '@/stores/event'
+import type { Player } from '@/types'
 
 const props = defineProps<{
-  editing?: {
-    id: number
-    firstName: string
-    lastName: string
-    gender: 'M' | 'F' | 'O'
-    birthYear?: number | null
-  } | null
+  editing?: Player | null
 }>()
 
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -24,6 +19,9 @@ const firstName = ref(props.editing?.firstName ?? '')
 const lastName = ref(props.editing?.lastName ?? '')
 const birthDate = ref(props.editing?.birthYear ? `${props.editing.birthYear}-01-01` : '')
 const gender = ref<'M' | 'F' | 'O'>(props.editing?.gender ?? 'M')
+const email = ref(props.editing?.email ?? '')
+const phone = ref(props.editing?.phone ?? '')
+const licenseNumber = ref(props.editing?.licenseNumber ?? '')
 const saving = ref(false)
 const error = ref('')
 
@@ -56,6 +54,9 @@ async function save() {
         last_name: lastName.value,
         gender: gender.value,
         birth_year: parseBirthYear(),
+        email: email.value || undefined,
+        phone: phone.value || undefined,
+        license_number: licenseNumber.value || undefined,
       })
     } else {
       await post('/api/players/create/', {
@@ -63,6 +64,9 @@ async function save() {
         last_name: lastName.value,
         birth_date: birthDate.value || undefined,
         gender: gender.value,
+        email: email.value || undefined,
+        phone: phone.value || undefined,
+        license_number: licenseNumber.value || undefined,
       })
       await eventStore.fetchAllPlayers()
     }
@@ -90,7 +94,9 @@ async function save() {
       </svg>
     </template>
 
+    <!-- Section Identité -->
     <div class="mdl-section">
+      <h4>Identité</h4>
       <div class="fld-grid">
         <label class="fld">
           <span class="fld-lbl">Prénom <em>*</em></span>
@@ -107,6 +113,32 @@ async function save() {
         <label class="fld">
           <span class="fld-lbl">Genre <em>*</em></span>
           <Segmented v-model="gender" :options="genderOptions" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Section Contact -->
+    <div class="mdl-section">
+      <h4>Contact</h4>
+      <div class="fld-grid">
+        <label class="fld">
+          <span class="fld-lbl">Email</span>
+          <input v-model="email" class="inp" type="email" placeholder="adresse@example.com" />
+        </label>
+        <label class="fld">
+          <span class="fld-lbl">Téléphone</span>
+          <input v-model="phone" class="inp" type="tel" placeholder="+33 6 …" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Section Compétition -->
+    <div class="mdl-section">
+      <h4>Compétition</h4>
+      <div class="fld-grid fld-grid--single">
+        <label class="fld">
+          <span class="fld-lbl">N° de licence</span>
+          <input v-model="licenseNumber" class="inp inp--mono" placeholder="ex. 1234567" />
         </label>
       </div>
     </div>
@@ -132,6 +164,10 @@ async function save() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px 20px;
+}
+
+.fld-grid--single {
+  grid-template-columns: 1fr;
 }
 
 .fld {
@@ -168,6 +204,8 @@ async function save() {
 }
 
 .inp:focus { border-color: var(--accent); }
+
+.inp--mono { font-family: monospace; }
 
 .mdl-error {
   margin: 8px 0 0;

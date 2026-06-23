@@ -627,6 +627,9 @@ def api_player_create(request):
     last_name = data.get("last_name", "").strip()
     gender = data.get("gender", "")
     birth_date = data.get("birth_date")  # "YYYY-MM-DD" ou None
+    email = data.get("email", "").strip()
+    phone = data.get("phone", "").strip()
+    license_number = data.get("license_number", "").strip()
 
     if not first_name or not last_name:
         return JsonResponse({"error": "Prénom et nom requis."}, status=400)
@@ -643,6 +646,9 @@ def api_player_create(request):
         last_name=last_name,
         gender=gender,
         birth_year=birth_year,
+        email=email,
+        phone=phone,
+        license_number=license_number,
     )
 
     return JsonResponse({"ok": True, "playerId": player.id})
