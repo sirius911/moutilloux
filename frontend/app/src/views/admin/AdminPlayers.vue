@@ -26,7 +26,8 @@ const filtered = computed(() => {
   if (!search.value.trim()) return eventStore.allPlayers
   const q = search.value.toLowerCase()
   return eventStore.allPlayers.filter((p) =>
-    p.fullName.toLowerCase().includes(q)
+    p.fullName.toLowerCase().includes(q) ||
+    (p.licenseNumber?.toLowerCase().includes(q) ?? false)
   )
 })
 
