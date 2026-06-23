@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { useAuthStore } from '@/stores/auth'
@@ -16,16 +16,28 @@ async function handleLogout() {
 
 onMounted(() => {
   eventStore.fetchEditions()
+  eventStore.fetchAllPlayers()
 })
 
-const navItems = [
-  { path: '/admin/tournoi',      label: 'Tournoi',       icon: '🏛' },
-  { path: '/admin/players',      label: 'Joueurs',       icon: '👤' },
-  { path: '/admin/inscriptions', label: 'Inscriptions',  icon: '📝' },
-  { path: '/admin/groups',       label: 'Poules',        icon: '⊞' },
-  { path: '/admin/matches',      label: 'Matchs',        icon: '⚡' },
-  { path: '/admin/bracket',      label: 'Tableau final', icon: '🏆' },
-]
+const navItems = computed(() => {
+  const kanban = eventStore.kanban
+  const bracket = eventStore.bracket
+  const matchCount = kanban === null
+    ? null
+    : kanban.backlog.length + kanban.queue.length + kanban.finished.length
+  const bracketCount = bracket === null
+    ? null
+    : bracket.qf.length + bracket.sf.length + bracket.f.length
+
+  return [
+    { path: '/admin/tournoi',      label: 'Tournoi',       icon: '🏛', count: eventStore.events.length },
+    { path: '/admin/players',      label: 'Joueurs',       icon: '👤', count: eventStore.allPlayers.length },
+    { path: '/admin/inscriptions', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
+    { path: '/admin/groups',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
+    { path: '/admin/matches',      label: 'Matchs',        icon: '⚡', count: matchCount },
+    { path: '/admin/bracket',      label: 'Tableau final', icon: '🏆', count: bracketCount },
+  ]
+})
 </script>
 
 <template>
@@ -69,6 +81,7 @@ const navItems = [
         >
           <span class="nav-icon">{{ item.icon }}</span>
           <span class="nav-label">{{ item.label }}</span>
+          <span v-if="item.count !== null" class="nav-badge">{{ item.count }}</span>
         </RouterLink>
       </nav>
 
@@ -209,6 +222,23 @@ const navItems = [
   font-size: 16px;
   width: 20px;
   text-align: center;
+}
+
+.nav-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-3);
+  border-radius: 10px;
+  padding: 1px 6px;
+  color: var(--ink-2);
+  min-width: 20px;
+  text-align: center;
+}
+
+.sb-nav-item.active .nav-badge {
+  background: rgba(0, 0, 0, 0.12);
+  color: #000;
 }
 
 /* Bas */
