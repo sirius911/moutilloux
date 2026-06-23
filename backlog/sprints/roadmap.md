@@ -10,5 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 03 — Admin Shell | `backlog/sprints/03-admin-shell/sprint.md` |
-| 2 | 04 — Admin Panel Map | `backlog/sprints/04-admin-panel-map/sprint.md` |
+| 1 | 04 — Admin Panel Map | `backlog/sprints/04-admin-panel-map/sprint.md` |
