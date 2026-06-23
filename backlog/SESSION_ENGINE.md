@@ -355,8 +355,8 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-23 — Session #3
-**Sprint 03 — Admin Shell :** ✅ TERMINÉ — milestone fermé, dossier archivé dans `done/`
+**Dernière session :** 2026-06-23 — Session #3 (sprint-04)
 **Sprint actif :** 04 — Admin Panel Map
-**Issues sprint-04 ouvertes :** 3 (040, 050, 060)
-**Branche :** `claude/sprint/03-admin-shell` (poussée sur origin)
+**Tickets clôturés cette session :** #16 (060 ✅), #26 (040 ✅)
+**Issues sprint-04 ouvertes :** 1 (#27 — 050 mineure)
+**Branche :** `claude/sprint/04-admin-panel-map` (poussée sur origin)
