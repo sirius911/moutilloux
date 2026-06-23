@@ -328,6 +328,24 @@ Mettre à jour la **section 6** de ce fichier (`SESSION_ENGINE.md`).
 git push origin <branche>
 ```
 
+**PR — création automatique si absente :**
+
+Après le push, et seulement si le sprint est encore dans `backlog/sprints/roadmap.md` :
+```bash
+OPEN_PR=$(gh pr list --repo sirius911/moutilloux \
+  --head <branche> --state open --json number -q '.[0].number')
+
+if [ -z "$OPEN_PR" ]; then
+  gh pr create --repo sirius911/moutilloux \
+    --base main \
+    --head <branche> \
+    --title "Sprint NN — Nom du sprint" \
+    --body "Travail en cours — généré automatiquement par la Routine SESSION_ENGINE."
+fi
+```
+
+Si le PR existe déjà → ne rien faire (il accumule les commits au fil des sessions).
+
 ---
 
 ## 4. Règles strictes
