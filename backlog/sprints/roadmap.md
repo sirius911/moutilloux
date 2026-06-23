@@ -10,3 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
+| 1 | 05 — Admin Joueurs | `backlog/sprints/05-admin-joueurs/sprint.md` |
