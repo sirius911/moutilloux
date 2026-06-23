@@ -14,9 +14,17 @@ async function handleLogout() {
   router.push('/login')
 }
 
-onMounted(() => {
-  eventStore.fetchEditions()
-  eventStore.fetchAllPlayers()
+onMounted(async () => {
+  try {
+    await eventStore.fetchEditions()
+  } catch {
+    // sidebar affiche ses états neutres (activeEdition null, events vide)
+  }
+  try {
+    await eventStore.fetchAllPlayers()
+  } catch {
+    // compteur Joueurs reste vide
+  }
 })
 
 const navItems = computed(() => {
