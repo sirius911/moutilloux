@@ -373,8 +373,8 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-23 — Session #3 (sprint-04)
-**Sprint actif :** 04 — Admin Panel Map
-**Tickets clôturés cette session :** #16 (060 ✅), #26 (040 ✅)
-**Issues sprint-04 ouvertes :** 1 (#27 — 050 mineure)
+**Dernière session :** 2026-06-23 — Session #4
+**Sprint 04 — Admin Panel Map :** ✅ TERMINÉ — dossier archivé dans `done/`, roadmap vide
+**⚠️ Action manuelle requise :** fermer le milestone "Sprint 04 — Admin Panel Map" sur GitHub (bloqué en session automatique)
+**Roadmap :** vide — tous les sprints terminés. Désactiver la Routine manuellement sur claude.ai/code/routines.
 **Branche :** `claude/sprint/04-admin-panel-map` (poussée sur origin)
