@@ -49,7 +49,11 @@ const navItems = computed(() => {
         <div class="sb-logo-badge">M</div>
         <div class="sb-logo-text">
           <span class="sb-logo-name">MOUTILLOUX</span>
-          <span class="sb-logo-sub">Open · Édition {{ eventStore.activeEdition?.year }}</span>
+          <span class="sb-logo-sub">
+            {{ eventStore.activeEdition
+                ? `${eventStore.activeEdition.name} · Édition ${eventStore.activeEdition.year}`
+                : '—' }}
+          </span>
         </div>
       </div>
 
