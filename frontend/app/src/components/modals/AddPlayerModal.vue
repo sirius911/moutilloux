@@ -25,6 +25,7 @@ const phone = ref(props.editing?.phone ?? '')
 const licenseNumber = ref(props.editing?.licenseNumber ?? '')
 const saving = ref(false)
 const error = ref('')
+const fieldErrors = ref<Record<string, string[]>>({})
 
 const subtitle = computed(() =>
   props.editing
@@ -43,6 +44,7 @@ async function save() {
   if (!firstName.value || !lastName.value) return
   saving.value = true
   error.value = ''
+  fieldErrors.value = {}
   try {
     if (props.editing) {
       await eventStore.editPlayer(props.editing.id, {
@@ -69,7 +71,19 @@ async function save() {
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    const raw = e instanceof Error ? e.message : 'Erreur inconnue.'
+    const jsonStart = raw.indexOf(' — ')
+    if (jsonStart !== -1) {
+      try {
+        const parsed = JSON.parse(raw.slice(jsonStart + 3))
+        if (parsed.fields) fieldErrors.value = parsed.fields
+        error.value = parsed.error ?? raw
+      } catch {
+        error.value = raw
+      }
+    } else {
+      error.value = raw
+    }
   } finally {
     saving.value = false
   }
@@ -97,18 +111,22 @@ async function save() {
         <label class="fld">
           <span class="fld-lbl">Prénom <em>*</em></span>
           <input v-model="firstName" class="inp" placeholder="Prénom" />
+          <span v-if="fieldErrors.first_name?.length" class="fld-error">{{ fieldErrors.first_name[0] }}</span>
         </label>
         <label class="fld">
           <span class="fld-lbl">Nom <em>*</em></span>
           <input v-model="lastName" class="inp" placeholder="Nom de famille" />
+          <span v-if="fieldErrors.last_name?.length" class="fld-error">{{ fieldErrors.last_name[0] }}</span>
         </label>
         <label class="fld">
           <span class="fld-lbl">Année de naissance</span>
           <input v-model="birthYear" class="inp" type="number" min="1900" :max="currentYear" placeholder="ex. 1990" />
+          <span v-if="fieldErrors.birth_year?.length" class="fld-error">{{ fieldErrors.birth_year[0] }}</span>
         </label>
         <label class="fld">
           <span class="fld-lbl">Genre</span>
           <Segmented v-model="gender" :options="genderOptions" />
+          <span v-if="fieldErrors.gender?.length" class="fld-error">{{ fieldErrors.gender[0] }}</span>
         </label>
       </div>
     </div>
@@ -120,10 +138,12 @@ async function save() {
         <label class="fld">
           <span class="fld-lbl">Email</span>
           <input v-model="email" class="inp" type="email" placeholder="adresse@example.com" />
+          <span v-if="fieldErrors.email?.length" class="fld-error">{{ fieldErrors.email[0] }}</span>
         </label>
         <label class="fld">
           <span class="fld-lbl">Téléphone</span>
           <input v-model="phone" class="inp" type="tel" placeholder="+33 6 …" />
+          <span v-if="fieldErrors.phone?.length" class="fld-error">{{ fieldErrors.phone[0] }}</span>
         </label>
       </div>
     </div>
@@ -135,6 +155,7 @@ async function save() {
         <label class="fld">
           <span class="fld-lbl">N° de licence</span>
           <input v-model="licenseNumber" class="inp inp--mono" placeholder="ex. 1234567" />
+          <span v-if="fieldErrors.license_number?.length" class="fld-error">{{ fieldErrors.license_number[0] }}</span>
         </label>
       </div>
     </div>
@@ -235,4 +256,10 @@ async function save() {
 
 .adm-btn.primary:hover { opacity: 0.9; }
 .adm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.fld-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 2px;
+}
 </style>
