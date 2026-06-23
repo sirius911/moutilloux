@@ -18,7 +18,7 @@ const eventStore = useEventStore()
 const firstName = ref(props.editing?.firstName ?? '')
 const lastName = ref(props.editing?.lastName ?? '')
 const birthDate = ref(props.editing?.birthYear ? `${props.editing.birthYear}-01-01` : '')
-const gender = ref<'M' | 'F' | 'O'>(props.editing?.gender ?? 'M')
+const gender = ref<'M' | 'F' | 'O' | ''>(props.editing?.gender ?? '')
 const email = ref(props.editing?.email ?? '')
 const phone = ref(props.editing?.phone ?? '')
 const licenseNumber = ref(props.editing?.licenseNumber ?? '')
@@ -32,6 +32,7 @@ const subtitle = computed(() =>
 )
 
 const genderOptions = [
+  { value: '', label: 'Non précisé' },
   { value: 'M', label: 'Homme' },
   { value: 'F', label: 'Femme' },
   { value: 'O', label: 'Autre' },
@@ -52,7 +53,7 @@ async function save() {
       await eventStore.editPlayer(props.editing.id, {
         first_name: firstName.value,
         last_name: lastName.value,
-        gender: gender.value,
+        gender: gender.value || undefined,
         birth_year: parseBirthYear(),
         email: email.value || undefined,
         phone: phone.value || undefined,
@@ -63,7 +64,7 @@ async function save() {
         first_name: firstName.value,
         last_name: lastName.value,
         birth_date: birthDate.value || undefined,
-        gender: gender.value,
+        gender: gender.value || undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
         license_number: licenseNumber.value || undefined,
@@ -111,7 +112,7 @@ async function save() {
           <input v-model="birthDate" class="inp" type="date" />
         </label>
         <label class="fld">
-          <span class="fld-lbl">Genre <em>*</em></span>
+          <span class="fld-lbl">Genre</span>
           <Segmented v-model="gender" :options="genderOptions" />
         </label>
       </div>

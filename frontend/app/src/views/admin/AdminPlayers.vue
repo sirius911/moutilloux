@@ -43,8 +43,8 @@ function initials(name: string): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
 }
 
-function genderLabel(g: string) {
-  return g === 'M' ? 'Homme' : g === 'F' ? 'Femme' : 'Autre'
+function genderLabel(g: string | undefined | null) {
+  return g === 'M' ? 'Homme' : g === 'F' ? 'Femme' : g === 'O' ? 'Autre' : '—'
 }
 </script>
 
@@ -122,7 +122,10 @@ function genderLabel(g: string) {
                   <button class="row-btn" type="button" @click="openEdit(p)">Éditer</button>
                 </td>
               </tr>
-              <tr v-if="filtered.length === 0">
+              <tr v-if="filtered.length === 0 && !search.trim()">
+                <td colspan="5" class="empty-row">Aucun joueur dans le registre. Ajoutez votre premier joueur.</td>
+              </tr>
+              <tr v-else-if="filtered.length === 0">
                 <td colspan="5" class="empty-row">Aucun joueur trouvé</td>
               </tr>
             </tbody>
