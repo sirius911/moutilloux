@@ -373,9 +373,9 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-23 — Session #7
+**Dernière session :** 2026-06-24 — Session #8
 **Sprint actif :** 05 — Admin Joueurs
 **Roadmap :** 1 sprint en cours (`backlog/sprints/05-admin-joueurs/sprint.md`)
-**Tickets clôturés cette session :** #67 (filtre licence), #68 (Contact), #69 (Compétition)
-**Tickets restants :** #70, #71, #72, #73 (4 open, toutes mineures)
+**Tickets clôturés cette session :** #70 (état vide registre), #71 (genre optionnel)
+**Tickets restants :** #72, #73 (2 open, mineures)
 **Branche :** `claude/sprint/05-admin-joueurs` (parent : `main`)
