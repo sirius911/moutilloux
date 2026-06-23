@@ -57,14 +57,14 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
 
 ## User stories par écran (résumé)
 
-- **Shell** — naviguer entre les 6 écrans, voir l'édition active, sélectionner
-  l'épreuve active, ouvrir la TV publique, se déconnecter.
+- **Shell** — naviguer entre les 6 écrans, voir l'édition active, ouvrir la TV
+  publique, se déconnecter.
 - **Tournoi** — voir l'état de l'édition active (stats agrégées), gérer les
   éditions (créer / éditer / activer / supprimer si vide) et les épreuves
   (créer avec catégorie inline / éditer / supprimer avec garde-fous),
   sélectionner une épreuve.
 - **Joueurs** — chercher dans le registre global, créer et corriger des fiches
-  (identité, contact, licence). Pas de suppression de fiche.
+  (identité, contact). Pas de suppression de fiche.
 - **Inscriptions** — inscrire des joueurs à l'épreuve active (unitaire et en
   masse, mode Simple), créer des équipes (mode Double), retirer une inscription
   (bloquée si engagée dans un match).
@@ -124,8 +124,13 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
 14. **Activation d'édition automatique si aucune active** : la première édition
     créée devient active ; les suivantes naissent en préparation et s'activent
     depuis l'historique. La case « Activer immédiatement » disparaît.
-15. **Licence joueur : pertinence à rediscuter** (tournoi amateur) lors de la
-    revue détaillée des écrans Joueurs / Inscriptions.
+16. **Sélecteur d'épreuve relocalisé en en-tête de page** : la liste déroulante
+    des épreuves quitte la sidebar et est portée par chacun des quatre écrans
+    dépendants (Inscriptions, Poules, Matchs, Tableau final). La sidebar ne montre
+    pas l'épreuve courante (option épurée). L'état reste global et partagé :
+    changer l'épreuve sur un écran le met à jour pour tous les autres.
+15. **Licence joueur : supprimée** (tournoi amateur — information sans usage dans
+    ce contexte). Retirée de la fiche joueur et de la table du registre.
 
 ## API de référence (état : tout est exposé)
 

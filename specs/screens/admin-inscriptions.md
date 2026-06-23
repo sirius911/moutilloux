@@ -19,7 +19,7 @@ l'**épreuve active** : il crée et retire des inscriptions. En épreuve **Simpl
 on inscrit des joueurs individuels ; en épreuve **Double**, on inscrit des
 équipes de deux joueurs.
 
-L'écran dépend entièrement de l'épreuve active (sélecteur de la sidebar) et
+L'écran dépend entièrement de l'épreuve active (sélecteur en en-tête de page) et
 adapte son interface au mode de la catégorie (Simple / Double).
 
 ---
@@ -28,8 +28,9 @@ adapte son interface au mode de la catégorie (Simple / Double).
 
 ### En-tête de page
 
-- Fil d'ariane « Tournoi », titre « Inscriptions », sous-titre :
-  « {nom de l'épreuve} · N inscrit(s) ».
+- **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
+  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+- Titre « Inscriptions », sous-titre « N inscrit(s) ».
 - Action principale selon le mode :
   - **Simple** : « Inscrire les N affichés » — inscrit en masse tous les joueurs
     actuellement visibles dans la liste « Joueurs disponibles » (donc en

@@ -28,8 +28,9 @@ l'écran Matchs (voir [[admin-matchs]]).
 
 ### En-tête de page
 
-- Fil d'ariane « Tournoi · {épreuve} », titre « Poules », sous-titre
-  « Glissez-déposez les joueurs dans leur groupe ».
+- **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
+  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+- Titre « Poules », sous-titre « Glissez-déposez les joueurs dans leur groupe ».
 - Action principale : **« Remplir automatiquement »** → modale de remplissage.
   Désactivée quand les poules sont verrouillées.
 
