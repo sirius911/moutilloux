@@ -55,6 +55,9 @@ const router = createRouter({
         { path: 'tournoi', component: () => import('@/views/admin/AdminTournoi.vue') },
       ],
     },
+
+    // ── Catch-all ──────────────────────────────────────────────────────────
+    { path: '/:pathMatch(.*)*', redirect: '/tv/live' },
   ],
 })
 
