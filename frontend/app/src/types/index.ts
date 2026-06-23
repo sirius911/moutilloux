@@ -7,6 +7,9 @@ export interface Player {
   fullName: string
   gender: 'M' | 'F' | 'O'
   birthYear: number | null
+  licenseNumber: string
+  email: string
+  phone: string
 }
 
 export interface Entry {

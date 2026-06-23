@@ -607,18 +607,8 @@ def api_players(request):
     GET /api/players/
     Retourne tous les joueurs du registre global.
     """
-    players = Player.objects.all()
-    return JsonResponse([
-        {
-            "id": p.id,
-            "firstName": p.first_name,
-            "lastName": p.last_name,
-            "fullName": str(p),
-            "gender": p.gender,
-            "birthYear": p.birth_year,
-        }
-        for p in players
-    ], safe=False)
+    players = Player.objects.all().order_by("last_name", "first_name")
+    return JsonResponse([_pack_player(p) for p in players], safe=False)
 
 
 @require_POST

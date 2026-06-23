@@ -5,3 +5,4 @@
 
 | Session | Date | Verdict spec review | Dérives trouvées | Tickets créés | Tickets sprint restants |
 |---------|------|---------------------|-----------------|---------------|------------------------|
+| #1 | 2026-06-23 | ❌ Dérive bloquante | 9 (5 majeures, 4 mineures) | 0 | 9 |
