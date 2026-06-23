@@ -2,12 +2,10 @@
 import { ref, computed, watch } from 'vue'
 import { useEventStore } from '@/stores/event'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
-import GenerateMatchesModal from '@/components/modals/GenerateMatchesModal.vue'
 import type { Entry } from '@/types'
 
 const eventStore = useEventStore()
 const showAutoFill = ref(false)
-const showGenerateMatches = ref(false)
 
 watch(() => eventStore.activeEventId, (id) => {
   if (id) {
@@ -88,12 +86,10 @@ async function onDropToUnassigned() {
       </div>
       <div class="header-actions">
         <button class="adm-btn" type="button" @click="showAutoFill = true">Auto-remplir</button>
-        <button class="adm-btn primary" type="button" @click="showGenerateMatches = true">Générer les matchs</button>
       </div>
     </header>
 
     <AutoFillModal v-if="showAutoFill" @close="showAutoFill = false" @saved="showAutoFill = false" />
-    <GenerateMatchesModal v-if="showGenerateMatches" @close="showGenerateMatches = false" @saved="showGenerateMatches = false" />
 
     <div class="page-content">
       <p v-if="dropError" class="adm-error">{{ dropError }}</p>
