@@ -374,10 +374,9 @@ et exécute le protocole complet (étapes 0 à 4).
 > Mis à jour automatiquement en fin de session.
 
 **Dernière session :** 2026-06-24 — Session #9 (2e de la journée)
-**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
-**Sprint précédent :** 05 — Admin Joueurs ✅ **TERMINÉ** (archivé dans `done/`)
-**Roadmap :** 1 sprint en cours (`backlog/sprints/06-refacto-selecteur/sprint.md`)
+**Sprint actif :** 05 — Admin Joueurs (rouvert — spec review à refaire)
+**Roadmap :** 2 sprints (`05-admin-joueurs` actif, `06-refacto-selecteur` suivant)
 **Tickets clôturés cette session :** #72 (année naissance), #73 (erreurs par champ)
-**Tickets restants :** 0 (sprint 05 complet)
+**Tickets restants sprint 05 :** à déterminer à la prochaine spec review
 **Branche :** `claude/sprint/05-admin-joueurs` (parent : `main`)
-**⚠️ Action manuelle requise :** fermer le milestone "Sprint 05 — Admin Joueurs" sur GitHub
+**Contexte :** Les specs avaient été ajustées intentionnellement par l'utilisateur entre sessions (réduction du périmètre : sans colonne Licence, sans filtrage licence, sans section Compétition dans la modale). La session a commis une erreur en "restaurant" ces suppressions. La spec est revenue à son état voulu. La prochaine spec review doit comparer le code actuel contre cette spec réduite et créer des tickets pour les écarts.

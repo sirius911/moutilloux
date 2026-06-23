@@ -10,4 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 06 — Refacto Sélecteur & Joueurs | `backlog/sprints/06-refacto-selecteur/sprint.md` |
+| 1 | 05 — Admin Joueurs | `backlog/sprints/05-admin-joueurs/sprint.md` |
+| 2 | 06 — Refacto Sélecteur & Joueurs | `backlog/sprints/06-refacto-selecteur/sprint.md` |
