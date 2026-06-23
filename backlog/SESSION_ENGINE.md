@@ -373,9 +373,11 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #8
-**Sprint actif :** 05 — Admin Joueurs
-**Roadmap :** 1 sprint en cours (`backlog/sprints/05-admin-joueurs/sprint.md`)
-**Tickets clôturés cette session :** #70 (état vide registre), #71 (genre optionnel)
-**Tickets restants :** #72, #73 (2 open, mineures)
+**Dernière session :** 2026-06-24 — Session #9 (2e de la journée)
+**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
+**Sprint précédent :** 05 — Admin Joueurs ✅ **TERMINÉ** (archivé dans `done/`)
+**Roadmap :** 1 sprint en cours (`backlog/sprints/06-refacto-selecteur/sprint.md`)
+**Tickets clôturés cette session :** #72 (année naissance), #73 (erreurs par champ)
+**Tickets restants :** 0 (sprint 05 complet)
 **Branche :** `claude/sprint/05-admin-joueurs` (parent : `main`)
+**⚠️ Action manuelle requise :** fermer le milestone "Sprint 05 — Admin Joueurs" sur GitHub
