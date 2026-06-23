@@ -355,8 +355,8 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-17 — Migration GitHub Issues (manuelle)
-**Sprint actif :** 03 — Admin Shell
-**Issues sprint-03 ouvertes :** 5 (055, 056, 057, 058, 059)
+**Dernière session :** 2026-06-23 — Session #3
+**Sprint 03 — Admin Shell :** ✅ TERMINÉ — milestone fermé, dossier archivé dans `done/`
+**Sprint actif :** 04 — Admin Panel Map
 **Issues sprint-04 ouvertes :** 3 (040, 050, 060)
-**Issues sans sprint :** 15 tickets hors sprint
+**Branche :** `claude/sprint/03-admin-shell` (poussée sur origin)
