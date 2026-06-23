@@ -17,7 +17,8 @@ const eventStore = useEventStore()
 
 const firstName = ref(props.editing?.firstName ?? '')
 const lastName = ref(props.editing?.lastName ?? '')
-const birthDate = ref(props.editing?.birthYear ? `${props.editing.birthYear}-01-01` : '')
+const birthYear = ref<string>(props.editing?.birthYear?.toString() ?? '')
+const currentYear = new Date().getFullYear()
 const gender = ref<'M' | 'F' | 'O' | ''>(props.editing?.gender ?? '')
 const email = ref(props.editing?.email ?? '')
 const phone = ref(props.editing?.phone ?? '')
@@ -38,12 +39,6 @@ const genderOptions = [
   { value: 'O', label: 'Autre' },
 ]
 
-function parseBirthYear(): number | undefined {
-  if (!birthDate.value) return undefined
-  const y = Number.parseInt(birthDate.value.slice(0, 4), 10)
-  return Number.isNaN(y) ? undefined : y
-}
-
 async function save() {
   if (!firstName.value || !lastName.value) return
   saving.value = true
@@ -54,7 +49,7 @@ async function save() {
         first_name: firstName.value,
         last_name: lastName.value,
         gender: gender.value || undefined,
-        birth_year: parseBirthYear(),
+        birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
         license_number: licenseNumber.value || undefined,
@@ -63,7 +58,7 @@ async function save() {
       await post('/api/players/create/', {
         first_name: firstName.value,
         last_name: lastName.value,
-        birth_date: birthDate.value || undefined,
+        birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
         gender: gender.value || undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
@@ -108,8 +103,8 @@ async function save() {
           <input v-model="lastName" class="inp" placeholder="Nom de famille" />
         </label>
         <label class="fld">
-          <span class="fld-lbl">Date de naissance</span>
-          <input v-model="birthDate" class="inp" type="date" />
+          <span class="fld-lbl">Année de naissance</span>
+          <input v-model="birthYear" class="inp" type="number" min="1900" :max="currentYear" placeholder="ex. 1990" />
         </label>
         <label class="fld">
           <span class="fld-lbl">Genre</span>

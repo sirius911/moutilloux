@@ -35,13 +35,14 @@ tête de série sur une fiche joueur.
 ### Barre d'outils
 
 - Champ de recherche, filtrage instantané (sans soumission) sur le **nom
-  complet**, insensible à la casse.
+  complet** et le **numéro de licence**, insensible à la casse.
 
 ### Table du registre
 
 | Colonne | Contenu |
 |---|---|
 | Joueur | Avatar à initiales (couleur stable dérivée du nom) + nom complet |
+| Licence | Numéro de licence (police monospace) ou « — » |
 | Genre | Homme / Femme / Autre, ou « — » si non renseigné |
 | Né(e) en | Année de naissance ou « — » |
 | Actions | **Éditer** → modale Fiche joueur en édition |
@@ -76,6 +77,12 @@ en édition, sinon « Le joueur sera ajouté au registre. »).
 |---|---|
 | Email | Optionnel, format email vérifié par le serveur |
 | Téléphone | Optionnel |
+
+**Section Compétition**
+
+| Champ | Règle |
+|---|---|
+| N° de licence | Optionnel, texte libre (police monospace) |
 
 **Comportement**
 - Le bouton d'enregistrement est désactivé tant que prénom ou nom sont vides,
