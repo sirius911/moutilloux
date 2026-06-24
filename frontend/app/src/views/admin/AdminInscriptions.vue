@@ -2,12 +2,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useEventStore } from '@/stores/event'
 import CreateTeamModal from '@/components/modals/CreateTeamModal.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 
 const eventStore = useEventStore()
 const search = ref('')
 const showCreateTeam = ref(false)
 const busy = ref(false)
 const error = ref('')
+const confirmState = ref<{ show: boolean; entryId: number; name: string }>({ show: false, entryId: 0, name: '' })
 
 const activeEvent = computed(() =>
   eventStore.events.find((e) => e.id === eventStore.activeEventId) ?? null,
@@ -81,13 +83,18 @@ function setActiveEvent(id: string) {
   if (!isNaN(numId)) eventStore.activeEventId = numId
 }
 
-async function retirer(entryId: number, name: string) {
+function retirer(entryId: number, name: string) {
   if (!eventStore.activeEventId) return
-  if (!window.confirm(`Retirer ${name} de l'épreuve ?`)) return
+  confirmState.value = { show: true, entryId, name }
+}
+
+async function executeRetrait() {
+  confirmState.value.show = false
+  if (!eventStore.activeEventId) return
   busy.value = true
   error.value = ''
   try {
-    await eventStore.removeRegistration(eventStore.activeEventId, entryId)
+    await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
@@ -153,6 +160,15 @@ function initials(name: string): string {
       v-if="showCreateTeam"
       @close="showCreateTeam = false"
       @saved="showCreateTeam = false"
+    />
+
+    <ConfirmModal
+      v-if="confirmState.show"
+      :title="`Retirer ${confirmState.name} de l'épreuve ?`"
+      body="L'historique du joueur est conservé."
+      confirm-label="Retirer"
+      @confirm="executeRetrait"
+      @close="confirmState.show = false"
     />
 
     <div class="page-content">
