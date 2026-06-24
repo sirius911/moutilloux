@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #13 (6e de la journée)
+**Dernière session :** 2026-06-24 — Session #14 (7e de la journée)
 **Sprint actif :** 06 — Refacto Sélecteur & Joueurs
 **Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 0 (clôture de sprint uniquement)
-**Sprint 05 terminé :** Milestone fermé ✅ — dossier archivé dans `done/05-admin-joueurs/`
-**Branche :** `claude/sprint/05-admin-joueurs` (push sur cette branche, Sprint 06 démarrera sur sa propre branche)
-**Contexte :** Sprint 05 clos manuellement (4e blocage consécutif). Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont dans Sprint 06 (#78, #79, #80). Sprint 06 — Refacto Sélecteur & Joueurs est maintenant le sprint actif. Démarrer Sprint 06 à la prochaine session planifiée.
+**Tickets clôturés cette session :** 2 (#75 ✅, #78 ✅)
+**Branche :** `claude/sprint/06-refacto-selecteur` (créée depuis `claude/sprint/05-admin-joueurs`)
+**Issues restantes Sprint 06 :** 9 (#76, #77, #79, #80, #81, #82, #83, #84, #85)
+**Contexte :** Sprint 06 session 1. Spec review ⚠️ (11 dérives, toutes déjà ticketées, 0 nouvelle issue). #75 (sidebar sélecteur) et #78 (colonne Licence) clôturés. Prochaine session : #79 (filtre licence) + #80 (modale section Compétition), puis #76+#77 (sélecteurs header), puis #82, #81, mineures.
