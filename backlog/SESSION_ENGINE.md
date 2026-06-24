@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #10 (3e de la journée)
+**Dernière session :** 2026-06-24 — Session #11 (4e de la journée)
 **Sprint actif :** 05 — Admin Joueurs (blocage : spec non conforme, mais tous tickets Sprint 05 fermés)
 **Roadmap :** 2 sprints (`05-admin-joueurs` actif, `06-refacto-selecteur` suivant)
 **Tickets clôturés cette session :** 0
 **Tickets restants sprint 05 :** 0 (toutes les issues #65–#73 sont fermées)
 **Branche :** `claude/sprint/05-admin-joueurs` (parent : `main`)
-**Contexte :** Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont intentionnellement déplacées en Sprint 06 (#78, #79, #80). Le Sprint 05 est fonctionnellement terminé mais le protocole bloque la clôture formelle (spec review ⚠️). Action requise de l'utilisateur : clore Sprint 05 manuellement (voir session_2026-06-24_3.md § Problèmes d'orchestration).
+**Contexte :** Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont intentionnellement déplacées en Sprint 06 (#78, #79, #80). Le Sprint 05 est fonctionnellement terminé mais le protocole bloque la clôture formelle (spec review ⚠️). Action requise de l'utilisateur : clore Sprint 05 manuellement (voir session_2026-06-24_4.md § Problèmes d'orchestration). Note : `done/05-admin-joueurs/` existe déjà depuis une archive antérieure — le remplacer lors de la clôture manuelle.
