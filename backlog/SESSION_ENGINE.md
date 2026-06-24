@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #16 (9e de la journée)
+**Dernière session :** 2026-06-25 — Session #10
 **Sprint actif :** 06 — Refacto Sélecteur & Joueurs
 **Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 2 (#76 ✅, #77 ✅)
+**Tickets clôturés cette session :** 4 (#82 ✅, #81 ✅, #83 ✅, #84 ✅)
 **Branche :** `claude/sprint/06-refacto-selecteur`
-**Issues restantes Sprint 06 :** 5 (#81, #82, #83, #84, #85)
-**Contexte :** Sprint 06 session 3. Spec review ❌ (7 dérives restantes, toutes déjà ticketées, 0 nouvelle issue). #76 (sélecteur Inscriptions) et #77 (sélecteur Poules) clôturés. Prochaine session : #82 (ConfirmModal retrait dans AdminInscriptions), puis #81 (bandeau verrouillage AdminGroups — back + store partagé), puis mineures #83, #84, #85.
+**Issues restantes Sprint 06 :** 1 (#85)
+**Contexte :** Sprint 06 session 4. Spec review ⚠️ (1 dérive mineure restante : console.logs dans AdminInscriptions, #85). #82 (ConfirmModal retrait), #81 (bandeau verrouillage + api locked field + store groupsLocked), #83 (libellé bouton) et #84 (message serveur exact) tous clôturés. Prochaine session : #85 (supprimer les logs console dans AdminInscriptions) — dernier ticket du sprint.
