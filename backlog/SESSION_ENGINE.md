@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #9 (2e de la journée)
-**Sprint actif :** 05 — Admin Joueurs (rouvert — spec review à refaire)
+**Dernière session :** 2026-06-24 — Session #10 (3e de la journée)
+**Sprint actif :** 05 — Admin Joueurs (blocage : spec non conforme, mais tous tickets Sprint 05 fermés)
 **Roadmap :** 2 sprints (`05-admin-joueurs` actif, `06-refacto-selecteur` suivant)
-**Tickets clôturés cette session :** #72 (année naissance), #73 (erreurs par champ)
-**Tickets restants sprint 05 :** à déterminer à la prochaine spec review
+**Tickets clôturés cette session :** 0
+**Tickets restants sprint 05 :** 0 (toutes les issues #65–#73 sont fermées)
 **Branche :** `claude/sprint/05-admin-joueurs` (parent : `main`)
-**Contexte :** Les specs avaient été ajustées intentionnellement par l'utilisateur entre sessions (réduction du périmètre : sans colonne Licence, sans filtrage licence, sans section Compétition dans la modale). La session a commis une erreur en "restaurant" ces suppressions. La spec est revenue à son état voulu. La prochaine spec review doit comparer le code actuel contre cette spec réduite et créer des tickets pour les écarts.
+**Contexte :** Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont intentionnellement déplacées en Sprint 06 (#78, #79, #80). Le Sprint 05 est fonctionnellement terminé mais le protocole bloque la clôture formelle (spec review ⚠️). Action requise de l'utilisateur : clore Sprint 05 manuellement (voir session_2026-06-24_3.md § Problèmes d'orchestration).
