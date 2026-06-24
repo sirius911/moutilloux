@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #10
-**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
-**Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 4 (#82 ✅, #81 ✅, #83 ✅, #84 ✅)
+**Dernière session :** 2026-06-25 — Session #11
+**Sprint actif :** —
+**Roadmap :** vide (Sprint 06 terminé)
+**Tickets clôturés cette session :** 1 (#85 ✅)
 **Branche :** `claude/sprint/06-refacto-selecteur`
-**Issues restantes Sprint 06 :** 1 (#85)
-**Contexte :** Sprint 06 session 4. Spec review ⚠️ (1 dérive mineure restante : console.logs dans AdminInscriptions, #85). #82 (ConfirmModal retrait), #81 (bandeau verrouillage + api locked field + store groupsLocked), #83 (libellé bouton) et #84 (message serveur exact) tous clôturés. Prochaine session : #85 (supprimer les logs console dans AdminInscriptions) — dernier ticket du sprint.
+**Issues restantes Sprint 06 :** 0
+**Contexte :** Sprint 06 session 5 (finale). Spec review ⚠️ (1 dérive restante : console.logs #85, immédiatement résolue). #85 clôturé. Sprint terminé — specs conformes, 0 issue ouverte. Dossier `06-refacto-selecteur/` déplacé dans `done/`, roadmap vidée. **Action manuelle requise :** fermer le milestone "Sprint 06 — Refacto Sélecteur & Joueurs" sur GitHub (action bloquée par auto-mode). Désactiver la Routine sur claude.ai/code/routines si aucun sprint suivant n'est planifié.
