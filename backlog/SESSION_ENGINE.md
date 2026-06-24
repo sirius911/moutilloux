@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #12 (5e de la journée)
-**Sprint actif :** 05 — Admin Joueurs (blocage récurrent — 3e occurrence — spec non conforme, mais tous tickets Sprint 05 fermés)
-**Roadmap :** 2 sprints (`05-admin-joueurs` actif, `06-refacto-selecteur` suivant)
-**Tickets clôturés cette session :** 0
-**Tickets restants sprint 05 :** 0 (toutes les issues #65–#73 sont fermées)
-**Branche :** `claude/sprint/05-admin-joueurs` (parent : `main`)
-**Contexte :** Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont intentionnellement déplacées en Sprint 06 (#78, #79, #80). Le Sprint 05 est fonctionnellement terminé mais le protocole bloque la clôture formelle (spec review ⚠️). **Action requise (urgente — 3e blocage consécutif) :** clore Sprint 05 manuellement (voir session_2026-06-24_5.md § Problèmes d'orchestration). Note : `done/05-admin-joueurs/` existe déjà depuis une archive antérieure — le remplacer lors de la clôture manuelle.
+**Dernière session :** 2026-06-24 — Session #13 (6e de la journée)
+**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
+**Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
+**Tickets clôturés cette session :** 0 (clôture de sprint uniquement)
+**Sprint 05 terminé :** Milestone fermé ✅ — dossier archivé dans `done/05-admin-joueurs/`
+**Branche :** `claude/sprint/05-admin-joueurs` (push sur cette branche, Sprint 06 démarrera sur sa propre branche)
+**Contexte :** Sprint 05 clos manuellement (4e blocage consécutif). Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont dans Sprint 06 (#78, #79, #80). Sprint 06 — Refacto Sélecteur & Joueurs est maintenant le sprint actif. Démarrer Sprint 06 à la prochaine session planifiée.

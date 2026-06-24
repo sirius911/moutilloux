@@ -9,3 +9,7 @@
 | #7 | 2026-06-23 | ❌ Dérive bloquante | 0 nouvelles | 0 | 4 |
 | #8 | 2026-06-24 | ⚠️ Dérive mineure | 0 nouvelles (4 connues #70-#73) | 0 | 4 |
 | #9 | 2026-06-24 | ⚠️ Dérive mineure | 0 nouvelles (#72, #73 connues) | 0 | 2 |
+| #10 | 2026-06-24 | ⚠️ Dérive majeure | 3 connues (#78, #79, #80 → sprint-06) | 0 | 0 |
+| #11 | 2026-06-24 | ⚠️ Dérive majeure | 3 connues (#78, #79, #80 → sprint-06) | 0 | 0 |
+| #12 | 2026-06-24 | ⚠️ Dérive majeure | 3 connues (#78, #79, #80 → sprint-06) | 0 | 0 |
+| #13 | 2026-06-24 | ⚠️ Dérive majeure | 3 connues (#78, #79, #80 → sprint-06) — clôture manuelle Sprint 05 | 0 | 0 |
