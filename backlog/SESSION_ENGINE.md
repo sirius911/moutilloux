@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #15 (8e de la journée)
+**Dernière session :** 2026-06-24 — Session #16 (9e de la journée)
 **Sprint actif :** 06 — Refacto Sélecteur & Joueurs
 **Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 2 (#79 ✅, #80 ✅)
+**Tickets clôturés cette session :** 2 (#76 ✅, #77 ✅)
 **Branche :** `claude/sprint/06-refacto-selecteur`
-**Issues restantes Sprint 06 :** 7 (#76, #77, #81, #82, #83, #84, #85)
-**Contexte :** Sprint 06 session 2. Spec review ⚠️ (9 dérives restantes, toutes déjà ticketées, 0 nouvelle issue). #79 (filtre licence) et #80 (modale section Compétition) clôturés. Prochaine session : #76+#77 en parallèle (sélecteurs header Inscriptions + Poules), puis #82 (ConfirmModal), #81 (bandeau verrouillage), mineures.
+**Issues restantes Sprint 06 :** 5 (#81, #82, #83, #84, #85)
+**Contexte :** Sprint 06 session 3. Spec review ❌ (7 dérives restantes, toutes déjà ticketées, 0 nouvelle issue). #76 (sélecteur Inscriptions) et #77 (sélecteur Poules) clôturés. Prochaine session : #82 (ConfirmModal retrait dans AdminInscriptions), puis #81 (bandeau verrouillage AdminGroups — back + store partagé), puis mineures #83, #84, #85.
