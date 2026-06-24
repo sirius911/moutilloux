@@ -38,18 +38,12 @@ onMounted(reload)
 watch(() => eventStore.activeEventId, reload)
 
 async function inscrire(playerId: number) {
-  console.log('[Inscriptions] inscrire() — playerId:', playerId, 'activeEventId:', eventStore.activeEventId)
-  if (!eventStore.activeEventId) {
-    console.warn('[Inscriptions] inscrire() annulé : pas d\'activeEventId')
-    return
-  }
+  if (!eventStore.activeEventId) return
   busy.value = true
   error.value = ''
   try {
     await eventStore.addRegistration(eventStore.activeEventId, playerId)
-    console.log('[Inscriptions] inscrire() succès')
   } catch (e) {
-    console.error('[Inscriptions] inscrire() erreur:', e)
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
     busy.value = false
@@ -57,21 +51,14 @@ async function inscrire(playerId: number) {
 }
 
 async function inscrireTout() {
-  console.log('[Inscriptions] inscrireTout() — activeEventId:', eventStore.activeEventId, 'availablePlayers:', availablePlayers.value.length)
-  if (!eventStore.activeEventId) {
-    console.warn('[Inscriptions] inscrireTout() annulé : pas d\'activeEventId')
-    return
-  }
+  if (!eventStore.activeEventId) return
   const ids = availablePlayers.value.map((p) => p.id)
-  console.log('[Inscriptions] inscrireTout() — ids à inscrire:', ids)
   if (ids.length === 0) return
   busy.value = true
   error.value = ''
   try {
-    const result = await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
-    console.log('[Inscriptions] inscrireTout() succès:', result)
+    await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
   } catch (e) {
-    console.error('[Inscriptions] inscrireTout() erreur:', e)
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
     busy.value = false
