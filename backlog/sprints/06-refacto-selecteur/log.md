@@ -3,3 +3,4 @@
 | # | Date | Verdict | Dérives | Nouvelles issues | Issues sprint restantes |
 |---|------|---------|---------|-----------------|------------------------|
 | 1 | 2026-06-24 | ⚠️ Dérive mineure | 11 dérives (toutes déjà ticketées) | 0 | 11 |
+| 2 | 2026-06-24 | ⚠️ Dérive mineure | 9 dérives restantes (toutes déjà ticketées) | 0 | 7 |
