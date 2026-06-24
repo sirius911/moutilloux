@@ -76,6 +76,11 @@ async function inscrireTout() {
   }
 }
 
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) eventStore.activeEventId = numId
+}
+
 async function retirer(entryId: number, name: string) {
   if (!eventStore.activeEventId) return
   if (!window.confirm(`Retirer ${name} de l'épreuve ?`)) return
@@ -107,12 +112,17 @@ function initials(name: string): string {
   <div class="admin-page">
     <header class="page-header">
       <div>
-        <p class="breadcrumb">Tournoi</p>
+        <select
+          class="event-select"
+          :value="eventStore.activeEventId ?? ''"
+          :disabled="eventStore.events.length === 0"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-if="eventStore.events.length === 0" value="" disabled>Aucune épreuve</option>
+          <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">{{ ev.name }}</option>
+        </select>
         <h1 class="page-title">Inscriptions</h1>
-        <p class="page-sub">
-          {{ activeEvent?.name ?? 'Aucune épreuve' }} ·
-          {{ eventStore.players.length }} inscrit{{ eventStore.players.length > 1 ? 's' : '' }}
-        </p>
+        <p class="page-sub">{{ eventStore.players.length }} inscrit{{ eventStore.players.length > 1 ? 's' : '' }}</p>
       </div>
       <button
         v-if="isDouble"
@@ -242,7 +252,25 @@ function initials(name: string): string {
   gap: 16px;
 }
 
-.breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+.event-select {
+  display: block;
+  margin-bottom: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  max-width: 280px;
+}
+
+.event-select:focus { border-color: var(--accent); }
+.event-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-2); }
 

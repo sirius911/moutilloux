@@ -42,6 +42,11 @@ function entryDisplayName(entry: Entry): string {
   return entry.player?.fullName ?? `Équipe ${entry.id}`
 }
 
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) eventStore.activeEventId = numId
+}
+
 const dropError = ref('')
 
 // Drag state
@@ -80,7 +85,15 @@ async function onDropToUnassigned() {
   <div class="admin-page">
     <header class="page-header">
       <div>
-        <p class="breadcrumb">Tournoi · {{ eventStore.events.find(e => e.id === eventStore.activeEventId)?.name }}</p>
+        <select
+          class="event-select"
+          :value="eventStore.activeEventId ?? ''"
+          :disabled="eventStore.events.length === 0"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-if="eventStore.events.length === 0" value="" disabled>Aucune épreuve</option>
+          <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">{{ ev.name }}</option>
+        </select>
         <h1 class="page-title">Poules</h1>
         <p class="page-sub">Glissez-déposez les joueurs dans leur groupe</p>
       </div>
@@ -208,7 +221,25 @@ async function onDropToUnassigned() {
 
 .adm-btn.primary:hover { opacity: 0.9; }
 
-.breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+.event-select {
+  display: block;
+  margin-bottom: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  max-width: 280px;
+}
+
+.event-select:focus { border-color: var(--accent); }
+.event-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-2); }
 
