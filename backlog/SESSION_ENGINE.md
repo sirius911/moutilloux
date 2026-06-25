@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #24
-**Sprint actif :** 09 — Calendrier : programme TV (à créer)
-**Roadmap :** Sprint 08 terminé ✅ — Sprint 09 est le prochain sprint actif
-**Tickets clôturés cette session :** 1 (#111 ✅)
-**Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 0
-**Contexte :** Session 24 — Sprint 08 clôturé. #111 fermé (DnD unifié pauses+matchs : type DayItem, dayItemsDnd liste unifiée, ETA pauses à position réelle). Milestone Sprint 08 fermé. Sprint 09 (programme TV) à créer et planifier.
+**Dernière session :** 2026-06-27 — Session #25
+**Sprint actif :** 09 — Calendrier : programme TV
+**Roadmap :** Sprint 09 en cours — 1 issue restante (#102)
+**Tickets clôturés cette session :** 2 (#113 ✅ #101 ✅)
+**Branche :** `claude/sprint/09-calendrier-tv`
+**Issues restantes :** 1 (#102 — TvScoreboard bandeau À suivre)
+**Contexte :** Session 25 — Sprint 09 planifié (sprint.md créé, #113 créé). #113 fermé (live.ts : fetchUpcoming + upcoming[] + TvUpcoming). #101 fermé (TvIdle : slide Programme avec polling 4s). Reste #102 (bandeau À suivre dans TvScoreboard — repositionner en bas + wording).
