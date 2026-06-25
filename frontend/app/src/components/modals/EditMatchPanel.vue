@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
+import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
 import type { Match } from '@/types'
 
@@ -31,8 +32,6 @@ const formatTbPoints = ref('7')
 const formatServer = ref<'A' | 'B' | 'rand'>(props.match.server ?? 'A')
 
 // Planning tab
-const court = ref(props.match.court ?? '')
-const scheduledTime = ref(props.match.scheduledTime ?? '')
 const status = ref<'scheduled' | 'live' | 'finished' | 'canceled'>(
   props.match.status === 'LIVE' ? 'live'
     : props.match.status === 'FINISHED' ? 'finished'
@@ -40,6 +39,47 @@ const status = ref<'scheduled' | 'live' | 'finished' | 'canceled'>(
     : 'scheduled'
 )
 const featured = ref(props.match.isFeatured)
+
+// Journée courante : cherche dans le calendrier quelle PlayDay contient ce match
+const currentPlayDayId = computed<number | null>(() => {
+  const cal = eventStore.calendar
+  if (!cal) return null
+  for (const day of cal.playDays) {
+    if (day.matches.some(m => m.id === props.match.id)) return day.id
+  }
+  return null
+})
+
+const selectedPlayDayId = ref<number | null>(currentPlayDayId.value)
+
+async function changePlayDay(newPlayDayId: number | null) {
+  const editionId = eventStore.activeEdition?.id
+  const cal = eventStore.calendar
+  if (!editionId || !cal) return
+  saving.value = true
+  error.value = ''
+  try {
+    const matchId = props.match.id
+    const payload: CalendarReorderPayload = {
+      playDays: cal.playDays.map(day => {
+        const matchItems = day.matches
+          .filter(m => m.id !== matchId)
+          .map(m => ({ type: 'match' as const, id: m.id }))
+        const breakItems = day.breaks.map(b => ({ type: 'break' as const, id: b.id }))
+        const added = day.id === newPlayDayId
+          ? [{ type: 'match' as const, id: matchId }]
+          : []
+        return { playDayId: day.id, items: [...matchItems, ...breakItems, ...added] }
+      }),
+    }
+    await eventStore.reorderCalendar(editionId, payload)
+    selectedPlayDayId.value = newPlayDayId
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Erreur lors du déplacement.'
+  } finally {
+    saving.value = false
+  }
+}
 
 const nameA = computed(() =>
   props.match.sideA?.player?.fullName ?? props.match.sideALabel ?? 'Joueur A'
@@ -94,13 +134,11 @@ async function save() {
   saving.value = true
   error.value = ''
   try {
-    // Édition via MatchEditForm. On omet les points bruts (les displayPoint
-    // sont des chaînes d'affichage non mappables sur 0-4) et les champs de
-    // format (onglet décoratif) pour ne pas écraser les règles côté serveur.
+    // Édition via MatchEditForm. On omet les points bruts, les champs de
+    // format (onglet décoratif), court (mono-court, non éditable) et
+    // scheduled_time (ETA dérivée, lecture seule — décisions 18-19).
     await eventStore.editMatch(eventId, props.match.id, {
       status: status.value.toUpperCase(),
-      scheduled_time: scheduledTime.value || null,
-      court: court.value || null,
       sets_a: setsA.value,
       sets_b: setsB.value,
       games_a: gamesA.value,
@@ -256,15 +294,27 @@ async function save() {
             <div class="slide-section">
               <h4>Planning</h4>
               <div class="fld-col">
-                <div class="fld-row">
-                  <label class="fld">
-                    <span class="fld-lbl">Court</span>
-                    <input v-model="court" class="inp" placeholder="ex. Court Central" />
-                  </label>
-                  <label class="fld">
-                    <span class="fld-lbl">Heure prévue</span>
-                    <input v-model="scheduledTime" class="inp tab" type="time" />
-                  </label>
+                <label class="fld">
+                  <span class="fld-lbl">Journée</span>
+                  <select
+                    class="inp"
+                    :value="selectedPlayDayId ?? ''"
+                    :disabled="saving"
+                    @change="changePlayDay(($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
+                  >
+                    <option value="">À planifier</option>
+                    <option
+                      v-for="day in (eventStore.calendar?.playDays ?? [])"
+                      :key="day.id"
+                      :value="day.id"
+                    >
+                      {{ new Date(day.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+                    </option>
+                  </select>
+                </label>
+                <div class="fld">
+                  <span class="fld-lbl">Heure estimée</span>
+                  <span class="inp inp-ro">{{ match.scheduledTime ? '~' + match.scheduledTime : '—' }}</span>
                 </div>
                 <label class="fld">
                   <span class="fld-lbl">Statut</span>
@@ -581,6 +631,19 @@ async function save() {
   padding: 8px 6px;
   font-size: 16px;
   font-weight: 700;
+}
+
+.inp-ro {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-4);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  color: var(--ink-2);
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .tab { font-family: var(--font-mono); }
