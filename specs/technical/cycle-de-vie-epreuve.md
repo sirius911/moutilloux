@@ -307,7 +307,7 @@ toujours). À créer :
 
 ---
 
-## Impacts sur les specs existantes (à réconcilier)
+## Impacts sur les specs existantes (réconciliées)
 
 - **[[admin-poules]]** : le verrouillage n'est plus « dès qu'un match existe » mais
   « dès `status = EN_COURS` ». Le bandeau de verrouillage référence « Débuter ».
@@ -319,7 +319,11 @@ toujours). À créer :
   correction manuelle, au lieu d'un drag-drop d'amorce ; seeding à séparation
   maximale généralisé ; petite finale optionnelle.
 - **[[admin-tournoi]]** : la carte d'épreuve porte l'action « Débuter » (et
-  « Rouvrir »), et le badge d'avancement se dérive de `status`.
+  « Rouvrir »), le badge d'avancement se dérive de `status`, et la modale Épreuve
+  porte l'option « petite finale ».
+- **[[admin-inscriptions]]** : le retrait **sec** d'une inscription reste réservé à
+  la phase d'inscription ; une fois l'épreuve débutée, sortir un joueur passe par le
+  forfait / retrait en cours de jeu.
 
 ---
 

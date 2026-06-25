@@ -80,10 +80,11 @@ Les cinq états affichés ne sont **pas stockés** : ils se déduisent de
 | **En cours** | `LIVE` (un seul par édition — garanti par `mark_live()`, existant) |
 | **Terminé** | `FINISHED` |
 
-`CANCELED` (forfait / abandon) reste un état distinct, affiché comme tel, hors
-séquence. `is_featured` désigne le match à l'antenne TV : en règle générale le
-*next* ou le *live*, mais forçable manuellement (voir [[admin-matchs]], « mettre
-en avant »).
+`CANCELED` est l'**annulation sèche** (sans vainqueur), affichée comme telle, hors
+séquence. Le **forfait** en est distinct : c'est un **walkover** (`FINISHED` +
+`is_walkover`, **avec** vainqueur — voir [[cycle-de-vie-epreuve]]). `is_featured`
+désigne le match à l'antenne TV : en règle générale le *next* ou le *live*, mais
+forçable manuellement (voir [[admin-matchs]], « mettre en avant »).
 
 ---
 
@@ -161,7 +162,7 @@ toucher à ce qui est déjà placé :
 
 | Endpoint | Usage calendrier |
 |---|---|
-| `POST /api/events/<id>/matches/generate/` | génère le round-robin → matchs en **à planifier** (`SCHEDULED`, sans `order_index`). Verrouille les poules. |
+| `POST /api/events/<id>/matches/generate/` | génère le round-robin → matchs en **à planifier** (`SCHEDULED`, sans `order_index`). Désormais appelé par **« Débuter l'épreuve »** (qui verrouille les poules et passe l'épreuve `EN_COURS`, voir [[cycle-de-vie-epreuve]]) ; réutilisé tel quel pour l'ajout tardif (additif). |
 | `POST /api/events/<id>/matches/reorder/` | applique l'ordre complet de la séquence (drag) ; (ré)attribue `order_index`. |
 | `POST /api/matches/<id>/edit/` | édition fine (score correctif, format, statut, journée, mise en avant). |
 | `POST /api/matches/<id>/feature/` | passe le match à l'antenne (→ `LIVE`, `is_featured`). |
