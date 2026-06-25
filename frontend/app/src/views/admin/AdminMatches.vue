@@ -8,6 +8,11 @@ import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import GenerateMatchesModal from '@/components/modals/GenerateMatchesModal.vue'
 import type { Match, Break, CalendarDay } from '@/types'
 
+// ── Type union local ───────────────────────────────────────────────────────
+type DayItem =
+  | { kind: 'match'; data: Match }
+  | { kind: 'break'; data: Break }
+
 const eventStore = useEventStore()
 
 const editingMatch = ref<Match | null>(null)
@@ -27,37 +32,42 @@ watch(
 // ── État local DnD (miroir du store, muté par vuedraggable) ───────────────
 
 const dragging = ref(false)
-// Pile : groupée par poule (une entrée par groupe)
-const unscheduledByGroupDnd = ref<Record<string, Match[]>>({})
-// Journées : matchs ordonnés par playDayId
-const dayMatchesDnd = ref<Record<number, Match[]>>({})
-// Journées : pauses ordonnées par playDayId (miroir local pour DnD)
-const dayBreaksDnd = ref<Record<number, Break[]>>({})
+// Pile : groupée par poule (une entrée par groupe, wrappée en DayItem)
+const unscheduledByGroupDnd = ref<Record<string, DayItem[]>>({})
+// Journées : items unifiés (matchs + pauses) ordonnés par playDayId
+const dayItemsDnd = ref<Record<number, DayItem[]>>({})
 
 function syncFromStore() {
   if (dragging.value) return
   const cal = eventStore.calendar
   if (!cal) {
     unscheduledByGroupDnd.value = {}
-    dayMatchesDnd.value = {}
-    dayBreaksDnd.value = {}
+    dayItemsDnd.value = {}
     return
   }
-  const newGroups: Record<string, Match[]> = {}
+
+  // Pile
+  const newGroups: Record<string, DayItem[]> = {}
   for (const m of cal.unscheduled.filter((m) => m.eventId === eventStore.activeEventId)) {
     const g = groupName(m) || '?'
-    ;(newGroups[g] ??= []).push(m)
+    ;(newGroups[g] ??= []).push({ kind: 'match', data: m })
   }
   unscheduledByGroupDnd.value = newGroups
 
-  const days: Record<number, Match[]> = {}
-  const breaks: Record<number, Break[]> = {}
+  // Journées : merge + tri par orderIndex
+  const days: Record<number, DayItem[]> = {}
   for (const day of cal.playDays) {
-    days[day.id] = day.matches.filter((m) => m.eventId === eventStore.activeEventId)
-    breaks[day.id] = [...day.breaks].sort((a, b) => a.orderIndex - b.orderIndex)
+    const matchItems: DayItem[] = day.matches
+      .filter((m) => m.eventId === eventStore.activeEventId)
+      .map((m) => ({ kind: 'match', data: m }))
+    const breakItems: DayItem[] = day.breaks.map((b) => ({ kind: 'break', data: b }))
+    days[day.id] = [...matchItems, ...breakItems].sort((a, b) => {
+      const ao = a.kind === 'match' ? (a.data.orderIndex ?? 99999) : a.data.orderIndex
+      const bo = b.kind === 'match' ? (b.data.orderIndex ?? 99999) : b.data.orderIndex
+      return ao - bo
+    })
   }
-  dayMatchesDnd.value = days
-  dayBreaksDnd.value = breaks
+  dayItemsDnd.value = days
 }
 
 watch(() => eventStore.calendar, () => { if (!dragging.value) syncFromStore() }, { deep: true, immediate: true })
@@ -68,7 +78,9 @@ const calendarDays = computed<CalendarDay[]>(() => {
   if (!eventStore.calendar) return []
   return eventStore.calendar.playDays.map((day) => ({
     ...day,
-    matches: dayMatchesDnd.value[day.id] ?? [],
+    matches: (dayItemsDnd.value[day.id] ?? [])
+      .filter((i): i is { kind: 'match'; data: Match } => i.kind === 'match')
+      .map((i) => i.data),
   }))
 })
 
@@ -77,7 +89,9 @@ const unscheduledTotal = computed(() =>
 )
 
 const totalScheduledMatches = computed(() =>
-  Object.values(dayMatchesDnd.value).reduce((s, arr) => s + arr.length, 0),
+  Object.values(dayItemsDnd.value).reduce(
+    (s, items) => s + items.filter((i) => i.kind === 'match').length, 0,
+  ),
 )
 
 // ── Pauses ─────────────────────────────────────────────────────────────────
@@ -123,15 +137,21 @@ function playerLabel(match: Match, side: 'A' | 'B'): string {
 // Identifiant du seul match "Next" — lu depuis l'état DnD local.
 // Scope à la journée du match en cours quand un match est LIVE (spec planning §États dérivés).
 const nextMatchId = computed<number | null>(() => {
-  const allMatches = Object.values(dayMatchesDnd.value).flat()
+  const allMatchItems = Object.values(dayItemsDnd.value)
+    .flat()
+    .filter((i): i is { kind: 'match'; data: Match } => i.kind === 'match')
+  const allMatches = allMatchItems.map((i) => i.data)
   const liveMatch = allMatches.find((m) => m.status === 'LIVE')
 
   let candidates: Match[]
   if (liveMatch) {
-    const liveDayMatches =
-      Object.values(dayMatchesDnd.value).find((matches) =>
-        matches.some((m) => m.id === liveMatch.id),
+    const liveDayItems =
+      Object.values(dayItemsDnd.value).find((items) =>
+        items.some((i) => i.kind === 'match' && i.data.id === liveMatch.id),
       ) ?? []
+    const liveDayMatches = liveDayItems
+      .filter((i): i is { kind: 'match'; data: Match } => i.kind === 'match')
+      .map((i) => i.data)
     candidates = liveDayMatches.filter(
       (m) => m.status === 'SCHEDULED' && (m.orderIndex ?? -1) > (liveMatch.orderIndex ?? -1),
     )
@@ -150,7 +170,10 @@ const restWarnings = computed<Set<number>>(() => {
   const warnings = new Set<number>()
 
   for (const day of calendarDays.value) {
-    const seq = (dayMatchesDnd.value[day.id] ?? []).filter(m => m.status !== 'CANCELED')
+    const seq = (dayItemsDnd.value[day.id] ?? [])
+      .filter((item): item is { kind: 'match'; data: Match } =>
+        item.kind === 'match' && item.data.status !== 'CANCELED')
+      .map((item) => item.data)
 
     for (let i = 0; i < seq.length; i++) {
       const curr = seq[i]
@@ -158,7 +181,7 @@ const restWarnings = computed<Set<number>>(() => {
       if (curr.sideA?.player?.id != null) currIds.add(curr.sideA.player.id)
       if (curr.sideB?.player?.id != null) currIds.add(curr.sideB.player.id)
 
-      const sharesPlayer = (other: typeof seq[0]): boolean => {
+      const sharesPlayer = (other: Match): boolean => {
         if (other.sideA?.player?.id != null && currIds.has(other.sideA.player.id)) return true
         if (other.sideB?.player?.id != null && currIds.has(other.sideB.player.id)) return true
         return false
@@ -207,6 +230,7 @@ function isoToMin(iso: string): number {
 // ── Moteur ETA frontal ─────────────────────────────────────────────────────
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
+// Les pauses obtiennent leur ETA à leur position réelle dans la séquence unifiée.
 const computedETAs = computed<Map<string, string>>(() => {
   const result = new Map<string, string>()
   const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
@@ -214,22 +238,12 @@ const computedETAs = computed<Map<string, string>>(() => {
   const nowMin = now.getHours() * 60 + now.getMinutes()
 
   for (const day of calendarDays.value) {
-    const dayMatches = dayMatchesDnd.value[day.id] ?? []
-    const dayBreaks = dayBreaksDnd.value[day.id] ?? []
-    type Item =
-      | { kind: 'match'; m: typeof dayMatches[0]; idx: number }
-      | { kind: 'break'; b: typeof dayBreaks[0]; idx: number }
-    const items: Item[] = [
-      ...dayMatches.map((m, i) => ({ kind: 'match' as const, m, idx: m.orderIndex ?? (99000 + i) })),
-      ...dayBreaks.map((b, i) => ({ kind: 'break' as const, b, idx: 99500 + i })),
-    ]
-    items.sort((a, b) => a.idx - b.idx)
-
+    const items = dayItemsDnd.value[day.id] ?? []
     let cursor = timeToMin(day.startTime)
 
     for (const item of items) {
       if (item.kind === 'match') {
-        const m = item.m
+        const m = item.data
         if (m.status === 'FINISHED' && m.finishedAt) {
           const ft = isoToMin(m.finishedAt)
           result.set(`m-${m.id}`, minToTime(ft))
@@ -243,8 +257,8 @@ const computedETAs = computed<Map<string, string>>(() => {
           cursor += dur
         }
       } else {
-        result.set(`b-${item.b.id}`, `~${minToTime(cursor)}`)
-        cursor += item.b.durationMin
+        result.set(`b-${item.data.id}`, `~${minToTime(cursor)}`)
+        cursor += item.data.durationMin
       }
     }
 
@@ -304,8 +318,11 @@ function onDragStart() {
   dragging.value = true
 }
 
-function checkMove(evt: { draggedContext: { element: Match } }): boolean {
-  return evt.draggedContext.element.status !== 'LIVE'
+function checkMove(evt: { draggedContext: { element: DayItem }; to: Element }): boolean {
+  const el = evt.draggedContext.element
+  if (el.kind === 'match' && el.data.status === 'LIVE') return false
+  if (el.kind === 'break' && evt.to.classList.contains('pile-draggable')) return false
+  return true
 }
 
 function buildReorderPayload(): CalendarReorderPayload {
@@ -313,10 +330,11 @@ function buildReorderPayload(): CalendarReorderPayload {
   return {
     playDays: playDays.map((day) => ({
       playDayId: day.id,
-      items: [
-        ...(dayMatchesDnd.value[day.id] ?? []).map((m) => ({ type: 'match' as const, id: m.id })),
-        ...(dayBreaksDnd.value[day.id] ?? []).map((b) => ({ type: 'break' as const, id: b.id })),
-      ],
+      items: (dayItemsDnd.value[day.id] ?? []).map((item) =>
+        item.kind === 'match'
+          ? { type: 'match' as const, id: item.data.id }
+          : { type: 'break' as const, id: item.data.id },
+      ),
     })),
   }
 }
@@ -414,17 +432,18 @@ async function onDragEnd() {
             <div class="pile-group-hd">Poule {{ g }}</div>
             <draggable
               v-model="unscheduledByGroupDnd[g]"
-              item-key="id"
+              class="pile-draggable"
+              :item-key="(item: DayItem) => item.kind + '-' + item.data.id"
               :group="{ name: 'matches', pull: true, put: true }"
               :move="checkMove"
               @start="onDragStart"
               @end="onDragEnd"
             >
-              <template #item="{ element: m }">
-                <div class="pile-card" @click="editingMatch = m">
+              <template #item="{ element }">
+                <div class="pile-card" @click="editingMatch = element.data as Match">
                   <span class="poule-pill">{{ g }}</span>
                   <span class="pile-card-players">
-                    {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
+                    {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
                   </span>
                   <span class="drag-handle">⋮⋮</span>
                 </div>
@@ -450,7 +469,7 @@ async function onDragEnd() {
           <header class="pd-header">
             <div class="pd-header-left">
               <span class="pd-date">{{ formatDate(day.date) }}</span>
-              <span class="pd-match-count">{{ (dayMatchesDnd[day.id] ?? []).length }} match{{ (dayMatchesDnd[day.id] ?? []).length !== 1 ? 's' : '' }}</span>
+              <span class="pd-match-count">{{ day.matches.length }} match{{ day.matches.length !== 1 ? 's' : '' }}</span>
             </div>
             <div class="pd-header-right">
               <span class="pd-times">
@@ -468,94 +487,81 @@ async function onDragEnd() {
             </div>
           </header>
 
-          <!-- Lignes matchs (draggables ↔ pile) -->
+          <!-- Lignes matchs + pauses (liste unifiée DnD ↔ pile) -->
           <div class="pd-rows">
             <div
-              v-if="(dayMatchesDnd[day.id] ?? []).length === 0 && (dayBreaksDnd[day.id] ?? []).length === 0"
+              v-if="(dayItemsDnd[day.id] ?? []).length === 0"
               class="pd-empty"
             >Aucun match pour cette journée.</div>
-            <template v-else>
-              <draggable
-                v-model="dayMatchesDnd[day.id]"
-                item-key="id"
-                :group="{ name: 'matches', pull: true, put: true }"
-                :move="checkMove"
-                ghost-class="cal-row--ghost"
-                drag-class="cal-row--dragging"
-                @start="onDragStart"
-                @end="onDragEnd"
-              >
-                <template #item="{ element: m }">
-                  <div
-                    class="cal-row"
-                    :class="[`state--${displayState(m)}`, { 'no-drag': m.status === 'LIVE' }]"
-                    role="button"
-                    tabindex="0"
-                    @click="editingMatch = m"
-                    @keydown.enter="editingMatch = m"
-                  >
-                    <span class="cal-time">
-                      {{ computedETAs.get(`m-${m.id}`) ?? '—' }}
-                    </span>
+            <draggable
+              v-else
+              v-model="dayItemsDnd[day.id]"
+              :item-key="(item: DayItem) => item.kind + '-' + item.data.id"
+              :group="{ name: 'matches', pull: true, put: true }"
+              :move="checkMove"
+              ghost-class="cal-row--ghost"
+              drag-class="cal-row--dragging"
+              @start="onDragStart"
+              @end="onDragEnd"
+            >
+              <template #item="{ element }">
+                <!-- Ligne match -->
+                <div
+                  v-if="element.kind === 'match'"
+                  class="cal-row"
+                  :class="[`state--${displayState(element.data as Match)}`, { 'no-drag': (element.data as Match).status === 'LIVE' }]"
+                  role="button"
+                  tabindex="0"
+                  @click="editingMatch = element.data as Match"
+                  @keydown.enter="editingMatch = element.data as Match"
+                >
+                  <span class="cal-time">
+                    {{ computedETAs.get(`m-${element.data.id}`) ?? '—' }}
+                  </span>
+                  <span
+                    class="cal-dot"
+                    :class="`dot--${displayState(element.data as Match)}`"
+                    :title="stateLabel(displayState(element.data as Match))"
+                  />
+                  <span class="poule-pill">{{ groupName(element.data as Match) || (element.data as Match).stageLabel }}</span>
+                  <span class="cal-players">
+                    {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
+                  </span>
+                  <span class="cal-badges">
                     <span
-                      class="cal-dot"
-                      :class="`dot--${displayState(m)}`"
-                      :title="stateLabel(displayState(m))"
-                    />
-                    <span class="poule-pill">{{ groupName(m) || m.stageLabel }}</span>
-                    <span class="cal-players">
-                      {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
-                    </span>
-                    <span class="cal-badges">
-                      <span
-                        v-if="restWarnings.has(m.id)"
-                        class="rest-warning"
-                        title="Repos insuffisant — ce joueur joue deux matchs consécutifs"
-                      >⚠</span>
-                      <span
-                        v-if="m.isFeatured"
-                        class="featured-badge"
-                        title="Match mis en avant sur la TV"
-                      >★ EN AVANT</span>
-                    </span>
+                      v-if="restWarnings.has(element.data.id)"
+                      class="rest-warning"
+                      title="Repos insuffisant — ce joueur joue deux matchs consécutifs"
+                    >⚠</span>
                     <span
-                      class="drag-handle"
-                      :class="{ 'drag-handle--locked': m.status === 'LIVE' }"
-                    >⋮⋮</span>
-                  </div>
-                </template>
-              </draggable>
-
-              <!-- Pauses draggables (séparées des matchs, reordonnables entre elles) -->
-              <draggable
-                v-if="(dayBreaksDnd[day.id] ?? []).length > 0"
-                v-model="dayBreaksDnd[day.id]"
-                item-key="id"
-                :group="{ name: 'breaks-' + day.id, pull: false, put: false }"
-                ghost-class="cal-row--ghost"
-                drag-class="cal-row--dragging"
-                @start="onDragStart"
-                @end="onDragEnd"
-              >
-                <template #item="{ element: brk }">
-                  <div class="cal-row cal-row--break">
-                    <span class="cal-time">{{ computedETAs.get(`b-${brk.id}`) ?? '—' }}</span>
-                    <span class="break-icon">⏸</span>
-                    <span class="break-label">
-                      {{ brk.label || 'Pause' }} · {{ brk.durationMin }} min
-                    </span>
-                    <button
-                      class="break-delete-btn"
-                      type="button"
-                      :disabled="deletingBreak[brk.id]"
-                      :title="deletingBreak[brk.id] ? 'Suppression…' : 'Supprimer la pause'"
-                      @click.stop="deletePause(brk.id)"
-                    >×</button>
-                    <span class="drag-handle">⋮⋮</span>
-                  </div>
-                </template>
-              </draggable>
-            </template>
+                      v-if="(element.data as Match).isFeatured"
+                      class="featured-badge"
+                      title="Match mis en avant sur la TV"
+                    >★ EN AVANT</span>
+                  </span>
+                  <span
+                    class="drag-handle"
+                    :class="{ 'drag-handle--locked': (element.data as Match).status === 'LIVE' }"
+                  >⋮⋮</span>
+                </div>
+                <!-- Ligne pause -->
+                <div v-else class="cal-row cal-row--break">
+                  <span class="cal-time">{{ computedETAs.get(`b-${element.data.id}`) ?? '—' }}</span>
+                  <span class="break-icon">⏸</span>
+                  <span class="break-label">
+                    {{ (element.data as Break).label || 'Pause' }} · {{ (element.data as Break).durationMin }} min
+                  </span>
+                  <button
+                    class="break-delete-btn"
+                    type="button"
+                    :disabled="deletingBreak[element.data.id]"
+                    :title="deletingBreak[element.data.id] ? 'Suppression…' : 'Supprimer la pause'"
+                    @click.stop="deletePause(element.data.id)"
+                  >×</button>
+                  <span class="drag-handle">⋮⋮</span>
+                </div>
+              </template>
+            </draggable>
           </div>
 
           <!-- Action pause -->

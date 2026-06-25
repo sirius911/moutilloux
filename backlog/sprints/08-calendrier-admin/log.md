@@ -9,3 +9,4 @@
 | 5 | 2026-06-25 | ⚠️ | 4 (API bug #107, menu #108 — déjà trackés ; GenerateMatchesModal → #109, nextMatchId scope → #110 — nouveaux) | 2 | 5 |
 | 6 | 2026-06-25 | ⚠️ | 1 (court absent onglet Planning EditMatchPanel → #112 — nouveau) | 1 | 5 |
 | 7 | 2026-06-25 | ⚠️ | 3 (tous trackés : #110, #111, #112) | 0 | 1 |
+| 8 | 2026-06-26 | ⚠️ | 2 (admin-matchs : pauses non entrelacées + ETA fixes — tous trackés dans #111) | 0 | 1 |
