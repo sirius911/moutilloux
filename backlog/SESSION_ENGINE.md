@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #19
+**Dernière session :** 2026-06-25 — Session #20
 **Sprint actif :** 08 — Calendrier : écran admin
 **Roadmap :** Sprint 08 en cours — 1 issue ouverte (#98)
-**Tickets clôturés cette session :** 2 (#96 ✅ #97 ✅)
+**Tickets clôturés cette session :** 2 (#105 ✅ #106 ✅)
 **Branche :** `claude/sprint/08-calendrier-admin`
 **Issues restantes :** 1
-**Contexte :** Session 19 — Moteur ETA frontal (#96 : computedETAs, re-flow LIVE/FINISHED, pauses, alerte capacité). Détection repos insuffisant (#97 : restWarnings, badge ⚠ dans cal-badges, légende). Restant : pauses CRUD + déplaçables (#98).
+**Contexte :** Session 20 — Spec review : 2 nouvelles dérives trouvées et corrigées. Format tab lock when LIVE (#105 : fieldset disabled + bannière). Confirmation avant mise en avant (#106 : window.confirm avec message spec). Restant : pauses CRUD + draggable (#98).
