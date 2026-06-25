@@ -211,3 +211,9 @@ export interface CalendarData {
   playDays: CalendarDay[]
   unscheduled: Match[]      // SCHEDULED, GROUP, sans order_index
 }
+
+export interface TvUpcoming {
+  next: Match | null
+  upcoming: Match[]
+  currentPlayDay: PlayDay | null
+}
