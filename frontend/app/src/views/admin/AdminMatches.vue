@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import draggable from 'vuedraggable'
 import { useEventStore } from '@/stores/event'
+import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import GenerateMatchesModal from '@/components/modals/GenerateMatchesModal.vue'
@@ -22,35 +24,54 @@ watch(
   () => eventStore.fetchCalendar(),
 )
 
-// ── Données filtrées par épreuve active ────────────────────────────────────
+// ── État local DnD (miroir du store, muté par vuedraggable) ───────────────
+
+const dragging = ref(false)
+// Pile : groupée par poule (une entrée par groupe)
+const unscheduledByGroupDnd = ref<Record<string, Match[]>>({})
+// Journées : matchs ordonnés par playDayId
+const dayMatchesDnd = ref<Record<number, Match[]>>({})
+
+function syncFromStore() {
+  if (dragging.value) return
+  const cal = eventStore.calendar
+  if (!cal) {
+    unscheduledByGroupDnd.value = {}
+    dayMatchesDnd.value = {}
+    return
+  }
+  const newGroups: Record<string, Match[]> = {}
+  for (const m of cal.unscheduled.filter((m) => m.eventId === eventStore.activeEventId)) {
+    const g = groupName(m) || '?'
+    ;(newGroups[g] ??= []).push(m)
+  }
+  unscheduledByGroupDnd.value = newGroups
+
+  const days: Record<number, Match[]> = {}
+  for (const day of cal.playDays) {
+    days[day.id] = day.matches.filter((m) => m.eventId === eventStore.activeEventId)
+  }
+  dayMatchesDnd.value = days
+}
+
+watch(() => eventStore.calendar, () => { if (!dragging.value) syncFromStore() }, { deep: true, immediate: true })
+
+// ── Données de structure (journées depuis le store, matchs depuis DnD local) ─
 
 const calendarDays = computed<CalendarDay[]>(() => {
   if (!eventStore.calendar) return []
   return eventStore.calendar.playDays.map((day) => ({
     ...day,
-    matches: day.matches.filter((m) => m.eventId === eventStore.activeEventId),
+    matches: dayMatchesDnd.value[day.id] ?? [],
   }))
 })
 
-const unscheduledByGroup = computed<Record<string, Match[]>>(() => {
-  const pile = (eventStore.calendar?.unscheduled ?? []).filter(
-    (m) => m.eventId === eventStore.activeEventId,
-  )
-  const groups: Record<string, Match[]> = {}
-  for (const m of pile) {
-    const g = groupName(m) || '?'
-    if (!groups[g]) groups[g] = []
-    groups[g].push(m)
-  }
-  return groups
-})
-
 const unscheduledTotal = computed(() =>
-  Object.values(unscheduledByGroup.value).reduce((s, arr) => s + arr.length, 0),
+  Object.values(unscheduledByGroupDnd.value).reduce((s, arr) => s + arr.length, 0),
 )
 
 const totalScheduledMatches = computed(() =>
-  calendarDays.value.reduce((s, d) => s + d.matches.length, 0),
+  Object.values(dayMatchesDnd.value).reduce((s, arr) => s + arr.length, 0),
 )
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -65,10 +86,9 @@ function playerLabel(match: Match, side: 'A' | 'B'): string {
   return match.sideB?.player?.fullName ?? match.sideBLabel ?? 'TBD'
 }
 
-// Identifiant du seul match "Next" pour toute l'édition — calculé globalement
-// pour éviter d'attribuer le badge "Next" au premier planifié de chaque journée.
+// Identifiant du seul match "Next" — lu depuis l'état DnD local
 const nextMatchId = computed<number | null>(() => {
-  const allMatches: Match[] = calendarDays.value.flatMap((d) => d.matches)
+  const allMatches = Object.values(dayMatchesDnd.value).flat()
   const liveMatch = allMatches.find((m) => m.status === 'LIVE')
   const pivotIndex = liveMatch?.orderIndex ?? -Infinity
   const candidates = allMatches
@@ -144,6 +164,55 @@ function onMatchSaved() {
   editingMatch.value = null
   eventStore.fetchCalendar()
 }
+
+// ── Drag-and-drop ──────────────────────────────────────────────────────────
+
+// Guard contre le double @end lors des drags inter-listes (SortableJS peut
+// émettre end sur source ET destination pour un même glissement).
+let reorderPending = false
+
+function onDragStart() {
+  dragging.value = true
+}
+
+function checkMove(evt: { draggedContext: { element: Match } }): boolean {
+  return evt.draggedContext.element.status !== 'LIVE'
+}
+
+function buildReorderPayload(): CalendarReorderPayload {
+  const playDays = eventStore.calendar?.playDays ?? []
+  return {
+    playDays: playDays.map((day) => ({
+      playDayId: day.id,
+      items: [
+        ...(dayMatchesDnd.value[day.id] ?? []).map((m) => ({ type: 'match' as const, id: m.id })),
+        ...day.breaks.map((b) => ({ type: 'break' as const, id: b.id })),
+      ],
+    })),
+  }
+}
+
+async function onDragEnd() {
+  if (reorderPending) return
+  reorderPending = true
+  const editionId = eventStore.activeEdition?.id
+  if (!editionId || !eventStore.calendar) {
+    dragging.value = false
+    reorderPending = false
+    return
+  }
+  bannerError.value = ''
+  try {
+    await eventStore.reorderCalendar(editionId, buildReorderPayload())
+  } catch (e) {
+    bannerError.value = e instanceof Error ? e.message : 'Erreur lors du réordonnancement.'
+    await eventStore.fetchCalendar()
+  } finally {
+    dragging.value = false
+    reorderPending = false
+    syncFromStore()
+  }
+}
 </script>
 
 <template>
@@ -212,20 +281,26 @@ function onMatchSaved() {
           Tout est planifié
         </div>
         <template v-else>
-          <template v-for="g in Object.keys(unscheduledByGroup).sort()" :key="g">
+          <template v-for="g in Object.keys(unscheduledByGroupDnd).sort()" :key="g">
             <div class="pile-group-hd">Poule {{ g }}</div>
-            <div
-              v-for="m in unscheduledByGroup[g]"
-              :key="m.id"
-              class="pile-card"
-              @click="editingMatch = m"
+            <draggable
+              v-model="unscheduledByGroupDnd[g]"
+              item-key="id"
+              :group="{ name: 'matches', pull: true, put: true }"
+              :move="checkMove"
+              @start="onDragStart"
+              @end="onDragEnd"
             >
-              <span class="poule-pill">{{ g }}</span>
-              <span class="pile-card-players">
-                {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
-              </span>
-              <span class="drag-handle" title="Déplacer (bientôt disponible)">⋮⋮</span>
-            </div>
+              <template #item="{ element: m }">
+                <div class="pile-card" @click="editingMatch = m">
+                  <span class="poule-pill">{{ g }}</span>
+                  <span class="pile-card-players">
+                    {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
+                  </span>
+                  <span class="drag-handle">⋮⋮</span>
+                </div>
+              </template>
+            </draggable>
           </template>
         </template>
       </aside>
@@ -264,59 +339,69 @@ function onMatchSaved() {
             </div>
           </header>
 
-          <!-- Lignes (matchs + pauses mélangés par orderIndex) -->
+          <!-- Lignes (matchs draggables + pauses statiques) -->
           <div class="pd-rows">
-            <template v-if="day.matches.length === 0 && day.breaks.length === 0">
+            <template v-if="(dayMatchesDnd[day.id] ?? []).length === 0 && day.breaks.length === 0">
               <div class="pd-empty">Aucun match pour cette journée.</div>
             </template>
             <template v-else>
-              <!--
-                Mélange matchs + pauses triés par orderIndex.
-                Les pauses ont leur propre orderIndex ; les matchs aussi.
-                Pour #94, on les affiche séparément (pas encore de tri croisé).
-              -->
-              <div
-                v-for="m in day.matches"
-                :key="`m-${m.id}`"
-                class="cal-row"
-                :class="`state--${displayState(m)}`"
-                role="button"
-                tabindex="0"
-                @click="editingMatch = m"
-                @keydown.enter="editingMatch = m"
+              <draggable
+                v-model="dayMatchesDnd[day.id]"
+                item-key="id"
+                :group="{ name: 'matches', pull: true, put: true }"
+                :move="checkMove"
+                ghost-class="cal-row--ghost"
+                drag-class="cal-row--dragging"
+                @start="onDragStart"
+                @end="onDragEnd"
               >
-                <span class="cal-time">
-                  {{ m.status === 'FINISHED' && m.startedAt ? '' : '~' }}{{ m.scheduledTime ?? '—' }}
-                </span>
-                <span
-                  class="cal-dot"
-                  :class="`dot--${displayState(m)}`"
-                  :title="stateLabel(displayState(m))"
-                />
-                <span class="poule-pill">{{ groupName(m) || m.stageLabel }}</span>
-                <span class="cal-players">
-                  {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
-                </span>
-                <span
-                  v-if="m.isFeatured"
-                  class="featured-badge"
-                  title="Match mis en avant sur la TV"
-                >★ EN AVANT</span>
-                <span class="drag-handle" title="Déplacer (bientôt disponible)">⋮⋮</span>
-              </div>
-
-              <div
-                v-for="brk in day.breaks"
-                :key="`b-${brk.id}`"
-                class="cal-row cal-row--break"
-              >
-                <span class="cal-time">—</span>
-                <span class="break-icon">⏸</span>
-                <span class="break-label">
-                  {{ brk.label || 'Pause' }} · {{ brk.durationMin }} min
-                </span>
-                <span class="drag-handle">⋮⋮</span>
-              </div>
+                <template #item="{ element: m }">
+                  <div
+                    class="cal-row"
+                    :class="[`state--${displayState(m)}`, { 'no-drag': m.status === 'LIVE' }]"
+                    role="button"
+                    tabindex="0"
+                    @click="editingMatch = m"
+                    @keydown.enter="editingMatch = m"
+                  >
+                    <span class="cal-time">
+                      {{ m.status === 'FINISHED' && m.startedAt ? '' : '~' }}{{ m.scheduledTime ?? '—' }}
+                    </span>
+                    <span
+                      class="cal-dot"
+                      :class="`dot--${displayState(m)}`"
+                      :title="stateLabel(displayState(m))"
+                    />
+                    <span class="poule-pill">{{ groupName(m) || m.stageLabel }}</span>
+                    <span class="cal-players">
+                      {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
+                    </span>
+                    <span
+                      v-if="m.isFeatured"
+                      class="featured-badge"
+                      title="Match mis en avant sur la TV"
+                    >★ EN AVANT</span>
+                    <span
+                      class="drag-handle"
+                      :class="{ 'drag-handle--locked': m.status === 'LIVE' }"
+                    >⋮⋮</span>
+                  </div>
+                </template>
+                <template #footer>
+                  <div
+                    v-for="brk in day.breaks"
+                    :key="`b-${brk.id}`"
+                    class="cal-row cal-row--break"
+                  >
+                    <span class="cal-time">—</span>
+                    <span class="break-icon">⏸</span>
+                    <span class="break-label">
+                      {{ brk.label || 'Pause' }} · {{ brk.durationMin }} min
+                    </span>
+                    <span class="drag-handle drag-handle--locked">⋮⋮</span>
+                  </div>
+                </template>
+              </draggable>
             </template>
           </div>
 
@@ -483,6 +568,7 @@ function onMatchSaved() {
 }
 
 .pile-card:hover { background: var(--bg-4); }
+.pile-card--ghost { opacity: 0.35; background: var(--accent-soft); }
 
 .pile-card-players {
   flex: 1;
@@ -686,6 +772,15 @@ function onMatchSaved() {
   user-select: none;
   flex-shrink: 0;
 }
+
+.drag-handle--locked {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+/* États DnD */
+.cal-row--ghost { opacity: 0.35; background: var(--accent-soft); }
+.cal-row--dragging { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
 /* Break */
 .break-icon { font-size: 14px; color: var(--ink-3); }
