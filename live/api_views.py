@@ -293,6 +293,7 @@ def _pack_edition(edition):
         "distinctPlayersCount": len(player_ids),
         "matchesFinished": matches_finished,
         "matchesTotal": matches_total,
+        "defaultMatchDurationMin": edition.default_match_duration_min,
     }
 
 
@@ -1237,7 +1238,7 @@ def api_edition_create(request):
 @superuser_required
 @transaction.atomic
 def api_edition_edit(request, edition_id):
-    """POST /api/editions/<id>/edit/ — {name?, year?, start_dt?, end_dt?} (édition partielle)."""
+    """POST /api/editions/<id>/edit/ — {name?, year?, start_dt?, end_dt?, default_match_duration_min?} (édition partielle)."""
     data, err = _json_body(request)
     if err:
         return err
@@ -1247,6 +1248,12 @@ def api_edition_edit(request, edition_id):
         kwargs["name"] = data["name"]
     if "year" in data:
         kwargs["year"] = data["year"]
+    if "default_match_duration_min" in data:
+        val = data["default_match_duration_min"]
+        try:
+            kwargs["default_match_duration_min"] = max(1, int(val))
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "default_match_duration_min doit être un entier positif"}, status=400)
     try:
         if "start_dt" in data:
             kwargs["start_dt"] = _parse_edition_dt(data["start_dt"], "Date de début")

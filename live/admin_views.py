@@ -1509,7 +1509,7 @@ def create_edition(name, year, start_dt=None, end_dt=None, activate=False):
     return edition
 
 
-def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, end_dt=_NOCHANGE):
+def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, end_dt=_NOCHANGE, **kwargs):
     """Édition partielle : seuls les champs fournis (≠ _NOCHANGE) sont touchés."""
     if name is not _NOCHANGE:
         name = (name or "").strip()
@@ -1525,6 +1525,8 @@ def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, 
         edition.start_dt = start_dt or None
     if end_dt is not _NOCHANGE:
         edition.end_dt = end_dt or None
+    if "default_match_duration_min" in kwargs:
+        edition.default_match_duration_min = kwargs["default_match_duration_min"]
     edition.save()
     return edition
 
@@ -1821,7 +1823,7 @@ def _entry_ids(match):
     return ids
 
 
-def auto_arrange_matches(edition, default_duration_min=27):
+def auto_arrange_matches(edition, default_duration_min=None):
     """
     Range automatiquement les matchs « à planifier » (SCHEDULED, order_index=None,
     stage=GROUP) sur les journées de l'édition, sans toucher aux matchs déjà placés.
@@ -1833,6 +1835,8 @@ def auto_arrange_matches(edition, default_duration_min=27):
 
     Retourne le nombre de matchs placés.
     """
+    if default_duration_min is None:
+        default_duration_min = edition.default_match_duration_min
     play_days = list(
         PlayDay.objects.filter(edition=edition)
         .prefetch_related("breaks")
