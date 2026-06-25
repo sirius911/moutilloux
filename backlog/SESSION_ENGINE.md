@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #18
+**Dernière session :** 2026-06-25 — Session #19
 **Sprint actif :** 08 — Calendrier : écran admin
-**Roadmap :** Sprint 08 en cours — 3 issues ouvertes (#96 #97 #98)
-**Tickets clôturés cette session :** 2 (#99 ⚠️ #95 ⚠️)
+**Roadmap :** Sprint 08 en cours — 1 issue ouverte (#98)
+**Tickets clôturés cette session :** 2 (#96 ✅ #97 ✅)
 **Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 3
-**Contexte :** Session 18 — EditMatchPanel onglet Planning revu (#99 : sélecteur journée via reorderCalendar, heure estimée en lecture seule, court retiré). DnD vuedraggable opérationnel (#95 : pile → journée, réordonnancement, dé-planification, match LIVE non draggable, guard double @end). Restant : moteur ETA frontal (#96), détection repos ⚠ (#97), pauses (#98).
+**Issues restantes :** 1
+**Contexte :** Session 19 — Moteur ETA frontal (#96 : computedETAs, re-flow LIVE/FINISHED, pauses, alerte capacité). Détection repos insuffisant (#97 : restWarnings, badge ⚠ dans cal-badges, légende). Restant : pauses CRUD + déplaçables (#98).
