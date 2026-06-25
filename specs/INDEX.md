@@ -51,6 +51,7 @@ flux utilisateur, redirections, gestion des erreurs.
 | admin/poules | [screens/admin-poules.md](./screens/admin-poules.md) | ✅ Actif |
 | admin/matchs | [screens/admin-matchs.md](./screens/admin-matchs.md) | ✅ Actif |
 | admin/tableau-final | [screens/admin-tableau-final.md](./screens/admin-tableau-final.md) | ✅ Actif |
+| tv/programme | [screens/tv-programme.md](./screens/tv-programme.md) | ✅ Actif |
 
 > L'écran Configuration a été supprimé (décisions 11-12 du journal de
 > [admin-panel-map](./admin-panel-map.md)) : catégories créées inline dans la
@@ -76,7 +77,8 @@ Décrivent les modèles de données, contrats d'API, structures de stores.
 
 | Module | Fichier | Statut |
 |--------|---------|--------|
-| — | — | À créer |
+| planning | [technical/planning.md](./technical/planning.md) | ✅ Actif |
+| routing | [technical/routing-context.md](./technical/routing-context.md) | ✅ Actif |
 
 *Exemples à prévoir : match (structure `_pack_match`), event/edition, entry.*
 

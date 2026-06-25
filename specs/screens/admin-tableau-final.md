@@ -13,7 +13,7 @@ fichiers:
 
 ## Rôle de l'écran
 
-L'écran Tableau final (`/admin/bracket`) crée le tableau de phase finale de
+L'écran Tableau final (`/admin/events/:eventId/bracket`) crée le tableau de phase finale de
 l'**épreuve active**, le peuple depuis les qualifiés des poules (glisser-
 déposer), pose les étiquettes de provenance des places, et suit la progression
 automatique des gagnants jusqu'à la finale.
@@ -25,7 +25,9 @@ automatique des gagnants jusqu'à la finale.
 ### En-tête de page
 
 - **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
-  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+  en lieu et place du fil d'ariane. Le **choix d'épreuve navigue** vers
+  `/admin/events/:eventId/…` (`router.push`) ; l'URL fait foi et survit au
+  rechargement (voir [[routing-context]]).
 - Titre « Tableau final », sous-titre « Glissez les qualifiés dans les slots du bracket ».
 - Quand un tableau existe : action secondaire **« Recréer le tableau »**.
 
@@ -120,6 +122,10 @@ automatique des gagnants jusqu'à la finale.
 
 ## Données
 
+- L'**épreuve active** vient du segment d'URL `:eventId`
+  (`/admin/events/:eventId/bracket`) : l'URL fait foi, le store la reflète, et un
+  `:eventId` absent ou périmé est rattrapé par la garde de route (voir
+  [[routing-context]]). Recharger conserve l'épreuve.
 - Bracket, poules et inscrits chargés au montage et au changement d'épreuve,
   rechargés après chaque mutation. L'écran se rafraîchit périodiquement (de
   l'ordre de quelques secondes) pour suivre la progression pendant la phase

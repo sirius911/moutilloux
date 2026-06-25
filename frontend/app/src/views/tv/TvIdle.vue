@@ -7,8 +7,9 @@ const live = useLiveStore()
 const eventStore = useEventStore()
 
 const slide = ref(0)
-const SLIDES = ['hero', 'results', 'groups', 'bracket'] as const
+const SLIDES = ['hero', 'results', 'groups', 'bracket', 'programme'] as const
 let timer: ReturnType<typeof setInterval> | null = null
+let upcomingTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
   eventStore.fetchEditions()
@@ -17,13 +18,18 @@ onMounted(() => {
     eventStore.fetchGroups(eventStore.activeEventId)
     eventStore.fetchBracket(eventStore.activeEventId)
   }
+  live.fetchUpcoming(5)
   timer = setInterval(() => {
     slide.value = (slide.value + 1) % SLIDES.length
   }, 6000)
+  upcomingTimer = setInterval(() => {
+    live.fetchUpcoming(5)
+  }, 4000)
 })
 
 onUnmounted(() => {
   if (timer) clearInterval(timer)
+  if (upcomingTimer) clearInterval(upcomingTimer)
 })
 
 const recentFinished = computed(() =>
@@ -226,6 +232,35 @@ function nextPlayerName(side: 'A' | 'B'): string {
             </div>
           </div>
           <div v-else class="tv-empty">Tableau final non disponible</div>
+        </div>
+      </section>
+
+      <!-- Slide 4 : Programme -->
+      <section :class="['tv-slide', { on: slide === 4 }]">
+        <div class="tv-rotate">
+          <h2 class="tv-rotate-title">PROCHAINS MATCHS</h2>
+          <div class="tv-programme">
+            <div v-if="live.upcoming.length === 0" class="tv-empty">
+              Aucun match programmé
+            </div>
+            <div
+              v-for="(m, i) in live.upcoming"
+              :key="m.id"
+              :class="['tv-prog-row', { bientot: i === 0 }]"
+            >
+              <span class="tv-prog-time tab">~{{ m.scheduledTime ?? '—' }}</span>
+              <div class="tv-prog-match">
+                <span class="tv-prog-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? '?' }}</span>
+                <em class="tv-prog-vs">vs</em>
+                <span class="tv-prog-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? '?' }}</span>
+              </div>
+              <span class="tv-prog-group">{{ m.stageLabel }}</span>
+              <span v-if="i === 0" class="tv-prog-bientot">bientôt</span>
+            </div>
+          </div>
+          <p class="tv-prog-disclaimer">
+            Horaires estimés — susceptibles de bouger
+          </p>
         </div>
       </section>
     </main>
@@ -763,5 +798,86 @@ function nextPlayerName(side: 'A' | 'B'): string {
   font-size: 16px;
   text-align: center;
   padding: 40px 0;
+}
+
+/* Slide Programme */
+.tv-programme {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tv-prog-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  padding: 14px 20px;
+  transition: border-color 300ms;
+}
+
+.tv-prog-row.bientot {
+  border-color: var(--accent-soft);
+  background: linear-gradient(90deg, rgba(255,200,61,0.08), transparent);
+}
+
+.tv-prog-time {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 90px;
+}
+
+.tv-prog-match {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tv-prog-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.tv-prog-vs {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.tv-prog-group {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  min-width: 160px;
+  text-align: right;
+}
+
+.tv-prog-bientot {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: #000;
+  padding: 3px 8px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+.tv-prog-disclaimer {
+  margin: 16px 0 0;
+  font-size: 12px;
+  color: var(--ink-4);
+  font-style: italic;
+  text-align: center;
 }
 </style>

@@ -14,7 +14,7 @@ fichiers:
 
 ## Rôle de l'écran
 
-L'écran Poules (`/admin/groups`) compose les poules de l'**épreuve active** :
+L'écran Poules (`/admin/events/:eventId/groups`) compose les poules de l'**épreuve active** :
 répartition automatique des inscrits, ajustements manuels par glisser-déposer.
 La composition est libre **jusqu'à la génération des matchs de poule** ; elle est
 ensuite verrouillée.
@@ -29,7 +29,9 @@ l'écran Matchs (voir [[admin-matchs]]).
 ### En-tête de page
 
 - **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
-  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+  en lieu et place du fil d'ariane. Le **choix d'épreuve navigue** vers
+  `/admin/events/:eventId/…` (`router.push`) ; l'URL fait foi et survit au
+  rechargement (voir [[routing-context]]).
 - Titre « Poules », sous-titre « Glissez-déposez les joueurs dans leur groupe ».
 - Action principale : **« Remplir automatiquement »** → modale de remplissage.
   Désactivée quand les poules sont verrouillées.
@@ -125,6 +127,10 @@ Titre « Remplir les poules automatiquement ».
 
 ## Données
 
+- L'**épreuve active** vient du segment d'URL `:eventId`
+  (`/admin/events/:eventId/groups`) : l'URL fait foi, le store la reflète, et un
+  `:eventId` absent ou périmé est rattrapé par la garde de route (voir
+  [[routing-context]]). Recharger conserve l'épreuve.
 - Inscrits et poules chargés au montage et au changement d'épreuve active,
   rechargés après chaque mutation. L'état de verrouillage est déduit de
   l'existence de matchs de poule pour l'épreuve. Pas de polling.

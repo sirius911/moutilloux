@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApi } from '@/composables/useApi'
-import type { Edition, Event, Entry, Group, KanbanData, Bracket, Player, Category, Court, CategoryMode } from '@/types'
+import type { Edition, Event, Entry, Group, KanbanData, Bracket, Player, Category, Court, CategoryMode, CalendarData, PlayDay, Break } from '@/types'
 
 export interface PlayerEditPayload {
   first_name?: string
@@ -49,6 +49,35 @@ export interface EventConfigPayload {
   notes?: string
 }
 
+// ── Payloads Sprint 08 (calendrier) ──────────────────────────────────────────
+
+export interface PlayDayPayload {
+  date: string
+  startTime: string
+  targetEndTime: string
+}
+
+export interface BreakCreatePayload {
+  durationMin: number
+  label?: string
+  orderIndex?: number
+}
+
+export interface BreakEditPayload {
+  durationMin?: number
+  label?: string
+  orderIndex?: number
+}
+
+export interface CalendarReorderItem {
+  type: 'match' | 'break'
+  id: number
+}
+
+export interface CalendarReorderPayload {
+  playDays: Array<{ playDayId: number; items: CalendarReorderItem[] }>
+}
+
 export const useEventStore = defineStore('event', () => {
   const { get, post } = useApi()
 
@@ -62,7 +91,9 @@ export const useEventStore = defineStore('event', () => {
   const allPlayers = ref<Player[]>([])
   const players = ref<Entry[]>([])
   const groups = ref<Group[]>([])
+  const groupsLocked = ref(false)
   const kanban = ref<KanbanData | null>(null)
+  const calendar = ref<CalendarData | null>(null)
   const bracket = ref<Bracket | null>(null)
 
   // ── Référentiels de configuration (Phase 9) ───────────────────────────
@@ -102,13 +133,21 @@ export const useEventStore = defineStore('event', () => {
   async function fetchGroups(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
-    groups.value = await get<Group[]>(`/api/events/${id}/groups/`)
+    const data = await get<{ locked: boolean; groups: Group[] }>(`/api/events/${id}/groups/`)
+    groups.value = data.groups
+    groupsLocked.value = data.locked
   }
 
   async function fetchMatches(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
     kanban.value = await get<KanbanData>(`/api/events/${id}/matches/`)
+  }
+
+  async function fetchCalendar(editionId?: number) {
+    const id = editionId ?? activeEdition.value?.id
+    if (!id) return
+    calendar.value = await get<CalendarData>(`/api/editions/${id}/calendar/`)
   }
 
   async function fetchBracket(eventId?: number) {
@@ -204,6 +243,55 @@ export const useEventStore = defineStore('event', () => {
   async function featureMatch(eventId: number, matchId: number) {
     await post(`/api/matches/${matchId}/feature/`, {})
     await fetchMatches(eventId)
+  }
+
+  // ── Mutations — Sprint 08 (calendrier) ────────────────────────────────
+
+  async function createPlayDay(editionId: number, payload: PlayDayPayload) {
+    await post(`/api/editions/${editionId}/play-days/create/`, payload)
+    await fetchCalendar(editionId)
+  }
+
+  async function updatePlayDay(playDayId: number, payload: Partial<PlayDayPayload>) {
+    const editionId = activeEdition.value?.id
+    await post(`/api/play-days/${playDayId}/edit/`, payload)
+    await fetchCalendar(editionId)
+  }
+
+  async function deletePlayDay(playDayId: number) {
+    const editionId = activeEdition.value?.id
+    await post(`/api/play-days/${playDayId}/delete/`, {})
+    await fetchCalendar(editionId)
+  }
+
+  async function createBreak(playDayId: number, payload: BreakCreatePayload) {
+    const editionId = activeEdition.value?.id
+    await post(`/api/play-days/${playDayId}/breaks/create/`, payload)
+    await fetchCalendar(editionId)
+  }
+
+  async function updateBreak(breakId: number, payload: BreakEditPayload) {
+    const editionId = activeEdition.value?.id
+    await post(`/api/breaks/${breakId}/edit/`, payload)
+    await fetchCalendar(editionId)
+  }
+
+  async function deleteBreak(breakId: number) {
+    const editionId = activeEdition.value?.id
+    await post(`/api/breaks/${breakId}/delete/`, {})
+    await fetchCalendar(editionId)
+  }
+
+  async function reorderCalendar(editionId: number, payload: CalendarReorderPayload) {
+    await post(`/api/editions/${editionId}/calendar/reorder/`, payload)
+    await fetchCalendar(editionId)
+  }
+
+  async function autoArrangeMatches(eventId: number) {
+    const editionId = activeEdition.value?.id
+    const result = await post<{ placed: number }>(`/api/events/${eventId}/matches/auto-arrange/`, {})
+    await fetchCalendar(editionId)
+    return result
   }
 
   // ── Mutations — Phase 7 (bracket) ─────────────────────────────────────
@@ -317,10 +405,10 @@ export const useEventStore = defineStore('event', () => {
   return {
     // State
     activeEdition, editions, events, activeEventId,
-    allPlayers, players, groups, kanban, bracket,
+    allPlayers, players, groups, groupsLocked, kanban, calendar, bracket,
     categories, courts,
     // Fetch
-    fetchEditions, fetchAllPlayers, fetchPlayers, fetchGroups, fetchMatches, fetchBracket,
+    fetchEditions, fetchAllPlayers, fetchPlayers, fetchGroups, fetchMatches, fetchCalendar, fetchBracket,
     fetchCategories, fetchCourts,
     // Mutations — P2 inscriptions
     editPlayer, createTeam, addRegistration, addRegistrationsBulk, removeRegistration,
@@ -328,6 +416,10 @@ export const useEventStore = defineStore('event', () => {
     assignGroup, createGroup, autofillGroups, generateMatches,
     // Mutations — P4 planning
     editMatch, reorderMatches, featureMatch,
+    // Mutations — Sprint 08 calendrier
+    createPlayDay, updatePlayDay, deletePlayDay,
+    createBreak, updateBreak, deleteBreak,
+    reorderCalendar, autoArrangeMatches,
     // Mutations — P7 bracket
     createBracket, updateBracketLabels, assignBracket, clearBracket,
     // Mutations — P9 configuration
