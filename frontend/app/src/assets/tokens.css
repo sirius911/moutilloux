@@ -32,7 +32,8 @@
   --danger:      #FF3052;
   --danger-soft: rgba(255, 48, 82, 0.14);
   --gold:        #FFC83D;
-  --success:     #22E27F;
+  --success:      #22E27F;
+  --success-soft: rgba(34, 226, 127, 0.12);
   --ball-yellow: #E8F35A;
 
   /* Typographie */
