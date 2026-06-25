@@ -15,7 +15,7 @@ fichiers:
 
 ## Rôle de l'écran
 
-L'écran Calendrier (`/admin/matches`, intitulé **« Calendrier des matchs »**)
+L'écran Calendrier (`/admin/events/:eventId/matches`, intitulé **« Calendrier des matchs »**)
 agence les matchs de l'**épreuve active** dans le temps : il transforme la liste
 des matchs de poule en un **planning ordonné par journée**, sur un court unique.
 
@@ -50,8 +50,9 @@ décision 17 de [[admin-panel-map]]).
 ### En-tête de page
 
 - **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active, en
-  lieu et place du fil d'ariane (décision 16 de [[admin-panel-map]]). Pilote
-  l'épreuve active globale (voir [[admin-shell]]).
+  lieu et place du fil d'ariane (décision 16 de [[admin-panel-map]]). Le **choix
+  d'épreuve navigue** vers `/admin/events/:eventId/matches` (`router.push`) ; l'URL
+  fait foi et survit au rechargement (voir [[routing-context]]).
 - Titre « Calendrier des matchs », sous-titre « Qui joue, quand, contre qui ».
 - Actions :
   - **« Générer les matchs de poule »** → modale de génération (prérequis : crée
@@ -227,6 +228,12 @@ pied sans fermer le panneau).
 
 ## Données
 
+- L'**épreuve active** vient du segment d'URL `:eventId`
+  (`/admin/events/:eventId/matches`) : l'URL fait foi, le store la reflète, et un
+  `:eventId` absent ou périmé est rattrapé par la garde de route (voir
+  [[routing-context]]). Recharger conserve l'épreuve. Le calendrier lui-même couvre
+  toute l'**édition** (dérivée de l'épreuve) ; le `:eventId` cible les actions par
+  épreuve (générer, pré-poser) et la mise en évidence.
 - Le calendrier est chargé au montage et au changement d'épreuve, rechargé après
   chaque mutation. L'écran se rafraîchit **périodiquement** (de l'ordre de quelques
   secondes ; cible ~2 s, voir [[planning]]) pour refléter les passages En cours /

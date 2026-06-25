@@ -36,18 +36,23 @@ le registre se peuple au fil des inscriptions.
 Deux notions de contexte, à ne pas confondre (vocabulaire fixé par les specs) :
 - **Édition active** : globale, persistée en base (`TournamentEdition.is_active`) —
   on l'**Active** depuis l'écran Tournoi.
-- **Épreuve active** : sélection d'écran locale (sélecteur sidebar) — on la
-  **Sélectionne** ; elle pilote Inscriptions / Poules / Matchs / Tableau final.
+- **Épreuve active** : choix d'affichage **porté par l'URL** (segment
+  `/admin/events/:eventId/…`, voir [[routing-context]]) — on la **Sélectionne** via
+  le sélecteur en en-tête ; elle pilote Inscriptions / Poules / Planning / Tableau
+  final et **survit au rechargement** (décision 22).
 
 | # | Écran | Route | Réf design | Spec |
 |---|-------|-------|------------|------|
 | 0 | Shell admin (sidebar) | `/admin` (layout) | `admin.jsx → AdminSidebar` | ✅ [admin-shell.md](./screens/admin-shell.md) |
 | 1 | Tournoi | `/admin/tournoi` (défaut) | `extras.jsx → AdminTournoi` | ✅ [admin-tournoi.md](./screens/admin-tournoi.md) |
 | 2 | Joueurs (registre) | `/admin/players` | `admin.jsx → AdminJoueurs` (partiel) | ✅ [admin-joueurs.md](./screens/admin-joueurs.md) |
-| 3 | Inscriptions | `/admin/inscriptions` | — (dérivé d'AdminJoueurs) | ✅ [admin-inscriptions.md](./screens/admin-inscriptions.md) |
-| 4 | Poules | `/admin/groups` | `admin.jsx → AdminPoules` | ✅ [admin-poules.md](./screens/admin-poules.md) |
-| 5 | Calendrier des matchs *(menu : Planning)* | `/admin/matches` | `admin.jsx → AdminMatchs` (kanban, remplacé) | ✅ [admin-matchs.md](./screens/admin-matchs.md) |
-| 6 | Tableau final | `/admin/bracket` | `admin.jsx → AdminTableau` | ✅ [admin-tableau-final.md](./screens/admin-tableau-final.md) |
+| 3 | Inscriptions | `/admin/events/:eventId/inscriptions` | — (dérivé d'AdminJoueurs) | ✅ [admin-inscriptions.md](./screens/admin-inscriptions.md) |
+| 4 | Poules | `/admin/events/:eventId/groups` | `admin.jsx → AdminPoules` | ✅ [admin-poules.md](./screens/admin-poules.md) |
+| 5 | Calendrier des matchs *(menu : Planning)* | `/admin/events/:eventId/matches` | `admin.jsx → AdminMatchs` (kanban, remplacé) | ✅ [admin-matchs.md](./screens/admin-matchs.md) |
+| 6 | Tableau final | `/admin/events/:eventId/bracket` | `admin.jsx → AdminTableau` | ✅ [admin-tableau-final.md](./screens/admin-tableau-final.md) |
+
+Le segment `:eventId` est l'**épreuve active** ; sa résolution, la garde de route et
+le rattrapage des liens périmés sont décrits dans [[routing-context]] (décision 22).
 
 Modales couvertes par les specs de leur écran hôte : Fiche joueur (Joueurs),
 Équipe (Inscriptions), Remplissage auto (Poules), Génération + panneau d'édition
@@ -155,6 +160,15 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
     « valider les poules » séparée : générer les matchs verrouille les poules
     ([[admin-poules]]) et crée les matchs « à planifier ». Sur mono-court, le seul
     conflit est le **repos** (≥ 1 match d'écart entre deux matchs d'un joueur).
+22. **Épreuve active portée par l'URL.** Les écrans dépendants d'une épreuve
+    s'ouvrent sur `/admin/events/:eventId/…` ; l'URL est la **source de vérité** et
+    le store la reflète. Le sélecteur en en-tête **navigue** (`router.push`) au lieu
+    de muter le store, le choix se conserve d'un écran à l'autre et **survit au
+    rechargement** (corrige la perte de contexte : avant, l'épreuve retombait sur
+    `events[0]`). Une garde résout / valide le `:eventId` et rattrape les liens
+    périmés. L'**édition** reste une bascule globale serveur (décision 16 conservée :
+    le sélecteur reste en en-tête ; seul son **effet** passe désormais par l'URL).
+    Contrat complet : [[routing-context]].
 
 ## API de référence (état : tout est exposé)
 

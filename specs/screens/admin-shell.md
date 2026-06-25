@@ -53,14 +53,19 @@ Six entrées, dans cet ordre, chacune avec icône, libellé et compteur :
 |---|---|---|
 | Tournoi | `/admin/tournoi` | Nombre d'épreuves de l'édition active |
 | Joueurs | `/admin/players` | Taille du registre de joueurs |
-| Inscriptions | `/admin/inscriptions` | Nombre d'inscrits de l'épreuve active |
-| Poules | `/admin/groups` | Nombre de poules de l'épreuve active |
-| Planning | `/admin/matches` | Nombre total de matchs de l'épreuve active |
-| Tableau final | `/admin/bracket` | Nombre de matchs du tableau (QF+SF+F) |
+| Inscriptions | `/admin/events/:eventId/inscriptions` | Nombre d'inscrits de l'épreuve active |
+| Poules | `/admin/events/:eventId/groups` | Nombre de poules de l'épreuve active |
+| Planning | `/admin/events/:eventId/matches` | Nombre total de matchs de l'épreuve active |
+| Tableau final | `/admin/events/:eventId/bracket` | Nombre de matchs du tableau (QF+SF+F) |
 
 L'entrée **Planning** héberge l'écran dont le titre en zone principale est
 « Calendrier des matchs » (voir [[admin-matchs]]) : le libellé court tient dans la
 sidebar, le titre complet est porté par l'en-tête de l'écran (décision 17).
+
+Les quatre entrées dépendantes d'une épreuve (Inscriptions, Poules, Planning,
+Tableau final) pointent vers l'**épreuve active courante** : leur lien porte le
+segment `:eventId` (décision 22, [[routing-context]]). Tournoi et Joueurs n'ont pas
+de param d'épreuve.
 
 Il n'y a pas d'écran Configuration : les catégories se créent inline depuis la
 modale Épreuve (voir [[admin-tournoi]]) et le court unique est seedé en base.
@@ -87,9 +92,13 @@ qui reste fixe.
 
 1. Depuis le sélecteur en en-tête d'un écran dépendant (Inscriptions, Poules,
    Planning, Tableau final), l'admin choisit une autre épreuve.
-2. L'épreuve active est mise à jour dans l'état global.
+2. Le sélecteur **navigue** (`router.push`) vers le même écran avec le nouveau
+   `:eventId` ; l'URL fait foi et l'état global se synchronise depuis elle
+   (voir [[routing-context]]).
 3. L'écran courant relance ses chargements pour la nouvelle épreuve et remplace
-   son contenu. Les écrans indépendants (Tournoi, Joueurs) ne sont pas affectés.
+   son contenu. Le choix se **conserve d'un écran à l'autre** (les liens portent le
+   `:eventId`) et **survit au rechargement**. Les écrans indépendants (Tournoi,
+   Joueurs) ne sont pas affectés.
 4. Les compteurs de navigation liés à l'épreuve se mettent à jour.
 
 Aucune saisie en cours n'est perdue silencieusement : si une modale est ouverte,

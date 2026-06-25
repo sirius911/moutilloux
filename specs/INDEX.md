@@ -78,6 +78,7 @@ Décrivent les modèles de données, contrats d'API, structures de stores.
 | Module | Fichier | Statut |
 |--------|---------|--------|
 | planning | [technical/planning.md](./technical/planning.md) | ✅ Actif |
+| routing | [technical/routing-context.md](./technical/routing-context.md) | ✅ Actif |
 
 *Exemples à prévoir : match (structure `_pack_match`), event/edition, entry.*
 
