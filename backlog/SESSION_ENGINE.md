@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #23
-**Sprint actif :** 08 — Calendrier : écran admin
-**Roadmap :** Sprint 08 en cours — 1 issue ouverte (#111)
-**Tickets clôturés cette session :** 2 (#110 ✅ #112 ✅)
+**Dernière session :** 2026-06-26 — Session #24
+**Sprint actif :** 09 — Calendrier : programme TV (à créer)
+**Roadmap :** Sprint 08 terminé ✅ — Sprint 09 est le prochain sprint actif
+**Tickets clôturés cette session :** 1 (#111 ✅)
 **Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 1 (mineure)
-**Contexte :** Session 23 — Spec review : 0 nouvelle dérive (toutes trackées). #110 fermé (nextMatchId scopé journée LIVE). #112 fermé (champ Court lecture seule onglet Planning). Restant : #111 DnD unifié pauses+matchs (complexité moyenne).
+**Issues restantes :** 0
+**Contexte :** Session 24 — Sprint 08 clôturé. #111 fermé (DnD unifié pauses+matchs : type DayItem, dayItemsDnd liste unifiée, ETA pauses à position réelle). Milestone Sprint 08 fermé. Sprint 09 (programme TV) à créer et planifier.
