@@ -88,6 +88,8 @@ const nameB = computed(() =>
   props.match.sideB?.player?.fullName ?? props.match.sideBLabel ?? 'Joueur B'
 )
 
+const isLive = computed(() => props.match.status === 'LIVE')
+
 const statusLabel = computed(() => {
   if (props.match.status === 'LIVE') return 'EN DIRECT'
   if (props.match.status === 'FINISHED') return 'TERMINÉ'
@@ -147,9 +149,18 @@ async function save() {
       winner_side:
         winnerSide.value === 'A' || winnerSide.value === 'B' ? winnerSide.value : null,
     })
-    // Mise en avant : seul l'enclenchement est exposé (feature_match → LIVE) ;
-    // il n'existe pas de service de retrait, donc on ne déclenche qu'à l'activation.
     if (featured.value && !props.match.isFeatured) {
+      const ok = window.confirm(
+        'Ce match passe EN DIRECT et devient le match affiché sur la TV. Le match actuellement à l\'antenne est retiré.\n\nConfirmer ?'
+      )
+      if (!ok) {
+        featured.value = false
+        // Les autres modifications ont déjà été enregistrées — on ferme sans
+        // déclencher la mise en avant.
+        emit('saved')
+        emit('close')
+        return
+      }
       await eventStore.featureMatch(eventId, props.match.id)
     }
     emit('saved')
@@ -253,40 +264,46 @@ async function save() {
 
           <!-- Format -->
           <template v-if="tab === 'format'">
-            <div class="slide-section">
-              <h4>Format du match</h4>
-              <div class="fld-col">
-                <label class="fld">
-                  <span class="fld-lbl">Sets à gagner</span>
-                  <Segmented v-model="formatSets" :options="formatSetsOptions" />
-                </label>
-                <div class="fld-row">
+            <div v-if="isLive" class="format-lock-banner">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+              Verrouillé — match en cours. Ces champs ne seront pas pris en compte.
+            </div>
+            <fieldset :disabled="isLive" class="format-fieldset">
+              <div class="slide-section">
+                <h4>Format du match</h4>
+                <div class="fld-col">
                   <label class="fld">
-                    <span class="fld-lbl">Jeux par set</span>
-                    <select v-model="formatGames" class="inp">
-                      <option value="4">4 jeux</option>
-                      <option value="5">5 jeux (TB à 4)</option>
-                      <option value="6">6 jeux (TB à 6)</option>
-                    </select>
+                    <span class="fld-lbl">Sets à gagner</span>
+                    <Segmented v-model="formatSets" :options="formatSetsOptions" />
                   </label>
+                  <div class="fld-row">
+                    <label class="fld">
+                      <span class="fld-lbl">Jeux par set</span>
+                      <select v-model="formatGames" class="inp">
+                        <option value="4">4 jeux</option>
+                        <option value="5">5 jeux (TB à 4)</option>
+                        <option value="6">6 jeux (TB à 6)</option>
+                      </select>
+                    </label>
+                    <label class="fld">
+                      <span class="fld-lbl">Tie-break à</span>
+                      <input v-model="formatTb" class="inp tab" />
+                    </label>
+                    <label class="fld">
+                      <span class="fld-lbl">Points TB</span>
+                      <select v-model="formatTbPoints" class="inp">
+                        <option value="7">7 points</option>
+                        <option value="10">10 points</option>
+                      </select>
+                    </label>
+                  </div>
                   <label class="fld">
-                    <span class="fld-lbl">Tie-break à</span>
-                    <input v-model="formatTb" class="inp tab" />
-                  </label>
-                  <label class="fld">
-                    <span class="fld-lbl">Points TB</span>
-                    <select v-model="formatTbPoints" class="inp">
-                      <option value="7">7 points</option>
-                      <option value="10">10 points</option>
-                    </select>
+                    <span class="fld-lbl">Service initial</span>
+                    <Segmented v-model="formatServer" :options="serverOptions" />
                   </label>
                 </div>
-                <label class="fld">
-                  <span class="fld-lbl">Service initial</span>
-                  <Segmented v-model="formatServer" :options="serverOptions" />
-                </label>
               </div>
-            </div>
+            </fieldset>
           </template>
 
           <!-- Planning -->
@@ -728,6 +745,33 @@ async function save() {
 .log-time { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
 .log-who { font-size: 12px; color: var(--ink-2); font-weight: 500; }
 .log-what { color: var(--ink-0); }
+
+/* ── Format lock ──────────────────────────────────────────────────── */
+.format-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--r-md);
+  border: 1px solid var(--danger);
+}
+
+.format-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.format-fieldset:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 
 /* ── Footer ───────────────────────────────────────────────────────── */
 .slide-foot {
