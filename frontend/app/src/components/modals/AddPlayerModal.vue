@@ -22,7 +22,6 @@ const currentYear = new Date().getFullYear()
 const gender = ref<'M' | 'F' | 'O' | ''>(props.editing?.gender ?? '')
 const email = ref(props.editing?.email ?? '')
 const phone = ref(props.editing?.phone ?? '')
-const licenseNumber = ref(props.editing?.licenseNumber ?? '')
 const saving = ref(false)
 const error = ref('')
 const fieldErrors = ref<Record<string, string[]>>({})
@@ -54,7 +53,6 @@ async function save() {
         birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
-        license_number: licenseNumber.value || undefined,
       })
     } else {
       await post('/api/players/create/', {
@@ -64,7 +62,6 @@ async function save() {
         gender: gender.value || undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
-        license_number: licenseNumber.value || undefined,
       })
       await eventStore.fetchAllPlayers()
     }
@@ -148,18 +145,6 @@ async function save() {
       </div>
     </div>
 
-    <!-- Section Compétition -->
-    <div class="mdl-section">
-      <h4>Compétition</h4>
-      <div class="fld-grid fld-grid--single">
-        <label class="fld">
-          <span class="fld-lbl">N° de licence</span>
-          <input v-model="licenseNumber" class="inp inp--mono" placeholder="ex. 1234567" />
-          <span v-if="fieldErrors.license_number?.length" class="fld-error">{{ fieldErrors.license_number[0] }}</span>
-        </label>
-      </div>
-    </div>
-
     <p v-if="error" class="mdl-error">{{ error }}</p>
 
     <template #footer>
@@ -181,10 +166,6 @@ async function save() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px 20px;
-}
-
-.fld-grid--single {
-  grid-template-columns: 1fr;
 }
 
 .fld {
@@ -221,8 +202,6 @@ async function save() {
 }
 
 .inp:focus { border-color: var(--accent); }
-
-.inp--mono { font-family: monospace; }
 
 .mdl-error {
   margin: 8px 0 0;

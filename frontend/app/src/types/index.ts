@@ -38,6 +38,7 @@ export interface Edition {
   distinctPlayersCount: number
   matchesFinished: number
   matchesTotal: number
+  defaultMatchDurationMin: number
 }
 
 export interface Event {

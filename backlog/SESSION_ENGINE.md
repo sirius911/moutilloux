@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #13 (6e de la journée)
-**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
-**Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 0 (clôture de sprint uniquement)
-**Sprint 05 terminé :** Milestone fermé ✅ — dossier archivé dans `done/05-admin-joueurs/`
-**Branche :** `claude/sprint/05-admin-joueurs` (push sur cette branche, Sprint 06 démarrera sur sa propre branche)
-**Contexte :** Sprint 05 clos manuellement (4e blocage consécutif). Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont dans Sprint 06 (#78, #79, #80). Sprint 06 — Refacto Sélecteur & Joueurs est maintenant le sprint actif. Démarrer Sprint 06 à la prochaine session planifiée.
+**Dernière session :** 2026-06-25 — Session #16
+**Sprint actif :** 08 — Calendrier : écran admin (à créer)
+**Roadmap :** Sprint 07 terminé — Sprint 08 prochain (à planifier)
+**Tickets clôturés cette session :** 2 (#92 ⚠️ #93 ⚠️)
+**Branche :** `claude/sprint/07-calendrier-api`
+**Issues restantes :** 0 (sprint 07 clôturé)
+**Contexte :** Sprint 07 terminé — état TV enrichi + durée match par défaut implémentés. Milestone fermé, sprint archivé dans done/. Sprint 08 à planifier avec /plan-sprint.
