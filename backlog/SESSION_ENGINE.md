@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-28 — Session #27
-**Sprint actif :** 10 — Contexte d'épreuve (URL)
-**Roadmap :** Sprint 10 actif — 2 issues restantes (#117, #119)
-**Tickets clôturés cette session :** 3 (#115 ✅, #118 ✅, #116 ✅)
+**Dernière session :** 2026-06-29 — Session #28
+**Sprint actif :** aucun (roadmap vide)
+**Roadmap :** vide — Sprint 10 terminé et archivé
+**Tickets clôturés cette session :** 2 (#117 ✅, #119 ⚠️)
 **Branche :** `claude/sprint/10-contexte-url`
-**Issues restantes :** 2 (#117 sélecteur router.push, #119 état vide)
-**Contexte :** Session 27 — Sprint 10 planifié (5 issues créées, milestone #9). Router migré vers /admin/events/:eventId/ avec garde beforeEnter (#115+#118). AdminLayout watcher de route + sidebar dynamique (#116). Milestone Sprint 09 toujours ouvert (à fermer manuellement : `gh api repos/sirius911/moutilloux/milestones/8 -X PATCH -f state=closed`). Prochaine session : #117 (sélecteurs router.push, 3 écrans) + #119 (état vide, 4 écrans).
+**Issues restantes :** 0
+**Contexte :** Session 28 — Sprint 10 terminé. Sélecteurs épreuve migrés vers router.push (#117). États vides « Aucune épreuve active » ajoutés sur 4 écrans (#119). Milestone #9 fermé. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines si les sprints 11-13 ne sont pas encore dans la roadmap.

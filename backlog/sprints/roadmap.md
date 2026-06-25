@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 10 — Contexte d'épreuve (URL) | `backlog/sprints/10-contexte-url/sprint.md` |
