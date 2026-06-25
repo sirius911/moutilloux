@@ -10,5 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 09 — Calendrier : programme TV | (à créer) |
+| 1 | Sprint 09 — Calendrier : programme TV | `backlog/sprints/09-calendrier-tv/sprint.md` |
 | 2 | Sprint 10 — Contexte d'épreuve (URL) | (à créer) |
