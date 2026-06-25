@@ -121,16 +121,66 @@ function minToTime(min: number): string {
   return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
 }
 
-function dayEndEstimate(day: CalendarDay, filteredMatches: Match[]): string | null {
-  if (filteredMatches.length === 0) return null
-  const last = filteredMatches[filteredMatches.length - 1]
-  if (!last.scheduledTime) return null
-  const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
-  return minToTime(timeToMin(last.scheduledTime) + dur)
+function isoToMin(iso: string): number {
+  const d = new Date(iso)
+  return d.getHours() * 60 + d.getMinutes()
 }
 
-function capacityOver(day: CalendarDay, filteredMatches: Match[]): boolean {
-  const end = dayEndEstimate(day, filteredMatches)
+// ── Moteur ETA frontal ─────────────────────────────────────────────────────
+// Calcule les heures estimées pour chaque match et pause de chaque journée.
+// Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
+const computedETAs = computed<Map<string, string>>(() => {
+  const result = new Map<string, string>()
+  const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
+  const now = new Date()
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+
+  for (const day of calendarDays.value) {
+    const dayMatches = dayMatchesDnd.value[day.id] ?? []
+    type Item =
+      | { kind: 'match'; m: typeof dayMatches[0]; idx: number }
+      | { kind: 'break'; b: (typeof day.breaks)[0]; idx: number }
+    const items: Item[] = [
+      ...dayMatches.map((m, i) => ({ kind: 'match' as const, m, idx: m.orderIndex ?? (99000 + i) })),
+      ...day.breaks.map(b => ({ kind: 'break' as const, b, idx: b.orderIndex })),
+    ]
+    items.sort((a, b) => a.idx - b.idx)
+
+    let cursor = timeToMin(day.startTime)
+
+    for (const item of items) {
+      if (item.kind === 'match') {
+        const m = item.m
+        if (m.status === 'FINISHED' && m.finishedAt) {
+          const ft = isoToMin(m.finishedAt)
+          result.set(`m-${m.id}`, minToTime(ft))
+          cursor = ft
+        } else if (m.status === 'LIVE') {
+          result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
+          const liveEnd = m.startedAt ? isoToMin(m.startedAt) + dur : cursor + dur
+          cursor = Math.max(nowMin, liveEnd)
+        } else {
+          result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
+          cursor += dur
+        }
+      } else {
+        result.set(`b-${item.b.id}`, `~${minToTime(cursor)}`)
+        cursor += item.b.durationMin
+      }
+    }
+
+    result.set(`day-end-${day.id}`, minToTime(cursor))
+  }
+
+  return result
+})
+
+function dayEndEstimate(day: CalendarDay): string | null {
+  return computedETAs.value.get(`day-end-${day.id}`) ?? null
+}
+
+function capacityOver(day: CalendarDay): boolean {
+  const end = dayEndEstimate(day)
   if (!end) return false
   return timeToMin(end) > timeToMin(day.targetEndTime)
 }
@@ -326,14 +376,14 @@ async function onDragEnd() {
             <div class="pd-header-right">
               <span class="pd-times">
                 Court central · début {{ day.startTime }} · fin estimée
-                ~{{ dayEndEstimate(day, day.matches) ?? '—' }}
+                ~{{ dayEndEstimate(day) ?? '—' }}
               </span>
               <span
-                v-if="dayEndEstimate(day, day.matches)"
-                :class="['pd-capacity', capacityOver(day, day.matches) ? 'over' : '']"
+                v-if="dayEndEstimate(day)"
+                :class="['pd-capacity', capacityOver(day) ? 'over' : '']"
               >
-                {{ capacityOver(day, day.matches)
-                  ? `Dépasse ${dayEndEstimate(day, day.matches)}`
+                {{ capacityOver(day)
+                  ? `Dépasse ${dayEndEstimate(day)}`
                   : `Cible ${day.targetEndTime}` }}
               </span>
             </div>
@@ -365,7 +415,7 @@ async function onDragEnd() {
                     @keydown.enter="editingMatch = m"
                   >
                     <span class="cal-time">
-                      {{ m.status === 'FINISHED' && m.startedAt ? '' : '~' }}{{ m.scheduledTime ?? '—' }}
+                      {{ computedETAs.get(`m-${m.id}`) ?? '—' }}
                     </span>
                     <span
                       class="cal-dot"
@@ -393,7 +443,7 @@ async function onDragEnd() {
                     :key="`b-${brk.id}`"
                     class="cal-row cal-row--break"
                   >
-                    <span class="cal-time">—</span>
+                    <span class="cal-time">{{ computedETAs.get(`b-${brk.id}`) ?? '—' }}</span>
                     <span class="break-icon">⏸</span>
                     <span class="break-label">
                       {{ brk.label || 'Pause' }} · {{ brk.durationMin }} min
