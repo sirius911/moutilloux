@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import CreateTeamModal from '@/components/modals/CreateTeamModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
@@ -161,7 +161,12 @@ function initials(name: string): string {
       @close="confirmState.show = false"
     />
 
-    <div class="page-content">
+    <div v-if="eventStore.events.length === 0" class="empty-state">
+      <p>Aucune épreuve active.</p>
+      <RouterLink to="/admin/tournoi">Créer une épreuve dans Tournoi →</RouterLink>
+    </div>
+
+    <div v-else class="page-content">
       <p v-if="error" class="banner-error">{{ error }}</p>
 
       <!-- Inscrits -->
@@ -424,4 +429,24 @@ function initials(name: string): string {
 .adm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .empty-row { text-align: center; padding: 48px !important; color: var(--ink-3); }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 40px;
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: center;
+}
+
+.empty-state a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.empty-state a:hover { text-decoration: underline; }
 </style>
