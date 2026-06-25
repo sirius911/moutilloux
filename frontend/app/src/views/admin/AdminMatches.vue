@@ -6,7 +6,7 @@ import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import GenerateMatchesModal from '@/components/modals/GenerateMatchesModal.vue'
-import type { Match, CalendarDay } from '@/types'
+import type { Match, Break, CalendarDay } from '@/types'
 
 const eventStore = useEventStore()
 
@@ -31,6 +31,8 @@ const dragging = ref(false)
 const unscheduledByGroupDnd = ref<Record<string, Match[]>>({})
 // Journées : matchs ordonnés par playDayId
 const dayMatchesDnd = ref<Record<number, Match[]>>({})
+// Journées : pauses ordonnées par playDayId (miroir local pour DnD)
+const dayBreaksDnd = ref<Record<number, Break[]>>({})
 
 function syncFromStore() {
   if (dragging.value) return
@@ -38,6 +40,7 @@ function syncFromStore() {
   if (!cal) {
     unscheduledByGroupDnd.value = {}
     dayMatchesDnd.value = {}
+    dayBreaksDnd.value = {}
     return
   }
   const newGroups: Record<string, Match[]> = {}
@@ -48,10 +51,13 @@ function syncFromStore() {
   unscheduledByGroupDnd.value = newGroups
 
   const days: Record<number, Match[]> = {}
+  const breaks: Record<number, Break[]> = {}
   for (const day of cal.playDays) {
     days[day.id] = day.matches.filter((m) => m.eventId === eventStore.activeEventId)
+    breaks[day.id] = [...day.breaks].sort((a, b) => a.orderIndex - b.orderIndex)
   }
   dayMatchesDnd.value = days
+  dayBreaksDnd.value = breaks
 }
 
 watch(() => eventStore.calendar, () => { if (!dragging.value) syncFromStore() }, { deep: true, immediate: true })
@@ -73,6 +79,34 @@ const unscheduledTotal = computed(() =>
 const totalScheduledMatches = computed(() =>
   Object.values(dayMatchesDnd.value).reduce((s, arr) => s + arr.length, 0),
 )
+
+// ── Pauses ─────────────────────────────────────────────────────────────────
+const addingPause = ref<Record<number, boolean>>({})
+const deletingBreak = ref<Record<number, boolean>>({})
+
+async function addPause(dayId: number) {
+  addingPause.value[dayId] = true
+  bannerError.value = ''
+  try {
+    await eventStore.createBreak(dayId, { durationMin: 15 })
+  } catch (e) {
+    bannerError.value = e instanceof Error ? e.message : 'Erreur lors de l\'ajout de la pause.'
+  } finally {
+    addingPause.value[dayId] = false
+  }
+}
+
+async function deletePause(breakId: number) {
+  deletingBreak.value[breakId] = true
+  bannerError.value = ''
+  try {
+    await eventStore.deleteBreak(breakId)
+  } catch (e) {
+    bannerError.value = e instanceof Error ? e.message : 'Erreur lors de la suppression de la pause.'
+  } finally {
+    deletingBreak.value[breakId] = false
+  }
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -99,7 +133,7 @@ const nextMatchId = computed<number | null>(() => {
 
 // ── Détection repos insuffisant ────────────────────────────────────────────
 // Deux matchs adjacents dans la séquence partageant un joueur → ⚠ (spec planning §repos).
-// Les pauses ne comptent pas : dayMatchesDnd ne contient que des matchs.
+// Les pauses sont ignorées pour ce calcul.
 const restWarnings = computed<Set<number>>(() => {
   const warnings = new Set<number>()
 
@@ -169,12 +203,13 @@ const computedETAs = computed<Map<string, string>>(() => {
 
   for (const day of calendarDays.value) {
     const dayMatches = dayMatchesDnd.value[day.id] ?? []
+    const dayBreaks = dayBreaksDnd.value[day.id] ?? []
     type Item =
       | { kind: 'match'; m: typeof dayMatches[0]; idx: number }
-      | { kind: 'break'; b: (typeof day.breaks)[0]; idx: number }
+      | { kind: 'break'; b: typeof dayBreaks[0]; idx: number }
     const items: Item[] = [
       ...dayMatches.map((m, i) => ({ kind: 'match' as const, m, idx: m.orderIndex ?? (99000 + i) })),
-      ...day.breaks.map(b => ({ kind: 'break' as const, b, idx: b.orderIndex })),
+      ...dayBreaks.map((b, i) => ({ kind: 'break' as const, b, idx: 99500 + i })),
     ]
     items.sort((a, b) => a.idx - b.idx)
 
@@ -268,7 +303,7 @@ function buildReorderPayload(): CalendarReorderPayload {
       playDayId: day.id,
       items: [
         ...(dayMatchesDnd.value[day.id] ?? []).map((m) => ({ type: 'match' as const, id: m.id })),
-        ...day.breaks.map((b) => ({ type: 'break' as const, id: b.id })),
+        ...(dayBreaksDnd.value[day.id] ?? []).map((b) => ({ type: 'break' as const, id: b.id })),
       ],
     })),
   }
@@ -403,7 +438,7 @@ async function onDragEnd() {
           <header class="pd-header">
             <div class="pd-header-left">
               <span class="pd-date">{{ formatDate(day.date) }}</span>
-              <span class="pd-match-count">{{ day.matches.length }} match{{ day.matches.length !== 1 ? 's' : '' }}</span>
+              <span class="pd-match-count">{{ (dayMatchesDnd[day.id] ?? []).length }} match{{ (dayMatchesDnd[day.id] ?? []).length !== 1 ? 's' : '' }}</span>
             </div>
             <div class="pd-header-right">
               <span class="pd-times">
@@ -421,11 +456,12 @@ async function onDragEnd() {
             </div>
           </header>
 
-          <!-- Lignes (matchs draggables + pauses statiques) -->
+          <!-- Lignes matchs (draggables ↔ pile) -->
           <div class="pd-rows">
-            <template v-if="(dayMatchesDnd[day.id] ?? []).length === 0 && day.breaks.length === 0">
-              <div class="pd-empty">Aucun match pour cette journée.</div>
-            </template>
+            <div
+              v-if="(dayMatchesDnd[day.id] ?? []).length === 0 && (dayBreaksDnd[day.id] ?? []).length === 0"
+              class="pd-empty"
+            >Aucun match pour cette journée.</div>
             <template v-else>
               <draggable
                 v-model="dayMatchesDnd[day.id]"
@@ -476,27 +512,48 @@ async function onDragEnd() {
                     >⋮⋮</span>
                   </div>
                 </template>
-                <template #footer>
-                  <div
-                    v-for="brk in day.breaks"
-                    :key="`b-${brk.id}`"
-                    class="cal-row cal-row--break"
-                  >
+              </draggable>
+
+              <!-- Pauses draggables (séparées des matchs, reordonnables entre elles) -->
+              <draggable
+                v-if="(dayBreaksDnd[day.id] ?? []).length > 0"
+                v-model="dayBreaksDnd[day.id]"
+                item-key="id"
+                :group="{ name: 'breaks-' + day.id, pull: false, put: false }"
+                ghost-class="cal-row--ghost"
+                drag-class="cal-row--dragging"
+                @start="onDragStart"
+                @end="onDragEnd"
+              >
+                <template #item="{ element: brk }">
+                  <div class="cal-row cal-row--break">
                     <span class="cal-time">{{ computedETAs.get(`b-${brk.id}`) ?? '—' }}</span>
                     <span class="break-icon">⏸</span>
                     <span class="break-label">
                       {{ brk.label || 'Pause' }} · {{ brk.durationMin }} min
                     </span>
-                    <span class="drag-handle drag-handle--locked">⋮⋮</span>
+                    <button
+                      class="break-delete-btn"
+                      type="button"
+                      :disabled="deletingBreak[brk.id]"
+                      :title="deletingBreak[brk.id] ? 'Suppression…' : 'Supprimer la pause'"
+                      @click.stop="deletePause(brk.id)"
+                    >×</button>
+                    <span class="drag-handle">⋮⋮</span>
                   </div>
                 </template>
               </draggable>
             </template>
           </div>
 
-          <!-- Action pause (placeholder #98) -->
-          <button class="add-pause-btn" type="button" disabled title="Bientôt disponible (#98)">
-            + pause
+          <!-- Action pause -->
+          <button
+            class="add-pause-btn"
+            type="button"
+            :disabled="addingPause[day.id]"
+            @click="addPause(day.id)"
+          >
+            {{ addingPause[day.id] ? 'Ajout…' : '+ pause' }}
           </button>
         </section>
       </main>
@@ -780,7 +837,7 @@ async function onDragEnd() {
 .cal-row.state--next { background: var(--accent-soft, rgba(255,200,61,0.07)); }
 
 .cal-row--break {
-  grid-template-columns: 64px 16px 1fr 20px;
+  grid-template-columns: 64px 16px 1fr 28px 20px;
   cursor: default;
   background: var(--bg-3);
   opacity: 0.8;
@@ -889,6 +946,21 @@ async function onDragEnd() {
 .break-icon { font-size: 14px; color: var(--ink-3); }
 .break-label { font-size: 13px; color: var(--ink-2); }
 
+.break-delete-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--r-xs);
+  line-height: 1;
+  transition: color 100ms, background 100ms;
+}
+
+.break-delete-btn:hover { color: var(--danger); background: var(--danger-soft); }
+.break-delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* Bouton pause */
 .add-pause-btn {
   display: block;
@@ -900,11 +972,15 @@ async function onDragEnd() {
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-3);
-  cursor: not-allowed;
+  cursor: pointer;
   font-family: inherit;
   text-align: center;
   letter-spacing: 0.04em;
+  transition: color 100ms, background 100ms;
 }
+
+.add-pause-btn:hover { color: var(--ink-1); background: var(--bg-3); }
+.add-pause-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Légende ─────────────────────────────────────────────────────────────── */
 .cal-legend {
