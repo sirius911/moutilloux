@@ -87,7 +87,7 @@ async function generate() {
       <button
         class="adm-btn primary"
         type="button"
-        :disabled="rows.length === 0 || saving"
+        :disabled="totalMatches === 0 || saving"
         @click="generate"
       >
         {{ saving ? 'Génération…' : `Générer ${totalMatches} matchs` }}
