@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #21
+**Dernière session :** 2026-06-25 — Session #22
 **Sprint actif :** 08 — Calendrier : écran admin
-**Roadmap :** Sprint 08 en cours — 4 issues ouvertes (#108 #109 #110 #111)
-**Tickets clôturés cette session :** 2 (#107 ⚠️ #98 ⚠️)
+**Roadmap :** Sprint 08 en cours — 3 issues ouvertes (#110 #111 #112)
+**Tickets clôturés cette session :** 2 (#108 ✅ #109 ✅)
 **Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 4 (toutes mineures)
-**Contexte :** Session 21 — Spec review : 2 nouvelles dérives (#109 GenerateMatchesModal bouton, #110 nextMatchId scope). #107 fixé (select_related invalide). #98 implémenté (+ pause, × delete, draggable par section). Limitation connue : pauses toujours après matchs (DnD séparé) → #111. Restant : #108 menu Planning, #109, #110, #111.
+**Issues restantes :** 3 (toutes mineures)
+**Contexte :** Session 22 — Spec review : 1 nouvelle dérive (#112 court absent onglet Planning EditMatchPanel). #108 fermé (Matchs → Planning sidebar). #109 fermé (bouton Générer désactivé si totalMatches=0). Restant : #110 nextMatchId scope journée courante, #111 DnD unifié pauses+matchs, #112 court info-only Planning panel.
