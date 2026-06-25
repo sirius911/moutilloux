@@ -77,6 +77,7 @@ Décrivent les modèles de données, contrats d'API, structures de stores.
 
 | Module | Fichier | Statut |
 |--------|---------|--------|
+| cycle-de-vie | [technical/cycle-de-vie-epreuve.md](./technical/cycle-de-vie-epreuve.md) | ✅ Actif |
 | planning | [technical/planning.md](./technical/planning.md) | ✅ Actif |
 | routing | [technical/routing-context.md](./technical/routing-context.md) | ✅ Actif |
 
