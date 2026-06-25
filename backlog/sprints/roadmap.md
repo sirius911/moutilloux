@@ -10,5 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 08 — Calendrier : écran admin | (à créer) |
+| 1 | Sprint 08 — Calendrier : écran admin | `backlog/sprints/08-calendrier-admin/sprint.md` |
 | 2 | Sprint 09 — Calendrier : programme TV | (à créer) |
