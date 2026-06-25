@@ -39,37 +39,23 @@ function pointLabel(n: number, inTb: boolean): string {
           </div>
         </div>
 
-        <!-- PrepPanel : joueurs à préparer -->
-        <div v-if="live.next" class="tv-prep">
-          <div class="tv-prep-bar" />
-          <div class="tv-prep-head">
-            <span class="tv-prep-lbl">À PRÉPARER</span>
-            <span v-if="live.next.scheduledTime" class="tv-prep-time">· {{ live.next.scheduledTime }}</span>
-          </div>
-          <div class="tv-prep-players">
-            <div class="tv-prep-player">
-              <div class="tv-prep-avatar tv-prep-avatar--a">
-                {{ (live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?').slice(0, 2).toUpperCase() }}
-              </div>
-              <span class="tv-prep-name">{{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? 'TBD' }}</span>
-            </div>
-            <em class="tv-prep-vs">vs</em>
-            <div class="tv-prep-player">
-              <div class="tv-prep-avatar">
-                {{ (live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?').slice(0, 2).toUpperCase() }}
-              </div>
-              <span class="tv-prep-name">{{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? 'TBD' }}</span>
-            </div>
-          </div>
-          <div v-if="live.next.court" class="tv-prep-foot">
-            <span class="tv-prep-court">{{ live.next.court }}</span>
-            <span class="tv-prep-call">
-              <i class="tv-prep-call-dot" />
-              Présentez-vous au juge-arbitre
-            </span>
-          </div>
-        </div>
       </header>
+
+      <!-- Bandeau « À suivre » — positionné juste au-dessus du sb-band -->
+      <div v-if="live.next" class="sb-next-band">
+        <span class="sb-next-lbl">À SUIVRE</span>
+        <span class="sb-next-dash">—</span>
+        <span class="sb-next-players">
+          {{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?' }}
+          <em class="sb-next-vs">vs</em>
+          {{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?' }}
+        </span>
+        <span v-if="live.next.stageLabel" class="sb-next-stage">· {{ live.next.stageLabel }}</span>
+        <span class="sb-next-call">
+          <i class="sb-next-dot" />
+          Joueurs suivants, présentez-vous au juge-arbitre
+        </span>
+      </div>
 
       <!-- Bandeau score bas -->
       <div class="sb-band">
@@ -202,104 +188,79 @@ function pointLabel(n: number, inTb: boolean): string {
   text-transform: uppercase;
 }
 
-/* ── PrepPanel ────────────────────────────────────────────────────── */
-.tv-prep {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--line-2);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--r-md);
-  padding: 10px 16px;
-  backdrop-filter: blur(8px);
-  max-width: 500px;
-}
-
-.tv-prep-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.tv-prep-lbl {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: var(--accent);
-  text-transform: uppercase;
-}
-
-.tv-prep-time {
-  font-size: 10px;
-  color: var(--ink-3);
-  letter-spacing: 0.1em;
-}
-
-.tv-prep-players {
+/* ── Bandeau « À suivre » ────────────────────────────────────── */
+.sb-next-band {
+  position: absolute;
+  bottom: 240px;
+  left: 0;
+  right: 0;
+  height: 56px;
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 0 48px;
+  background: rgba(5, 6, 8, 0.88);
+  border-top: 1px solid var(--accent-soft);
+  border-bottom: 1px solid var(--line-2);
+  z-index: 10;
 }
 
-.tv-prep-player {
+.sb-next-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.sb-next-dash {
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+
+.sb-next-players {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-0);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-next-vs {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+}
+
+.sb-next-stage {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0.06em;
+}
+
+.sb-next-call {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.tv-prep-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  color: var(--ink-1);
-  font-size: 11px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tv-prep-avatar--a {
-  background: var(--accent);
-  color: #000;
-}
-
-.tv-prep-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink-0);
-}
-
-.tv-prep-vs {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-3);
-  font-style: normal;
+  letter-spacing: 0.06em;
 }
 
-.tv-prep-foot {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 6px;
-  font-size: 11px;
-  color: var(--ink-3);
-}
-
-.tv-prep-court { font-weight: 600; color: var(--ink-2); }
-
-.tv-prep-call {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.tv-prep-call-dot {
+.sb-next-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
   animation: pulse 1.5s ease-in-out infinite;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 /* ── Bandeau bas ─────────────────────────────────────────────────────── */
