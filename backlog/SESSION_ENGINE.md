@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #17
+**Dernière session :** 2026-06-25 — Session #18
 **Sprint actif :** 08 — Calendrier : écran admin
-**Roadmap :** Sprint 08 en cours — 5 issues ouvertes (#95 #96 #97 #98 #99)
-**Tickets clôturés cette session :** 2 (#100 ✅ #94 ⚠️)
+**Roadmap :** Sprint 08 en cours — 3 issues ouvertes (#96 #97 #98)
+**Tickets clôturés cette session :** 2 (#99 ⚠️ #95 ⚠️)
 **Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 5
-**Contexte :** Session 17 — Sprint 08 planifié (plan-sprint), sprint.md créé. Infra store calendrier livrée (#100 : types PlayDay/Break/CalendarData, fetchCalendar, CRUD, reorderCalendar, autoArrange). AdminMatches refondu en vue calendrier (#94 : pile à planifier, journées, lignes état dérivé, légende, polling 2s). Restant : drag-and-drop (#95), ETA client (#96), repos ⚠ (#97), pauses (#98), EditMatchPanel planning (#99).
+**Issues restantes :** 3
+**Contexte :** Session 18 — EditMatchPanel onglet Planning revu (#99 : sélecteur journée via reorderCalendar, heure estimée en lecture seule, court retiré). DnD vuedraggable opérationnel (#95 : pile → journée, réordonnancement, dé-planification, match LIVE non draggable, guard double @end). Restant : moteur ETA frontal (#96), détection repos ⚠ (#97), pauses (#98).
