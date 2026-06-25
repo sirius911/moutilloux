@@ -49,6 +49,7 @@ en branchant l'API calendrier livrée au sprint 07.
 
 | # | Titre | Fichier(s) | Note |
 |---|-------|-----------|------|
+| [#107](https://github.com/sirius911/moutilloux/issues/107) | API calendrier : `GET …/calendar/` renvoie 500 (`select_related` player1/player2 invalide sur Entry) | `live/api_views.py` | 🐛 Bug bloquant — le packer doit répondre 200 avant tout affichage front |
 | [#94](https://github.com/sirius911/moutilloux/issues/94) | AdminMatches : refonte en calendrier (structure + packer + états + légende) | `AdminMatches.vue` | Ticket fondateur — à traiter en premier |
 | [#95](https://github.com/sirius911/moutilloux/issues/95) | AdminMatches : drag-and-drop planifier / réordonner / dé-planifier | `AdminMatches.vue` | Dépend de #94 + #100 |
 | [#96](https://github.com/sirius911/moutilloux/issues/96) | AdminMatches : moteur d'ETA + re-flow + alerte de capacité (front) | `AdminMatches.vue` | Dépend de #94 + #100 |
@@ -56,6 +57,7 @@ en branchant l'API calendrier livrée au sprint 07.
 | [#98](https://github.com/sirius911/moutilloux/issues/98) | AdminMatches : pré-poser + pauses (insérer / déplacer / retirer) | `AdminMatches.vue` | Dépend de #94 + #95 + #100 |
 | [#99](https://github.com/sirius911/moutilloux/issues/99) | EditMatchPanel : onglet Planning revu (journée, heure estimée lecture seule, court retiré) | `EditMatchPanel.vue` | Dépend de #100 |
 | [#100](https://github.com/sirius911/moutilloux/issues/100) | Store event.ts : état calendrier (fetchCalendar, CRUD playDays/breaks, autoArrange) **[infra]** | `stores/event.ts` | ⚠️ Fichier partagé — câblé par l'orchestrateur uniquement |
+| [#108](https://github.com/sirius911/moutilloux/issues/108) | AdminLayout : renommer l'entrée de menu « Matchs » → « Planning » | `AdminLayout.vue` | Indépendant — libellé sidebar seul (route/icône/compteur inchangés) |
 
 ---
 
@@ -79,6 +81,10 @@ Les endpoints à consommer :
 ---
 
 ## Ordre d'exécution suggéré
+
+0. **#107 [bug API — prérequis]** — Corriger le packer calendrier : `GET …/calendar/`
+   renvoie 500 (`select_related('player1','player2')` invalide sur `Entry`). Tant que
+   l'endpoint ne répond pas 200, aucun écran de ce sprint ne peut charger ses données.
 
 1. **#100 [infra — orchestrateur]** — Ajouter l'état calendrier dans `event.ts` : types
    `PlayDay`, `Break`, `CalendarData` ; actions `fetchCalendar`, `createPlayDay`,

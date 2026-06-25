@@ -46,7 +46,7 @@ Deux notions de contexte, à ne pas confondre (vocabulaire fixé par les specs) 
 | 2 | Joueurs (registre) | `/admin/players` | `admin.jsx → AdminJoueurs` (partiel) | ✅ [admin-joueurs.md](./screens/admin-joueurs.md) |
 | 3 | Inscriptions | `/admin/inscriptions` | — (dérivé d'AdminJoueurs) | ✅ [admin-inscriptions.md](./screens/admin-inscriptions.md) |
 | 4 | Poules | `/admin/groups` | `admin.jsx → AdminPoules` | ✅ [admin-poules.md](./screens/admin-poules.md) |
-| 5 | Calendrier des matchs | `/admin/matches` | `admin.jsx → AdminMatchs` (kanban, remplacé) | ✅ [admin-matchs.md](./screens/admin-matchs.md) |
+| 5 | Calendrier des matchs *(menu : Planning)* | `/admin/matches` | `admin.jsx → AdminMatchs` (kanban, remplacé) | ✅ [admin-matchs.md](./screens/admin-matchs.md) |
 | 6 | Tableau final | `/admin/bracket` | `admin.jsx → AdminTableau` | ✅ [admin-tableau-final.md](./screens/admin-tableau-final.md) |
 
 Modales couvertes par les specs de leur écran hôte : Fiche joueur (Joueurs),
@@ -135,7 +135,9 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
 15. **Licence joueur : supprimée** (tournoi amateur — information sans usage dans
     ce contexte). Retirée de la fiche joueur et de la table du registre.
 17. **Calendrier remplace le kanban Matchs.** L'écran « Matchs » devient
-    « Calendrier des matchs » : un agenda ordonné par journée sur mono-court (plus
+    « Calendrier des matchs » ; l'**entrée de menu** de la sidebar est renommée
+    « Planning » (libellé court tenant dans la nav — le titre complet reste porté
+    par l'en-tête de l'écran). C'est un agenda ordonné par journée sur mono-court (plus
     de colonnes Backlog / File / Terminés). États dérivés, heures estimées,
     pré-pose, pauses et alerte de capacité sont décrits dans [[planning]] ; la spec
     [[admin-matchs]] est réécrite en ce sens.

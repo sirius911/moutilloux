@@ -16,7 +16,7 @@ fichiers:
 Le shell admin est le cadre commun de tout l'espace `/admin/*`. Il fournit la barre
 latérale (marque, navigation, liens de pied), héberge l'écran courant dans sa zone
 principale, et porte l'**état global d'épreuve active** dont dépendent les écrans
-Inscriptions, Poules, Matchs et Tableau final. Le sélecteur d'épreuve est intégré
+Inscriptions, Poules, Planning et Tableau final. Le sélecteur d'épreuve est intégré
 en en-tête de chacun de ces quatre écrans (décision 16).
 
 L'espace admin est réservé à l'administrateur (superuser). Il s'affiche en thème
@@ -55,8 +55,12 @@ Six entrées, dans cet ordre, chacune avec icône, libellé et compteur :
 | Joueurs | `/admin/players` | Taille du registre de joueurs |
 | Inscriptions | `/admin/inscriptions` | Nombre d'inscrits de l'épreuve active |
 | Poules | `/admin/groups` | Nombre de poules de l'épreuve active |
-| Matchs | `/admin/matches` | Nombre total de matchs de l'épreuve active |
+| Planning | `/admin/matches` | Nombre total de matchs de l'épreuve active |
 | Tableau final | `/admin/bracket` | Nombre de matchs du tableau (QF+SF+F) |
+
+L'entrée **Planning** héberge l'écran dont le titre en zone principale est
+« Calendrier des matchs » (voir [[admin-matchs]]) : le libellé court tient dans la
+sidebar, le titre complet est porté par l'en-tête de l'écran (décision 17).
 
 Il n'y a pas d'écran Configuration : les catégories se créent inline depuis la
 modale Épreuve (voir [[admin-tournoi]]) et le court unique est seedé en base.
@@ -82,7 +86,7 @@ qui reste fixe.
 ## Flux : changement d'épreuve
 
 1. Depuis le sélecteur en en-tête d'un écran dépendant (Inscriptions, Poules,
-   Matchs, Tableau final), l'admin choisit une autre épreuve.
+   Planning, Tableau final), l'admin choisit une autre épreuve.
 2. L'épreuve active est mise à jour dans l'état global.
 3. L'écran courant relance ses chargements pour la nouvelle épreuve et remplace
    son contenu. Les écrans indépendants (Tournoi, Joueurs) ne sont pas affectés.
