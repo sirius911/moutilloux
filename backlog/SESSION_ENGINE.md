@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #16
-**Sprint actif :** 08 — Calendrier : écran admin (à créer)
-**Roadmap :** Sprint 07 terminé — Sprint 08 prochain (à planifier)
-**Tickets clôturés cette session :** 2 (#92 ⚠️ #93 ⚠️)
-**Branche :** `claude/sprint/07-calendrier-api`
-**Issues restantes :** 0 (sprint 07 clôturé)
-**Contexte :** Sprint 07 terminé — état TV enrichi + durée match par défaut implémentés. Milestone fermé, sprint archivé dans done/. Sprint 08 à planifier avec /plan-sprint.
+**Dernière session :** 2026-06-25 — Session #17
+**Sprint actif :** 08 — Calendrier : écran admin
+**Roadmap :** Sprint 08 en cours — 5 issues ouvertes (#95 #96 #97 #98 #99)
+**Tickets clôturés cette session :** 2 (#100 ✅ #94 ⚠️)
+**Branche :** `claude/sprint/08-calendrier-admin`
+**Issues restantes :** 5
+**Contexte :** Session 17 — Sprint 08 planifié (plan-sprint), sprint.md créé. Infra store calendrier livrée (#100 : types PlayDay/Break/CalendarData, fetchCalendar, CRUD, reorderCalendar, autoArrange). AdminMatches refondu en vue calendrier (#94 : pile à planifier, journées, lignes état dérivé, légende, polling 2s). Restant : drag-and-drop (#95), ETA client (#96), repos ⚠ (#97), pauses (#98), EditMatchPanel planning (#99).
