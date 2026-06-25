@@ -10,6 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 07 — Calendrier : modèle & API | `backlog/sprints/07-calendrier-api/sprint.md` |
-| 2 | Sprint 08 — Calendrier : écran admin | (à créer) |
-| 3 | Sprint 09 — Calendrier : programme TV | (à créer) |
+| 1 | Sprint 08 — Calendrier : écran admin | (à créer) |
+| 2 | Sprint 09 — Calendrier : programme TV | (à créer) |
