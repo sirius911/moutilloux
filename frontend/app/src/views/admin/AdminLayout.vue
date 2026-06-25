@@ -42,7 +42,7 @@ const navItems = computed(() => {
     { path: '/admin/players',      label: 'Joueurs',       icon: '👤', count: eventStore.allPlayers.length },
     { path: '/admin/inscriptions', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
     { path: '/admin/groups',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
-    { path: '/admin/matches',      label: 'Matchs',        icon: '⚡', count: matchCount },
+    { path: '/admin/matches',      label: 'Planning',      icon: '⚡', count: matchCount },
     { path: '/admin/bracket',      label: 'Tableau final', icon: '🏆', count: bracketCount },
   ]
 })
@@ -63,23 +63,6 @@ const navItems = computed(() => {
                 : '—' }}
           </span>
         </div>
-      </div>
-
-      <!-- Événement actif -->
-      <div class="sb-event-selector">
-        <span class="sb-event-label">ÉPREUVE</span>
-        <select
-          v-model="eventStore.activeEventId"
-          class="sb-event-select"
-          :disabled="eventStore.events.length === 0"
-        >
-          <option v-if="eventStore.events.length === 0" :value="null" disabled>
-            Aucune épreuve
-          </option>
-          <option v-for="e in eventStore.events" :key="e.id" :value="e.id">
-            {{ e.name }}
-          </option>
-        </select>
       </div>
 
       <!-- Navigation -->
@@ -163,39 +146,6 @@ const navItems = computed(() => {
   display: block;
   font-size: 11px;
   color: var(--ink-3);
-}
-
-/* Sélecteur d'épreuve */
-.sb-event-selector {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--line-1);
-}
-
-.sb-event-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.sb-event-select {
-  width: 100%;
-  background: var(--bg-3);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  padding: 8px 10px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-0);
-  cursor: pointer;
-}
-
-.sb-event-select:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 
 /* Nav */

@@ -38,6 +38,7 @@ export interface Edition {
   distinctPlayersCount: number
   matchesFinished: number
   matchesTotal: number
+  defaultMatchDurationMin: number
 }
 
 export interface Event {
@@ -181,4 +182,32 @@ export interface KanbanData {
   backlog: Match[]          // SCHEDULED sans orderIndex
   queue: Match[]            // SCHEDULED avec orderIndex (ordonné)
   finished: Match[]         // FINISHED
+}
+
+// ─── Calendrier ──────────────────────────────────────────────────────────────
+
+export interface PlayDay {
+  id: number
+  editionId: number
+  date: string              // "YYYY-MM-DD"
+  startTime: string         // "HH:MM"
+  targetEndTime: string     // "HH:MM"
+}
+
+export interface Break {
+  id: number
+  playDayId: number
+  orderIndex: number
+  durationMin: number
+  label: string
+}
+
+export interface CalendarDay extends PlayDay {
+  breaks: Break[]
+  matches: Match[]
+}
+
+export interface CalendarData {
+  playDays: CalendarDay[]
+  unscheduled: Match[]      // SCHEDULED, GROUP, sans order_index
 }

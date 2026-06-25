@@ -2,12 +2,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useEventStore } from '@/stores/event'
 import CreateTeamModal from '@/components/modals/CreateTeamModal.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 
 const eventStore = useEventStore()
 const search = ref('')
 const showCreateTeam = ref(false)
 const busy = ref(false)
 const error = ref('')
+const confirmState = ref<{ show: boolean; entryId: number; name: string }>({ show: false, entryId: 0, name: '' })
 
 const activeEvent = computed(() =>
   eventStore.events.find((e) => e.id === eventStore.activeEventId) ?? null,
@@ -36,18 +38,12 @@ onMounted(reload)
 watch(() => eventStore.activeEventId, reload)
 
 async function inscrire(playerId: number) {
-  console.log('[Inscriptions] inscrire() — playerId:', playerId, 'activeEventId:', eventStore.activeEventId)
-  if (!eventStore.activeEventId) {
-    console.warn('[Inscriptions] inscrire() annulé : pas d\'activeEventId')
-    return
-  }
+  if (!eventStore.activeEventId) return
   busy.value = true
   error.value = ''
   try {
     await eventStore.addRegistration(eventStore.activeEventId, playerId)
-    console.log('[Inscriptions] inscrire() succès')
   } catch (e) {
-    console.error('[Inscriptions] inscrire() erreur:', e)
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
     busy.value = false
@@ -55,34 +51,37 @@ async function inscrire(playerId: number) {
 }
 
 async function inscrireTout() {
-  console.log('[Inscriptions] inscrireTout() — activeEventId:', eventStore.activeEventId, 'availablePlayers:', availablePlayers.value.length)
-  if (!eventStore.activeEventId) {
-    console.warn('[Inscriptions] inscrireTout() annulé : pas d\'activeEventId')
-    return
-  }
+  if (!eventStore.activeEventId) return
   const ids = availablePlayers.value.map((p) => p.id)
-  console.log('[Inscriptions] inscrireTout() — ids à inscrire:', ids)
   if (ids.length === 0) return
   busy.value = true
   error.value = ''
   try {
-    const result = await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
-    console.log('[Inscriptions] inscrireTout() succès:', result)
+    await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
   } catch (e) {
-    console.error('[Inscriptions] inscrireTout() erreur:', e)
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
     busy.value = false
   }
 }
 
-async function retirer(entryId: number, name: string) {
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) eventStore.activeEventId = numId
+}
+
+function retirer(entryId: number, name: string) {
   if (!eventStore.activeEventId) return
-  if (!window.confirm(`Retirer ${name} de l'épreuve ?`)) return
+  confirmState.value = { show: true, entryId, name }
+}
+
+async function executeRetrait() {
+  confirmState.value.show = false
+  if (!eventStore.activeEventId) return
   busy.value = true
   error.value = ''
   try {
-    await eventStore.removeRegistration(eventStore.activeEventId, entryId)
+    await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
@@ -107,12 +106,17 @@ function initials(name: string): string {
   <div class="admin-page">
     <header class="page-header">
       <div>
-        <p class="breadcrumb">Tournoi</p>
+        <select
+          class="event-select"
+          :value="eventStore.activeEventId ?? ''"
+          :disabled="eventStore.events.length === 0"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-if="eventStore.events.length === 0" value="" disabled>Aucune épreuve</option>
+          <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">{{ ev.name }}</option>
+        </select>
         <h1 class="page-title">Inscriptions</h1>
-        <p class="page-sub">
-          {{ activeEvent?.name ?? 'Aucune épreuve' }} ·
-          {{ eventStore.players.length }} inscrit{{ eventStore.players.length > 1 ? 's' : '' }}
-        </p>
+        <p class="page-sub">{{ eventStore.players.length }} inscrit{{ eventStore.players.length > 1 ? 's' : '' }}</p>
       </div>
       <button
         v-if="isDouble"
@@ -143,6 +147,15 @@ function initials(name: string): string {
       v-if="showCreateTeam"
       @close="showCreateTeam = false"
       @saved="showCreateTeam = false"
+    />
+
+    <ConfirmModal
+      v-if="confirmState.show"
+      :title="`Retirer ${confirmState.name} de l'épreuve ?`"
+      body="L'historique du joueur est conservé."
+      confirm-label="Retirer"
+      @confirm="executeRetrait"
+      @close="confirmState.show = false"
     />
 
     <div class="page-content">
@@ -242,7 +255,25 @@ function initials(name: string): string {
   gap: 16px;
 }
 
-.breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+.event-select {
+  display: block;
+  margin-bottom: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  max-width: 280px;
+}
+
+.event-select:focus { border-color: var(--accent); }
+.event-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-2); }
 

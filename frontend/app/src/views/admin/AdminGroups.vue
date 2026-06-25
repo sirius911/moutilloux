@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import type { Entry } from '@/types'
@@ -42,36 +43,51 @@ function entryDisplayName(entry: Entry): string {
   return entry.player?.fullName ?? `Équipe ${entry.id}`
 }
 
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) eventStore.activeEventId = numId
+}
+
 const dropError = ref('')
+
+function apiErrorMessage(e: unknown, fallback: string): string {
+  if (!(e instanceof Error)) return fallback
+  const match = e.message.match(/— (.+)$/)
+  if (match) {
+    try { const p = JSON.parse(match[1]); if (p.error) return p.error } catch {}
+  }
+  return e.message
+}
 
 // Drag state
 let draggingEntryId: number | null = null
 
 function onDragStart(entryId: number) {
+  if (eventStore.groupsLocked) return
   draggingEntryId = entryId
 }
 
 async function onDropToGroup(groupId: number) {
-  if (draggingEntryId === null) return
+  if (draggingEntryId === null || eventStore.groupsLocked) return
   const id = draggingEntryId
   draggingEntryId = null
   try {
     await assign(id, groupId)
     dropError.value = ''
-  } catch {
-    dropError.value = 'Erreur lors de l\'assignation.'
+  } catch (e) {
+    dropError.value = apiErrorMessage(e, 'Erreur lors de l\'assignation.')
   }
 }
 
 async function onDropToUnassigned() {
-  if (draggingEntryId === null) return
+  if (draggingEntryId === null || eventStore.groupsLocked) return
   const id = draggingEntryId
   draggingEntryId = null
   try {
     await unassign(id)
     dropError.value = ''
-  } catch {
-    dropError.value = 'Erreur lors du retrait.'
+  } catch (e) {
+    dropError.value = apiErrorMessage(e, 'Erreur lors du retrait.')
   }
 }
 </script>
@@ -80,18 +96,33 @@ async function onDropToUnassigned() {
   <div class="admin-page">
     <header class="page-header">
       <div>
-        <p class="breadcrumb">Tournoi · {{ eventStore.events.find(e => e.id === eventStore.activeEventId)?.name }}</p>
+        <select
+          class="event-select"
+          :value="eventStore.activeEventId ?? ''"
+          :disabled="eventStore.events.length === 0"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-if="eventStore.events.length === 0" value="" disabled>Aucune épreuve</option>
+          <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">{{ ev.name }}</option>
+        </select>
         <h1 class="page-title">Poules</h1>
         <p class="page-sub">Glissez-déposez les joueurs dans leur groupe</p>
       </div>
       <div class="header-actions">
-        <button class="adm-btn" type="button" @click="showAutoFill = true">Auto-remplir</button>
+        <button class="adm-btn" type="button" :disabled="eventStore.groupsLocked" @click="showAutoFill = true">Remplir automatiquement</button>
       </div>
     </header>
 
     <AutoFillModal v-if="showAutoFill" @close="showAutoFill = false" @saved="showAutoFill = false" />
 
     <div class="page-content">
+      <div v-if="eventStore.groupsLocked" class="lock-banner">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Les matchs de poule sont générés — la composition des poules est verrouillée.
+        <RouterLink to="/admin/matches" class="lock-link">Voir les matchs</RouterLink>
+      </div>
       <p v-if="dropError" class="adm-error">{{ dropError }}</p>
       <div class="groups-layout">
         <!-- Non assignés -->
@@ -115,7 +146,7 @@ async function onDropToUnassigned() {
               v-for="entry in unassigned"
               :key="entry.id"
               class="player-pill"
-              draggable="true"
+              :draggable="!eventStore.groupsLocked"
               @dragstart="onDragStart(entry.id)"
             >
               <span class="grip">⋮⋮</span>
@@ -144,13 +175,14 @@ async function onDropToUnassigned() {
                 v-for="row in group.standings"
                 :key="row.entryId"
                 class="player-pill"
-                draggable="true"
+                :class="{ 'player-pill--locked': eventStore.groupsLocked }"
+                :draggable="!eventStore.groupsLocked"
                 @dragstart="onDragStart(row.entryId)"
               >
                 <span class="grip">⋮⋮</span>
                 <span class="pill-name">{{ row.name }}</span>
                 <span v-if="row.qualified" class="q-badge">Q</span>
-                <button class="pill-remove" @click="unassign(row.entryId)" @mousedown.stop>✕</button>
+                <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="unassign(row.entryId)" @mousedown.stop>✕</button>
               </div>
             </div>
 
@@ -208,7 +240,25 @@ async function onDropToUnassigned() {
 
 .adm-btn.primary:hover { opacity: 0.9; }
 
-.breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+.event-select {
+  display: block;
+  margin-bottom: 4px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 5px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-1);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  max-width: 280px;
+}
+
+.event-select:focus { border-color: var(--accent); }
+.event-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-2); }
 
@@ -362,4 +412,42 @@ async function onDropToUnassigned() {
 }
 
 .pill-remove:hover { color: var(--danger); }
+
+.player-pill--locked { cursor: default; }
+.player-pill--locked:hover { background: var(--bg-3); }
+.player-pill--locked:active { cursor: default; }
+
+.lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--warning, #f59e0b) 12%, transparent);
+  border: 1px solid var(--warning, #f59e0b);
+  color: var(--ink-1);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.lock-link {
+  margin-left: 4px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.lock-link:hover { text-decoration: underline; }
+
+.adm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.adm-error {
+  margin: 0 0 8px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 13px;
+}
 </style>

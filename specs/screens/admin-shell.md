@@ -16,7 +16,7 @@ fichiers:
 Le shell admin est le cadre commun de tout l'espace `/admin/*`. Il fournit la barre
 latérale (marque, navigation, liens de pied), héberge l'écran courant dans sa zone
 principale, et porte l'**état global d'épreuve active** dont dépendent les écrans
-Inscriptions, Poules, Matchs et Tableau final. Le sélecteur d'épreuve est intégré
+Inscriptions, Poules, Planning et Tableau final. Le sélecteur d'épreuve est intégré
 en en-tête de chacun de ces quatre écrans (décision 16).
 
 L'espace admin est réservé à l'administrateur (superuser). Il s'affiche en thème
@@ -53,10 +53,19 @@ Six entrées, dans cet ordre, chacune avec icône, libellé et compteur :
 |---|---|---|
 | Tournoi | `/admin/tournoi` | Nombre d'épreuves de l'édition active |
 | Joueurs | `/admin/players` | Taille du registre de joueurs |
-| Inscriptions | `/admin/inscriptions` | Nombre d'inscrits de l'épreuve active |
-| Poules | `/admin/groups` | Nombre de poules de l'épreuve active |
-| Matchs | `/admin/matches` | Nombre total de matchs de l'épreuve active |
-| Tableau final | `/admin/bracket` | Nombre de matchs du tableau (QF+SF+F) |
+| Inscriptions | `/admin/events/:eventId/inscriptions` | Nombre d'inscrits de l'épreuve active |
+| Poules | `/admin/events/:eventId/groups` | Nombre de poules de l'épreuve active |
+| Planning | `/admin/events/:eventId/matches` | Nombre total de matchs de l'épreuve active |
+| Tableau final | `/admin/events/:eventId/bracket` | Nombre de matchs du tableau (QF+SF+F) |
+
+L'entrée **Planning** héberge l'écran dont le titre en zone principale est
+« Calendrier des matchs » (voir [[admin-matchs]]) : le libellé court tient dans la
+sidebar, le titre complet est porté par l'en-tête de l'écran (décision 17).
+
+Les quatre entrées dépendantes d'une épreuve (Inscriptions, Poules, Planning,
+Tableau final) pointent vers l'**épreuve active courante** : leur lien porte le
+segment `:eventId` (décision 22, [[routing-context]]). Tournoi et Joueurs n'ont pas
+de param d'épreuve.
 
 Il n'y a pas d'écran Configuration : les catégories se créent inline depuis la
 modale Épreuve (voir [[admin-tournoi]]) et le court unique est seedé en base.
@@ -82,10 +91,14 @@ qui reste fixe.
 ## Flux : changement d'épreuve
 
 1. Depuis le sélecteur en en-tête d'un écran dépendant (Inscriptions, Poules,
-   Matchs, Tableau final), l'admin choisit une autre épreuve.
-2. L'épreuve active est mise à jour dans l'état global.
+   Planning, Tableau final), l'admin choisit une autre épreuve.
+2. Le sélecteur **navigue** (`router.push`) vers le même écran avec le nouveau
+   `:eventId` ; l'URL fait foi et l'état global se synchronise depuis elle
+   (voir [[routing-context]]).
 3. L'écran courant relance ses chargements pour la nouvelle épreuve et remplace
-   son contenu. Les écrans indépendants (Tournoi, Joueurs) ne sont pas affectés.
+   son contenu. Le choix se **conserve d'un écran à l'autre** (les liens portent le
+   `:eventId`) et **survit au rechargement**. Les écrans indépendants (Tournoi,
+   Joueurs) ne sont pas affectés.
 4. Les compteurs de navigation liés à l'épreuve se mettent à jour.
 
 Aucune saisie en cours n'est perdue silencieusement : si une modale est ouverte,

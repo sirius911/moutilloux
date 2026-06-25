@@ -10,4 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 06 — Refacto Sélecteur & Joueurs | `backlog/sprints/06-refacto-selecteur/sprint.md` |
+| 1 | Sprint 09 — Calendrier : programme TV | (à créer) |
+| 2 | Sprint 10 — Contexte d'épreuve (URL) | (à créer) |
