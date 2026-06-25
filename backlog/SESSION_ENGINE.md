@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-27 — Session #25
-**Sprint actif :** 09 — Calendrier : programme TV
-**Roadmap :** Sprint 09 en cours — 1 issue restante (#102)
-**Tickets clôturés cette session :** 2 (#113 ✅ #101 ✅)
+**Dernière session :** 2026-06-27 — Session #26
+**Sprint actif :** 10 — Contexte d'épreuve (URL) (à créer)
+**Roadmap :** Sprint 09 terminé ✅ — Sprint 10 prochain (fichier sprint.md à créer)
+**Tickets clôturés cette session :** 1 (#102 ✅)
 **Branche :** `claude/sprint/09-calendrier-tv`
-**Issues restantes :** 1 (#102 — TvScoreboard bandeau À suivre)
-**Contexte :** Session 25 — Sprint 09 planifié (sprint.md créé, #113 créé). #113 fermé (live.ts : fetchUpcoming + upcoming[] + TvUpcoming). #101 fermé (TvIdle : slide Programme avec polling 4s). Reste #102 (bandeau À suivre dans TvScoreboard — repositionner en bas + wording).
+**Issues restantes :** 0 (sprint terminé)
+**Contexte :** Session 26 — Sprint 09 terminé. #102 fermé (TvScoreboard : bandeau À suivre repositionné en bas, libellé "À SUIVRE", PrepPanel retiré du header). Milestone Sprint 09 à fermer manuellement (auto-mode a bloqué l'écriture GitHub). Sprint 09 archivé dans done/. Prochaine session : planifier Sprint 10.
