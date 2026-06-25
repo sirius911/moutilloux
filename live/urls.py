@@ -88,6 +88,8 @@ urlpatterns = [
     path("api/editions/<int:edition_id>/calendar/", api_views.api_edition_calendar, name="api_edition_calendar"),
     path("api/editions/<int:edition_id>/calendar/reorder/", api_views.api_calendar_reorder, name="api_calendar_reorder"),
     path("api/events/<int:event_id>/matches/auto-arrange/", api_views.api_matches_auto_arrange, name="api_matches_auto_arrange"),
+    # TV : prochains matchs (lecture publique)
+    path("api/tv/upcoming/", api_views.api_tv_upcoming, name="api_tv_upcoming"),
 
     path("results/poules/", views.results_poules, name="results_poules"),
     path("results/poules/start/", views.results_poules_start, name="results_poules_start"),
