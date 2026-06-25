@@ -333,6 +333,10 @@ async function save() {
                   <span class="fld-lbl">Heure estimée</span>
                   <span class="inp inp-ro">{{ match.scheduledTime ? '~' + match.scheduledTime : '—' }}</span>
                 </div>
+                <div class="fld">
+                  <span class="fld-lbl">Court</span>
+                  <span class="inp inp-ro">{{ match.court || 'Central' }}</span>
+                </div>
                 <label class="fld">
                   <span class="fld-lbl">Statut</span>
                   <Segmented v-model="status" :options="planningStatusOptions" />

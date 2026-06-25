@@ -120,14 +120,26 @@ function playerLabel(match: Match, side: 'A' | 'B'): string {
   return match.sideB?.player?.fullName ?? match.sideBLabel ?? 'TBD'
 }
 
-// Identifiant du seul match "Next" — lu depuis l'état DnD local
+// Identifiant du seul match "Next" — lu depuis l'état DnD local.
+// Scope à la journée du match en cours quand un match est LIVE (spec planning §États dérivés).
 const nextMatchId = computed<number | null>(() => {
   const allMatches = Object.values(dayMatchesDnd.value).flat()
   const liveMatch = allMatches.find((m) => m.status === 'LIVE')
-  const pivotIndex = liveMatch?.orderIndex ?? -Infinity
-  const candidates = allMatches
-    .filter((m) => m.status === 'SCHEDULED' && (m.orderIndex ?? -1) > pivotIndex)
-    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+
+  let candidates: Match[]
+  if (liveMatch) {
+    const liveDayMatches =
+      Object.values(dayMatchesDnd.value).find((matches) =>
+        matches.some((m) => m.id === liveMatch.id),
+      ) ?? []
+    candidates = liveDayMatches.filter(
+      (m) => m.status === 'SCHEDULED' && (m.orderIndex ?? -1) > (liveMatch.orderIndex ?? -1),
+    )
+  } else {
+    candidates = allMatches.filter((m) => m.status === 'SCHEDULED')
+  }
+
+  candidates.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
   return candidates[0]?.id ?? null
 })
 
