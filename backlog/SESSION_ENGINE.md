@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-27 — Session #26
-**Sprint actif :** 10 — Contexte d'épreuve (URL) (à créer)
-**Roadmap :** Sprint 09 terminé ✅ — Sprint 10 prochain (fichier sprint.md à créer)
-**Tickets clôturés cette session :** 1 (#102 ✅)
-**Branche :** `claude/sprint/09-calendrier-tv`
-**Issues restantes :** 0 (sprint terminé)
-**Contexte :** Session 26 — Sprint 09 terminé. #102 fermé (TvScoreboard : bandeau À suivre repositionné en bas, libellé "À SUIVRE", PrepPanel retiré du header). Milestone Sprint 09 à fermer manuellement (auto-mode a bloqué l'écriture GitHub). Sprint 09 archivé dans done/. Prochaine session : planifier Sprint 10.
+**Dernière session :** 2026-06-28 — Session #27
+**Sprint actif :** 10 — Contexte d'épreuve (URL)
+**Roadmap :** Sprint 10 actif — 2 issues restantes (#117, #119)
+**Tickets clôturés cette session :** 3 (#115 ✅, #118 ✅, #116 ✅)
+**Branche :** `claude/sprint/10-contexte-url`
+**Issues restantes :** 2 (#117 sélecteur router.push, #119 état vide)
+**Contexte :** Session 27 — Sprint 10 planifié (5 issues créées, milestone #9). Router migré vers /admin/events/:eventId/ avec garde beforeEnter (#115+#118). AdminLayout watcher de route + sidebar dynamique (#116). Milestone Sprint 09 toujours ouvert (à fermer manuellement : `gh api repos/sirius911/moutilloux/milestones/8 -X PATCH -f state=closed`). Prochaine session : #117 (sélecteurs router.push, 3 écrans) + #119 (état vide, 4 écrans).
