@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #20
+**Dernière session :** 2026-06-25 — Session #21
 **Sprint actif :** 08 — Calendrier : écran admin
-**Roadmap :** Sprint 08 en cours — 1 issue ouverte (#98)
-**Tickets clôturés cette session :** 2 (#105 ✅ #106 ✅)
+**Roadmap :** Sprint 08 en cours — 4 issues ouvertes (#108 #109 #110 #111)
+**Tickets clôturés cette session :** 2 (#107 ⚠️ #98 ⚠️)
 **Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 1
-**Contexte :** Session 20 — Spec review : 2 nouvelles dérives trouvées et corrigées. Format tab lock when LIVE (#105 : fieldset disabled + bannière). Confirmation avant mise en avant (#106 : window.confirm avec message spec). Restant : pauses CRUD + draggable (#98).
+**Issues restantes :** 4 (toutes mineures)
+**Contexte :** Session 21 — Spec review : 2 nouvelles dérives (#109 GenerateMatchesModal bouton, #110 nextMatchId scope). #107 fixé (select_related invalide). #98 implémenté (+ pause, × delete, draggable par section). Limitation connue : pauses toujours après matchs (DnD séparé) → #111. Restant : #108 menu Planning, #109, #110, #111.
