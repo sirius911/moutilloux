@@ -84,8 +84,10 @@ urlpatterns = [
     path("api/play-days/<int:play_day_id>/breaks/create/", api_views.api_break_create, name="api_break_create"),
     path("api/breaks/<int:break_id>/edit/", api_views.api_break_edit, name="api_break_edit"),
     path("api/breaks/<int:break_id>/delete/", api_views.api_break_delete, name="api_break_delete"),
-    # Packer calendrier
+    # Packer calendrier + mutations calendrier
     path("api/editions/<int:edition_id>/calendar/", api_views.api_edition_calendar, name="api_edition_calendar"),
+    path("api/editions/<int:edition_id>/calendar/reorder/", api_views.api_calendar_reorder, name="api_calendar_reorder"),
+    path("api/events/<int:event_id>/matches/auto-arrange/", api_views.api_matches_auto_arrange, name="api_matches_auto_arrange"),
 
     path("results/poules/", views.results_poules, name="results_poules"),
     path("results/poules/start/", views.results_poules_start, name="results_poules_start"),

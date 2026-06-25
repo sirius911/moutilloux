@@ -62,6 +62,8 @@ from live.admin_views import (
     create_break,
     update_break,
     delete_break,
+    reorder_calendar,
+    auto_arrange_matches,
 )
 
 
@@ -1675,3 +1677,48 @@ def api_edition_calendar(request, edition_id):
         "playDays": packed_play_days,
         "unscheduled": [_pack_match(m) for m in unscheduled],
     })
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_calendar_reorder(request, edition_id):
+    """
+    POST /api/editions/<id>/calendar/reorder/
+    Réordonne le calendrier de l'édition.
+    Body JSON : {"playDays": [{"playDayId": int, "items": [{"type": "match"|"break", "id": int}]}]}
+    """
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    play_day_sequences = data.get("playDays", [])
+    if not isinstance(play_day_sequences, list):
+        return JsonResponse({"error": "playDays doit être une liste"}, status=400)
+
+    try:
+        reorder_calendar(edition, play_day_sequences)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_matches_auto_arrange(request, event_id):
+    """
+    POST /api/events/<id>/matches/auto-arrange/
+    Pré-pose les matchs à planifier (SCHEDULED + GROUP + sans order_index) sur les journées.
+    Réponse : {"placed": N}
+    """
+    event = get_object_or_404(Event, pk=event_id)
+    try:
+        placed = auto_arrange_matches(event.edition)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"placed": placed})
