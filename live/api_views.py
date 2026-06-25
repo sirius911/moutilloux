@@ -15,11 +15,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.dateparse import parse_datetime, parse_date, parse_time
 
 from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
-from live.models import Match, Court
+from live.models import Match, Court, PlayDay, Break
 from live.views import build_event_group_tables
 from live.admin_views import (
     superuser_required,
@@ -55,6 +55,13 @@ from live.admin_views import (
     create_event,
     update_event,
     delete_event,
+    # Sprint 07 — calendrier (journées + pauses)
+    create_play_day,
+    update_play_day,
+    delete_play_day,
+    create_break,
+    update_break,
+    delete_break,
 )
 
 
@@ -1432,3 +1439,239 @@ def api_event_delete(request, event_id):
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"ok": True})
+
+
+# ── Sprint 07 — Calendrier : PlayDay + Break ─────────────────────────────────
+
+def _pack_play_day(pd):
+    return {
+        "id": pd.id,
+        "editionId": pd.edition_id,
+        "date": pd.date.isoformat(),
+        "startTime": pd.start_time.strftime("%H:%M"),
+        "targetEndTime": pd.target_end_time.strftime("%H:%M"),
+    }
+
+
+def _pack_break(brk):
+    return {
+        "id": brk.id,
+        "playDayId": brk.play_day_id,
+        "orderIndex": brk.order_index,
+        "durationMin": brk.duration_min,
+        "label": brk.label,
+    }
+
+
+@require_GET
+@superuser_required
+def api_play_days_list(request, edition_id):
+    """GET /api/editions/<id>/play-days/"""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    play_days = PlayDay.objects.filter(edition=edition).order_by("date")
+    return JsonResponse({"playDays": [_pack_play_day(pd) for pd in play_days]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_day_create(request, edition_id):
+    """POST /api/editions/<id>/play-days/create/"""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    date = parse_date(data.get("date", ""))
+    start_time = parse_time(data.get("startTime", ""))
+    target_end_time = parse_time(data.get("targetEndTime", ""))
+
+    if not date or not start_time or not target_end_time:
+        return JsonResponse({"error": "date, startTime et targetEndTime sont requis"}, status=400)
+
+    try:
+        pd = create_play_day(edition, date, start_time, target_end_time)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_play_day(pd), status=201)
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_day_edit(request, play_day_id):
+    """POST /api/play-days/<id>/edit/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    kwargs = {}
+    if "date" in data:
+        d = parse_date(data["date"])
+        if not d:
+            return JsonResponse({"error": "date invalide"}, status=400)
+        kwargs["date"] = d
+    if "startTime" in data:
+        t = parse_time(data["startTime"])
+        if not t:
+            return JsonResponse({"error": "startTime invalide"}, status=400)
+        kwargs["start_time"] = t
+    if "targetEndTime" in data:
+        t = parse_time(data["targetEndTime"])
+        if not t:
+            return JsonResponse({"error": "targetEndTime invalide"}, status=400)
+        kwargs["target_end_time"] = t
+
+    try:
+        pd = update_play_day(pd, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_play_day(pd))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_day_delete(request, play_day_id):
+    """POST /api/play-days/<id>/delete/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    delete_play_day(pd)
+    return JsonResponse({"ok": True})
+
+
+@require_GET
+@superuser_required
+def api_breaks_list(request, play_day_id):
+    """GET /api/play-days/<id>/breaks/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    breaks = Break.objects.filter(play_day=pd).order_by("order_index")
+    return JsonResponse({"breaks": [_pack_break(b) for b in breaks]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_break_create(request, play_day_id):
+    """POST /api/play-days/<id>/breaks/create/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    try:
+        order_index = int(data.get("orderIndex", 0))
+        duration_min = int(data.get("durationMin", 0))
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "orderIndex et durationMin doivent être des entiers"}, status=400)
+
+    label = data.get("label", "")
+
+    try:
+        brk = create_break(pd, order_index, duration_min, label)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_break(brk), status=201)
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_break_edit(request, break_id):
+    """POST /api/breaks/<id>/edit/"""
+    brk = get_object_or_404(Break, pk=break_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    kwargs = {}
+    if "orderIndex" in data:
+        try:
+            kwargs["order_index"] = int(data["orderIndex"])
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "orderIndex doit être un entier"}, status=400)
+    if "durationMin" in data:
+        try:
+            kwargs["duration_min"] = int(data["durationMin"])
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "durationMin doit être un entier"}, status=400)
+    if "label" in data:
+        kwargs["label"] = data["label"]
+
+    try:
+        brk = update_break(brk, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_break(brk))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_break_delete(request, break_id):
+    """POST /api/breaks/<id>/delete/"""
+    brk = get_object_or_404(Break, pk=break_id)
+    delete_break(brk)
+    return JsonResponse({"ok": True})
+
+
+# ── Sprint 07 — Packer calendrier ────────────────────────────────────────────
+
+@require_GET
+@superuser_required
+def api_edition_calendar(request, edition_id):
+    """
+    GET /api/editions/<id>/calendar/
+    Retourne les journées avec leurs matchs ordonnés + la pile des matchs
+    à planifier (SCHEDULED, sans order_index, poules uniquement — MVP).
+    """
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+
+    play_days = list(
+        PlayDay.objects.filter(edition=edition)
+        .prefetch_related("breaks")
+        .order_by("date")
+    )
+
+    # Matchs assignés à une journée : order_index non null ET scheduled_time non null
+    assigned_matches = (
+        Match.objects
+        .filter(edition=edition, order_index__isnull=False, scheduled_time__isnull=False)
+        .select_related("court", "side_a__player1", "side_a__player2",
+                        "side_b__player1", "side_b__player2", "group", "event")
+        .order_by("order_index")
+    )
+
+    # Regrouper les matchs assignés par date (date locale du scheduled_time)
+    from collections import defaultdict
+    matches_by_date = defaultdict(list)
+    for m in assigned_matches:
+        day_key = timezone.localtime(m.scheduled_time).date()
+        matches_by_date[day_key].append(m)
+
+    packed_play_days = []
+    for pd in play_days:
+        packed_play_days.append({
+            **_pack_play_day(pd),
+            "breaks": [_pack_break(b) for b in sorted(pd.breaks.all(), key=lambda b: b.order_index)],
+            "matches": [_pack_match(m) for m in matches_by_date.get(pd.date, [])],
+        })
+
+    # Pile à planifier : SCHEDULED, order_index IS NULL, poules uniquement (MVP)
+    unscheduled = (
+        Match.objects
+        .filter(edition=edition, status=Match.Status.SCHEDULED,
+                order_index__isnull=True, stage=Match.Stage.GROUP)
+        .select_related("court", "side_a__player1", "side_a__player2",
+                        "side_b__player1", "side_b__player2", "group", "event")
+        .order_by("event_id", "id")
+    )
+
+    return JsonResponse({
+        "playDays": packed_play_days,
+        "unscheduled": [_pack_match(m) for m in unscheduled],
+    })

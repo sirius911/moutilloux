@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #13
-**Sprint actif :** aucun
-**Roadmap :** vide — tous les sprints terminés
-**Tickets clôturés cette session :** 0
-**Branche :** `claude/sprint/06-refacto-selecteur`
-**Issues restantes :** 0
-**Contexte :** Roadmap vide. Commit de rattrapage des fichiers non commités de la session 12. Aucun sprint actif. **Action manuelle requise :** désactiver la Routine sur claude.ai/code/routines.
+**Dernière session :** 2026-06-25 — Session #14
+**Sprint actif :** 07 — Calendrier : modèle & API
+**Roadmap :** Sprint 07 actif (issues #90–93 ouvertes)
+**Tickets clôturés cette session :** 2 (#88 ✅ #89 ✅)
+**Branche :** `claude/sprint/07-calendrier-api`
+**Issues restantes :** 4 (#90 reorder évolué, #91 pré-pose, #92 état TV enrichi, #93 durée défaut)
+**Contexte :** Infrastructure sprint 07 créée (sprint.md + roadmap + log) — manquait depuis le démarrage manuel du sprint. CRUD PlayDay+Break + packer calendrier implémentés.

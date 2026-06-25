@@ -7,7 +7,7 @@ from django.db import transaction
 
 from core.models import TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupMembership, GroupStanding
-from live.models import Match, Court
+from live.models import Match, Court, PlayDay, Break
 from live.views import build_event_group_tables
 
 from django import forms
@@ -1654,3 +1654,61 @@ def delete_event(event):
     ).exists():
         raise ValueError("Impossible de supprimer une épreuve avec des matchs en cours ou terminés.")
     event.delete()
+
+
+# ── PlayDay + Break (journées de jeu et pauses) ──────────────────────────────
+
+def create_play_day(edition, date, start_time, target_end_time):
+    if PlayDay.objects.filter(edition=edition, date=date).exists():
+        raise ValueError(f"Une journée de jeu existe déjà pour la date {date}.")
+    return PlayDay.objects.create(
+        edition=edition,
+        date=date,
+        start_time=start_time,
+        target_end_time=target_end_time,
+    )
+
+
+def update_play_day(play_day, *, date=_NOCHANGE, start_time=_NOCHANGE, target_end_time=_NOCHANGE):
+    if date is not _NOCHANGE:
+        if PlayDay.objects.filter(edition=play_day.edition, date=date).exclude(pk=play_day.pk).exists():
+            raise ValueError(f"Une journée de jeu existe déjà pour la date {date}.")
+        play_day.date = date
+    if start_time is not _NOCHANGE:
+        play_day.start_time = start_time
+    if target_end_time is not _NOCHANGE:
+        play_day.target_end_time = target_end_time
+    play_day.save()
+    return play_day
+
+
+def delete_play_day(play_day):
+    play_day.delete()
+
+
+def create_break(play_day, order_index, duration_min, label):
+    if duration_min <= 0:
+        raise ValueError("La durée d'une pause doit être supérieure à 0.")
+    return Break.objects.create(
+        play_day=play_day,
+        order_index=order_index,
+        duration_min=duration_min,
+        label=(label or "").strip() or "Pause",
+    )
+
+
+def update_break(brk, *, order_index=_NOCHANGE, duration_min=_NOCHANGE, label=_NOCHANGE):
+    if order_index is not _NOCHANGE:
+        brk.order_index = order_index
+    if duration_min is not _NOCHANGE:
+        if duration_min <= 0:
+            raise ValueError("La durée d'une pause doit être supérieure à 0.")
+        brk.duration_min = duration_min
+    if label is not _NOCHANGE:
+        brk.label = (label or "").strip() or "Pause"
+    brk.save()
+    return brk
+
+
+def delete_break(brk):
+    brk.delete()
