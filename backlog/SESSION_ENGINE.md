@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #22
+**Dernière session :** 2026-06-25 — Session #23
 **Sprint actif :** 08 — Calendrier : écran admin
-**Roadmap :** Sprint 08 en cours — 3 issues ouvertes (#110 #111 #112)
-**Tickets clôturés cette session :** 2 (#108 ✅ #109 ✅)
+**Roadmap :** Sprint 08 en cours — 1 issue ouverte (#111)
+**Tickets clôturés cette session :** 2 (#110 ✅ #112 ✅)
 **Branche :** `claude/sprint/08-calendrier-admin`
-**Issues restantes :** 3 (toutes mineures)
-**Contexte :** Session 22 — Spec review : 1 nouvelle dérive (#112 court absent onglet Planning EditMatchPanel). #108 fermé (Matchs → Planning sidebar). #109 fermé (bouton Générer désactivé si totalMatches=0). Restant : #110 nextMatchId scope journée courante, #111 DnD unifié pauses+matchs, #112 court info-only Planning panel.
+**Issues restantes :** 1 (mineure)
+**Contexte :** Session 23 — Spec review : 0 nouvelle dérive (toutes trackées). #110 fermé (nextMatchId scopé journée LIVE). #112 fermé (champ Court lecture seule onglet Planning). Restant : #111 DnD unifié pauses+matchs (complexité moyenne).
