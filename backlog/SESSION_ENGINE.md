@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #14
+**Dernière session :** 2026-06-25 — Session #15
 **Sprint actif :** 07 — Calendrier : modèle & API
-**Roadmap :** Sprint 07 actif (issues #90–93 ouvertes)
-**Tickets clôturés cette session :** 2 (#88 ✅ #89 ✅)
+**Roadmap :** Sprint 07 actif (issues #92–93 ouvertes)
+**Tickets clôturés cette session :** 2 (#90 ⚠️ #91 ⚠️)
 **Branche :** `claude/sprint/07-calendrier-api`
-**Issues restantes :** 4 (#90 reorder évolué, #91 pré-pose, #92 état TV enrichi, #93 durée défaut)
-**Contexte :** Infrastructure sprint 07 créée (sprint.md + roadmap + log) — manquait depuis le démarrage manuel du sprint. CRUD PlayDay+Break + packer calendrier implémentés.
+**Issues restantes :** 2 (#92 état TV enrichi, #93 durée défaut)
+**Contexte :** Reorder calendrier évolué + auto-arrange pré-pose implémentés. Prochaine session : #92 (majeure) puis #93 (mineure).
