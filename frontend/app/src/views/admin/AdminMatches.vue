@@ -97,6 +97,38 @@ const nextMatchId = computed<number | null>(() => {
   return candidates[0]?.id ?? null
 })
 
+// ── Détection repos insuffisant ────────────────────────────────────────────
+// Deux matchs adjacents dans la séquence partageant un joueur → ⚠ (spec planning §repos).
+// Les pauses ne comptent pas : dayMatchesDnd ne contient que des matchs.
+const restWarnings = computed<Set<number>>(() => {
+  const warnings = new Set<number>()
+
+  for (const day of calendarDays.value) {
+    const seq = (dayMatchesDnd.value[day.id] ?? []).filter(m => m.status !== 'CANCELED')
+
+    for (let i = 0; i < seq.length; i++) {
+      const curr = seq[i]
+      const currIds = new Set<number>()
+      if (curr.sideA?.player?.id != null) currIds.add(curr.sideA.player.id)
+      if (curr.sideB?.player?.id != null) currIds.add(curr.sideB.player.id)
+
+      const sharesPlayer = (other: typeof seq[0]): boolean => {
+        if (other.sideA?.player?.id != null && currIds.has(other.sideA.player.id)) return true
+        if (other.sideB?.player?.id != null && currIds.has(other.sideB.player.id)) return true
+        return false
+      }
+
+      const prev = i > 0 ? seq[i - 1] : null
+      const next = i < seq.length - 1 ? seq[i + 1] : null
+      if ((prev && sharesPlayer(prev)) || (next && sharesPlayer(next))) {
+        warnings.add(curr.id)
+      }
+    }
+  }
+
+  return warnings
+})
+
 type DisplayState = 'live' | 'next' | 'scheduled' | 'finished' | 'canceled'
 
 function displayState(match: Match): DisplayState {
@@ -426,11 +458,18 @@ async function onDragEnd() {
                     <span class="cal-players">
                       {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
                     </span>
-                    <span
-                      v-if="m.isFeatured"
-                      class="featured-badge"
-                      title="Match mis en avant sur la TV"
-                    >★ EN AVANT</span>
+                    <span class="cal-badges">
+                      <span
+                        v-if="restWarnings.has(m.id)"
+                        class="rest-warning"
+                        title="Repos insuffisant — ce joueur joue deux matchs consécutifs"
+                      >⚠</span>
+                      <span
+                        v-if="m.isFeatured"
+                        class="featured-badge"
+                        title="Match mis en avant sur la TV"
+                      >★ EN AVANT</span>
+                    </span>
                     <span
                       class="drag-handle"
                       :class="{ 'drag-handle--locked': m.status === 'LIVE' }"
@@ -470,6 +509,7 @@ async function onDragEnd() {
       <div class="legend-item"><span class="cal-dot dot--scheduled" /> Planifié</div>
       <div class="legend-item"><span class="cal-dot dot--finished" /> Terminé</div>
       <div class="legend-item"><span class="cal-dot dot--canceled" /> Annulé</div>
+      <div class="legend-item"><span class="rest-warning">⚠</span> Repos insuffisant</div>
     </footer>
   </div>
 </template>
@@ -801,6 +841,19 @@ async function onDragEnd() {
   color: var(--ink-3);
   margin: 0 4px;
   font-weight: 400;
+}
+
+.cal-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rest-warning {
+  font-size: 13px;
+  color: var(--warning, #e57c00);
+  line-height: 1;
 }
 
 .featured-badge {
