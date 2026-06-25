@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import type { Entry } from '@/types'
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
 const showAutoFill = ref(false)
 
 watch(() => eventStore.activeEventId, (id) => {
@@ -45,7 +47,7 @@ function entryDisplayName(entry: Entry): string {
 
 function setActiveEvent(id: string) {
   const numId = parseInt(id, 10)
-  if (!isNaN(numId)) eventStore.activeEventId = numId
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
 }
 
 const dropError = ref('')

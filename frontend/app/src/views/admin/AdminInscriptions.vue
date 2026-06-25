@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import CreateTeamModal from '@/components/modals/CreateTeamModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
 const search = ref('')
 const showCreateTeam = ref(false)
 const busy = ref(false)
@@ -67,7 +70,7 @@ async function inscrireTout() {
 
 function setActiveEvent(id: string) {
   const numId = parseInt(id, 10)
-  if (!isNaN(numId)) eventStore.activeEventId = numId
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
 }
 
 function retirer(entryId: number, name: string) {

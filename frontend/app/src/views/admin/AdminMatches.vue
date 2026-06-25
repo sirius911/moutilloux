@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
+import { useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
@@ -14,6 +15,8 @@ type DayItem =
   | { kind: 'break'; data: Break }
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
 
 const editingMatch = ref<Match | null>(null)
 const showGenerateMatches = ref(false)
@@ -308,6 +311,11 @@ function onMatchSaved() {
   eventStore.fetchCalendar()
 }
 
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
+}
+
 // ── Drag-and-drop ──────────────────────────────────────────────────────────
 
 // Guard contre le double @end lors des drags inter-listes (SortableJS peut
@@ -370,7 +378,7 @@ async function onDragEnd() {
         <select
           class="event-selector"
           :value="eventStore.activeEventId"
-          @change="eventStore.activeEventId = Number(($event.target as HTMLSelectElement).value)"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
         >
           <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">
             {{ ev.name }}
