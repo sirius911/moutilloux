@@ -14,9 +14,10 @@ fichiers:
 ## Rôle de l'écran
 
 Le shell admin est le cadre commun de tout l'espace `/admin/*`. Il fournit la barre
-latérale (marque, sélecteur d'épreuve, navigation, liens de pied), héberge l'écran
-courant dans sa zone principale, et porte le **contexte d'épreuve active** dont
-dépendent les écrans Inscriptions, Poules, Matchs et Tableau final.
+latérale (marque, navigation, liens de pied), héberge l'écran courant dans sa zone
+principale, et porte l'**état global d'épreuve active** dont dépendent les écrans
+Inscriptions, Poules, Matchs et Tableau final. Le sélecteur d'épreuve est intégré
+en en-tête de chacun de ces quatre écrans (décision 16).
 
 L'espace admin est réservé à l'administrateur (superuser). Il s'affiche en thème
 clair, cible PC 1440×900.
@@ -43,21 +44,6 @@ enfants**. `/admin` sans sous-chemin redirige vers `/admin/tournoi`.
 - Pastille logo + nom du tournoi (« MOUTILLOUX »).
 - Sous-titre : libellé de l'édition active (ex. « Open · Édition 2026 »).
   Si aucune édition active n'existe, le sous-titre affiche un état neutre (« — »).
-
-### Sidebar — sélecteur d'épreuve
-
-- Libellé « ÉPREUVE » + liste déroulante des épreuves de l'édition active.
-- La sélection définit l'**épreuve active**, contexte des écrans Inscriptions,
-  Poules, Matchs et Tableau final.
-- Par défaut, la première épreuve de l'édition est sélectionnée automatiquement
-  dès que la liste est chargée.
-- Changer d'épreuve recharge les données de l'écran courant pour la nouvelle
-  épreuve, sans recharger la page.
-- La sélection est conservée pendant toute la session de navigation (elle survit
-  aux changements d'écran).
-- S'il n'existe aucune épreuve, le sélecteur est désactivé et affiche
-  « Aucune épreuve » ; les écrans dépendant de l'épreuve affichent leur état vide
-  (voir leurs specs).
 
 ### Sidebar — navigation
 
@@ -95,16 +81,15 @@ qui reste fixe.
 
 ## Flux : changement d'épreuve
 
-1. L'admin choisit une épreuve dans le sélecteur.
+1. Depuis le sélecteur en en-tête d'un écran dépendant (Inscriptions, Poules,
+   Matchs, Tableau final), l'admin choisit une autre épreuve.
 2. L'épreuve active est mise à jour dans l'état global.
-3. L'écran courant, s'il dépend de l'épreuve, relance ses chargements pour la
-   nouvelle épreuve et remplace son contenu. Les écrans indépendants de l'épreuve
-   (Tournoi, Joueurs) ne sont pas affectés.
+3. L'écran courant relance ses chargements pour la nouvelle épreuve et remplace
+   son contenu. Les écrans indépendants (Tournoi, Joueurs) ne sont pas affectés.
 4. Les compteurs de navigation liés à l'épreuve se mettent à jour.
 
 Aucune saisie en cours n'est perdue silencieusement : si une modale est ouverte,
-elle reste ouverte (le changement d'épreuve via la sidebar n'est pas accessible
-sous l'overlay d'une modale).
+elle reste ouverte (le sélecteur n'est pas accessible sous l'overlay d'une modale).
 
 ---
 
@@ -122,6 +107,6 @@ sous l'overlay d'une modale).
 
 | Situation | Comportement |
 |---|---|
-| Aucune édition active | Sous-titre marque neutre, sélecteur vide désactivé, écrans d'épreuve en état vide. L'écran Tournoi reste utilisable pour créer/activer une édition. |
-| Édition active sans épreuve | Sélecteur « Aucune épreuve » désactivé ; l'écran Tournoi propose la création d'épreuve. |
-| Épreuve active supprimée (depuis Tournoi) | Le sélecteur bascule sur la première épreuve restante, ou sur l'état « Aucune épreuve ». |
+| Aucune édition active | Sous-titre marque neutre, sélecteurs d'épreuve désactivés sur les écrans dépendants, ces écrans affichent leur état vide. L'écran Tournoi reste utilisable pour créer/activer une édition. |
+| Édition active sans épreuve | Les sélecteurs affichent « Aucune épreuve » désactivé ; l'écran Tournoi propose la création d'épreuve. |
+| Épreuve active supprimée (depuis Tournoi) | L'état global bascule sur la première épreuve restante, ou sur l'état « Aucune épreuve ». |

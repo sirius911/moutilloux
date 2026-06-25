@@ -4,7 +4,8 @@
       "Bash(gh issue *)",
       "Bash(gh api *)",
       "Bash(git push origin claude/*)",
-      "Bash(gh pr *)"
+      "Bash(gh pr *)",
+      "Bash(gh api repos/sirius911/moutilloux/milestones/*:write)"
     ]
   }
 }

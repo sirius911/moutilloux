@@ -28,8 +28,9 @@ d'attente** (ordre de passage), **Terminés**.
 
 ### En-tête de page
 
-- Fil d'ariane « Tournoi · {épreuve} », titre « Matchs », sous-titre « Backlog,
-  file d'attente et matchs terminés ».
+- **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
+  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+- Titre « Matchs », sous-titre « Backlog, file d'attente et matchs terminés ».
 - Action principale : **« Générer les matchs de poule »** → modale de
   génération.
 

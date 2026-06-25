@@ -4,15 +4,10 @@ import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useApi } from '@/composables/useApi'
 import { useEventStore } from '@/stores/event'
+import type { Player } from '@/types'
 
 const props = defineProps<{
-  editing?: {
-    id: number
-    firstName: string
-    lastName: string
-    gender: 'M' | 'F' | 'O'
-    birthYear?: number | null
-  } | null
+  editing?: Player | null
 }>()
 
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -22,10 +17,15 @@ const eventStore = useEventStore()
 
 const firstName = ref(props.editing?.firstName ?? '')
 const lastName = ref(props.editing?.lastName ?? '')
-const birthDate = ref(props.editing?.birthYear ? `${props.editing.birthYear}-01-01` : '')
-const gender = ref<'M' | 'F' | 'O'>(props.editing?.gender ?? 'M')
+const birthYear = ref<string>(props.editing?.birthYear?.toString() ?? '')
+const currentYear = new Date().getFullYear()
+const gender = ref<'M' | 'F' | 'O' | ''>(props.editing?.gender ?? '')
+const email = ref(props.editing?.email ?? '')
+const phone = ref(props.editing?.phone ?? '')
+const licenseNumber = ref(props.editing?.licenseNumber ?? '')
 const saving = ref(false)
 const error = ref('')
+const fieldErrors = ref<Record<string, string[]>>({})
 
 const subtitle = computed(() =>
   props.editing
@@ -34,42 +34,56 @@ const subtitle = computed(() =>
 )
 
 const genderOptions = [
+  { value: '', label: 'Non précisé' },
   { value: 'M', label: 'Homme' },
   { value: 'F', label: 'Femme' },
   { value: 'O', label: 'Autre' },
 ]
 
-function parseBirthYear(): number | undefined {
-  if (!birthDate.value) return undefined
-  const y = Number.parseInt(birthDate.value.slice(0, 4), 10)
-  return Number.isNaN(y) ? undefined : y
-}
-
 async function save() {
   if (!firstName.value || !lastName.value) return
   saving.value = true
   error.value = ''
+  fieldErrors.value = {}
   try {
     if (props.editing) {
       await eventStore.editPlayer(props.editing.id, {
         first_name: firstName.value,
         last_name: lastName.value,
-        gender: gender.value,
-        birth_year: parseBirthYear(),
+        gender: gender.value || undefined,
+        birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
+        email: email.value || undefined,
+        phone: phone.value || undefined,
+        license_number: licenseNumber.value || undefined,
       })
     } else {
       await post('/api/players/create/', {
         first_name: firstName.value,
         last_name: lastName.value,
-        birth_date: birthDate.value || undefined,
-        gender: gender.value,
+        birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
+        gender: gender.value || undefined,
+        email: email.value || undefined,
+        phone: phone.value || undefined,
+        license_number: licenseNumber.value || undefined,
       })
       await eventStore.fetchAllPlayers()
     }
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    const raw = e instanceof Error ? e.message : 'Erreur inconnue.'
+    const jsonStart = raw.indexOf(' — ')
+    if (jsonStart !== -1) {
+      try {
+        const parsed = JSON.parse(raw.slice(jsonStart + 3))
+        if (parsed.fields) fieldErrors.value = parsed.fields
+        error.value = parsed.error ?? raw
+      } catch {
+        error.value = raw
+      }
+    } else {
+      error.value = raw
+    }
   } finally {
     saving.value = false
   }
@@ -90,23 +104,58 @@ async function save() {
       </svg>
     </template>
 
+    <!-- Section Identité -->
     <div class="mdl-section">
+      <h4>Identité</h4>
       <div class="fld-grid">
         <label class="fld">
           <span class="fld-lbl">Prénom <em>*</em></span>
           <input v-model="firstName" class="inp" placeholder="Prénom" />
+          <span v-if="fieldErrors.first_name?.length" class="fld-error">{{ fieldErrors.first_name[0] }}</span>
         </label>
         <label class="fld">
           <span class="fld-lbl">Nom <em>*</em></span>
           <input v-model="lastName" class="inp" placeholder="Nom de famille" />
+          <span v-if="fieldErrors.last_name?.length" class="fld-error">{{ fieldErrors.last_name[0] }}</span>
         </label>
         <label class="fld">
-          <span class="fld-lbl">Date de naissance</span>
-          <input v-model="birthDate" class="inp" type="date" />
+          <span class="fld-lbl">Année de naissance</span>
+          <input v-model="birthYear" class="inp" type="number" min="1900" :max="currentYear" placeholder="ex. 1990" />
+          <span v-if="fieldErrors.birth_year?.length" class="fld-error">{{ fieldErrors.birth_year[0] }}</span>
         </label>
         <label class="fld">
-          <span class="fld-lbl">Genre <em>*</em></span>
+          <span class="fld-lbl">Genre</span>
           <Segmented v-model="gender" :options="genderOptions" />
+          <span v-if="fieldErrors.gender?.length" class="fld-error">{{ fieldErrors.gender[0] }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Section Contact -->
+    <div class="mdl-section">
+      <h4>Contact</h4>
+      <div class="fld-grid">
+        <label class="fld">
+          <span class="fld-lbl">Email</span>
+          <input v-model="email" class="inp" type="email" placeholder="adresse@example.com" />
+          <span v-if="fieldErrors.email?.length" class="fld-error">{{ fieldErrors.email[0] }}</span>
+        </label>
+        <label class="fld">
+          <span class="fld-lbl">Téléphone</span>
+          <input v-model="phone" class="inp" type="tel" placeholder="+33 6 …" />
+          <span v-if="fieldErrors.phone?.length" class="fld-error">{{ fieldErrors.phone[0] }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Section Compétition -->
+    <div class="mdl-section">
+      <h4>Compétition</h4>
+      <div class="fld-grid fld-grid--single">
+        <label class="fld">
+          <span class="fld-lbl">N° de licence</span>
+          <input v-model="licenseNumber" class="inp inp--mono" placeholder="ex. 1234567" />
+          <span v-if="fieldErrors.license_number?.length" class="fld-error">{{ fieldErrors.license_number[0] }}</span>
         </label>
       </div>
     </div>
@@ -132,6 +181,10 @@ async function save() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px 20px;
+}
+
+.fld-grid--single {
+  grid-template-columns: 1fr;
 }
 
 .fld {
@@ -169,6 +222,8 @@ async function save() {
 
 .inp:focus { border-color: var(--accent); }
 
+.inp--mono { font-family: monospace; }
+
 .mdl-error {
   margin: 8px 0 0;
   font-size: 13px;
@@ -201,4 +256,10 @@ async function save() {
 
 .adm-btn.primary:hover { opacity: 0.9; }
 .adm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.fld-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 2px;
+}
 </style>

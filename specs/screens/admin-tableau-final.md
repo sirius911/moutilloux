@@ -24,8 +24,9 @@ automatique des gagnants jusqu'à la finale.
 
 ### En-tête de page
 
-- Fil d'ariane « Tournoi · {épreuve} », titre « Tableau final », sous-titre
-  « Glissez les qualifiés dans les slots du bracket ».
+- **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
+  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+- Titre « Tableau final », sous-titre « Glissez les qualifiés dans les slots du bracket ».
 - Quand un tableau existe : action secondaire **« Recréer le tableau »**.
 
 ### État initial (aucun tableau)
