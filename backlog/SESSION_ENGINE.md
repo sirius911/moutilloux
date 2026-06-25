@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-25 — Session #15
-**Sprint actif :** 07 — Calendrier : modèle & API
-**Roadmap :** Sprint 07 actif (issues #92–93 ouvertes)
-**Tickets clôturés cette session :** 2 (#90 ⚠️ #91 ⚠️)
+**Dernière session :** 2026-06-25 — Session #16
+**Sprint actif :** 08 — Calendrier : écran admin (à créer)
+**Roadmap :** Sprint 07 terminé — Sprint 08 prochain (à planifier)
+**Tickets clôturés cette session :** 2 (#92 ⚠️ #93 ⚠️)
 **Branche :** `claude/sprint/07-calendrier-api`
-**Issues restantes :** 2 (#92 état TV enrichi, #93 durée défaut)
-**Contexte :** Reorder calendrier évolué + auto-arrange pré-pose implémentés. Prochaine session : #92 (majeure) puis #93 (mineure).
+**Issues restantes :** 0 (sprint 07 clôturé)
+**Contexte :** Sprint 07 terminé — état TV enrichi + durée match par défaut implémentés. Milestone fermé, sprint archivé dans done/. Sprint 08 à planifier avec /plan-sprint.
