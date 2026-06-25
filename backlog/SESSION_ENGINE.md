@@ -375,7 +375,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 **Dernière session :** 2026-06-29 — Session #28
 **Sprint actif :** aucun (roadmap vide)
-**Roadmap :** vide — Sprint 10 terminé et archivé
+**Roadmap :** Sprint 11 actif (ajouté en fin de session)
 **Tickets clôturés cette session :** 2 (#117 ✅, #119 ⚠️)
 **Branche :** `claude/sprint/10-contexte-url`
 **Issues restantes :** 0
