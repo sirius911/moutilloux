@@ -502,6 +502,79 @@ def generate_group_matches(request, event_id: int):
 
 
 # -----------------------
+# Services : Cycle de vie de l'épreuve
+# -----------------------
+
+@transaction.atomic
+def start_event(event):
+    """
+    Service : passe l'épreuve de INSCRIPTION → EN_COURS.
+    - Génère le round-robin de chaque poule jouable (≥ 2 entries).
+    - Crée le squelette du tableau final.
+    - Met status = EN_COURS.
+    Retourne {"created": int, "unplaced": [Entry, ...]}.
+    Lève ValueError si le statut n'est pas INSCRIPTION ou si aucune poule jouable.
+    """
+    if event.status != Event.Status.INSCRIPTION:
+        raise ValueError(f"Impossible de démarrer : statut actuel = {event.status}.")
+
+    # poules jouables = au moins 2 entries
+    playable_groups = [
+        g for g in Group.objects.filter(event=event).prefetch_related("memberships")
+        if g.memberships.count() >= 2
+    ]
+    if not playable_groups:
+        raise ValueError("Aucune poule jouable (au moins 2 inscrits par poule requis).")
+
+    # entries non affectées à une poule
+    placed_entry_ids = set(
+        GroupMembership.objects.filter(group__event=event).values_list("entry_id", flat=True)
+    )
+    all_entry_ids = set(Entry.objects.filter(event=event).values_list("id", flat=True))
+    unplaced_ids = all_entry_ids - placed_entry_ids
+    unplaced = list(Entry.objects.filter(id__in=unplaced_ids).select_related("player", "team"))
+
+    created, _ = generate_group_matches_for_event(event)
+    ensure_final_bracket_exists(event)
+
+    event.status = Event.Status.EN_COURS
+    event.save(update_fields=["status"])
+
+    return {"created": created, "unplaced": unplaced}
+
+
+def close_event(event):
+    """
+    Service : passe l'épreuve EN_COURS → TERMINEE si la finale (F1) est FINISHED.
+    Idempotent : no-op si déjà TERMINEE.
+    Lève ValueError si la finale n'est pas terminée.
+    """
+    if event.status == Event.Status.TERMINEE:
+        return
+
+    finale = Match.objects.filter(
+        event=event, stage=Match.Stage.F, bracket_slot="F1"
+    ).first()
+    if not finale or finale.status != Match.Status.FINISHED:
+        raise ValueError("La finale (F1) n'est pas encore terminée.")
+
+    event.status = Event.Status.TERMINEE
+    event.save(update_fields=["status"])
+
+
+def reopen_event(event):
+    """
+    Service : passe l'épreuve TERMINEE → EN_COURS (recours admin).
+    Lève ValueError si le statut n'est pas TERMINEE.
+    """
+    if event.status != Event.Status.TERMINEE:
+        raise ValueError(f"Impossible de rouvrir : statut actuel = {event.status}.")
+
+    event.status = Event.Status.EN_COURS
+    event.save(update_fields=["status"])
+
+
+# -----------------------
 # Actions : Matches (edit + feature)
 # -----------------------
 
@@ -531,6 +604,12 @@ def finalize_match_edit(match):
     if match.status == Match.Status.FINISHED and match.stage in (Match.Stage.QF, Match.Stage.SF):
         from live.bracket import sync_final_winners_for_event
         sync_final_winners_for_event(match.event)
+
+    if match.status == Match.Status.FINISHED and match.stage == Match.Stage.F:
+        try:
+            close_event(match.event)
+        except ValueError:
+            pass
 
     return match
 

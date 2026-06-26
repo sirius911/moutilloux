@@ -606,6 +606,12 @@ def referee_action(request, match_id: int):
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+        if match.stage == Match.Stage.F:
+            from live.admin_views import close_event
+            try:
+                close_event(match.event)
+            except ValueError:
+                pass
 
         return JsonResponse({"ok": True})
 
@@ -622,6 +628,12 @@ def referee_action(request, match_id: int):
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+        if match.stage == Match.Stage.F:
+            from live.admin_views import close_event
+            try:
+                close_event(match.event)
+            except ValueError:
+                pass
 
         return JsonResponse({"ok": True})
 
@@ -642,6 +654,12 @@ def referee_action(request, match_id: int):
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+        if match.stage == Match.Stage.F:
+            from live.admin_views import close_event
+            try:
+                close_event(match.event)
+            except ValueError:
+                pass
 
         return JsonResponse({"ok": True})
 
