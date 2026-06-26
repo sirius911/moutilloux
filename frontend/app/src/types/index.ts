@@ -103,7 +103,7 @@ export interface Group {
 
 // ─── Match ──────────────────────────────────────────────────────────────────
 
-export type MatchStage = 'GROUP' | 'QF' | 'SF' | 'F'
+export type MatchStage = 'GROUP' | 'QF' | 'SF' | 'F' | 'P3'
 export type MatchStatus = 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'CANCELED'
 export type MatchSide = 'A' | 'B'
 
@@ -180,6 +180,7 @@ export interface Bracket {
   qf: BracketSlot[]        // 4 slots
   sf: BracketSlot[]        // 2 slots
   f: BracketSlot[]         // 1 slot
+  p3?: BracketSlot[]       // 1 slot (petite finale, optionnel)
 }
 
 // ─── Kanban ─────────────────────────────────────────────────────────────────
