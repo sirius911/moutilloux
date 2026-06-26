@@ -47,6 +47,7 @@ export interface EventConfigPayload {
   group_size_default?: number
   qualified_per_group?: number
   notes?: string
+  has_third_place?: boolean
 }
 
 // ── Payloads Sprint 12 (ajustements en cours de jeu) ─────────────────────────

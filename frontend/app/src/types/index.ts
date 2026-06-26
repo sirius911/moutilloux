@@ -59,6 +59,7 @@ export interface Event {
   hasGroups: boolean
   hasBracket: boolean
   hasBracketStarted: boolean
+  hasThirdPlace: boolean
 }
 
 // ─── Référentiels de configuration (Phase 9) ────────────────────────────────
