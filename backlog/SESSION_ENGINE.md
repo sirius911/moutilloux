@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #31
+**Dernière session :** 2026-06-26 — Session #32
 **Sprint actif :** 11 — Cycle de vie : statut & « Débuter »
 **Roadmap :** Sprint 11 en cours
-**Tickets clôturés cette session :** 2 (#124 ⚠️ verrouillage poules, #125 ⚠️ store status)
+**Tickets clôturés cette session :** 2 (#126 ⚠️ bouton Débuter/Rouvrir AdminTournoi, #128 ⚠️ bandeau AdminGroups)
 **Branche :** `claude/sprint/11-cycle-de-vie-statut`
-**Issues restantes :** 4 (#126, #127, #128, #129)
-**Contexte :** Session 31 — Verrouillage poules piloté par Event.status (#124 : _assert_groups_unlocked + autofill_groups + champ locked API). Store EventStatus + actions start/close/reopen câblées (#125). Prochaine session : #126 (bouton Débuter/Rouvrir AdminTournoi), #128 (AdminGroups verrouillage status).
+**Issues restantes :** 2 (#127, #129)
+**Contexte :** Session 32 — StartEventModal (aperçu round-robin + avertissement inscrits non placés) + boutons Débuter/Rouvrir sur la carte épreuve (#126). Bandeau AdminGroups "L'épreuve est débutée — composition verrouillée." + token --gold (#128). Fix post-review : :danger=false sur ConfirmModal Rouvrir, fetchGroups après startEvent. Prochaine session : #127 (badge d'avancement AdminTournoi), #129 (gating EN_COURS AdminMatches).
