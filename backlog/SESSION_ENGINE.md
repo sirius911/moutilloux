@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #36
+**Dernière session :** 2026-06-26 — Session #37
 **Sprint actif :** 13 — Tableau : seeding général, byes & 3e place.
 **Roadmap :** 1 sprint restant (Sprint 13).
-**Tickets clôturés cette session :** 2 (#140 ✅, #138 ✅)
+**Tickets clôturés cette session :** 2 (#139 ✅, #142 ✅)
 **Branche :** `claude/sprint/13-tableau-seeding`
-**Issues Sprint 13 restantes :** 7 (#139, #141, #142, #143, #144, #145, #146)
-**Contexte :** Session 36 — Sprint 13 démarré. Event.has_third_place + Match.Stage.P3 ajoutés (migrations OK). bracket.py refondu : générateur général N poules, byes, séparation maximale avec labels positionnels (A1/B2…). Templates qpg=1 et qpg=2 pour N=2,3,4 groupes conformes à la spec.
+**Issues Sprint 13 restantes :** 5 (#141, #143, #144, #145, #146)
+**Contexte :** Session 37 — sync_final_bracket_for_event câblé après fin de match GROUP (referee_views + admin_views walkover). Endpoints généralisés : api_bracket_create → ensure_final_bracket_exists (bracket.py), _pack_event_bracket inclut P3, update_event accepte has_third_place, _pack_event expose hasThirdPlace. Prochaine session : #141 (propagation perdants → P3) puis front #143-#146.
