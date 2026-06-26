@@ -552,6 +552,8 @@ def close_event(event):
     """
     if event.status == Event.Status.TERMINEE:
         return
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible de clôturer : statut actuel = {event.status}.")
 
     finale = Match.objects.filter(
         event=event, stage=Match.Stage.F, bracket_slot="F1"
