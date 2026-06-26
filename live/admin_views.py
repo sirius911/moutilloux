@@ -6,7 +6,7 @@ from django.contrib import messages
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 
 from core.models import TournamentEdition, Player, Team
@@ -715,6 +715,85 @@ def remove_entry(event, entry):
             f"Impossible de retirer {entry} : déjà utilisé dans un ou plusieurs matchs."
         )
     entry.delete()
+
+
+@transaction.atomic
+def withdraw_entry(entry):
+    """
+    Service : déclare le forfait d'une Entry (EN_COURS requis).
+    - Pose entry.withdrawn = True.
+    - Tous les matchs non terminés (SCHEDULED/LIVE) → FINISHED, is_walkover=True,
+      winner_side = adversaire, score de convention (games_to_win / 0).
+    - Recalcule les standings de chaque poule affectée.
+    - Propage les vainqueurs du tableau (QF/SF/F).
+    Lève ValueError si l'event n'est pas EN_COURS.
+    Retourne {"matches_walkover": int}.
+    """
+    from competition.standings import recalc_one_group
+
+    event = entry.event
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible de déclarer un forfait : statut = {event.status}.")
+
+    entry.withdrawn = True
+    entry.save(update_fields=["withdrawn"])
+
+    non_finished = Match.objects.filter(
+        event=event,
+        status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
+    ).filter(
+        Q(side_a=entry) | Q(side_b=entry)
+    )
+
+    affected_groups = set()
+    has_qf_sf = False
+    has_finale = False
+    count = 0
+
+    for m in non_finished:
+        if m.side_a_id == entry.id:
+            m.winner_side = Match.WinnerSide.B
+            m.games_a = 0
+            m.games_b = m.games_to_win
+        else:
+            m.winner_side = Match.WinnerSide.A
+            m.games_a = m.games_to_win
+            m.games_b = 0
+
+        m.status = Match.Status.FINISHED
+        m.is_walkover = True
+        m.is_featured = False
+        m.order_index = None
+        if not m.finished_at:
+            m.finished_at = timezone.now()
+
+        m.save(update_fields=[
+            "winner_side", "games_a", "games_b",
+            "status", "is_walkover", "is_featured", "order_index", "finished_at",
+        ])
+
+        if m.group_id:
+            affected_groups.add(m.group_id)
+        if m.stage in (Match.Stage.QF, Match.Stage.SF):
+            has_qf_sf = True
+        if m.stage == Match.Stage.F:
+            has_finale = True
+        count += 1
+
+    for gid in affected_groups:
+        recalc_one_group(gid)
+
+    if has_qf_sf:
+        from live.bracket import sync_final_winners_for_event
+        sync_final_winners_for_event(event)
+
+    if has_finale:
+        try:
+            close_event(event)
+        except ValueError:
+            pass
+
+    return {"matches_walkover": count}
 
 
 @superuser_required
