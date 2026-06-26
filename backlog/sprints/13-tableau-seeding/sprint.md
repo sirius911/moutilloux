@@ -1,6 +1,6 @@
 ---
 sprint: 13
-nom: Tableau — seeding général, byes & 3e place
+nom: Tableau : seeding général, byes & 3e place
 specs:
   - specs/technical/cycle-de-vie-epreuve.md
 modules:
