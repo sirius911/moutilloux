@@ -37,7 +37,6 @@ from live.admin_views import (
     finalize_match_edit,
     feature_match,
     reorder_event_matches,
-    create_final_bracket_for_event,
     set_match_bracket_labels,
     assign_bracket_entry,
     clear_bracket_entry,
@@ -336,6 +335,7 @@ def _pack_event(event):
         "groupSizeDefault": event.group_size_default,
         "qualifiedPerGroup": event.qualified_per_group,
         "notes": event.notes,
+        "hasThirdPlace": event.has_third_place,
         "status": event.status,
         "entriesCount": Entry.objects.filter(event=event).count(),
         "hasGroups": Group.objects.filter(event=event).exists(),
@@ -555,9 +555,12 @@ def api_match_detail(request, match_id):
 
 
 def _pack_event_bracket(event):
-    """Structure du tableau final (QF/SF/F) groupée par slot — format partagé."""
+    """Structure du tableau final (QF/SF/F/P3) groupée par slot — format partagé."""
     qs = (
-        Match.objects.filter(event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F])
+        Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+        )
         .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player")
         .order_by("bracket_slot")
     )
@@ -575,6 +578,7 @@ def _pack_event_bracket(event):
         "qf": [make_slot("QF", k, by_slot.get(k)) for k in ("QF1", "QF2", "QF3", "QF4")],
         "sf": [make_slot("SF", k, by_slot.get(k)) for k in ("SF1", "SF2")],
         "f": [make_slot("F", k, by_slot.get(k)) for k in ("F1",)],
+        "p3": [make_slot("P3", "P3", by_slot.get("P3"))],
     }
 
 
@@ -1082,21 +1086,14 @@ def api_matches_reorder(request, event_id):
 def api_bracket_create(request, event_id):
     """
     POST /api/events/<id>/bracket/create/
-    Crée (ou recrée) le tableau final manuel (source : admin_views.create_final_bracket_for_event,
-    le même service que la vue panel_final_create). Body JSON : {start_stage: "QF|SF|F", force: bool}.
+    Crée ou met à jour le squelette du tableau final (générateur général : N poules × qpg, byes,
+    séparation maximale). Idempotent — aucun match lancé/terminé n'est touché.
     Réponse : structure du bracket (même format que GET /api/events/<id>/bracket/).
     """
-    try:
-        data = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
-
     event = get_object_or_404(Event.objects.select_related("edition"), pk=event_id)
 
-    try:
-        create_final_bracket_for_event(event, data.get("start_stage"), bool(data.get("force")))
-    except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
+    from live.bracket import ensure_final_bracket_exists
+    ensure_final_bracket_exists(event)
 
     return JsonResponse(_pack_event_bracket(event))
 
@@ -1435,7 +1432,7 @@ def api_event_create(request, edition_id):
 @superuser_required
 @transaction.atomic
 def api_event_edit(request, event_id):
-    """POST /api/events/<id>/edit/ — {group_size_default?, qualified_per_group?, notes?}."""
+    """POST /api/events/<id>/edit/ — {group_size_default?, qualified_per_group?, notes?, has_third_place?}."""
     data, err = _json_body(request)
     if err:
         return err
@@ -1447,6 +1444,8 @@ def api_event_edit(request, event_id):
         kwargs["qualified_per_group"] = data["qualified_per_group"]
     if "notes" in data:
         kwargs["notes"] = data["notes"]
+    if "has_third_place" in data:
+        kwargs["has_third_place"] = data["has_third_place"]
     try:
         update_event(event, **kwargs)
     except ValueError as exc:
