@@ -273,7 +273,10 @@ def referee_action(request, match_id: int):
                 # ✅ Recalcul classement poule
                 if match.stage == Match.Stage.GROUP and match.group_id:
                     gid = match.group_id
+                    _ev = match.event
                     transaction.on_commit(lambda: recalc_one_group(gid))
+                    from live.bracket import sync_final_bracket_for_event
+                    transaction.on_commit(lambda ev=_ev: sync_final_bracket_for_event(ev))
                 if match.stage in (Match.Stage.QF, Match.Stage.SF):
                     from live.bracket import sync_final_winners_for_event
                     transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
@@ -316,7 +319,10 @@ def referee_action(request, match_id: int):
                 # ✅ Recalcul classement poule
                 if match.stage == Match.Stage.GROUP and match.group_id:
                     gid = match.group_id
+                    _ev = match.event
                     transaction.on_commit(lambda: recalc_one_group(gid))
+                    from live.bracket import sync_final_bracket_for_event
+                    transaction.on_commit(lambda ev=_ev: sync_final_bracket_for_event(ev))
                 if match.stage in (Match.Stage.QF, Match.Stage.SF):
                     from live.bracket import sync_final_winners_for_event
                     transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
@@ -602,7 +608,10 @@ def referee_action(request, match_id: int):
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             gid = match.group_id
+            _ev_left = match.event
             transaction.on_commit(lambda: recalc_one_group(gid))
+            from live.bracket import sync_final_bracket_for_event
+            transaction.on_commit(lambda ev=_ev_left: sync_final_bracket_for_event(ev))
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
@@ -627,7 +636,10 @@ def referee_action(request, match_id: int):
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             gid = match.group_id
+            _ev_right = match.event
             transaction.on_commit(lambda: recalc_one_group(gid))
+            from live.bracket import sync_final_bracket_for_event
+            transaction.on_commit(lambda ev=_ev_right: sync_final_bracket_for_event(ev))
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
@@ -656,7 +668,10 @@ def referee_action(request, match_id: int):
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             gid = match.group_id
+            _ev_winner = match.event
             transaction.on_commit(lambda: recalc_one_group(gid))
+            from live.bracket import sync_final_bracket_for_event
+            transaction.on_commit(lambda ev=_ev_winner: sync_final_bracket_for_event(ev))
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))

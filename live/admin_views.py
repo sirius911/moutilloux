@@ -783,6 +783,10 @@ def withdraw_entry(entry):
     for gid in affected_groups:
         recalc_one_group(gid)
 
+    if affected_groups:
+        from live.bracket import sync_final_bracket_for_event
+        sync_final_bracket_for_event(event)
+
     if has_qf_sf:
         from live.bracket import sync_final_winners_for_event
         sync_final_winners_for_event(event)
