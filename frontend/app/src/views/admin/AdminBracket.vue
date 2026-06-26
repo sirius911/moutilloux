@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import type { BracketSlot, Entry } from '@/types'
 
@@ -100,7 +101,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
   <div class="admin-page">
     <header class="page-header">
       <div>
-        <p class="breadcrumb">Tournoi · {{ eventStore.events.find(e => e.id === eventStore.activeEventId)?.name }}</p>
+        <p class="breadcrumb">Tournoi · {{ eventStore.events.find(e => e.id === eventStore.activeEventId)?.name ?? '—' }}</p>
         <h1 class="page-title">Tableau final</h1>
         <p class="page-sub">Glissez les qualifiés dans les slots du bracket</p>
       </div>
@@ -109,7 +110,12 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
       </div>
     </header>
 
-    <div class="page-content">
+    <div v-if="eventStore.events.length === 0" class="empty-state">
+      <p>Aucune épreuve active.</p>
+      <RouterLink to="/admin/tournoi">Créer une épreuve dans Tournoi →</RouterLink>
+    </div>
+
+    <div v-else class="page-content">
       <p v-if="error" class="bracket-error" role="alert">{{ error }}</p>
 
       <div v-if="!hasBracket" class="bracket-empty bracket-empty--cta">
@@ -492,4 +498,24 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
   padding: 24px;
   font-style: italic;
 }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 40px;
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: center;
+}
+
+.empty-state a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.empty-state a:hover { text-decoration: underline; }
 </style>

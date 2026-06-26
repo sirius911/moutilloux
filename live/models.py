@@ -198,7 +198,7 @@ class Match(models.Model):
         if self.event_id:
             self.edition = self.event.edition
 
-        # ✅ Fix: si une heure a été saisie sans date -> Django l’a mise au 01/01/1900
+        # Fix: si une heure a été saisie sans date -> Django l’a mise au 01/01/1900
         if self.scheduled_time and self.scheduled_time.year == 1900:
             tz = timezone.get_current_timezone()
 
@@ -236,3 +236,34 @@ class Match(models.Model):
             self.finished_at = timezone.now()
 
         super().save(*args, **kwargs)
+
+
+class PlayDay(models.Model):
+    """Journée de jeu pré-déterminée par édition."""
+    edition = models.ForeignKey(
+        TournamentEdition, on_delete=models.CASCADE, related_name="play_days"
+    )
+    date = models.DateField()
+    start_time = models.TimeField()
+    target_end_time = models.TimeField()
+
+    class Meta:
+        ordering = ["edition", "date"]
+        unique_together = [("edition", "date")]
+
+    def __str__(self):
+        return f"{self.edition} — {self.date}"
+
+
+class Break(models.Model):
+    """Pause dans la séquence d'une journée (déjeuner, remise des prix…)."""
+    play_day = models.ForeignKey(PlayDay, on_delete=models.CASCADE, related_name="breaks")
+    order_index = models.PositiveIntegerField()
+    duration_min = models.PositiveIntegerField()
+    label = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ["play_day", "order_index"]
+
+    def __str__(self):
+        return f"{self.play_day.date} — {self.label} ({self.duration_min} min)"

@@ -14,13 +14,15 @@ fichiers:
 
 ## Rôle de l'écran
 
-L'écran Poules (`/admin/groups`) compose les poules de l'**épreuve active** :
+L'écran Poules (`/admin/events/:eventId/groups`) compose les poules de l'**épreuve active** :
 répartition automatique des inscrits, ajustements manuels par glisser-déposer.
-La composition est libre **jusqu'à la génération des matchs de poule** ; elle est
+La composition est libre **tant que l'épreuve n'est pas débutée** ; elle est
 ensuite verrouillée.
 
-La génération des matchs ne se fait pas ici : elle est l'action principale de
-l'écran Matchs (voir [[admin-matchs]]).
+Ni la génération des matchs ni le verrouillage ne se déclenchent ici : ils sont
+l'effet de **« Débuter l'épreuve »** sur l'écran Tournoi (voir
+[[cycle-de-vie-epreuve]]). Une fois l'épreuve débutée, seuls des **ajustements
+ponctuels** (forfait, remplacement, ajout tardif, retrait) restent possibles.
 
 ---
 
@@ -29,7 +31,9 @@ l'écran Matchs (voir [[admin-matchs]]).
 ### En-tête de page
 
 - **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
-  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+  en lieu et place du fil d'ariane. Le **choix d'épreuve navigue** vers
+  `/admin/events/:eventId/…` (`router.push`) ; l'URL fait foi et survit au
+  rechargement (voir [[routing-context]]).
 - Titre « Poules », sous-titre « Glissez-déposez les joueurs dans leur groupe ».
 - Action principale : **« Remplir automatiquement »** → modale de remplissage.
   Désactivée quand les poules sont verrouillées.
@@ -54,12 +58,16 @@ Une carte par poule :
 
 ### Bandeau de verrouillage
 
-Dès qu'**au moins un match de poule existe** pour l'épreuve, l'écran passe en
-lecture seule :
-- un bandeau explique : « Les matchs de poule sont générés — la composition des
-  poules est verrouillée », avec un lien vers l'écran Matchs ;
-- le glisser-déposer est désactivé (pastilles non déplaçables, ✕ masqués) ;
-- « Remplir automatiquement » est désactivé.
+Dès que l'**épreuve est débutée** (`status = EN_COURS`, voir
+[[cycle-de-vie-epreuve]]), l'écran passe en lecture seule :
+- un bandeau explique : « L'épreuve est débutée — la composition des poules est
+  verrouillée », avec un lien vers l'écran Calendrier ;
+- le glisser-déposer de **recomposition** est désactivé (pastilles non déplaçables,
+  ✕ masqués) ;
+- « Remplir automatiquement » est désactivé ;
+- restent accessibles les **ajustements ponctuels** de [[cycle-de-vie-epreuve]]
+  (déclarer un forfait, remplacer ou retirer un joueur, ajouter un inscrit tardif
+  dans une poule sous l'effectif).
 
 ---
 
@@ -125,6 +133,10 @@ Titre « Remplir les poules automatiquement ».
 
 ## Données
 
+- L'**épreuve active** vient du segment d'URL `:eventId`
+  (`/admin/events/:eventId/groups`) : l'URL fait foi, le store la reflète, et un
+  `:eventId` absent ou périmé est rattrapé par la garde de route (voir
+  [[routing-context]]). Recharger conserve l'épreuve.
 - Inscrits et poules chargés au montage et au changement d'épreuve active,
-  rechargés après chaque mutation. L'état de verrouillage est déduit de
-  l'existence de matchs de poule pour l'épreuve. Pas de polling.
+  rechargés après chaque mutation. L'état de verrouillage est déduit du **statut de
+  l'épreuve** (`EN_COURS`, voir [[cycle-de-vie-epreuve]]). Pas de polling.

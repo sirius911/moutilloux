@@ -25,6 +25,7 @@ export interface Entry {
 // ─── Tournoi ────────────────────────────────────────────────────────────────
 
 export type CategoryMode = 'S' | 'D'
+export type EventStatus = 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'
 
 export interface Edition {
   id: number
@@ -38,6 +39,7 @@ export interface Edition {
   distinctPlayersCount: number
   matchesFinished: number
   matchesTotal: number
+  defaultMatchDurationMin: number
 }
 
 export interface Event {
@@ -51,9 +53,11 @@ export interface Event {
   qualifiedPerGroup: number   // 1 | 2
   notes: string
   // ── Indicateurs d'état ──
+  status: EventStatus
   entriesCount: number
   hasGroups: boolean
   hasBracket: boolean
+  hasBracketStarted: boolean
 }
 
 // ─── Référentiels de configuration (Phase 9) ────────────────────────────────
@@ -181,4 +185,38 @@ export interface KanbanData {
   backlog: Match[]          // SCHEDULED sans orderIndex
   queue: Match[]            // SCHEDULED avec orderIndex (ordonné)
   finished: Match[]         // FINISHED
+}
+
+// ─── Calendrier ──────────────────────────────────────────────────────────────
+
+export interface PlayDay {
+  id: number
+  editionId: number
+  date: string              // "YYYY-MM-DD"
+  startTime: string         // "HH:MM"
+  targetEndTime: string     // "HH:MM"
+}
+
+export interface Break {
+  id: number
+  playDayId: number
+  orderIndex: number
+  durationMin: number
+  label: string
+}
+
+export interface CalendarDay extends PlayDay {
+  breaks: Break[]
+  matches: Match[]
+}
+
+export interface CalendarData {
+  playDays: CalendarDay[]
+  unscheduled: Match[]      // SCHEDULED, GROUP, sans order_index
+}
+
+export interface TvUpcoming {
+  next: Match | null
+  upcoming: Match[]
+  currentPlayDay: PlayDay | null
 }
