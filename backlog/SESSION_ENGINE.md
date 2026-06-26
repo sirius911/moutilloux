@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #31
-**Sprint actif :** 12 — Forfait & ajustements en cours de jeu.
-**Roadmap :** 2 sprints restants (Sprint 12 actif, Sprint 13 en attente).
-**Tickets clôturés cette session :** 2 (#134 ⚠️, #135 ⚠️)
+**Dernière session :** 2026-06-26 — Session #32
+**Sprint actif :** 13 — Tableau : seeding général, byes & 3e place.
+**Roadmap :** 1 sprint restant (Sprint 13).
+**Tickets clôturés cette session :** 2 (#136 ⚠️, #137 ✅)
 **Branche :** `claude/sprint/12-forfait-ajustements`
-**Issues restantes :** 2 (#136, #137)
-**Contexte :** Session 31 — Endpoints /api/entries/<id>/withdraw|replace/ + /api/events/<id>/entries/late/ livrés ; store câblé. Prochain : #136 (AdminGroups affordances) + #137 (AdminInscriptions forfait + AdminMatches walkover), parallélisables.
+**Sprint 12 terminé :** milestone fermé, dossier archivé, roadmap mise à jour.
+**Contexte :** Session 32 — Sprint 12 clôturé. AdminGroups affordances forfait/remplacer/retirer/ajouter-tardif ; AdminInscriptions chemin forfait EN_COURS ; AdminMatches badge FORFAIT walkover. Sprint 13 démarrera à la prochaine échéance.
