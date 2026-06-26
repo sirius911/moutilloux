@@ -183,6 +183,33 @@ def ensure_final_bracket_exists(event):
             side_b_label=b_label,
         )
 
+    # Slot P3 (petite finale) — créé seulement si l'épreuve le demande et qu'il y a au moins 2 SF
+    sf_count = sum(1 for (stage, _, _, _) in layout if stage == Match.Stage.SF)
+    if event.has_third_place and sf_count >= 2:
+        fmt = _fmt_for_stage(Match.Stage.P3)
+        rules = _rules_for_fmt(fmt)
+        exists = Match.objects.filter(event=event, stage=Match.Stage.P3, bracket_slot="P3").exists()
+        if not exists:
+            Match.objects.create(
+                edition=event.edition,
+                event=event,
+                stage=Match.Stage.P3,
+                bracket_slot="P3",
+                match_format=fmt,
+                side_a_label="LSF1",
+                side_b_label="LSF2",
+                status=Match.Status.SCHEDULED,
+                side_a=None,
+                side_b=None,
+                games_to_win=rules["games_to_win"],
+                tb_at=rules["tb_at"],
+                best_of=rules["best_of"],
+                tb_points_to_win=7,
+                tb_win_by_two=True,
+                deciding_set_mode=Match.DecidingSetMode.FULL_SET,
+                deciding_tb_points_to_win=10,
+            )
+
 
 def sync_final_bracket_for_event(event):
     """
@@ -222,6 +249,16 @@ def _winner_entry(match):
         return match.side_a
     if match.winner_side == "B":
         return match.side_b
+    return None
+
+
+def _loser_entry(match):
+    if match.status != Match.Status.FINISHED:
+        return None
+    if match.winner_side == "A":
+        return match.side_b
+    if match.winner_side == "B":
+        return match.side_a
     return None
 
 
@@ -294,3 +331,41 @@ def sync_final_winners_for_event(event):
 
         if changed:
             m.save(update_fields=["side_a", "side_b"])
+
+
+def sync_p3_losers_for_event(event):
+    """
+    Propage les perdants de SF1/SF2 vers le slot P3.
+    N'agit que si event.has_third_place et si un slot P3 SCHEDULED existe.
+    """
+    if not event.has_third_place:
+        return
+    p3 = Match.objects.filter(
+        event=event,
+        stage=Match.Stage.P3,
+        bracket_slot="P3",
+        status=Match.Status.SCHEDULED,
+    ).first()
+    if not p3:
+        return
+    sf_matches = {
+        m.bracket_slot: m
+        for m in Match.objects.filter(event=event, stage=Match.Stage.SF)
+    }
+    changed = False
+    if p3.side_a is None:
+        sf1 = sf_matches.get("SF1")
+        if sf1:
+            loser = _loser_entry(sf1)
+            if loser:
+                p3.side_a = loser
+                changed = True
+    if p3.side_b is None:
+        sf2 = sf_matches.get("SF2")
+        if sf2:
+            loser = _loser_entry(sf2)
+            if loser:
+                p3.side_b = loser
+                changed = True
+    if changed:
+        p3.save(update_fields=["side_a", "side_b"])
