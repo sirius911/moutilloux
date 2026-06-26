@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #38
-**Sprint actif :** — (Sprint 13 terminé, roadmap vide)
+**Dernière session :** 2026-06-26 — Session #39
+**Sprint actif :** — (roadmap vide)
 **Roadmap :** 0 sprint restant.
-**Tickets clôturés cette session :** 4 (#141 ✅ déjà fait, #144 ✅ déjà fait, #145 ✅, #146 ✅)
+**Tickets clôturés cette session :** 0
 **Branche :** `claude/sprint/13-tableau-seeding`
 **Issues Sprint 13 restantes :** 0
-**Contexte :** Session 38 — Sprint 13 terminé. EventModal has_third_place toggle ajouté. TvBracket : carte P3 + polling 4 s. Milestone fermé, dossier archivé dans done/. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines.
+**Contexte :** Session 39 — Roadmap vide confirmée. Aucun sprint actif. Désactiver la Routine manuellement sur claude.ai/code/routines.
