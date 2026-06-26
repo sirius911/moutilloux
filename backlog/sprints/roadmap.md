@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 13 — Tableau : seeding général, byes & 3e place | `backlog/sprints/13-tableau-seeding/sprint.md` |

@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #37
-**Sprint actif :** 13 — Tableau : seeding général, byes & 3e place.
-**Roadmap :** 1 sprint restant (Sprint 13).
-**Tickets clôturés cette session :** 2 (#139 ✅, #142 ✅)
+**Dernière session :** 2026-06-26 — Session #38
+**Sprint actif :** — (Sprint 13 terminé, roadmap vide)
+**Roadmap :** 0 sprint restant.
+**Tickets clôturés cette session :** 4 (#141 ✅ déjà fait, #144 ✅ déjà fait, #145 ✅, #146 ✅)
 **Branche :** `claude/sprint/13-tableau-seeding`
-**Issues Sprint 13 restantes :** 5 (#141, #143, #144, #145, #146)
-**Contexte :** Session 37 — sync_final_bracket_for_event câblé après fin de match GROUP (referee_views + admin_views walkover). Endpoints généralisés : api_bracket_create → ensure_final_bracket_exists (bracket.py), _pack_event_bracket inclut P3, update_event accepte has_third_place, _pack_event expose hasThirdPlace. Prochaine session : #141 (propagation perdants → P3) puis front #143-#146.
+**Issues Sprint 13 restantes :** 0
+**Contexte :** Session 38 — Sprint 13 terminé. EventModal has_third_place toggle ajouté. TvBracket : carte P3 + polling 4 s. Milestone fermé, dossier archivé dans done/. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines.
