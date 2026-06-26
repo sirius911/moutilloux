@@ -139,6 +139,7 @@ def _pack_entry(entry):
         "seedHint": entry.seed_hint,
         "groupId": None,
         "groupName": None,
+        "withdrawn": entry.withdrawn,
     }
     # Groupe assigné (via GroupMembership)
     membership = getattr(entry, "_membership_cache", None)
@@ -249,6 +250,7 @@ def _pack_match(m):
         "displayPointA": display_point_a,
         "displayPointB": display_point_b,
         "winnerSide": m.winner_side,
+        "isWalkover": m.is_walkover,
         "scheduledTime": scheduled_str,
         "startedAt": m.started_at.isoformat() if m.started_at else None,
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
@@ -467,6 +469,7 @@ def api_event_groups(request, event_id):
                 "gamesRatio": f"{games_won}/{games_lost}",
                 "points": points,
                 "qualified": qualif.get(entry.id, "-") != "-",
+                "withdrawn": entry.withdrawn,
             })
 
         # Grille croisée (matrice n×n)
