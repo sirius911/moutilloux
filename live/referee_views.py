@@ -607,11 +607,14 @@ def referee_action(request, match_id: int):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
         if match.stage == Match.Stage.F:
-            from live.admin_views import close_event
-            try:
-                close_event(match.event)
-            except ValueError:
-                pass
+            _event = match.event
+            def _try_close_left(ev=_event):
+                from live.admin_views import close_event
+                try:
+                    close_event(ev)
+                except ValueError:
+                    pass
+            transaction.on_commit(_try_close_left)
 
         return JsonResponse({"ok": True})
 
@@ -629,11 +632,14 @@ def referee_action(request, match_id: int):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
         if match.stage == Match.Stage.F:
-            from live.admin_views import close_event
-            try:
-                close_event(match.event)
-            except ValueError:
-                pass
+            _event = match.event
+            def _try_close_right(ev=_event):
+                from live.admin_views import close_event
+                try:
+                    close_event(ev)
+                except ValueError:
+                    pass
+            transaction.on_commit(_try_close_right)
 
         return JsonResponse({"ok": True})
 
@@ -655,11 +661,14 @@ def referee_action(request, match_id: int):
             from live.bracket import sync_final_winners_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
         if match.stage == Match.Stage.F:
-            from live.admin_views import close_event
-            try:
-                close_event(match.event)
-            except ValueError:
-                pass
+            _event = match.event
+            def _try_close_winner(ev=_event):
+                from live.admin_views import close_event
+                try:
+                    close_event(ev)
+                except ValueError:
+                    pass
+            transaction.on_commit(_try_close_winner)
 
         return JsonResponse({"ok": True})
 

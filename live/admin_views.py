@@ -543,6 +543,7 @@ def start_event(event):
     return {"created": created, "unplaced": unplaced}
 
 
+@transaction.atomic
 def close_event(event):
     """
     Service : passe l'épreuve EN_COURS → TERMINEE si la finale (F1) est FINISHED.
@@ -562,6 +563,7 @@ def close_event(event):
     event.save(update_fields=["status"])
 
 
+@transaction.atomic
 def reopen_event(event):
     """
     Service : passe l'épreuve TERMINEE → EN_COURS (recours admin).
@@ -1494,10 +1496,14 @@ def ensure_final_bracket_exists(event):
         get_or_create(Match.Stage.QF, "QF2", "C1", "B2", Match.Format.QF_SET5_TB_5_5)
         get_or_create(Match.Stage.QF, "QF3", "B1", "C2", Match.Format.QF_SET5_TB_5_5)
         get_or_create(Match.Stage.QF, "QF4", "D1", "A2", Match.Format.QF_SET5_TB_5_5)
+        get_or_create(Match.Stage.SF, "SF1", "WQF1", "WQF2", Match.Format.NORMAL_1SET)
+        get_or_create(Match.Stage.SF, "SF2", "WQF3", "WQF4", Match.Format.NORMAL_1SET)
+        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
 
     elif n == 2 and all(k in by_name for k in ["A", "B"]):
         get_or_create(Match.Stage.SF, "SF1", "A1", "B2", Match.Format.NORMAL_1SET)
         get_or_create(Match.Stage.SF, "SF2", "B1", "A2", Match.Format.NORMAL_1SET)
+        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
 
     else:
         # 1 poule => rien ; 3 poules => non géré
