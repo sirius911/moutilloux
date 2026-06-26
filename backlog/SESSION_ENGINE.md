@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #32
-**Sprint actif :** 11 — Cycle de vie : statut & « Débuter »
-**Roadmap :** Sprint 11 en cours
-**Tickets clôturés cette session :** 2 (#126 ⚠️ bouton Débuter/Rouvrir AdminTournoi, #128 ⚠️ bandeau AdminGroups)
+**Dernière session :** 2026-06-26 — Session #33
+**Sprint actif :** 11 — TERMINÉ (archivé dans done/)
+**Roadmap :** Vide — tous les sprints terminés.
+**Tickets clôturés cette session :** 2 (#127 ✅ badge avancement 5 états, #129 ✅ gating INSCRIPTION AdminMatches)
 **Branche :** `claude/sprint/11-cycle-de-vie-statut`
-**Issues restantes :** 2 (#127, #129)
-**Contexte :** Session 32 — StartEventModal (aperçu round-robin + avertissement inscrits non placés) + boutons Débuter/Rouvrir sur la carte épreuve (#126). Bandeau AdminGroups "L'épreuve est débutée — composition verrouillée." + token --gold (#128). Fix post-review : :danger=false sur ConfirmModal Rouvrir, fetchGroups après startEvent. Prochaine session : #127 (badge d'avancement AdminTournoi), #129 (gating EN_COURS AdminMatches).
+**Issues restantes :** 0
+**Contexte :** Session 33 — Sprint 11 bouclé. Badge d'avancement AdminTournoi migré vers 5 libellés dérivés de status + hasBracketStarted (nouveau champ API). AdminMatches : retrait du bouton « Générer les matchs de poule » + gating état vide quand INSCRIPTION. Milestone Sprint 11 fermé. Roadmap vide — désactiver la Routine sur claude.ai/code/routines.
