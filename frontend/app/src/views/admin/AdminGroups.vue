@@ -127,8 +127,8 @@ async function onDropToUnassigned() {
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
-        Les matchs de poule sont générés — la composition des poules est verrouillée.
-        <RouterLink to="/admin/matches" class="lock-link">Voir les matchs</RouterLink>
+        L'épreuve est débutée — composition verrouillée.
+        <RouterLink to="/admin/matches" class="lock-link">Voir le Calendrier</RouterLink>
       </div>
       <p v-if="dropError" class="adm-error">{{ dropError }}</p>
       <div class="groups-layout">
@@ -450,8 +450,8 @@ async function onDropToUnassigned() {
   gap: 8px;
   padding: 12px 16px;
   border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--warning, #f59e0b) 12%, transparent);
-  border: 1px solid var(--warning, #f59e0b);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border: 1px solid var(--gold);
   color: var(--ink-1);
   font-size: 13px;
   margin-bottom: 4px;

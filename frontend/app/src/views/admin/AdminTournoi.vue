@@ -5,6 +5,7 @@ import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
 import EditionModal from '@/components/modals/EditionModal.vue'
 import EventModal from '@/components/modals/EventModal.vue'
+import StartEventModal from '@/components/modals/StartEventModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { Edition, Event } from '@/types'
 
@@ -27,7 +28,9 @@ const eventModal = ref<{ editionId: number; editing: Event | null } | null>(null
 type ConfirmAction =
   | { type: 'deleteEdition'; payload: Edition }
   | { type: 'deleteEvent'; payload: Event }
+  | { type: 'reopenEvent'; payload: Event }
 const confirmState = ref<ConfirmAction | null>(null)
+const startConfirm = ref<Event | null>(null)
 
 function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : '—'
@@ -64,8 +67,10 @@ async function handleConfirm() {
   try {
     if (action.type === 'deleteEdition') {
       await eventStore.deleteEdition(action.payload.id)
-    } else {
+    } else if (action.type === 'deleteEvent') {
       await eventStore.deleteEvent(action.payload.id)
+    } else if (action.type === 'reopenEvent') {
+      await eventStore.reopenEvent(action.payload.id)
     }
   } catch (err) {
     error.value = extractApiError(err)
@@ -179,6 +184,22 @@ async function handleConfirm() {
                 Matchs
               </button>
               <span class="adm-event-spacer" />
+              <button
+                v-if="ev.status === 'INSCRIPTION'"
+                class="adm-btn primary"
+                type="button"
+                @click="startConfirm = ev"
+              >
+                Débuter
+              </button>
+              <button
+                v-if="ev.status === 'TERMINEE'"
+                class="adm-btn"
+                type="button"
+                @click="confirmState = { type: 'reopenEvent', payload: ev }"
+              >
+                Rouvrir
+              </button>
               <button class="adm-btn" type="button" @click="eventModal = { editionId: ev.editionId, editing: ev }">
                 Modifier
               </button>
@@ -186,7 +207,7 @@ async function handleConfirm() {
                 Supprimer
               </button>
               <button
-                class="adm-btn primary"
+                class="adm-btn"
                 type="button"
                 :disabled="eventStore.activeEventId === ev.id"
                 @click="eventStore.activeEventId = ev.id"
@@ -276,7 +297,24 @@ async function handleConfirm() {
       @saved="error = ''"
     />
 
-    <!-- Modale de confirmation destructive -->
+    <!-- Modale Débuter -->
+    <StartEventModal
+      v-if="startConfirm"
+      :event="startConfirm"
+      @close="startConfirm = null"
+      @started="startConfirm = null"
+    />
+
+    <!-- Modale de confirmation destructive / réversible -->
+    <ConfirmModal
+      v-if="confirmState?.type === 'reopenEvent'"
+      :title="`Rouvrir l'épreuve « ${(confirmState.payload as Event).name} » ?`"
+      body="L'épreuve repassera en EN_COURS. Les scores déjà joués sont conservés."
+      confirm-label="Rouvrir"
+      :danger="false"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
+    />
     <ConfirmModal
       v-if="confirmState?.type === 'deleteEdition'"
       :title="`Supprimer l'édition « ${(confirmState.payload as Edition).name} » ?`"

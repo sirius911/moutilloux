@@ -337,6 +337,7 @@ export const useEventStore = defineStore('event', () => {
   async function startEvent(eventId: number) {
     await post(`/api/events/${eventId}/start/`, {})
     await fetchEditions()
+    if (activeEventId.value === eventId) await fetchGroups(eventId)
   }
 
   async function closeEvent(eventId: number) {
