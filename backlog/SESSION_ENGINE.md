@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #33
-**Sprint actif :** 11 — TERMINÉ (archivé dans done/)
+**Dernière session :** 2026-06-26 — Session #34
+**Sprint actif :** Aucun — Roadmap vide.
 **Roadmap :** Vide — tous les sprints terminés.
-**Tickets clôturés cette session :** 2 (#127 ✅ badge avancement 5 états, #129 ✅ gating INSCRIPTION AdminMatches)
+**Tickets clôturés cette session :** 0
 **Branche :** `claude/sprint/11-cycle-de-vie-statut`
 **Issues restantes :** 0
-**Contexte :** Session 33 — Sprint 11 bouclé. Badge d'avancement AdminTournoi migré vers 5 libellés dérivés de status + hasBracketStarted (nouveau champ API). AdminMatches : retrait du bouton « Générer les matchs de poule » + gating état vide quand INSCRIPTION. Milestone Sprint 11 fermé. Roadmap vide — désactiver la Routine sur claude.ai/code/routines.
+**Contexte :** Session 34 — Roadmap vide, rien à faire. Working tree de la session 33 (déplacement done/ incomplet) commité. Désactiver la Routine sur claude.ai/code/routines.
