@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #34
+**Dernière session :** 2026-06-26 — Session #35
 **Sprint actif :** Aucun — Roadmap vide.
 **Roadmap :** Vide — tous les sprints terminés.
 **Tickets clôturés cette session :** 0
 **Branche :** `claude/sprint/11-cycle-de-vie-statut`
 **Issues restantes :** 0
-**Contexte :** Session 34 — Roadmap vide, rien à faire. Working tree de la session 33 (déplacement done/ incomplet) commité. Désactiver la Routine sur claude.ai/code/routines.
+**Contexte :** Session 35 — Roadmap vide, rien à faire. Désactiver la Routine sur claude.ai/code/routines.
