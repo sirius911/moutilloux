@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #13 (6e de la journée)
-**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
-**Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 0 (clôture de sprint uniquement)
-**Sprint 05 terminé :** Milestone fermé ✅ — dossier archivé dans `done/05-admin-joueurs/`
-**Branche :** `claude/sprint/05-admin-joueurs` (push sur cette branche, Sprint 06 démarrera sur sa propre branche)
-**Contexte :** Sprint 05 clos manuellement (4e blocage consécutif). Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont dans Sprint 06 (#78, #79, #80). Sprint 06 — Refacto Sélecteur & Joueurs est maintenant le sprint actif. Démarrer Sprint 06 à la prochaine session planifiée.
+**Dernière session :** 2026-06-29 — Session #28
+**Sprint actif :** aucun (roadmap vide)
+**Roadmap :** Sprint 11 actif (ajouté en fin de session)
+**Tickets clôturés cette session :** 2 (#117 ✅, #119 ⚠️)
+**Branche :** `claude/sprint/10-contexte-url`
+**Issues restantes :** 0
+**Contexte :** Session 28 — Sprint 10 terminé. Sélecteurs épreuve migrés vers router.push (#117). États vides « Aucune épreuve active » ajoutés sur 4 écrans (#119). Milestone #9 fermé. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines si les sprints 11-13 ne sont pas encore dans la roadmap.

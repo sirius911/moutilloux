@@ -73,6 +73,24 @@ urlpatterns = [
     path("api/events/<int:event_id>/edit/", api_views.api_event_edit, name="api_event_edit"),
     path("api/events/<int:event_id>/delete/", api_views.api_event_delete, name="api_event_delete"),
 
+    # ── API JSON — Sprint 07 (calendrier : journées et pauses) ────────────────
+    # PlayDay
+    path("api/editions/<int:edition_id>/play-days/", api_views.api_play_days_list, name="api_play_days_list"),
+    path("api/editions/<int:edition_id>/play-days/create/", api_views.api_play_day_create, name="api_play_day_create"),
+    path("api/play-days/<int:play_day_id>/edit/", api_views.api_play_day_edit, name="api_play_day_edit"),
+    path("api/play-days/<int:play_day_id>/delete/", api_views.api_play_day_delete, name="api_play_day_delete"),
+    # Break
+    path("api/play-days/<int:play_day_id>/breaks/", api_views.api_breaks_list, name="api_breaks_list"),
+    path("api/play-days/<int:play_day_id>/breaks/create/", api_views.api_break_create, name="api_break_create"),
+    path("api/breaks/<int:break_id>/edit/", api_views.api_break_edit, name="api_break_edit"),
+    path("api/breaks/<int:break_id>/delete/", api_views.api_break_delete, name="api_break_delete"),
+    # Packer calendrier + mutations calendrier
+    path("api/editions/<int:edition_id>/calendar/", api_views.api_edition_calendar, name="api_edition_calendar"),
+    path("api/editions/<int:edition_id>/calendar/reorder/", api_views.api_calendar_reorder, name="api_calendar_reorder"),
+    path("api/events/<int:event_id>/matches/auto-arrange/", api_views.api_matches_auto_arrange, name="api_matches_auto_arrange"),
+    # TV : prochains matchs (lecture publique)
+    path("api/tv/upcoming/", api_views.api_tv_upcoming, name="api_tv_upcoming"),
+
     path("results/poules/", views.results_poules, name="results_poules"),
     path("results/poules/start/", views.results_poules_start, name="results_poules_start"),
     path("results/poules/<int:event_id>/", views.results_poules_event, name="results_poules_event"),
