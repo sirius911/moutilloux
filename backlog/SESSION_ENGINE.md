@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-29 — Session #28
-**Sprint actif :** aucun (roadmap vide)
-**Roadmap :** Sprint 11 actif (ajouté en fin de session)
-**Tickets clôturés cette session :** 2 (#117 ✅, #119 ⚠️)
-**Branche :** `claude/sprint/10-contexte-url`
-**Issues restantes :** 0
-**Contexte :** Session 28 — Sprint 10 terminé. Sélecteurs épreuve migrés vers router.push (#117). États vides « Aucune épreuve active » ajoutés sur 4 écrans (#119). Milestone #9 fermé. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines si les sprints 11-13 ne sont pas encore dans la roadmap.
+**Dernière session :** 2026-06-26 — Session #29
+**Sprint actif :** 11 — Cycle de vie : statut & « Débuter »
+**Roadmap :** Sprint 11 en cours
+**Tickets clôturés cette session :** 2 (#121 ⚠️, #122 ⚠️)
+**Branche :** `claude/sprint/11-cycle-de-vie-statut`
+**Issues restantes :** 7 (#123, #124, #125, #126, #127, #128, #129)
+**Contexte :** Session 29 — Sprint 11 démarré. Infra backend posée : Event.status (INSCRIPTION/EN_COURS/TERMINEE) + migration de données (#121). Services start_event/close_event/reopen_event + hook auto-clôture dans finalize_match_edit et referee_views (#122). ensure_final_bracket_exists complété (SF+F1 pour cas 4 et 2 poules). Prochaine session : #123 (endpoints API), #124 (verrouillage poules par status).
