@@ -796,6 +796,70 @@ def withdraw_entry(entry):
     return {"matches_walkover": count}
 
 
+@transaction.atomic
+def add_late_entry(event, group, player=None, team=None):
+    """
+    Service : ajout tardif d'un inscrit dans une poule, en EN_COURS.
+    - Crée l'Entry (player ou team) si elle n'existe pas déjà.
+    - Crée le GroupMembership dans la poule désignée.
+    - Ré-exécute generate_group_matches_for_event (additif) → seuls les matchs
+      du nouveau venu sont créés ; les matchs déjà joués ne bougent pas.
+    Lève ValueError si event.status != EN_COURS, si player et team sont tous
+    les deux None, ou si le player/team est déjà inscrit dans l'event.
+    Retourne (entry, created_count, over_capacity).
+    """
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible d'ajouter un inscrit tardif : statut = {event.status}.")
+
+    if player is None and team is None:
+        raise ValueError("Il faut renseigner un joueur (simple) ou une équipe (double).")
+
+    if player is not None and Entry.objects.filter(event=event, player=player).exists():
+        raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
+    if team is not None and Entry.objects.filter(event=event, team=team).exists():
+        raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+
+    entry = Entry.objects.create(event=event, player=player, team=team)
+    GroupMembership.objects.get_or_create(group=group, entry=entry)
+
+    current_size = GroupMembership.objects.filter(group=group).count()
+    over_capacity = current_size > event.group_size_default
+
+    created_count, _ = generate_group_matches_for_event(event)
+
+    return entry, created_count, over_capacity
+
+
+@transaction.atomic
+def replace_entry_player(entry, player=None, team=None):
+    """
+    Service : remplace le player/team d'une Entry existante.
+    La place en poule et les résultats déjà joués sont conservés ; aucun match recréé.
+    Lève ValueError si player et team sont tous les deux None, si la catégorie ne
+    correspond pas (SINGLE/DOUBLE), ou si le nouveau player/team est déjà inscrit
+    dans le même event.
+    Retourne l'Entry mise à jour.
+    """
+    if player is None and team is None:
+        raise ValueError("Il faut renseigner un joueur (simple) ou une équipe (double).")
+
+    mode = entry.event.category.mode
+    if mode == Category.Mode.SINGLE and player is None:
+        raise ValueError("Cette catégorie est en simple : il faut un joueur.")
+    if mode == Category.Mode.DOUBLE and team is None:
+        raise ValueError("Cette catégorie est en double : il faut une équipe.")
+
+    if player is not None and Entry.objects.filter(event=entry.event, player=player).exclude(pk=entry.pk).exists():
+        raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
+    if team is not None and Entry.objects.filter(event=entry.event, team=team).exclude(pk=entry.pk).exists():
+        raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+
+    entry.player = player
+    entry.team = team
+    entry.save(update_fields=["player", "team"])
+    return entry
+
+
 @superuser_required
 def entry_add_player(request, event_id: int):
     event = get_object_or_404(Event.objects.select_related("category"), id=event_id)
