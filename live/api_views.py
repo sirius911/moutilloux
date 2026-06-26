@@ -492,7 +492,7 @@ def api_event_groups(request, event_id):
             "grid": grid,
         })
 
-    locked = Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists()
+    locked = event.status != Event.Status.INSCRIPTION
     return JsonResponse({"locked": locked, "groups": result})
 
 
@@ -904,7 +904,7 @@ def api_group_assign(request, event_id):
     """
     POST /api/events/<id>/groups/assign/
     Assigne/déplace une Entry dans une poule (source : admin_views.assign_entry_to_group).
-    Body JSON: {entry_id, group_id}. Verrouillé si des matchs de poule existent.
+    Body JSON: {entry_id, group_id}. Verrouillé si status != INSCRIPTION.
     """
     try:
         data = json.loads(request.body)
@@ -936,7 +936,7 @@ def api_group_unassign(request, event_id):
     """
     POST /api/events/<id>/groups/unassign/
     Retire une Entry de sa poule (source : admin_views.unassign_entry).
-    Body JSON: {entry_id}. Verrouillé si des matchs de poule existent.
+    Body JSON: {entry_id}. Verrouillé si status != INSCRIPTION.
     """
     try:
         data = json.loads(request.body)

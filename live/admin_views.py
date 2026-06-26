@@ -384,9 +384,10 @@ def autofill_groups(event, shuffle, group_size, num_groups=None):
     """
     Service : réinitialise les poules et répartit toutes les Entries de l'event
     en round-robin sur `num_groups` poules (A, B, C…). Réinitialise memberships
-    et standings. Lève ValueError s'il n'y a aucune inscription.
-    Retourne la liste des Group créés/utilisés.
+    et standings. Lève ValueError si l'épreuve est déjà débutée ou s'il n'y a
+    aucune inscription. Retourne la liste des Group créés/utilisés.
     """
+    _assert_groups_unlocked(event)
     entries = list(Entry.objects.filter(event=event))
     if not entries:
         raise ValueError("Aucune inscription (Entry) dans cet event.")
@@ -1193,16 +1194,16 @@ def player_edit(request, event_id: int, player_id: int):
 
 
 def _assert_groups_unlocked(event):
-    """Lève ValueError si des matchs de poule existent déjà (poules verrouillées)."""
-    if Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists():
-        raise ValueError("Matchs de poule déjà générés : poules verrouillées.")
+    """Lève ValueError si l'épreuve n'est plus en phase d'inscription (poules verrouillées)."""
+    if event.status != Event.Status.INSCRIPTION:
+        raise ValueError("Épreuve déjà débutée : composition des poules verrouillée.")
 
 
 def assign_entry_to_group(event, entry, group):
     """
     Service : assigne (ou déplace) une Entry dans une poule. Retire d'abord
     l'entry de toute autre poule de l'event. Lève ValueError si les poules sont
-    verrouillées (matchs déjà générés).
+    verrouillées (status != INSCRIPTION).
     """
     _assert_groups_unlocked(event)
     GroupMembership.objects.filter(entry=entry, group__event=event).delete()
