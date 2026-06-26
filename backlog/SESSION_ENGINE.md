@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #29
+**Dernière session :** 2026-06-26 — Session #30
 **Sprint actif :** 11 — Cycle de vie : statut & « Débuter »
 **Roadmap :** Sprint 11 en cours
-**Tickets clôturés cette session :** 2 (#121 ⚠️, #122 ⚠️)
+**Tickets clôturés cette session :** 2 (#122 ⚠️ garde EN_COURS, #123 ✅ endpoints)
 **Branche :** `claude/sprint/11-cycle-de-vie-statut`
-**Issues restantes :** 7 (#123, #124, #125, #126, #127, #128, #129)
-**Contexte :** Session 29 — Sprint 11 démarré. Infra backend posée : Event.status (INSCRIPTION/EN_COURS/TERMINEE) + migration de données (#121). Services start_event/close_event/reopen_event + hook auto-clôture dans finalize_match_edit et referee_views (#122). ensure_final_bracket_exists complété (SF+F1 pour cas 4 et 2 poules). Prochaine session : #123 (endpoints API), #124 (verrouillage poules par status).
+**Issues restantes :** 6 (#124, #125, #126, #127, #128, #129)
+**Contexte :** Session 30 — Infra API posée : garde `EN_COURS` ajoutée à close_event (#122). Endpoints POST /api/events/<id>/{start,close,reopen}/ exposés avec status dans _pack_event (#123). Prochaine session : #124 (verrouillage poules par status), #125 (store + types).
