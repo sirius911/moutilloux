@@ -19,26 +19,116 @@ def _resolve_label_to_entry(event, label: str):
     return s.entry if s else None
 
 
+def _is_group_label(label: str) -> bool:
+    if not label or len(label) < 2:
+        return False
+    if not label[0].isalpha():
+        return False
+    return label[1:].isdigit()
+
+
+def _fmt_for_stage(stage) -> str:
+    if stage in (Match.Stage.QF,):
+        return Match.Format.QF_SET5_TB_5_5
+    if stage == Match.Stage.SF:
+        return Match.Format.NORMAL_1SET
+    if stage in (Match.Stage.F, Match.Stage.P3):
+        return Match.Format.BO3
+    return Match.Format.NORMAL_1SET
+
+
+def _bracket_layout(gnames, qpg):
+    """
+    Retourne la liste des slots (stage, slot_name, a_label, b_label)
+    selon la configuration (N groupes × qpg qualifiés).
+
+    Principes de placement (qpg=2) :
+    - Séparation maximale : X1 et X2 d'une même poule sont en demi-tableaux opposés.
+    - Les byes vont aux premiers vainqueurs par ordre alphabétique.
+    - 1er tour : 1er vs 2e d'une autre poule autant que possible.
+
+    Templates explicites jusqu'à 4 poules (au-delà, non géré).
+    """
+    N = len(gnames)
+    g = gnames
+
+    if qpg == 2:
+        if N == 2:
+            # Q=4, B=4 — 2 demies + finale
+            return [
+                (Match.Stage.SF, "SF1", f"{g[0]}1", f"{g[1]}2"),
+                (Match.Stage.SF, "SF2", f"{g[1]}1", f"{g[0]}2"),
+                (Match.Stage.F,  "F1",  "WSF1",      "WSF2"),
+            ]
+        if N == 3:
+            # Q=6, B=8, 2 byes (A1, B1)
+            # QF1 : C1 vs B2 → WQF1 entre dans SF1
+            # QF2 : C2 vs A2 → WQF2 entre dans SF2
+            # SF1 : A1 (bye) vs WQF1
+            # SF2 : B1 (bye) vs WQF2
+            return [
+                (Match.Stage.QF, "QF1", f"{g[2]}1", f"{g[1]}2"),
+                (Match.Stage.QF, "QF2", f"{g[2]}2", f"{g[0]}2"),
+                (Match.Stage.SF, "SF1", f"{g[0]}1", "WQF1"),
+                (Match.Stage.SF, "SF2", f"{g[1]}1", "WQF2"),
+                (Match.Stage.F,  "F1",  "WSF1",      "WSF2"),
+            ]
+        if N == 4:
+            # Q=8, B=8 — 4 quarts + 2 demies + finale
+            # Séparation maximale per spec :
+            #   QF1=A1vsC2, QF2=D1vsB2, QF3=B1vsA2, QF4=C1vsD2
+            return [
+                (Match.Stage.QF, "QF1", f"{g[0]}1", f"{g[2]}2"),
+                (Match.Stage.QF, "QF2", f"{g[3]}1", f"{g[1]}2"),
+                (Match.Stage.QF, "QF3", f"{g[1]}1", f"{g[0]}2"),
+                (Match.Stage.QF, "QF4", f"{g[2]}1", f"{g[3]}2"),
+                (Match.Stage.SF, "SF1", "WQF1",      "WQF2"),
+                (Match.Stage.SF, "SF2", "WQF3",      "WQF4"),
+                (Match.Stage.F,  "F1",  "WSF1",      "WSF2"),
+            ]
+        return None  # N > 4 : non templé pour l'instant
+
+    if qpg == 1:
+        if N == 1:
+            return []  # une seule poule, pas de phase finale
+        if N == 2:
+            # finale sèche
+            return [
+                (Match.Stage.F, "F1", f"{g[0]}1", f"{g[1]}1"),
+            ]
+        if N == 3:
+            # Q=3, B=4, 1 bye (A1) — SF puis finale
+            return [
+                (Match.Stage.SF, "SF1", f"{g[1]}1", f"{g[2]}1"),
+                (Match.Stage.F,  "F1",  f"{g[0]}1", "WSF1"),
+            ]
+        if N == 4:
+            # Q=4, B=4 — 2 demies + finale (spec : A1 vs D1 / B1 vs C1)
+            return [
+                (Match.Stage.SF, "SF1", f"{g[0]}1", f"{g[3]}1"),
+                (Match.Stage.SF, "SF2", f"{g[1]}1", f"{g[2]}1"),
+                (Match.Stage.F,  "F1",  "WSF1",      "WSF2"),
+            ]
+        return None  # N > 4 : non templé pour l'instant
+
+    return None
+
+
 def ensure_final_bracket_exists(event):
     """
-    Crée le squelette du tableau final (même si poules pas finies)
-    Hypothèses:
-      - qualified_per_group == 2 (A1/A2 ...)
-      - 4 poules A/B/C/D => QF1..QF4 + SF + F
-      - 2 poules A/B     => SF1..SF2 + F
-      - 3 poules A/B/C   => tableau à 6 :
-            QF1: S3 vs S6
-            QF2: S4 vs S5
-            SF1: S1 vs WQF2
-            SF2: S2 vs WQF1
-            F1 : WSF1 vs WSF2
-        où S1..S6 sont des "seeds" globaux (remplis plus tard par sync)
+    Crée le squelette du tableau final selon le template positionnel
+    (N groupes × qualified_per_group, avec byes et séparation maximale).
     """
     groups = list(Group.objects.filter(event=event).order_by("name"))
-    if int(event.qualified_per_group or 0) != 2:
+    N = len(groups)
+    qpg = int(event.qualified_per_group or 0)
+    if qpg <= 0 or N <= 0:
         return
 
-    names = {g.name.upper() for g in groups}
+    gnames = [g.name.upper() for g in groups]
+    layout = _bracket_layout(gnames, qpg)
+    if layout is None:
+        return  # configuration non supportée
 
     def _rules_for_fmt(fmt):
         if fmt == Match.Format.QF_SET5_TB_5_5:
@@ -49,11 +139,11 @@ def ensure_final_bracket_exists(event):
             return dict(games_to_win=6, tb_at=6, best_of=3)
         return dict(games_to_win=5, tb_at=4, best_of=1)
 
-    def get_or_create(stage, slot, a_label, b_label, fmt):
+    for stage, slot, a_label, b_label in layout:
+        fmt = _fmt_for_stage(stage)
         rules = _rules_for_fmt(fmt)
         m = Match.objects.filter(event=event, stage=stage, bracket_slot=slot).first()
         if m:
-            # on met à jour seulement si match pas lancé
             if m.status == Match.Status.SCHEDULED:
                 m.side_a_label = a_label
                 m.side_b_label = b_label
@@ -71,7 +161,7 @@ def ensure_final_bracket_exists(event):
                     "tb_points_to_win", "tb_win_by_two",
                     "deciding_set_mode", "deciding_tb_points_to_win",
                 ])
-            return
+            continue
 
         Match.objects.create(
             edition=event.edition,
@@ -93,91 +183,13 @@ def ensure_final_bracket_exists(event):
             side_b_label=b_label,
         )
 
-    # ---- 4 poules : quarts (4), demies (2), finale (1)
-    if len(groups) == 4 and {"A", "B", "C", "D"} <= names:
-        get_or_create(Match.Stage.QF, "QF1", "A1", "D2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF2", "C1", "B2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF3", "B1", "C2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF4", "D1", "A2", Match.Format.QF_SET5_TB_5_5)
-
-        get_or_create(Match.Stage.SF, "SF1", "WQF1", "WQF2", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.SF, "SF2", "WQF3", "WQF4", Match.Format.NORMAL_1SET)
-
-        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
-        return
-
-    # ---- 2 poules : demies (2), finale (1)
-    if len(groups) == 2 and {"A", "B"} <= names:
-        get_or_create(Match.Stage.SF, "SF1", "A1", "B2", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.SF, "SF2", "B1", "A2", Match.Format.NORMAL_1SET)
-
-        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
-        return
-
-    # ---- 3 poules : tableau à 6 (2 quarts, 2 demies, 1 finale)
-    if len(groups) == 3 and {"A", "B", "C"} <= names:
-        # Tableau à 6 => 2 quarts, 2 demies, 1 finale
-        # (S1..S6 seront résolus par sync, pour l’instant on crée juste le squelette)
-
-        # Quarts
-        get_or_create(Match.Stage.QF, "QF1", "S3", "S6", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF2", "S4", "S5", Match.Format.QF_SET5_TB_5_5)
-
-        # Demies (2 têtes de série avec bye)
-        get_or_create(Match.Stage.SF, "SF1", "S1", "WQF2", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.SF, "SF2", "S2", "WQF1", Match.Format.NORMAL_1SET)
-
-        # Finale
-        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
-
-    # autres cas non gérés
-    return
-
-
-def _is_group_label(label: str) -> bool:
-    # A1, B2, C1, D2...
-    if not label or len(label) < 2:
-        return False
-    if not label[0].isalpha():
-        return False
-    return label[1:].isdigit()
-
-
-def _is_seed_label(label: str) -> bool:
-    # S1..S6
-    if not label or len(label) < 2:
-        return False
-    if label[0].upper() != "S":
-        return False
-    return label[1:].isdigit()
-
 
 def sync_final_bracket_for_event(event):
     """
-    Met à jour side_a/side_b dès que les ranks existent.
-    IMPORTANT: on ne crée PAS le tableau automatiquement.
-    On ne remplit que les cases vides, tant que le match n’a pas démarré
-    (status=SCHEDULED), pour éviter d’écraser un remplissage manuel.
-
-    Gère:
-      - labels de poule: A1/B2/C1...
-      - labels seeds (3 poules): S1..S6 (classement global)
-      - ne touche pas aux labels placeholder WQF1/WSF1...
+    Met à jour side_a/side_b dès que les ranks existent (labels positionnels : A1/B2/…).
+    Ne touche pas les labels placeholder WQF*/WSF*.
+    Ne crée pas le tableau — lecture seule des match slots existants.
     """
-    # --- Pré-calcul des seeds S1..S6 si on a 3 poules (A/B/C)
-    seed_map = {}  # "S1" -> Entry, ...
-    groups = list(Group.objects.filter(event=event).order_by("name"))
-    names = {g.name.upper() for g in groups}
-
-    if len(groups) == 3 and {"A", "B", "C"} <= names:
-        # ex: ["A1","C1","B1","A2","C2","B2"] triés globalement
-        seed_labels = _seed_labels_for_3_groups(event)  # déjà dans ton fichier
-        # seed_labels est trié du meilleur au moins bon
-        for i, lab in enumerate(seed_labels[:6], start=1):
-            entry = _resolve_label_to_entry(event, lab)  # lab = "A1"/"B2"/...
-            if entry:
-                seed_map[f"S{i}"] = entry
-
     qs = Match.objects.filter(
         event=event,
         stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
@@ -187,33 +199,18 @@ def sync_final_bracket_for_event(event):
     for m in qs:
         changed = False
 
-        # --- side A
-        if m.side_a is None:
-            if _is_group_label(m.side_a_label):
-                ea = _resolve_label_to_entry(event, m.side_a_label)
-                if ea is not None:
-                    m.side_a = ea
-                    changed = True
-            elif _is_seed_label(m.side_a_label):
-                ea = seed_map.get(m.side_a_label.upper())
-                if ea is not None:
-                    m.side_a = ea
-                    changed = True
+        if m.side_a is None and _is_group_label(m.side_a_label):
+            ea = _resolve_label_to_entry(event, m.side_a_label)
+            if ea is not None:
+                m.side_a = ea
+                changed = True
 
-        # --- side B
-        if m.side_b is None:
-            if _is_group_label(m.side_b_label):
-                eb = _resolve_label_to_entry(event, m.side_b_label)
-                if eb is not None:
-                    m.side_b = eb
-                    changed = True
-            elif _is_seed_label(m.side_b_label):
-                eb = seed_map.get(m.side_b_label.upper())
-                if eb is not None:
-                    m.side_b = eb
-                    changed = True
+        if m.side_b is None and _is_group_label(m.side_b_label):
+            eb = _resolve_label_to_entry(event, m.side_b_label)
+            if eb is not None:
+                m.side_b = eb
+                changed = True
 
-        # On ne touche pas aux labels type WSF1/WQF1 etc : placeholder
         if changed:
             m.save(update_fields=["side_a", "side_b"])
 
@@ -240,8 +237,8 @@ def _slot_num(slot: str, prefix: str):
 
 def sync_final_winners_for_event(event):
     """
-    Propage automatiquement les vainqueurs (QF -> SF, SF -> F)
-    en se basant sur les labels WQF1/WSF1, sans écraser un choix manuel.
+    Propage les vainqueurs (QF → SF → F) en se basant sur les labels WQF*/WSF*.
+    Ne touche pas les labels positionnels (A1/B2…) — gérés par sync_final_bracket_for_event.
     """
     qf = list(Match.objects.filter(event=event, stage=Match.Stage.QF))
     sf = list(Match.objects.filter(event=event, stage=Match.Stage.SF))
@@ -269,7 +266,6 @@ def sync_final_winners_for_event(event):
         status=Match.Status.SCHEDULED,
     )
 
-    # Fallback standard mapping si labels WQF*/WSF* absents
     default_source_by_slot_side = {
         ("SF1", "A"): "WQF1",
         ("SF1", "B"): "WQF2",
@@ -289,92 +285,12 @@ def sync_final_winners_for_event(event):
         if not lb:
             lb = default_source_by_slot_side.get((m.bracket_slot or "", "B"), "")
 
-        if m.side_a is None and la in winners:
+        if m.side_a is None and la.startswith("W") and la in winners:
             m.side_a = winners[la]
             changed = True
-        if m.side_b is None and lb in winners:
+        if m.side_b is None and lb.startswith("W") and lb in winners:
             m.side_b = winners[lb]
             changed = True
 
         if changed:
             m.save(update_fields=["side_a", "side_b"])
-
-
-def _seed_entries_for_3_groups(event):
-    """
-    Retourne une liste de tuples (label, entry_id) triée du seed1 au seed6.
-    On compare sur les standings de poule (points, games_won, diff).
-    """
-    groups = list(Group.objects.filter(event=event).order_by("name"))
-    labels = []
-    for g in groups:
-        labels.append(f"{g.name.upper()}1")
-        labels.append(f"{g.name.upper()}2")
-
-    items = []
-    for lab in labels:
-        e = _resolve_label_to_entry(event, lab)
-        if not e:
-            continue
-        # standing de l'entry dans SA poule
-        st = (GroupStanding.objects
-              .filter(entry=e, group__event=event)
-              .values("points", "games_won", "games_lost")
-              .first())
-        if not st:
-            continue
-
-        points = st["points"] or 0
-        gw = st["games_won"] or 0
-        gl = st["games_lost"] or 0
-        diff = gw - gl
-        items.append((lab, e, points, gw, diff))
-
-    # tri global (seed1 = meilleur)
-    items.sort(key=lambda x: (x[2], x[3], x[4]), reverse=True)
-    # retourne seed list : [(label, entry), ...]
-    return [(lab, e) for lab, e, *_ in items]
-
-
-def _standing_key_for_entry(event, entry):
-    st = (
-        GroupStanding.objects
-        .filter(entry=entry, group__event=event)
-        .values("points", "games_won", "games_lost")
-        .first()
-    )
-    if not st:
-        return None
-    points = st["points"] or 0
-    gw = st["games_won"] or 0
-    gl = st["games_lost"] or 0
-    diff = gw - gl
-    return (points, gw, diff)
-
-
-def _seed_labels_for_3_groups(event):
-    """
-    Retourne une liste de 6 labels triés du seed1 au seed6.
-    Labels attendus: A1,A2,B1,B2,C1,C2 (selon poules existantes).
-    Tri global : points, games_won, diff.
-    Ne garde que les labels dont l'entry est déjà résoluble (rank dispo).
-    """
-    groups = list(Group.objects.filter(event=event).order_by("name"))
-    labels = []
-    for g in groups:
-        gname = g.name.upper()
-        labels.append(f"{gname}1")
-        labels.append(f"{gname}2")
-
-    items = []
-    for lab in labels:
-        entry = _resolve_label_to_entry(event, lab)  # tu l'as déjà
-        if not entry:
-            continue
-        key = _standing_key_for_entry(event, entry)
-        if not key:
-            continue
-        items.append((lab, entry, key))
-
-    items.sort(key=lambda x: x[2], reverse=True)
-    return [lab for lab, entry, key in items]
