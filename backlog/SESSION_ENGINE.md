@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #30
+**Dernière session :** 2026-06-26 — Session #31
 **Sprint actif :** 11 — Cycle de vie : statut & « Débuter »
 **Roadmap :** Sprint 11 en cours
-**Tickets clôturés cette session :** 2 (#122 ⚠️ garde EN_COURS, #123 ✅ endpoints)
+**Tickets clôturés cette session :** 2 (#124 ⚠️ verrouillage poules, #125 ⚠️ store status)
 **Branche :** `claude/sprint/11-cycle-de-vie-statut`
-**Issues restantes :** 6 (#124, #125, #126, #127, #128, #129)
-**Contexte :** Session 30 — Infra API posée : garde `EN_COURS` ajoutée à close_event (#122). Endpoints POST /api/events/<id>/{start,close,reopen}/ exposés avec status dans _pack_event (#123). Prochaine session : #124 (verrouillage poules par status), #125 (store + types).
+**Issues restantes :** 4 (#126, #127, #128, #129)
+**Contexte :** Session 31 — Verrouillage poules piloté par Event.status (#124 : _assert_groups_unlocked + autofill_groups + champ locked API). Store EventStatus + actions start/close/reopen câblées (#125). Prochaine session : #126 (bouton Débuter/Rouvrir AdminTournoi), #128 (AdminGroups verrouillage status).
