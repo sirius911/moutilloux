@@ -336,6 +336,11 @@ def _pack_event(event):
         "hasBracket": Match.objects.filter(
             event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F]
         ).exists(),
+        "hasBracketStarted": Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+            status__in=[Match.Status.LIVE, Match.Status.FINISHED],
+        ).exists(),
     }
 
 

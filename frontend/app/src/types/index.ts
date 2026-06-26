@@ -57,6 +57,7 @@ export interface Event {
   entriesCount: number
   hasGroups: boolean
   hasBracket: boolean
+  hasBracketStarted: boolean
 }
 
 // ─── Référentiels de configuration (Phase 9) ────────────────────────────────

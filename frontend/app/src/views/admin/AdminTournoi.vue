@@ -36,6 +36,22 @@ function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : '—'
 }
 
+function eventBadgeLabel(ev: Event): string {
+  if (ev.status === 'TERMINEE') return 'Terminée'
+  if (ev.status === 'EN_COURS' && ev.hasBracketStarted) return 'Phase finale'
+  if (ev.status === 'EN_COURS') return 'Poules'
+  if (ev.hasGroups) return 'Inscription'
+  return 'À préparer'
+}
+
+function eventBadgeClass(ev: Event): string {
+  if (ev.status === 'TERMINEE') return 'state-done'
+  if (ev.status === 'EN_COURS' && ev.hasBracketStarted) return 'state-final'
+  if (ev.status === 'EN_COURS') return 'state-poules'
+  if (ev.hasGroups) return 'state-inscrip'
+  return 'state-prep'
+}
+
 function openEventCreate() {
   if (!activeEdition.value) return
   eventModal.value = { editionId: activeEdition.value.id, editing: null }
@@ -164,8 +180,8 @@ async function handleConfirm() {
                 <h4>{{ ev.name }}</h4>
                 <span>{{ ev.categoryMode === 'S' ? 'Simple' : 'Double' }}</span>
               </div>
-              <span :class="['adm-event-state', ev.hasBracket ? 'state-final' : ev.hasGroups ? 'state-poules' : 'state-prep']">
-                {{ ev.hasBracket ? 'Phase finale' : ev.hasGroups ? 'Poules' : 'À préparer' }}
+              <span :class="['adm-event-state', eventBadgeClass(ev)]">
+                {{ eventBadgeLabel(ev) }}
               </span>
             </div>
             <div class="adm-event-meta">
@@ -498,9 +514,11 @@ async function handleConfirm() {
   flex-shrink: 0;
 }
 
-.state-prep  { background: var(--bg-4); color: var(--ink-2); }
-.state-poules { background: var(--accent-soft); color: var(--accent); }
-.state-final { background: var(--accent); color: #000; }
+.state-prep    { background: var(--bg-4); color: var(--ink-2); }
+.state-inscrip { background: var(--bg-4); color: var(--ink-1); border: 1px solid var(--line-2); }
+.state-poules  { background: var(--accent-soft); color: var(--accent); }
+.state-final   { background: var(--accent); color: #000; }
+.state-done    { background: var(--bg-4); color: var(--ink-3); text-decoration: line-through; }
 
 .adm-event-meta {
   display: flex;
