@@ -332,6 +332,23 @@ export const useEventStore = defineStore('event', () => {
     await fetchBracket(eventId)
   }
 
+  // ── Mutations — Sprint 11 (cycle de vie) ──────────────────────────────
+
+  async function startEvent(eventId: number) {
+    await post(`/api/events/${eventId}/start/`, {})
+    await fetchEditions()
+  }
+
+  async function closeEvent(eventId: number) {
+    await post(`/api/events/${eventId}/close/`, {})
+    await fetchEditions()
+  }
+
+  async function reopenEvent(eventId: number) {
+    await post(`/api/events/${eventId}/reopen/`, {})
+    await fetchEditions()
+  }
+
   // ── Mutations — Phase 9 (configuration) ───────────────────────────────
   // Éditions, catégories, courts, épreuves. Chaque action recâble vers le ref
   // concerné (fetchEditions rafraîchit aussi events + compteurs d'épreuves).
@@ -422,6 +439,8 @@ export const useEventStore = defineStore('event', () => {
     reorderCalendar, autoArrangeMatches,
     // Mutations — P7 bracket
     createBracket, updateBracketLabels, assignBracket, clearBracket,
+    // Mutations — Sprint 11 cycle de vie
+    startEvent, closeEvent, reopenEvent,
     // Mutations — P9 configuration
     createEdition, editEdition, activateEdition, deleteEdition,
     createCategory, editCategory, deleteCategory,
