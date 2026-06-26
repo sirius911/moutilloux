@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-29 — Session #30
+**Dernière session :** 2026-06-26 — Session #31
 **Sprint actif :** 12 — Forfait & ajustements en cours de jeu.
 **Roadmap :** 2 sprints restants (Sprint 12 actif, Sprint 13 en attente).
-**Tickets clôturés cette session :** 2 (#132 ✅, #133 ✅)
+**Tickets clôturés cette session :** 2 (#134 ⚠️, #135 ⚠️)
 **Branche :** `claude/sprint/12-forfait-ajustements`
-**Issues restantes :** 4 (#134, #135, #136, #137)
-**Contexte :** Session 30 — Services add_late_entry + replace_entry_player livrés. Prochain : #134 (endpoints) → #135 (store) → #136/#137 (front).
+**Issues restantes :** 2 (#136, #137)
+**Contexte :** Session 31 — Endpoints /api/entries/<id>/withdraw|replace/ + /api/events/<id>/entries/late/ livrés ; store câblé. Prochain : #136 (AdminGroups affordances) + #137 (AdminInscriptions forfait + AdminMatches walkover), parallélisables.
