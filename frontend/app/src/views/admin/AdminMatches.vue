@@ -542,6 +542,11 @@ async function onDragEnd() {
                       title="Repos insuffisant — ce joueur joue deux matchs consécutifs"
                     >⚠</span>
                     <span
+                      v-if="(element.data as Match).isWalkover"
+                      class="walkover-badge"
+                      title="Victoire par forfait"
+                    >FORFAIT</span>
+                    <span
                       v-if="(element.data as Match).isFeatured"
                       class="featured-badge"
                       title="Match mis en avant sur la TV"
@@ -592,6 +597,7 @@ async function onDragEnd() {
         <div class="legend-item"><span class="cal-dot dot--scheduled" /> Planifié</div>
         <div class="legend-item"><span class="cal-dot dot--finished" /> Terminé</div>
         <div class="legend-item"><span class="cal-dot dot--canceled" /> Annulé</div>
+        <div class="legend-item"><span class="walkover-badge" style="font-size:9px;padding:1px 5px">FORFAIT</span> Walkover</div>
         <div class="legend-item"><span class="rest-warning">⚠</span> Repos insuffisant</div>
       </footer>
     </template>
@@ -938,6 +944,18 @@ async function onDragEnd() {
   font-size: 13px;
   color: var(--warning, #e57c00);
   line-height: 1;
+}
+
+.walkover-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--warning, #e57c00);
+  border: 1px solid var(--warning, #e57c00);
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .featured-badge {
