@@ -76,6 +76,11 @@ urlpatterns = [
     path("api/events/<int:event_id>/close/", api_views.api_event_close, name="api_event_close"),
     path("api/events/<int:event_id>/reopen/", api_views.api_event_reopen, name="api_event_reopen"),
 
+    # ── API JSON — Sprint 12 (ajustements en cours de jeu) ───────────────────
+    path("api/entries/<int:entry_id>/withdraw/", api_views.api_entry_withdraw, name="api_entry_withdraw"),
+    path("api/events/<int:event_id>/entries/late/", api_views.api_entry_add_late, name="api_entry_add_late"),
+    path("api/entries/<int:entry_id>/replace/", api_views.api_entry_replace, name="api_entry_replace"),
+
     # ── API JSON — Sprint 07 (calendrier : journées et pauses) ────────────────
     # PlayDay
     path("api/editions/<int:edition_id>/play-days/", api_views.api_play_days_list, name="api_play_days_list"),
