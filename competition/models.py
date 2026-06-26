@@ -58,6 +58,7 @@ class Entry(models.Model):
     team = models.ForeignKey(Team, on_delete=models.PROTECT, null=True, blank=True, related_name="entries")
 
     seed_hint = models.PositiveIntegerField(null=True, blank=True)  # optionnel (si un jour tu veux "têtes de série")
+    withdrawn = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -136,6 +136,7 @@ class Match(models.Model):
         B = "B", "B"
 
     winner_side = models.CharField(max_length=1, choices=WinnerSide.choices, null=True, blank=True)
+    is_walkover = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.event}: {self.side_a} vs {self.side_b}"
