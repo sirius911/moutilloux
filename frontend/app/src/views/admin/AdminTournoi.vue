@@ -5,6 +5,7 @@ import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
 import EditionModal from '@/components/modals/EditionModal.vue'
 import EventModal from '@/components/modals/EventModal.vue'
+import StartEventModal from '@/components/modals/StartEventModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { Edition, Event } from '@/types'
 
@@ -27,10 +28,28 @@ const eventModal = ref<{ editionId: number; editing: Event | null } | null>(null
 type ConfirmAction =
   | { type: 'deleteEdition'; payload: Edition }
   | { type: 'deleteEvent'; payload: Event }
+  | { type: 'reopenEvent'; payload: Event }
 const confirmState = ref<ConfirmAction | null>(null)
+const startConfirm = ref<Event | null>(null)
 
 function fmtDate(iso: string | null): string {
   return iso ? iso.slice(0, 10) : '—'
+}
+
+function eventBadgeLabel(ev: Event): string {
+  if (ev.status === 'TERMINEE') return 'Terminée'
+  if (ev.status === 'EN_COURS' && ev.hasBracketStarted) return 'Phase finale'
+  if (ev.status === 'EN_COURS') return 'Poules'
+  if (ev.hasGroups) return 'Inscription'
+  return 'À préparer'
+}
+
+function eventBadgeClass(ev: Event): string {
+  if (ev.status === 'TERMINEE') return 'state-done'
+  if (ev.status === 'EN_COURS' && ev.hasBracketStarted) return 'state-final'
+  if (ev.status === 'EN_COURS') return 'state-poules'
+  if (ev.hasGroups) return 'state-inscrip'
+  return 'state-prep'
 }
 
 function openEventCreate() {
@@ -64,8 +83,10 @@ async function handleConfirm() {
   try {
     if (action.type === 'deleteEdition') {
       await eventStore.deleteEdition(action.payload.id)
-    } else {
+    } else if (action.type === 'deleteEvent') {
       await eventStore.deleteEvent(action.payload.id)
+    } else if (action.type === 'reopenEvent') {
+      await eventStore.reopenEvent(action.payload.id)
     }
   } catch (err) {
     error.value = extractApiError(err)
@@ -159,8 +180,8 @@ async function handleConfirm() {
                 <h4>{{ ev.name }}</h4>
                 <span>{{ ev.categoryMode === 'S' ? 'Simple' : 'Double' }}</span>
               </div>
-              <span :class="['adm-event-state', ev.hasBracket ? 'state-final' : ev.hasGroups ? 'state-poules' : 'state-prep']">
-                {{ ev.hasBracket ? 'Phase finale' : ev.hasGroups ? 'Poules' : 'À préparer' }}
+              <span :class="['adm-event-state', eventBadgeClass(ev)]">
+                {{ eventBadgeLabel(ev) }}
               </span>
             </div>
             <div class="adm-event-meta">
@@ -179,6 +200,22 @@ async function handleConfirm() {
                 Matchs
               </button>
               <span class="adm-event-spacer" />
+              <button
+                v-if="ev.status === 'INSCRIPTION'"
+                class="adm-btn primary"
+                type="button"
+                @click="startConfirm = ev"
+              >
+                Débuter
+              </button>
+              <button
+                v-if="ev.status === 'TERMINEE'"
+                class="adm-btn"
+                type="button"
+                @click="confirmState = { type: 'reopenEvent', payload: ev }"
+              >
+                Rouvrir
+              </button>
               <button class="adm-btn" type="button" @click="eventModal = { editionId: ev.editionId, editing: ev }">
                 Modifier
               </button>
@@ -186,7 +223,7 @@ async function handleConfirm() {
                 Supprimer
               </button>
               <button
-                class="adm-btn primary"
+                class="adm-btn"
                 type="button"
                 :disabled="eventStore.activeEventId === ev.id"
                 @click="eventStore.activeEventId = ev.id"
@@ -276,7 +313,24 @@ async function handleConfirm() {
       @saved="error = ''"
     />
 
-    <!-- Modale de confirmation destructive -->
+    <!-- Modale Débuter -->
+    <StartEventModal
+      v-if="startConfirm"
+      :event="startConfirm"
+      @close="startConfirm = null"
+      @started="startConfirm = null"
+    />
+
+    <!-- Modale de confirmation destructive / réversible -->
+    <ConfirmModal
+      v-if="confirmState?.type === 'reopenEvent'"
+      :title="`Rouvrir l'épreuve « ${(confirmState.payload as Event).name} » ?`"
+      body="L'épreuve repassera en EN_COURS. Les scores déjà joués sont conservés."
+      confirm-label="Rouvrir"
+      :danger="false"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
+    />
     <ConfirmModal
       v-if="confirmState?.type === 'deleteEdition'"
       :title="`Supprimer l'édition « ${(confirmState.payload as Edition).name} » ?`"
@@ -460,9 +514,11 @@ async function handleConfirm() {
   flex-shrink: 0;
 }
 
-.state-prep  { background: var(--bg-4); color: var(--ink-2); }
-.state-poules { background: var(--accent-soft); color: var(--accent); }
-.state-final { background: var(--accent); color: #000; }
+.state-prep    { background: var(--bg-4); color: var(--ink-2); }
+.state-inscrip { background: var(--bg-4); color: var(--ink-1); border: 1px solid var(--line-2); }
+.state-poules  { background: var(--accent-soft); color: var(--accent); }
+.state-final   { background: var(--accent); color: #000; }
+.state-done    { background: var(--bg-4); color: var(--ink-3); text-decoration: line-through; }
 
 .adm-event-meta {
   display: flex;

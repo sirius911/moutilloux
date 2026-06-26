@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #13 (6e de la journée)
-**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
-**Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 0 (clôture de sprint uniquement)
-**Sprint 05 terminé :** Milestone fermé ✅ — dossier archivé dans `done/05-admin-joueurs/`
-**Branche :** `claude/sprint/05-admin-joueurs` (push sur cette branche, Sprint 06 démarrera sur sa propre branche)
-**Contexte :** Sprint 05 clos manuellement (4e blocage consécutif). Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont dans Sprint 06 (#78, #79, #80). Sprint 06 — Refacto Sélecteur & Joueurs est maintenant le sprint actif. Démarrer Sprint 06 à la prochaine session planifiée.
+**Dernière session :** 2026-06-26 — Session #32
+**Sprint actif :** 13 — Tableau : seeding général, byes & 3e place.
+**Roadmap :** 1 sprint restant (Sprint 13).
+**Tickets clôturés cette session :** 2 (#136 ⚠️, #137 ✅)
+**Branche :** `claude/sprint/12-forfait-ajustements`
+**Sprint 12 terminé :** milestone fermé, dossier archivé, roadmap mise à jour.
+**Contexte :** Session 32 — Sprint 12 clôturé. AdminGroups affordances forfait/remplacer/retirer/ajouter-tardif ; AdminInscriptions chemin forfait EN_COURS ; AdminMatches badge FORFAIT walkover. Sprint 13 démarrera à la prochaine échéance.

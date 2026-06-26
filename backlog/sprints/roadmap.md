@@ -10,4 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 06 — Refacto Sélecteur & Joueurs | `backlog/sprints/06-refacto-selecteur/sprint.md` |
+| 1 | Sprint 13 — Tableau : seeding général, byes & 3e place | `backlog/sprints/13-tableau-seeding/sprint.md` |

@@ -20,11 +20,13 @@ export interface Entry {
   seedHint: number | null
   groupId: number | null
   groupName: string | null    // "A", "B", etc.
+  withdrawn?: boolean
 }
 
 // ─── Tournoi ────────────────────────────────────────────────────────────────
 
 export type CategoryMode = 'S' | 'D'
+export type EventStatus = 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'
 
 export interface Edition {
   id: number
@@ -38,6 +40,7 @@ export interface Edition {
   distinctPlayersCount: number
   matchesFinished: number
   matchesTotal: number
+  defaultMatchDurationMin: number
 }
 
 export interface Event {
@@ -51,9 +54,11 @@ export interface Event {
   qualifiedPerGroup: number   // 1 | 2
   notes: string
   // ── Indicateurs d'état ──
+  status: EventStatus
   entriesCount: number
   hasGroups: boolean
   hasBracket: boolean
+  hasBracketStarted: boolean
 }
 
 // ─── Référentiels de configuration (Phase 9) ────────────────────────────────
@@ -82,6 +87,7 @@ export interface StandingRow {
   gamesRatio: string         // "12/8"
   points: number
   qualified: boolean
+  withdrawn?: boolean
 }
 
 export interface GridCell {
@@ -137,6 +143,7 @@ export interface Match {
   tbPointsB: number
   setScores: SetResult[]
   winnerSide: MatchSide | null
+  isWalkover?: boolean
 
   // Points affichage tennis (retournés par le backend)
   displayPointA: string     // "0", "15", "30", "40", "AV"
@@ -181,4 +188,38 @@ export interface KanbanData {
   backlog: Match[]          // SCHEDULED sans orderIndex
   queue: Match[]            // SCHEDULED avec orderIndex (ordonné)
   finished: Match[]         // FINISHED
+}
+
+// ─── Calendrier ──────────────────────────────────────────────────────────────
+
+export interface PlayDay {
+  id: number
+  editionId: number
+  date: string              // "YYYY-MM-DD"
+  startTime: string         // "HH:MM"
+  targetEndTime: string     // "HH:MM"
+}
+
+export interface Break {
+  id: number
+  playDayId: number
+  orderIndex: number
+  durationMin: number
+  label: string
+}
+
+export interface CalendarDay extends PlayDay {
+  breaks: Break[]
+  matches: Match[]
+}
+
+export interface CalendarData {
+  playDays: CalendarDay[]
+  unscheduled: Match[]      // SCHEDULED, GROUP, sans order_index
+}
+
+export interface TvUpcoming {
+  next: Match | null
+  upcoming: Match[]
+  currentPlayDay: PlayDay | null
 }

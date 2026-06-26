@@ -7,6 +7,7 @@ class TournamentEdition(models.Model):
     start_dt = models.DateTimeField(null=True, blank=True)
     end_dt = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=False, db_index=True)
+    default_match_duration_min = models.PositiveSmallIntegerField(default=27)
 
     class Meta:
         ordering = ["-year"]

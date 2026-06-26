@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
+import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
 import type { Match } from '@/types'
 
@@ -31,8 +32,6 @@ const formatTbPoints = ref('7')
 const formatServer = ref<'A' | 'B' | 'rand'>(props.match.server ?? 'A')
 
 // Planning tab
-const court = ref(props.match.court ?? '')
-const scheduledTime = ref(props.match.scheduledTime ?? '')
 const status = ref<'scheduled' | 'live' | 'finished' | 'canceled'>(
   props.match.status === 'LIVE' ? 'live'
     : props.match.status === 'FINISHED' ? 'finished'
@@ -41,12 +40,55 @@ const status = ref<'scheduled' | 'live' | 'finished' | 'canceled'>(
 )
 const featured = ref(props.match.isFeatured)
 
+// Journée courante : cherche dans le calendrier quelle PlayDay contient ce match
+const currentPlayDayId = computed<number | null>(() => {
+  const cal = eventStore.calendar
+  if (!cal) return null
+  for (const day of cal.playDays) {
+    if (day.matches.some(m => m.id === props.match.id)) return day.id
+  }
+  return null
+})
+
+const selectedPlayDayId = ref<number | null>(currentPlayDayId.value)
+
+async function changePlayDay(newPlayDayId: number | null) {
+  const editionId = eventStore.activeEdition?.id
+  const cal = eventStore.calendar
+  if (!editionId || !cal) return
+  saving.value = true
+  error.value = ''
+  try {
+    const matchId = props.match.id
+    const payload: CalendarReorderPayload = {
+      playDays: cal.playDays.map(day => {
+        const matchItems = day.matches
+          .filter(m => m.id !== matchId)
+          .map(m => ({ type: 'match' as const, id: m.id }))
+        const breakItems = day.breaks.map(b => ({ type: 'break' as const, id: b.id }))
+        const added = day.id === newPlayDayId
+          ? [{ type: 'match' as const, id: matchId }]
+          : []
+        return { playDayId: day.id, items: [...matchItems, ...breakItems, ...added] }
+      }),
+    }
+    await eventStore.reorderCalendar(editionId, payload)
+    selectedPlayDayId.value = newPlayDayId
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Erreur lors du déplacement.'
+  } finally {
+    saving.value = false
+  }
+}
+
 const nameA = computed(() =>
   props.match.sideA?.player?.fullName ?? props.match.sideALabel ?? 'Joueur A'
 )
 const nameB = computed(() =>
   props.match.sideB?.player?.fullName ?? props.match.sideBLabel ?? 'Joueur B'
 )
+
+const isLive = computed(() => props.match.status === 'LIVE')
 
 const statusLabel = computed(() => {
   if (props.match.status === 'LIVE') return 'EN DIRECT'
@@ -94,13 +136,11 @@ async function save() {
   saving.value = true
   error.value = ''
   try {
-    // Édition via MatchEditForm. On omet les points bruts (les displayPoint
-    // sont des chaînes d'affichage non mappables sur 0-4) et les champs de
-    // format (onglet décoratif) pour ne pas écraser les règles côté serveur.
+    // Édition via MatchEditForm. On omet les points bruts, les champs de
+    // format (onglet décoratif), court (mono-court, non éditable) et
+    // scheduled_time (ETA dérivée, lecture seule — décisions 18-19).
     await eventStore.editMatch(eventId, props.match.id, {
       status: status.value.toUpperCase(),
-      scheduled_time: scheduledTime.value || null,
-      court: court.value || null,
       sets_a: setsA.value,
       sets_b: setsB.value,
       games_a: gamesA.value,
@@ -109,9 +149,18 @@ async function save() {
       winner_side:
         winnerSide.value === 'A' || winnerSide.value === 'B' ? winnerSide.value : null,
     })
-    // Mise en avant : seul l'enclenchement est exposé (feature_match → LIVE) ;
-    // il n'existe pas de service de retrait, donc on ne déclenche qu'à l'activation.
     if (featured.value && !props.match.isFeatured) {
+      const ok = window.confirm(
+        'Ce match passe EN DIRECT et devient le match affiché sur la TV. Le match actuellement à l\'antenne est retiré.\n\nConfirmer ?'
+      )
+      if (!ok) {
+        featured.value = false
+        // Les autres modifications ont déjà été enregistrées — on ferme sans
+        // déclencher la mise en avant.
+        emit('saved')
+        emit('close')
+        return
+      }
       await eventStore.featureMatch(eventId, props.match.id)
     }
     emit('saved')
@@ -215,40 +264,46 @@ async function save() {
 
           <!-- Format -->
           <template v-if="tab === 'format'">
-            <div class="slide-section">
-              <h4>Format du match</h4>
-              <div class="fld-col">
-                <label class="fld">
-                  <span class="fld-lbl">Sets à gagner</span>
-                  <Segmented v-model="formatSets" :options="formatSetsOptions" />
-                </label>
-                <div class="fld-row">
+            <div v-if="isLive" class="format-lock-banner">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+              Verrouillé — match en cours. Ces champs ne seront pas pris en compte.
+            </div>
+            <fieldset :disabled="isLive" class="format-fieldset">
+              <div class="slide-section">
+                <h4>Format du match</h4>
+                <div class="fld-col">
                   <label class="fld">
-                    <span class="fld-lbl">Jeux par set</span>
-                    <select v-model="formatGames" class="inp">
-                      <option value="4">4 jeux</option>
-                      <option value="5">5 jeux (TB à 4)</option>
-                      <option value="6">6 jeux (TB à 6)</option>
-                    </select>
+                    <span class="fld-lbl">Sets à gagner</span>
+                    <Segmented v-model="formatSets" :options="formatSetsOptions" />
                   </label>
+                  <div class="fld-row">
+                    <label class="fld">
+                      <span class="fld-lbl">Jeux par set</span>
+                      <select v-model="formatGames" class="inp">
+                        <option value="4">4 jeux</option>
+                        <option value="5">5 jeux (TB à 4)</option>
+                        <option value="6">6 jeux (TB à 6)</option>
+                      </select>
+                    </label>
+                    <label class="fld">
+                      <span class="fld-lbl">Tie-break à</span>
+                      <input v-model="formatTb" class="inp tab" />
+                    </label>
+                    <label class="fld">
+                      <span class="fld-lbl">Points TB</span>
+                      <select v-model="formatTbPoints" class="inp">
+                        <option value="7">7 points</option>
+                        <option value="10">10 points</option>
+                      </select>
+                    </label>
+                  </div>
                   <label class="fld">
-                    <span class="fld-lbl">Tie-break à</span>
-                    <input v-model="formatTb" class="inp tab" />
-                  </label>
-                  <label class="fld">
-                    <span class="fld-lbl">Points TB</span>
-                    <select v-model="formatTbPoints" class="inp">
-                      <option value="7">7 points</option>
-                      <option value="10">10 points</option>
-                    </select>
+                    <span class="fld-lbl">Service initial</span>
+                    <Segmented v-model="formatServer" :options="serverOptions" />
                   </label>
                 </div>
-                <label class="fld">
-                  <span class="fld-lbl">Service initial</span>
-                  <Segmented v-model="formatServer" :options="serverOptions" />
-                </label>
               </div>
-            </div>
+            </fieldset>
           </template>
 
           <!-- Planning -->
@@ -256,15 +311,31 @@ async function save() {
             <div class="slide-section">
               <h4>Planning</h4>
               <div class="fld-col">
-                <div class="fld-row">
-                  <label class="fld">
-                    <span class="fld-lbl">Court</span>
-                    <input v-model="court" class="inp" placeholder="ex. Court Central" />
-                  </label>
-                  <label class="fld">
-                    <span class="fld-lbl">Heure prévue</span>
-                    <input v-model="scheduledTime" class="inp tab" type="time" />
-                  </label>
+                <label class="fld">
+                  <span class="fld-lbl">Journée</span>
+                  <select
+                    class="inp"
+                    :value="selectedPlayDayId ?? ''"
+                    :disabled="saving"
+                    @change="changePlayDay(($event.target as HTMLSelectElement).value ? Number(($event.target as HTMLSelectElement).value) : null)"
+                  >
+                    <option value="">À planifier</option>
+                    <option
+                      v-for="day in (eventStore.calendar?.playDays ?? [])"
+                      :key="day.id"
+                      :value="day.id"
+                    >
+                      {{ new Date(day.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) }}
+                    </option>
+                  </select>
+                </label>
+                <div class="fld">
+                  <span class="fld-lbl">Heure estimée</span>
+                  <span class="inp inp-ro">{{ match.scheduledTime ? '~' + match.scheduledTime : '—' }}</span>
+                </div>
+                <div class="fld">
+                  <span class="fld-lbl">Court</span>
+                  <span class="inp inp-ro">{{ match.court || 'Central' }}</span>
                 </div>
                 <label class="fld">
                   <span class="fld-lbl">Statut</span>
@@ -583,6 +654,19 @@ async function save() {
   font-weight: 700;
 }
 
+.inp-ro {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--bg-4);
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  color: var(--ink-2);
+  min-height: 38px;
+  box-sizing: border-box;
+}
+
 .tab { font-family: var(--font-mono); }
 
 /* Field helpers */
@@ -665,6 +749,33 @@ async function save() {
 .log-time { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
 .log-who { font-size: 12px; color: var(--ink-2); font-weight: 500; }
 .log-what { color: var(--ink-0); }
+
+/* ── Format lock ──────────────────────────────────────────────────── */
+.format-lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--r-md);
+  border: 1px solid var(--danger);
+}
+
+.format-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.format-fieldset:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 
 /* ── Footer ───────────────────────────────────────────────────────── */
 .slide-foot {
