@@ -1,13 +1,17 @@
 import random
 import json
+import datetime
+from collections import defaultdict
 from django.contrib import messages
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
+from django.db.models import Max, Q
+from django.utils import timezone
 
 from core.models import TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupMembership, GroupStanding
-from live.models import Match, Court
+from live.models import Match, Court, PlayDay, Break
 from live.views import build_event_group_tables
 
 from django import forms
@@ -380,9 +384,10 @@ def autofill_groups(event, shuffle, group_size, num_groups=None):
     """
     Service : réinitialise les poules et répartit toutes les Entries de l'event
     en round-robin sur `num_groups` poules (A, B, C…). Réinitialise memberships
-    et standings. Lève ValueError s'il n'y a aucune inscription.
-    Retourne la liste des Group créés/utilisés.
+    et standings. Lève ValueError si l'épreuve est déjà débutée ou s'il n'y a
+    aucune inscription. Retourne la liste des Group créés/utilisés.
     """
+    _assert_groups_unlocked(event)
     entries = list(Entry.objects.filter(event=event))
     if not entries:
         raise ValueError("Aucune inscription (Entry) dans cet event.")
@@ -498,6 +503,83 @@ def generate_group_matches(request, event_id: int):
 
 
 # -----------------------
+# Services : Cycle de vie de l'épreuve
+# -----------------------
+
+@transaction.atomic
+def start_event(event):
+    """
+    Service : passe l'épreuve de INSCRIPTION → EN_COURS.
+    - Génère le round-robin de chaque poule jouable (≥ 2 entries).
+    - Crée le squelette du tableau final.
+    - Met status = EN_COURS.
+    Retourne {"created": int, "unplaced": [Entry, ...]}.
+    Lève ValueError si le statut n'est pas INSCRIPTION ou si aucune poule jouable.
+    """
+    if event.status != Event.Status.INSCRIPTION:
+        raise ValueError(f"Impossible de démarrer : statut actuel = {event.status}.")
+
+    # poules jouables = au moins 2 entries
+    playable_groups = [
+        g for g in Group.objects.filter(event=event).prefetch_related("memberships")
+        if g.memberships.count() >= 2
+    ]
+    if not playable_groups:
+        raise ValueError("Aucune poule jouable (au moins 2 inscrits par poule requis).")
+
+    # entries non affectées à une poule
+    placed_entry_ids = set(
+        GroupMembership.objects.filter(group__event=event).values_list("entry_id", flat=True)
+    )
+    all_entry_ids = set(Entry.objects.filter(event=event).values_list("id", flat=True))
+    unplaced_ids = all_entry_ids - placed_entry_ids
+    unplaced = list(Entry.objects.filter(id__in=unplaced_ids).select_related("player", "team"))
+
+    created, _ = generate_group_matches_for_event(event)
+    ensure_final_bracket_exists(event)
+
+    event.status = Event.Status.EN_COURS
+    event.save(update_fields=["status"])
+
+    return {"created": created, "unplaced": unplaced}
+
+
+@transaction.atomic
+def close_event(event):
+    """
+    Service : passe l'épreuve EN_COURS → TERMINEE si la finale (F1) est FINISHED.
+    Idempotent : no-op si déjà TERMINEE.
+    Lève ValueError si la finale n'est pas terminée.
+    """
+    if event.status == Event.Status.TERMINEE:
+        return
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible de clôturer : statut actuel = {event.status}.")
+
+    finale = Match.objects.filter(
+        event=event, stage=Match.Stage.F, bracket_slot="F1"
+    ).first()
+    if not finale or finale.status != Match.Status.FINISHED:
+        raise ValueError("La finale (F1) n'est pas encore terminée.")
+
+    event.status = Event.Status.TERMINEE
+    event.save(update_fields=["status"])
+
+
+@transaction.atomic
+def reopen_event(event):
+    """
+    Service : passe l'épreuve TERMINEE → EN_COURS (recours admin).
+    Lève ValueError si le statut n'est pas TERMINEE.
+    """
+    if event.status != Event.Status.TERMINEE:
+        raise ValueError(f"Impossible de rouvrir : statut actuel = {event.status}.")
+
+    event.status = Event.Status.EN_COURS
+    event.save(update_fields=["status"])
+
+
+# -----------------------
 # Actions : Matches (edit + feature)
 # -----------------------
 
@@ -527,6 +609,12 @@ def finalize_match_edit(match):
     if match.status == Match.Status.FINISHED and match.stage in (Match.Stage.QF, Match.Stage.SF):
         from live.bracket import sync_final_winners_for_event
         sync_final_winners_for_event(match.event)
+
+    if match.status == Match.Status.FINISHED and match.stage == Match.Stage.F:
+        try:
+            close_event(match.event)
+        except ValueError:
+            pass
 
     return match
 
@@ -627,6 +715,153 @@ def remove_entry(event, entry):
             f"Impossible de retirer {entry} : déjà utilisé dans un ou plusieurs matchs."
         )
     entry.delete()
+
+
+@transaction.atomic
+def withdraw_entry(entry):
+    """
+    Service : déclare le forfait d'une Entry (EN_COURS requis).
+    - Pose entry.withdrawn = True.
+    - Tous les matchs non terminés (SCHEDULED/LIVE) → FINISHED, is_walkover=True,
+      winner_side = adversaire, score de convention (games_to_win / 0).
+    - Recalcule les standings de chaque poule affectée.
+    - Propage les vainqueurs du tableau (QF/SF/F).
+    Lève ValueError si l'event n'est pas EN_COURS.
+    Retourne {"matches_walkover": int}.
+    """
+    from competition.standings import recalc_one_group
+
+    event = entry.event
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible de déclarer un forfait : statut = {event.status}.")
+
+    entry.withdrawn = True
+    entry.save(update_fields=["withdrawn"])
+
+    non_finished = Match.objects.filter(
+        event=event,
+        status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
+    ).filter(
+        Q(side_a=entry) | Q(side_b=entry)
+    )
+
+    affected_groups = set()
+    has_qf_sf = False
+    has_finale = False
+    count = 0
+
+    for m in non_finished:
+        if m.side_a_id == entry.id:
+            m.winner_side = Match.WinnerSide.B
+            m.games_a = 0
+            m.games_b = m.games_to_win
+        else:
+            m.winner_side = Match.WinnerSide.A
+            m.games_a = m.games_to_win
+            m.games_b = 0
+
+        m.status = Match.Status.FINISHED
+        m.is_walkover = True
+        m.is_featured = False
+        m.order_index = None
+        if not m.finished_at:
+            m.finished_at = timezone.now()
+
+        m.save(update_fields=[
+            "winner_side", "games_a", "games_b",
+            "status", "is_walkover", "is_featured", "order_index", "finished_at",
+        ])
+
+        if m.group_id:
+            affected_groups.add(m.group_id)
+        if m.stage in (Match.Stage.QF, Match.Stage.SF):
+            has_qf_sf = True
+        if m.stage == Match.Stage.F:
+            has_finale = True
+        count += 1
+
+    for gid in affected_groups:
+        recalc_one_group(gid)
+
+    if affected_groups:
+        from live.bracket import sync_final_bracket_for_event
+        sync_final_bracket_for_event(event)
+
+    if has_qf_sf:
+        from live.bracket import sync_final_winners_for_event
+        sync_final_winners_for_event(event)
+
+    if has_finale:
+        try:
+            close_event(event)
+        except ValueError:
+            pass
+
+    return {"matches_walkover": count}
+
+
+@transaction.atomic
+def add_late_entry(event, group, player=None, team=None):
+    """
+    Service : ajout tardif d'un inscrit dans une poule, en EN_COURS.
+    - Crée l'Entry (player ou team) si elle n'existe pas déjà.
+    - Crée le GroupMembership dans la poule désignée.
+    - Ré-exécute generate_group_matches_for_event (additif) → seuls les matchs
+      du nouveau venu sont créés ; les matchs déjà joués ne bougent pas.
+    Lève ValueError si event.status != EN_COURS, si player et team sont tous
+    les deux None, ou si le player/team est déjà inscrit dans l'event.
+    Retourne (entry, created_count, over_capacity).
+    """
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible d'ajouter un inscrit tardif : statut = {event.status}.")
+
+    if player is None and team is None:
+        raise ValueError("Il faut renseigner un joueur (simple) ou une équipe (double).")
+
+    if player is not None and Entry.objects.filter(event=event, player=player).exists():
+        raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
+    if team is not None and Entry.objects.filter(event=event, team=team).exists():
+        raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+
+    entry = Entry.objects.create(event=event, player=player, team=team)
+    GroupMembership.objects.get_or_create(group=group, entry=entry)
+
+    current_size = GroupMembership.objects.filter(group=group).count()
+    over_capacity = current_size > event.group_size_default
+
+    created_count, _ = generate_group_matches_for_event(event)
+
+    return entry, created_count, over_capacity
+
+
+@transaction.atomic
+def replace_entry_player(entry, player=None, team=None):
+    """
+    Service : remplace le player/team d'une Entry existante.
+    La place en poule et les résultats déjà joués sont conservés ; aucun match recréé.
+    Lève ValueError si player et team sont tous les deux None, si la catégorie ne
+    correspond pas (SINGLE/DOUBLE), ou si le nouveau player/team est déjà inscrit
+    dans le même event.
+    Retourne l'Entry mise à jour.
+    """
+    if player is None and team is None:
+        raise ValueError("Il faut renseigner un joueur (simple) ou une équipe (double).")
+
+    mode = entry.event.category.mode
+    if mode == Category.Mode.SINGLE and player is None:
+        raise ValueError("Cette catégorie est en simple : il faut un joueur.")
+    if mode == Category.Mode.DOUBLE and team is None:
+        raise ValueError("Cette catégorie est en double : il faut une équipe.")
+
+    if player is not None and Entry.objects.filter(event=entry.event, player=player).exclude(pk=entry.pk).exists():
+        raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
+    if team is not None and Entry.objects.filter(event=entry.event, team=team).exclude(pk=entry.pk).exists():
+        raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+
+    entry.player = player
+    entry.team = team
+    entry.save(update_fields=["player", "team"])
+    return entry
 
 
 @superuser_required
@@ -1106,16 +1341,16 @@ def player_edit(request, event_id: int, player_id: int):
 
 
 def _assert_groups_unlocked(event):
-    """Lève ValueError si des matchs de poule existent déjà (poules verrouillées)."""
-    if Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists():
-        raise ValueError("Matchs de poule déjà générés : poules verrouillées.")
+    """Lève ValueError si l'épreuve n'est plus en phase d'inscription (poules verrouillées)."""
+    if event.status != Event.Status.INSCRIPTION:
+        raise ValueError("Épreuve déjà débutée : composition des poules verrouillée.")
 
 
 def assign_entry_to_group(event, entry, group):
     """
     Service : assigne (ou déplace) une Entry dans une poule. Retire d'abord
     l'entry de toute autre poule de l'event. Lève ValueError si les poules sont
-    verrouillées (matchs déjà générés).
+    verrouillées (status != INSCRIPTION).
     """
     _assert_groups_unlocked(event)
     GroupMembership.objects.filter(entry=entry, group__event=event).delete()
@@ -1411,10 +1646,14 @@ def ensure_final_bracket_exists(event):
         get_or_create(Match.Stage.QF, "QF2", "C1", "B2", Match.Format.QF_SET5_TB_5_5)
         get_or_create(Match.Stage.QF, "QF3", "B1", "C2", Match.Format.QF_SET5_TB_5_5)
         get_or_create(Match.Stage.QF, "QF4", "D1", "A2", Match.Format.QF_SET5_TB_5_5)
+        get_or_create(Match.Stage.SF, "SF1", "WQF1", "WQF2", Match.Format.NORMAL_1SET)
+        get_or_create(Match.Stage.SF, "SF2", "WQF3", "WQF4", Match.Format.NORMAL_1SET)
+        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
 
     elif n == 2 and all(k in by_name for k in ["A", "B"]):
         get_or_create(Match.Stage.SF, "SF1", "A1", "B2", Match.Format.NORMAL_1SET)
         get_or_create(Match.Stage.SF, "SF2", "B1", "A2", Match.Format.NORMAL_1SET)
+        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
 
     else:
         # 1 poule => rien ; 3 poules => non géré
@@ -1505,7 +1744,7 @@ def create_edition(name, year, start_dt=None, end_dt=None, activate=False):
     return edition
 
 
-def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, end_dt=_NOCHANGE):
+def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, end_dt=_NOCHANGE, **kwargs):
     """Édition partielle : seuls les champs fournis (≠ _NOCHANGE) sont touchés."""
     if name is not _NOCHANGE:
         name = (name or "").strip()
@@ -1521,6 +1760,8 @@ def update_edition(edition, name=_NOCHANGE, year=_NOCHANGE, start_dt=_NOCHANGE, 
         edition.start_dt = start_dt or None
     if end_dt is not _NOCHANGE:
         edition.end_dt = end_dt or None
+    if "default_match_duration_min" in kwargs:
+        edition.default_match_duration_min = kwargs["default_match_duration_min"]
     edition.save()
     return edition
 
@@ -1636,13 +1877,15 @@ def create_event(edition, category, group_size_default=4, qualified_per_group=2,
     )
 
 
-def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHANGE, notes=_NOCHANGE):
+def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHANGE, notes=_NOCHANGE, has_third_place=_NOCHANGE):
     if group_size_default is not _NOCHANGE:
         event.group_size_default = _as_choice_int(group_size_default, (3, 4), "La taille de poule par défaut")
     if qualified_per_group is not _NOCHANGE:
         event.qualified_per_group = _as_choice_int(qualified_per_group, (1, 2), "Le nombre de qualifiés par poule")
     if notes is not _NOCHANGE:
         event.notes = notes or ""
+    if has_third_place is not _NOCHANGE:
+        event.has_third_place = bool(has_third_place)
     event.save()
     return event
 
@@ -1654,3 +1897,269 @@ def delete_event(event):
     ).exists():
         raise ValueError("Impossible de supprimer une épreuve avec des matchs en cours ou terminés.")
     event.delete()
+
+
+# ── PlayDay + Break (journées de jeu et pauses) ──────────────────────────────
+
+def create_play_day(edition, date, start_time, target_end_time):
+    if PlayDay.objects.filter(edition=edition, date=date).exists():
+        raise ValueError(f"Une journée de jeu existe déjà pour la date {date}.")
+    return PlayDay.objects.create(
+        edition=edition,
+        date=date,
+        start_time=start_time,
+        target_end_time=target_end_time,
+    )
+
+
+def update_play_day(play_day, *, date=_NOCHANGE, start_time=_NOCHANGE, target_end_time=_NOCHANGE):
+    if date is not _NOCHANGE:
+        if PlayDay.objects.filter(edition=play_day.edition, date=date).exclude(pk=play_day.pk).exists():
+            raise ValueError(f"Une journée de jeu existe déjà pour la date {date}.")
+        play_day.date = date
+    if start_time is not _NOCHANGE:
+        play_day.start_time = start_time
+    if target_end_time is not _NOCHANGE:
+        play_day.target_end_time = target_end_time
+    play_day.save()
+    return play_day
+
+
+def delete_play_day(play_day):
+    play_day.delete()
+
+
+def create_break(play_day, order_index, duration_min, label):
+    if duration_min <= 0:
+        raise ValueError("La durée d'une pause doit être supérieure à 0.")
+    return Break.objects.create(
+        play_day=play_day,
+        order_index=order_index,
+        duration_min=duration_min,
+        label=(label or "").strip() or "Pause",
+    )
+
+
+def update_break(brk, *, order_index=_NOCHANGE, duration_min=_NOCHANGE, label=_NOCHANGE):
+    if order_index is not _NOCHANGE:
+        brk.order_index = order_index
+    if duration_min is not _NOCHANGE:
+        if duration_min <= 0:
+            raise ValueError("La durée d'une pause doit être supérieure à 0.")
+        brk.duration_min = duration_min
+    if label is not _NOCHANGE:
+        brk.label = (label or "").strip() or "Pause"
+    brk.save()
+    return brk
+
+
+def delete_break(brk):
+    brk.delete()
+
+
+# ── Sprint 07 — Reorder calendrier évolué ─────────────────────────────────────
+
+def reorder_calendar(edition, play_day_sequences):
+    """
+    Réordonne le calendrier de l'édition à partir d'une liste de séquences par journée.
+
+    play_day_sequences : [{"playDayId": int, "items": [{"type": "match"|"break", "id": int}]}]
+
+    - Chaque match reçoit un order_index global unique à l'édition + scheduled_time dont la
+      date = celle de la journée (temps = start_time de la journée, ETA approximative).
+    - Chaque Break reçoit un order_index local = sa position dans la séquence de la journée.
+    - Les matchs absents de toute journée perdent order_index et scheduled_time.
+    - Les matchs FINISHED ne sont jamais déplacés.
+    """
+    edition_play_days = {pd.id: pd for pd in PlayDay.objects.filter(edition=edition)}
+    default_court = Court.objects.order_by("id").first()
+
+    # Matchs déplaçables : SCHEDULED ou LIVE (pas FINISHED, pas CANCELED)
+    movable_statuses = [Match.Status.SCHEDULED, Match.Status.LIVE]
+    movable_qs = Match.objects.filter(edition=edition, status__in=movable_statuses)
+    edition_matches = {m.id: m for m in movable_qs.select_for_update()}
+
+    # Indices déjà utilisés par les matchs non-déplaçables (FINISHED)
+    used_indices = set(
+        Match.objects.filter(edition=edition, order_index__isnull=False)
+        .exclude(id__in=edition_matches.keys())
+        .values_list("order_index", flat=True)
+    )
+
+    # Étape 1 : effacer tous les order_index des matchs déplaçables (évite les conflits d'unicité)
+    movable_qs.update(order_index=None)
+
+    global_idx = 1
+    placed = {}  # match_id → (order_index, scheduled_dt)
+
+    for day_spec in play_day_sequences:
+        pd_id = int(day_spec.get("playDayId", 0))
+        pd = edition_play_days.get(pd_id)
+        if pd is None:
+            raise ValueError(f"PlayDay {pd_id} n'appartient pas à cette édition.")
+
+        items = day_spec.get("items", [])
+        local_tz = timezone.get_current_timezone()
+        scheduled_dt = timezone.make_aware(
+            datetime.datetime.combine(pd.date, pd.start_time), local_tz
+        )
+
+        day_breaks = {b.id: b for b in Break.objects.filter(play_day=pd).select_for_update()}
+        slot = 0
+
+        for item in items:
+            item_type = item.get("type")
+            item_id = int(item.get("id", 0))
+
+            if item_type == "match":
+                m = edition_matches.get(item_id)
+                if m is not None:
+                    while global_idx in used_indices:
+                        global_idx += 1
+                    placed[item_id] = (global_idx, scheduled_dt)
+                    used_indices.add(global_idx)
+                    global_idx += 1
+
+            elif item_type == "break":
+                brk = day_breaks.get(item_id)
+                if brk is not None:
+                    brk.order_index = slot
+                    brk.save(update_fields=["order_index"])
+
+            slot += 1
+
+    # Étape 2 : appliquer les placements
+    for mid, (idx, scheduled_dt) in placed.items():
+        m = edition_matches[mid]
+        m.order_index = idx
+        m.scheduled_time = scheduled_dt
+        update_fields = ["order_index", "scheduled_time"]
+        if m.court_id is None:
+            if default_court is None:
+                raise ValueError("Aucun court disponible. Crée un court avant d'ordonner les matchs.")
+            m.court = default_court
+            update_fields.append("court")
+        m.save(update_fields=update_fields)
+
+    # Étape 3 : matchs non placés → effacer scheduled_time (order_index déjà NULL depuis étape 1)
+    for mid, m in edition_matches.items():
+        if mid not in placed:
+            m.scheduled_time = None
+            m.save(update_fields=["scheduled_time"])
+
+
+# ── Sprint 07 — Auto-arrange (pré-pose) ───────────────────────────────────────
+
+def _entry_ids(match):
+    """Retourne l'ensemble des Entry.id impliqués dans un match."""
+    ids = set()
+    if match.side_a_id:
+        ids.add(match.side_a_id)
+    if match.side_b_id:
+        ids.add(match.side_b_id)
+    return ids
+
+
+def auto_arrange_matches(edition, default_duration_min=None):
+    """
+    Range automatiquement les matchs « à planifier » (SCHEDULED, order_index=None,
+    stage=GROUP) sur les journées de l'édition, sans toucher aux matchs déjà placés.
+
+    Algorithme (spec § Heuristique de pré-pose) :
+    1. Entrelacement des poules (A, B, C, A, B, C…)
+    2. Règle de repos : ≥ 1 match entre deux matchs d'une même Entry (best-effort, 1 passe)
+    3. Distribution sur les journées dans l'ordre, selon la capacité (target_end_time)
+
+    Retourne le nombre de matchs placés.
+    """
+    if default_duration_min is None:
+        default_duration_min = edition.default_match_duration_min
+    play_days = list(
+        PlayDay.objects.filter(edition=edition)
+        .prefetch_related("breaks")
+        .order_by("date")
+    )
+    if not play_days:
+        return 0
+
+    unscheduled = list(
+        Match.objects.filter(
+            edition=edition,
+            status=Match.Status.SCHEDULED,
+            order_index__isnull=True,
+            stage=Match.Stage.GROUP,
+            group__isnull=False,
+        ).order_by("event_id", "group_id", "id")
+    )
+    if not unscheduled:
+        return 0
+
+    # 1. Grouper par poule
+    buckets: dict = defaultdict(list)
+    for m in unscheduled:
+        buckets[m.group_id].append(m)
+
+    # 2. Entrelacement round-robin
+    buckets_list = list(buckets.values())
+    interleaved = []
+    max_len = max(len(b) for b in buckets_list)
+    for i in range(max_len):
+        for bucket in buckets_list:
+            if i < len(bucket):
+                interleaved.append(bucket[i])
+
+    # 3. Règle de repos : 1 passe de correction par swap
+    for i in range(len(interleaved) - 1):
+        if _entry_ids(interleaved[i]) & _entry_ids(interleaved[i + 1]):
+            if i + 2 < len(interleaved):
+                if not (_entry_ids(interleaved[i]) & _entry_ids(interleaved[i + 2])):
+                    interleaved[i + 1], interleaved[i + 2] = interleaved[i + 2], interleaved[i + 1]
+
+    # 4. Distribution sur les journées
+    default_court = Court.objects.order_by("id").first()
+    if not default_court:
+        raise ValueError("Aucun court disponible. Crée un court avant d'utiliser la pré-pose.")
+    max_idx = Match.objects.filter(
+        edition=edition, order_index__isnull=False
+    ).aggregate(m=Max("order_index"))["m"] or 0
+    global_idx = max_idx + 1
+
+    local_tz = timezone.get_current_timezone()
+    from collections import deque
+    pile = deque(interleaved)
+    placed_count = 0
+
+    for pd in play_days:
+        if not pile:
+            break
+
+        placed_in_day_count = Match.objects.filter(
+            edition=edition,
+            order_index__isnull=False,
+            scheduled_time__date=pd.date,
+        ).count()
+        breaks_duration = sum(b.duration_min for b in pd.breaks.all())
+        used_minutes = placed_in_day_count * default_duration_min + breaks_duration
+
+        start_dt = datetime.datetime.combine(pd.date, pd.start_time)
+        end_dt = datetime.datetime.combine(pd.date, pd.target_end_time)
+        capacity_minutes = int((end_dt - start_dt).total_seconds() // 60)
+
+        scheduled_dt = timezone.make_aware(
+            datetime.datetime.combine(pd.date, pd.start_time), local_tz
+        )
+
+        while pile and (used_minutes + default_duration_min) <= capacity_minutes:
+            m = pile.popleft()
+            m.order_index = global_idx
+            m.scheduled_time = scheduled_dt
+            update_fields = ["order_index", "scheduled_time"]
+            if m.court_id is None:
+                m.court = default_court
+                update_fields.append("court")
+            m.save(update_fields=update_fields)
+            global_idx += 1
+            used_minutes += default_duration_min
+            placed_count += 1
+
+    return placed_count

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApi } from '@/composables/useApi'
-import type { ScoreState, Match } from '@/types'
+import type { ScoreState, Match, PlayDay, TvUpcoming } from '@/types'
 
 export const useLiveStore = defineStore('live', () => {
   const { get } = useApi()
@@ -10,6 +10,9 @@ export const useLiveStore = defineStore('live', () => {
   const next = ref<Match | null>(null)
   const now = ref<string>('')
   const editionYear = ref<number | null>(null)
+
+  const upcoming = ref<Match[]>([])
+  const currentPlayDay = ref<PlayDay | null>(null)
 
   // Match unique (écran arbitre) — polling de /api/matches/<id>/
   const match = ref<Match | null>(null)
@@ -22,10 +25,17 @@ export const useLiveStore = defineStore('live', () => {
     editionYear.value = data.editionYear
   }
 
+  async function fetchUpcoming(n = 5) {
+    const data = await get<TvUpcoming>(`/api/tv/upcoming/?n=${n}`)
+    upcoming.value = data.upcoming
+    currentPlayDay.value = data.currentPlayDay
+    if (data.next) next.value = data.next
+  }
+
   async function fetchMatch(matchId: number | string) {
     const data = await get<{ match: Match }>(`/api/matches/${matchId}/`)
     match.value = data.match
   }
 
-  return { hero, next, now, editionYear, match, fetchScoreState, fetchMatch }
+  return { hero, next, now, editionYear, upcoming, currentPlayDay, match, fetchScoreState, fetchUpcoming, fetchMatch }
 })
