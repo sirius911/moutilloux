@@ -58,6 +58,10 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
   fait foi et survit au rechargement (voir [[routing-context]]).
 - Titre « Calendrier des matchs », sous-titre « Qui joue, quand, contre qui ».
 - Actions :
+  - **« Gérer les journées »** → ouvre la modale de gestion des journées de jeu
+    (`PlayDay`) : créer, modifier, supprimer une journée (voir « Modale Gérer les
+    journées » ci-dessous). C'est le point d'entrée **dans l'application** pour
+    configurer le calendrier (plus de passage obligé par l'admin Django).
   - **« Pré-poser »** → range automatiquement la pile à planifier (voir flux).
     Désactivé quand la pile est vide.
 
@@ -155,6 +159,34 @@ venu. Les matchs créés arrivent dans la **pile « À planifier »**.
 
 ---
 
+## Modale « Gérer les journées »
+
+Ouverte par **« Gérer les journées »**. Gère les journées de jeu (`PlayDay`) de
+l'**édition** courante — le calendrier étant édition-scoped (voir [[planning]] et
+[[routing-context]]).
+
+- **Liste** des journées existantes, triées par date : pour chacune, **date**,
+  **heure de début**, **heure de fin cible**, nombre de matchs/pauses rattachés,
+  et actions **Modifier** / **Supprimer**.
+- **« + Nouvelle journée »** : formulaire — **date** (requise), **heure de début**
+  (requise), **heure de fin cible** (requise). À l'enregistrement, la journée
+  apparaît immédiatement dans le calendrier (section vide prête à recevoir des
+  matchs).
+- **Modifier** : édite date / début / fin cible. Les heures estimées des matchs de
+  la journée sont recalculées (voir [[planning]]).
+- **Supprimer** : **refusée par le serveur** si la journée porte encore des matchs
+  ou des pauses — le message est affiché et invite à renvoyer d'abord ses matchs
+  vers la pile « à planifier ». Une journée **vide** se supprime après une
+  confirmation simple.
+- Les heures ne sont jamais saisies sur les matchs (décision 18) ; cette modale ne
+  règle que les **bornes de journée**, l'ETA reste dérivée.
+- Erreurs serveur affichées dans la modale, saisie conservée.
+
+> Contrat : `CRUD PlayDay` (voir [[planning]]). Conventions back (CLAUDE.md §5) :
+> chaque mutation est d'abord une **fonction de service** réutilisable dans
+> `admin_views.py`, exposée par un endpoint `/api/` fin ; `live/urls.py` est câblé
+> par l'orchestrateur.
+
 ## Panneau d'édition de match (volet latéral)
 
 Ouvert au clic sur une ligne. En-tête : étape, « {A} vs {B} », badges d'état
@@ -224,7 +256,7 @@ pied sans fermer le panneau).
 |---|---|
 | Aucune épreuve active | État vide avec lien vers Tournoi. |
 | Épreuve pas encore débutée (`INSCRIPTION`) | Le calendrier n'est pas disponible : invite à **débuter l'épreuve** depuis l'écran Tournoi (voir [[cycle-de-vie-epreuve]]). |
-| Aucune journée configurée | Invite à définir au moins une journée de jeu (date, début, fin cible — voir [[planning]]). Sans journée, on ne peut que générer / garder les matchs « à planifier ». |
+| Aucune journée configurée | État vide invitant à **créer une première journée** via **« Gérer les journées »** (date, début, fin cible — voir Modale ci-dessous et [[planning]]). Sans journée, on ne peut que générer / garder les matchs « à planifier ». Ne renvoie **pas** vers l'admin Django. |
 | Pile non vide en fin de planification | Ce n'est pas une erreur : les matchs restants demeurent « à planifier ». |
 
 ## Données

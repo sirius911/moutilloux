@@ -169,6 +169,17 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
     périmés. L'**édition** reste une bascule globale serveur (décision 16 conservée :
     le sélecteur reste en en-tête ; seul son **effet** passe désormais par l'URL).
     Contrat complet : [[routing-context]].
+23. **Journées de jeu gérées dans l'app.** La gestion des `PlayDay` (création,
+    édition, suppression) passe par une modale **« Gérer les journées »** sur le
+    Calendrier ([[admin-matchs]]), et non plus par l'admin Django. Lève l'impasse
+    « Aucune journée configurée → créez-les via Django » sans point d'entrée.
+    Suppression refusée si la journée porte des matchs ou des pauses
+    (contrat : [[planning]], `CRUD PlayDay`).
+24. **Composition manuelle des poules.** L'écran Poules expose **« + Nouvelle
+    poule »** (création de poules vides) en plus du remplissage automatique : on
+    peut composer entièrement à la main avant de débuter l'épreuve, sans passer par
+    l'auto-fill ([[admin-poules]]). S'appuie sur l'endpoint existant
+    `POST /api/events/<id>/groups/create/`.
 
 ## API de référence (état : tout est exposé)
 
