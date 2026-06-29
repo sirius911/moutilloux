@@ -53,6 +53,27 @@ function setActiveEvent(id: string) {
 }
 
 const dropError = ref('')
+const createGroupBusy = ref(false)
+
+const nextGroupLetter = computed(() => {
+  if (eventStore.groups.length === 0) return 'A'
+  const letters = eventStore.groups.map((g) => g.name.toUpperCase()).sort()
+  const last = letters[letters.length - 1]
+  return String.fromCharCode(last.charCodeAt(0) + 1)
+})
+
+async function createGroup() {
+  if (!eventStore.activeEventId || createGroupBusy.value) return
+  createGroupBusy.value = true
+  dropError.value = ''
+  try {
+    await eventStore.createGroup(eventStore.activeEventId, nextGroupLetter.value)
+  } catch (e) {
+    dropError.value = apiErrorMessage(e, 'Erreur lors de la création de la poule.')
+  } finally {
+    createGroupBusy.value = false
+  }
+}
 
 // ── Ajustements (épreuve EN_COURS) ────────────────────────────────────────
 
@@ -210,6 +231,12 @@ async function onDropToUnassigned() {
         <p class="page-sub">Glissez-déposez les joueurs dans leur groupe</p>
       </div>
       <div class="header-actions">
+        <button
+          class="adm-btn"
+          type="button"
+          :disabled="eventStore.groupsLocked || createGroupBusy"
+          @click="createGroup"
+        >+ Nouvelle poule</button>
         <button class="adm-btn" type="button" :disabled="eventStore.groupsLocked" @click="showAutoFill = true">Remplir automatiquement</button>
       </div>
     </header>
@@ -227,7 +254,7 @@ async function onDropToUnassigned() {
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
         </svg>
         L'épreuve est débutée — composition verrouillée.
-        <RouterLink to="/admin/matches" class="lock-link">Voir le Calendrier</RouterLink>
+        <RouterLink :to="`/admin/events/${eventStore.activeEventId}/matches`" class="lock-link">Voir le Calendrier</RouterLink>
       </div>
       <p v-if="dropError" class="adm-error">{{ dropError }}</p>
       <p v-if="adjustError" class="adm-error">{{ adjustError }}</p>
