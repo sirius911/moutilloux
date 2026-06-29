@@ -1608,7 +1608,10 @@ def api_play_day_edit(request, play_day_id):
 def api_play_day_delete(request, play_day_id):
     """POST /api/play-days/<id>/delete/"""
     pd = get_object_or_404(PlayDay, pk=play_day_id)
-    delete_play_day(pd)
+    try:
+        delete_play_day(pd)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
     return JsonResponse({"ok": True})
 
 
