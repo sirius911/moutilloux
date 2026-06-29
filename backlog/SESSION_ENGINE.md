@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-29 — Session #31
+**Dernière session :** 2026-06-29 — Session #32
 **Sprint actif :** 14 — Correctifs : navigation, registre, poules & journées
 **Roadmap :** 1 sprint restant.
-**Tickets clôturés cette session :** 2 (#150 ✅ #154 ✅)
+**Tickets clôturés cette session :** 2 (#151 ✅ #155 ✅)
 **Branche :** `claude/sprint/14-correctifs`
-**Issues Sprint 14 restantes :** 6
-**Contexte :** Session 31 — Sprint 14 démarré. Spec review : 3 specs ❌ bloquantes (#150 corrigé, #151/#155/#157 à venir), 2 ⚠️ (#152/#153/#156). Tickets #150 et #154 clôturés.
+**Issues Sprint 14 restantes :** 4 (#152, #153, #156, #157)
+**Contexte :** Session 32 — #151 (lien Calendrier route morte) et #155 (bouton + Nouvelle poule) corrigés dans AdminGroups.vue. Restants : #152/#153 (colonnes AdminPlayers), #156 (guard delete_play_day), #157 (modale Gérer les journées, dépend de #156).
