@@ -658,7 +658,6 @@ def api_player_create(request):
     first_name = data.get("first_name", "").strip()
     last_name = data.get("last_name", "").strip()
     gender = data.get("gender", "")
-    birth_date = data.get("birth_date")  # "YYYY-MM-DD" ou None
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
     license_number = data.get("license_number", "").strip()
@@ -666,10 +665,13 @@ def api_player_create(request):
     if not first_name or not last_name:
         return JsonResponse({"error": "Prénom et nom requis."}, status=400)
 
+    birth_year_raw = data.get("birth_year")
     birth_year = None
-    if birth_date:
+    if birth_year_raw is not None:
         try:
-            birth_year = int(str(birth_date)[:4])
+            y = int(birth_year_raw)
+            if 1900 <= y <= 2100:
+                birth_year = y
         except (ValueError, TypeError):
             pass
 
