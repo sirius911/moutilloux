@@ -95,7 +95,9 @@ function genderLabel(g: string | undefined | null) {
               <tr>
                 <th>Joueur</th>
                 <th>Genre</th>
-                <th>Né(e) en</th>
+                <th>Âge</th>
+                <th>Téléphone</th>
+                <th>Email</th>
                 <th class="col-actions-h">Actions</th>
               </tr>
             </thead>
@@ -111,17 +113,23 @@ function genderLabel(g: string | undefined | null) {
                   <span class="player-meta">{{ genderLabel(p.gender) }}</span>
                 </td>
                 <td>
-                  <span class="player-meta">{{ p.birthYear ?? '—' }}</span>
+                  <span class="player-meta">{{ p.birthYear ? (new Date().getFullYear() - p.birthYear) + ' ans' : '—' }}</span>
+                </td>
+                <td>
+                  <span class="player-meta">{{ p.phone || '—' }}</span>
+                </td>
+                <td>
+                  <span class="player-meta">{{ p.email || '—' }}</span>
                 </td>
                 <td class="col-actions">
                   <button class="row-btn" type="button" @click="openEdit(p)">Éditer</button>
                 </td>
               </tr>
               <tr v-if="filtered.length === 0 && !search.trim()">
-                <td colspan="4" class="empty-row">Aucun joueur dans le registre. Ajoutez votre premier joueur.</td>
+                <td colspan="6" class="empty-row">Aucun joueur dans le registre. Ajoutez votre premier joueur.</td>
               </tr>
               <tr v-else-if="filtered.length === 0">
-                <td colspan="4" class="empty-row">Aucun joueur trouvé</td>
+                <td colspan="6" class="empty-row">Aucun joueur trouvé</td>
               </tr>
             </tbody>
           </table>
