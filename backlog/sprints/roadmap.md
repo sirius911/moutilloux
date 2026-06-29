@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 14 — Correctifs : navigation, registre, poules & journées | `backlog/sprints/14-correctifs/sprint.md` |
