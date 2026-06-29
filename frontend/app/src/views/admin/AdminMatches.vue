@@ -6,6 +6,7 @@ import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
+import PlayDayModal from '@/components/modals/PlayDayModal.vue'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ const route = useRoute()
 const router = useRouter()
 
 const editingMatch = ref<Match | null>(null)
+const showPlayDayModal = ref(false)
 const bannerError = ref('')
 const arranging = ref(false)
 
@@ -387,6 +389,9 @@ async function onDragEnd() {
         </div>
       </div>
       <div class="header-actions">
+        <button class="adm-btn" type="button" @click="showPlayDayModal = true">
+          Gérer les journées
+        </button>
         <button
           class="adm-btn primary"
           type="button"
@@ -402,6 +407,7 @@ async function onDragEnd() {
     <div v-if="bannerError" class="error-banner">{{ bannerError }}</div>
 
     <!-- Modales -->
+    <PlayDayModal v-if="showPlayDayModal" @close="showPlayDayModal = false" />
     <EditMatchPanel
       v-if="editingMatch"
       :match="editingMatch"
@@ -465,7 +471,10 @@ async function onDragEnd() {
       <main class="cal-days">
         <div v-if="calendarDays.length === 0" class="cal-empty">
           <p>Aucune journée configurée.</p>
-          <p class="cal-empty-sub">Créez les journées de jeu via l'administration Django.</p>
+          <p class="cal-empty-sub">
+            Créez une première journée via
+            <button class="cal-empty-link" type="button" @click="showPlayDayModal = true">« Gérer les journées »</button>.
+          </p>
         </div>
 
         <section
@@ -779,6 +788,18 @@ async function onDragEnd() {
 
 .cal-empty p { margin: 0 0 6px; }
 .cal-empty-sub { font-size: 12px; }
+
+.cal-empty-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+}
 
 /* ── Journée (PlayDay) ───────────────────────────────────────────────────── */
 .play-day {
