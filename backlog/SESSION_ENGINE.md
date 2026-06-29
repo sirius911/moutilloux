@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #40
-**Sprint actif :** — (roadmap vide)
-**Roadmap :** 0 sprint restant.
-**Tickets clôturés cette session :** 0
-**Branche :** `claude/sprint/13-tableau-seeding`
-**Issues Sprint 13 restantes :** 0
-**Contexte :** Session 40 — Roadmap vide confirmée (2e fois). Aucun sprint actif. Désactiver la Routine manuellement sur claude.ai/code/routines.
+**Dernière session :** 2026-06-29 — Session #31
+**Sprint actif :** 14 — Correctifs : navigation, registre, poules & journées
+**Roadmap :** 1 sprint restant.
+**Tickets clôturés cette session :** 2 (#150 ✅ #154 ✅)
+**Branche :** `claude/sprint/14-correctifs`
+**Issues Sprint 14 restantes :** 6
+**Contexte :** Session 31 — Sprint 14 démarré. Spec review : 3 specs ❌ bloquantes (#150 corrigé, #151/#155/#157 à venir), 2 ⚠️ (#152/#153/#156). Tickets #150 et #154 clôturés.
