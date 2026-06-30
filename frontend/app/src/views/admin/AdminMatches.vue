@@ -522,7 +522,6 @@ async function onDragEnd() {
               @end="onDragEnd"
             >
               <template #item="{ element }">
-                <!-- Ligne match -->
                 <div
                   v-if="element.kind === 'match'"
                   class="cal-row"
@@ -566,7 +565,6 @@ async function onDragEnd() {
                     :class="{ 'drag-handle--locked': (element.data as Match).status === 'LIVE' }"
                   >⋮⋮</span>
                 </div>
-                <!-- Ligne pause -->
                 <div v-else class="cal-row cal-row--break">
                   <span class="cal-time">{{ computedETAs.get(`b-${element.data.id}`) ?? '—' }}</span>
                   <span class="break-icon">⏸</span>
