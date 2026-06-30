@@ -506,13 +506,9 @@ async function onDragEnd() {
 
           <!-- Lignes matchs + pauses (liste unifiée DnD ↔ pile) -->
           <div class="pd-rows">
-            <div
-              v-if="(dayItemsDnd[day.id] ?? []).length === 0"
-              class="pd-empty"
-            >Aucun match pour cette journée.</div>
             <draggable
-              v-else
               v-model="dayItemsDnd[day.id]"
+              class="pd-droparea"
               :item-key="(item: DayItem) => item.kind + '-' + item.data.id"
               :group="{ name: 'matches', pull: true, put: true }"
               :move="checkMove"
@@ -582,6 +578,10 @@ async function onDragEnd() {
                 </div>
               </template>
             </draggable>
+            <div
+              v-if="(dayItemsDnd[day.id] ?? []).length === 0"
+              class="pd-empty"
+            >Glissez un match ici</div>
           </div>
 
           <!-- Action pause -->
@@ -860,12 +860,21 @@ async function onDragEnd() {
   color: var(--danger);
 }
 
-.pd-rows { display: flex; flex-direction: column; }
+.pd-rows { display: flex; flex-direction: column; position: relative; }
+
+/* Zone de dépôt toujours présente, même journée vide (cible DnD pile → journée) */
+.pd-droparea { min-height: 44px; }
 
 .pd-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px 18px;
   font-size: 13px;
   color: var(--ink-4);
+  pointer-events: none; /* laisse passer le drop vers le draggable en dessous */
 }
 
 /* ── Ligne calendrier ────────────────────────────────────────────────────── */
