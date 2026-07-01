@@ -134,7 +134,9 @@ n'est pas un walkover. À créer :
 - **`Match.is_walkover`** (bool, **champ à créer**) : marque une victoire par forfait.
 - Au déclenchement du forfait sur une entry : tous ses matchs **non terminés**
   passent `FINISHED`, `winner_side` = l'adversaire, `is_walkover = True`, score de
-  convention (adversaire `games_to_win`, partant 0).
+  convention (adversaire `games_to_win`, partant 0). Ces matchs **restent à leur
+  place** dans le calendrier (verrouillés, libellé « Forfait ») : leur `order_index`
+  est conservé, ils ne disparaissent pas de la journée (voir [[planning]]).
 - Le reste se recâble sur l'existant : **classements recalculés**, et le tableau
   auto-rempli **avance l'adversaire** si le forfait touche un qualifié
   (propagation des vainqueurs, `bracket.py:241`).
