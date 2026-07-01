@@ -373,10 +373,24 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #37
-**Sprint actif :** 15 — Cycle de vie d'un match : order_index persistant & Annulés
-**Roadmap :** 1 sprint restant (15).
-**Tickets clôturés cette session :** 1 (#163 ✅)
-**Branche :** `claude/sprint/15-cycle-vie-match`
-**Issues Sprint 15 restantes :** 2 (#164, #165)
-**Contexte :** Session 37 — continuation directe de la session #36 (même déclenchement horaire, chevauchement constaté : un commit `ae72baa` de clôture de la session #36 est apparu sur la branche sans avoir été produit par cette session-ci, contenu vérifié cohérent — voir `backlog/logs/session_2026-07-02_37.md` §Problèmes d'orchestration). #163 (verrou LIVE/FINISHED + poignée SCHEDULED seule dans `AdminMatches.vue`) implémenté et approuvé, aucun fichier partagé à câbler. Spec review ⚠️ (planning.md, admin-matchs.md — dérives couvertes par #164/#165 restants ; cycle-de-vie-epreuve.md ✅). 2 nouvelles dérives hors périmètre ticketées : #176 (stage_label P3 manquant), #177 (GenerateMatchesModal.vue orphelin). Parent effectif = `claude/sprint/14-correctifs` (PR #158 encore ouverte, pas mergée dans `main`) ; branche sprint 15 déjà à jour dessus, aucun merge nécessaire. PR sprint 15 : #169 (déjà ouverte). Sprint non terminé (2 issues front restantes, #164/#165) → suite à la prochaine échéance.
+**Dernière session :** 2026-07-02 — Session #38
+**Sprint actif :** 16 — Arbitre : démarrer & lire un match
+**Roadmap :** 1 sprint restant (16).
+**Tickets clôturés cette session :** 2 (#164 ✅, #165 ✅)
+**Branche :** `claude/sprint/15-cycle-vie-match` (sprint 15 terminé et archivé cette session)
+**Issues Sprint 15 restantes :** 0 — sprint clos
+**Contexte :** Session 38 — traitement des 2 derniers tickets front du Sprint 15.
+Spec review en début de session : `planning.md` ✅, `admin-matchs.md` ⚠️ (seule
+dérive : colonne « Annulés » absente = #164, déjà ticketée), `cycle-de-vie-epreuve.md`
+✅ (point forfait). #164 (colonne « Annulés » en lecture seule dans
+`AdminMatches.vue`, type `CalendarData.canceled` câblé par l'orchestrateur dans
+`types/index.ts`) et #165 (moteur ETA : ancrage `max(cursor, ft/liveEnd, nowMin)`
+au lieu d'une réassignation sans plancher, limité à la journée du jour via un
+helper `isToday()`) implémentés et approuvés sans réserve, séquencés l'un après
+l'autre (fichier partagé `AdminMatches.vue`). Aucune nouvelle dérive hors
+périmètre. **Sprint 15 clos** : milestone GitHub #14 fermé, ligne retirée de
+`backlog/sprints/roadmap.md`, dossier archivé dans `backlog/sprints/done/15-cycle-vie-match/`.
+PR sprint 15 : #169 (accumule les commits, pas mergée — parent effectif encore
+`claude/sprint/14-correctifs`, PR #158 non mergée dans `main`). Roadmap : il
+reste le Sprint 16 (Arbitre : démarrer & lire un match), qui sera démarré à la
+**prochaine échéance planifiée**, pas dans cette session.
