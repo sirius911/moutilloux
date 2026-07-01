@@ -35,7 +35,7 @@ au fil des phases. La source de vérité des contrats reste `live/admin_views.py
 |--------------------|--------------------------------------------------------------------------|
 | Front              | Vue 3 + Vite + TypeScript + Vue Router + Pinia                           |
 | Inspiration UI     | Le React `frontend/design/` (mock) — CSS réutilisé tel quel, JSX porté en SFC `.vue` |
-| Temps réel         | Polling HTTP, pas de WebSockets — code actuel 300 ms ; cible ~2 s (live) / ~4 s (TV) à appliquer |
+| Temps réel         | Polling HTTP, pas de WebSockets — code actuel ~2 s (arbitre/scoreboard) / ~5 s (file, calendrier) ; cible ~4 s poules/bracket TV encore à appliquer |
 | Config initiale    | Éditions / catégories / courts via l'admin Django (`/admin/`), pas d'UI dédiée |
 | Séquencement       | Phases dans l'ordre 1 → 8                                                 |
 
@@ -81,13 +81,13 @@ Les subagents `vue-screen` et `django-api` héritent du modèle de session (`mod
   `get/post/patch`) — jamais de `fetch` brut dans une SFC.
   L'état partagé vit dans les stores Pinia (`auth`, `event`, `live`).
 - **Temps réel** : utiliser le composable `usePolling(fetcher, intervalMs)`.
-  État actuel du code : 300 ms (arbitre + scoreboard). Cible visée ~2 s arbitre/scoreboard,
-  ~4 s poules/bracket TV — **non encore appliquée**. Pause si onglet caché : **non implémentée**
-  dans `usePolling` (TODO).
+  État actuel du code : ~2 s (arbitre + scoreboard) / ~5 s (file arbitre, calendrier).
+  Cible ~4 s poules/bracket TV — **non encore appliquée**. Pause si onglet caché :
+  **non implémentée** dans `usePolling` (TODO).
 - **Rôles / routing** : cible = Admin → garde `isAdmin` ; Arbitre → garde `isReferee` ;
-  Spectateur (TV) → public. **État actuel** : `router/index.ts` vérifie `requiresAuth` et
-  `requiresAdmin` (garde `isAdmin` en place sur `/admin/*`) ; la garde `isReferee` sur
-  `/arbitre/*` manque encore (backlog 023).
+  Spectateur (TV) → public. **État actuel** : `router/index.ts` vérifie `requiresAuth`,
+  `requiresAdmin` (garde `isAdmin` sur `/admin/*`) **et `requiresReferee`** (garde
+  `isReferee` en place sur `/arbitre/*`).
 - **CSRF/session** : POST via `useApi` qui lit le cookie CSRF (`csrftoken`) et envoie
   `X-CSRFToken`, avec `credentials:'include'`. En dev, tout passe par le proxy Vite (même origine).
   Note : `useApi` `throw` sur tout statut non-2xx ; la **redirection sur 401 n'est pas encore

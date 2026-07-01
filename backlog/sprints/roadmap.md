@@ -11,3 +11,4 @@
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
 | 1 | 15 — Cycle de vie d'un match : order_index persistant & Annulés | `backlog/sprints/15-cycle-vie-match/sprint.md` |
+| 2 | 16 — Arbitre : démarrer & lire un match | `backlog/sprints/16-arbitre-demarrer-match/sprint.md` |
