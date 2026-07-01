@@ -15,11 +15,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.utils.dateparse import parse_datetime, parse_date
+from django.utils.dateparse import parse_datetime, parse_date, parse_time
 
 from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
-from live.models import Match, Court
+from live.models import Match, Court, PlayDay, Break
 from live.views import build_event_group_tables
 from live.admin_views import (
     superuser_required,
@@ -37,7 +37,6 @@ from live.admin_views import (
     finalize_match_edit,
     feature_match,
     reorder_event_matches,
-    create_final_bracket_for_event,
     set_match_bracket_labels,
     assign_bracket_entry,
     clear_bracket_entry,
@@ -55,6 +54,23 @@ from live.admin_views import (
     create_event,
     update_event,
     delete_event,
+    # Sprint 11 — cycle de vie
+    start_event,
+    close_event,
+    reopen_event,
+    # Sprint 12 — ajustements en cours de jeu
+    withdraw_entry,
+    add_late_entry,
+    replace_entry_player,
+    # Sprint 07 — calendrier (journées + pauses)
+    create_play_day,
+    update_play_day,
+    delete_play_day,
+    create_break,
+    update_break,
+    delete_break,
+    reorder_calendar,
+    auto_arrange_matches,
 )
 
 
@@ -122,6 +138,7 @@ def _pack_entry(entry):
         "seedHint": entry.seed_hint,
         "groupId": None,
         "groupName": None,
+        "withdrawn": entry.withdrawn,
     }
     # Groupe assigné (via GroupMembership)
     membership = getattr(entry, "_membership_cache", None)
@@ -232,6 +249,7 @@ def _pack_match(m):
         "displayPointA": display_point_a,
         "displayPointB": display_point_b,
         "winnerSide": m.winner_side,
+        "isWalkover": m.is_walkover,
         "scheduledTime": scheduled_str,
         "startedAt": m.started_at.isoformat() if m.started_at else None,
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
@@ -284,6 +302,7 @@ def _pack_edition(edition):
         "distinctPlayersCount": len(player_ids),
         "matchesFinished": matches_finished,
         "matchesTotal": matches_total,
+        "defaultMatchDurationMin": edition.default_match_duration_min,
     }
 
 
@@ -316,10 +335,17 @@ def _pack_event(event):
         "groupSizeDefault": event.group_size_default,
         "qualifiedPerGroup": event.qualified_per_group,
         "notes": event.notes,
+        "hasThirdPlace": event.has_third_place,
+        "status": event.status,
         "entriesCount": Entry.objects.filter(event=event).count(),
         "hasGroups": Group.objects.filter(event=event).exists(),
         "hasBracket": Match.objects.filter(
             event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F]
+        ).exists(),
+        "hasBracketStarted": Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+            status__in=[Match.Status.LIVE, Match.Status.FINISHED],
         ).exists(),
     }
 
@@ -443,6 +469,7 @@ def api_event_groups(request, event_id):
                 "gamesRatio": f"{games_won}/{games_lost}",
                 "points": points,
                 "qualified": qualif.get(entry.id, "-") != "-",
+                "withdrawn": entry.withdrawn,
             })
 
         # Grille croisée (matrice n×n)
@@ -477,7 +504,8 @@ def api_event_groups(request, event_id):
             "grid": grid,
         })
 
-    return JsonResponse(result, safe=False)
+    locked = event.status != Event.Status.INSCRIPTION
+    return JsonResponse({"locked": locked, "groups": result})
 
 
 @require_GET
@@ -527,9 +555,12 @@ def api_match_detail(request, match_id):
 
 
 def _pack_event_bracket(event):
-    """Structure du tableau final (QF/SF/F) groupée par slot — format partagé."""
+    """Structure du tableau final (QF/SF/F/P3) groupée par slot — format partagé."""
     qs = (
-        Match.objects.filter(event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F])
+        Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+        )
         .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player")
         .order_by("bracket_slot")
     )
@@ -547,6 +578,7 @@ def _pack_event_bracket(event):
         "qf": [make_slot("QF", k, by_slot.get(k)) for k in ("QF1", "QF2", "QF3", "QF4")],
         "sf": [make_slot("SF", k, by_slot.get(k)) for k in ("SF1", "SF2")],
         "f": [make_slot("F", k, by_slot.get(k)) for k in ("F1",)],
+        "p3": [make_slot("P3", "P3", by_slot.get("P3"))],
     }
 
 
@@ -626,7 +658,6 @@ def api_player_create(request):
     first_name = data.get("first_name", "").strip()
     last_name = data.get("last_name", "").strip()
     gender = data.get("gender", "")
-    birth_date = data.get("birth_date")  # "YYYY-MM-DD" ou None
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
     license_number = data.get("license_number", "").strip()
@@ -634,10 +665,13 @@ def api_player_create(request):
     if not first_name or not last_name:
         return JsonResponse({"error": "Prénom et nom requis."}, status=400)
 
+    birth_year_raw = data.get("birth_year")
     birth_year = None
-    if birth_date:
+    if birth_year_raw is not None:
         try:
-            birth_year = int(str(birth_date)[:4])
+            y = int(birth_year_raw)
+            if 1900 <= y <= 2100:
+                birth_year = y
         except (ValueError, TypeError):
             pass
 
@@ -888,7 +922,7 @@ def api_group_assign(request, event_id):
     """
     POST /api/events/<id>/groups/assign/
     Assigne/déplace une Entry dans une poule (source : admin_views.assign_entry_to_group).
-    Body JSON: {entry_id, group_id}. Verrouillé si des matchs de poule existent.
+    Body JSON: {entry_id, group_id}. Verrouillé si status != INSCRIPTION.
     """
     try:
         data = json.loads(request.body)
@@ -920,7 +954,7 @@ def api_group_unassign(request, event_id):
     """
     POST /api/events/<id>/groups/unassign/
     Retire une Entry de sa poule (source : admin_views.unassign_entry).
-    Body JSON: {entry_id}. Verrouillé si des matchs de poule existent.
+    Body JSON: {entry_id}. Verrouillé si status != INSCRIPTION.
     """
     try:
         data = json.loads(request.body)
@@ -1054,21 +1088,14 @@ def api_matches_reorder(request, event_id):
 def api_bracket_create(request, event_id):
     """
     POST /api/events/<id>/bracket/create/
-    Crée (ou recrée) le tableau final manuel (source : admin_views.create_final_bracket_for_event,
-    le même service que la vue panel_final_create). Body JSON : {start_stage: "QF|SF|F", force: bool}.
+    Crée ou met à jour le squelette du tableau final (générateur général : N poules × qpg, byes,
+    séparation maximale). Idempotent — aucun match lancé/terminé n'est touché.
     Réponse : structure du bracket (même format que GET /api/events/<id>/bracket/).
     """
-    try:
-        data = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
-
     event = get_object_or_404(Event.objects.select_related("edition"), pk=event_id)
 
-    try:
-        create_final_bracket_for_event(event, data.get("start_stage"), bool(data.get("force")))
-    except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
+    from live.bracket import ensure_final_bracket_exists
+    ensure_final_bracket_exists(event)
 
     return JsonResponse(_pack_event_bracket(event))
 
@@ -1227,7 +1254,7 @@ def api_edition_create(request):
 @superuser_required
 @transaction.atomic
 def api_edition_edit(request, edition_id):
-    """POST /api/editions/<id>/edit/ — {name?, year?, start_dt?, end_dt?} (édition partielle)."""
+    """POST /api/editions/<id>/edit/ — {name?, year?, start_dt?, end_dt?, default_match_duration_min?} (édition partielle)."""
     data, err = _json_body(request)
     if err:
         return err
@@ -1237,6 +1264,12 @@ def api_edition_edit(request, edition_id):
         kwargs["name"] = data["name"]
     if "year" in data:
         kwargs["year"] = data["year"]
+    if "default_match_duration_min" in data:
+        val = data["default_match_duration_min"]
+        try:
+            kwargs["default_match_duration_min"] = max(1, int(val))
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "default_match_duration_min doit être un entier positif"}, status=400)
     try:
         if "start_dt" in data:
             kwargs["start_dt"] = _parse_edition_dt(data["start_dt"], "Date de début")
@@ -1401,7 +1434,7 @@ def api_event_create(request, edition_id):
 @superuser_required
 @transaction.atomic
 def api_event_edit(request, event_id):
-    """POST /api/events/<id>/edit/ — {group_size_default?, qualified_per_group?, notes?}."""
+    """POST /api/events/<id>/edit/ — {group_size_default?, qualified_per_group?, notes?, has_third_place?}."""
     data, err = _json_body(request)
     if err:
         return err
@@ -1413,11 +1446,56 @@ def api_event_edit(request, event_id):
         kwargs["qualified_per_group"] = data["qualified_per_group"]
     if "notes" in data:
         kwargs["notes"] = data["notes"]
+    if "has_third_place" in data:
+        kwargs["has_third_place"] = data["has_third_place"]
     try:
         update_event(event, **kwargs)
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse(_pack_event(event))
+
+
+@require_POST
+@superuser_required
+def api_event_start(request, event_id):
+    """POST /api/events/<id>/start/ — INSCRIPTION → EN_COURS.
+    Réponse : {event, created, unplaced}."""
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    try:
+        result = start_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({
+        "event": _pack_event(event),
+        "created": result["created"],
+        "unplaced": [_pack_entry(e) for e in result["unplaced"]],
+    })
+
+
+@require_POST
+@superuser_required
+def api_event_close(request, event_id):
+    """POST /api/events/<id>/close/ — EN_COURS → TERMINEE (manuel admin).
+    Réponse : {event}."""
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    try:
+        close_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"event": _pack_event(event)})
+
+
+@require_POST
+@superuser_required
+def api_event_reopen(request, event_id):
+    """POST /api/events/<id>/reopen/ — TERMINEE → EN_COURS (recours admin).
+    Réponse : {event}."""
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    try:
+        reopen_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"event": _pack_event(event)})
 
 
 @require_POST
@@ -1431,3 +1509,425 @@ def api_event_delete(request, event_id):
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"ok": True})
+
+
+# ── Sprint 07 — Calendrier : PlayDay + Break ─────────────────────────────────
+
+def _pack_play_day(pd):
+    return {
+        "id": pd.id,
+        "editionId": pd.edition_id,
+        "date": pd.date.isoformat(),
+        "startTime": pd.start_time.strftime("%H:%M"),
+        "targetEndTime": pd.target_end_time.strftime("%H:%M"),
+    }
+
+
+def _pack_break(brk):
+    return {
+        "id": brk.id,
+        "playDayId": brk.play_day_id,
+        "orderIndex": brk.order_index,
+        "durationMin": brk.duration_min,
+        "label": brk.label,
+    }
+
+
+@require_GET
+@superuser_required
+def api_play_days_list(request, edition_id):
+    """GET /api/editions/<id>/play-days/"""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    play_days = PlayDay.objects.filter(edition=edition).order_by("date")
+    return JsonResponse({"playDays": [_pack_play_day(pd) for pd in play_days]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_day_create(request, edition_id):
+    """POST /api/editions/<id>/play-days/create/"""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    date = parse_date(data.get("date", ""))
+    start_time = parse_time(data.get("startTime", ""))
+    target_end_time = parse_time(data.get("targetEndTime", ""))
+
+    if not date or not start_time or not target_end_time:
+        return JsonResponse({"error": "date, startTime et targetEndTime sont requis"}, status=400)
+
+    try:
+        pd = create_play_day(edition, date, start_time, target_end_time)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_play_day(pd), status=201)
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_day_edit(request, play_day_id):
+    """POST /api/play-days/<id>/edit/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    kwargs = {}
+    if "date" in data:
+        d = parse_date(data["date"])
+        if not d:
+            return JsonResponse({"error": "date invalide"}, status=400)
+        kwargs["date"] = d
+    if "startTime" in data:
+        t = parse_time(data["startTime"])
+        if not t:
+            return JsonResponse({"error": "startTime invalide"}, status=400)
+        kwargs["start_time"] = t
+    if "targetEndTime" in data:
+        t = parse_time(data["targetEndTime"])
+        if not t:
+            return JsonResponse({"error": "targetEndTime invalide"}, status=400)
+        kwargs["target_end_time"] = t
+
+    try:
+        pd = update_play_day(pd, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_play_day(pd))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_day_delete(request, play_day_id):
+    """POST /api/play-days/<id>/delete/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    try:
+        delete_play_day(pd)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
+    return JsonResponse({"ok": True})
+
+
+@require_GET
+@superuser_required
+def api_breaks_list(request, play_day_id):
+    """GET /api/play-days/<id>/breaks/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    breaks = Break.objects.filter(play_day=pd).order_by("order_index")
+    return JsonResponse({"breaks": [_pack_break(b) for b in breaks]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_break_create(request, play_day_id):
+    """POST /api/play-days/<id>/breaks/create/"""
+    pd = get_object_or_404(PlayDay, pk=play_day_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    try:
+        order_index = int(data.get("orderIndex", 0))
+        duration_min = int(data.get("durationMin", 0))
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "orderIndex et durationMin doivent être des entiers"}, status=400)
+
+    label = data.get("label", "")
+
+    try:
+        brk = create_break(pd, order_index, duration_min, label)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_break(brk), status=201)
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_break_edit(request, break_id):
+    """POST /api/breaks/<id>/edit/"""
+    brk = get_object_or_404(Break, pk=break_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    kwargs = {}
+    if "orderIndex" in data:
+        try:
+            kwargs["order_index"] = int(data["orderIndex"])
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "orderIndex doit être un entier"}, status=400)
+    if "durationMin" in data:
+        try:
+            kwargs["duration_min"] = int(data["durationMin"])
+        except (TypeError, ValueError):
+            return JsonResponse({"error": "durationMin doit être un entier"}, status=400)
+    if "label" in data:
+        kwargs["label"] = data["label"]
+
+    try:
+        brk = update_break(brk, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_break(brk))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_break_delete(request, break_id):
+    """POST /api/breaks/<id>/delete/"""
+    brk = get_object_or_404(Break, pk=break_id)
+    delete_break(brk)
+    return JsonResponse({"ok": True})
+
+
+# ── Sprint 07 — Packer calendrier ────────────────────────────────────────────
+
+@require_GET
+@superuser_required
+def api_edition_calendar(request, edition_id):
+    """
+    GET /api/editions/<id>/calendar/
+    Retourne les journées avec leurs matchs ordonnés + la pile des matchs
+    à planifier (SCHEDULED, sans order_index, poules uniquement — MVP).
+    """
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+
+    play_days = list(
+        PlayDay.objects.filter(edition=edition)
+        .prefetch_related("breaks")
+        .order_by("date")
+    )
+
+    # Matchs assignés à une journée : order_index non null ET scheduled_time non null
+    assigned_matches = (
+        Match.objects
+        .filter(edition=edition, order_index__isnull=False, scheduled_time__isnull=False)
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
+        .order_by("order_index")
+    )
+
+    # Regrouper les matchs assignés par date (date locale du scheduled_time)
+    from collections import defaultdict
+    matches_by_date = defaultdict(list)
+    for m in assigned_matches:
+        day_key = timezone.localtime(m.scheduled_time).date()
+        matches_by_date[day_key].append(m)
+
+    packed_play_days = []
+    for pd in play_days:
+        packed_play_days.append({
+            **_pack_play_day(pd),
+            "breaks": [_pack_break(b) for b in sorted(pd.breaks.all(), key=lambda b: b.order_index)],
+            "matches": [_pack_match(m) for m in matches_by_date.get(pd.date, [])],
+        })
+
+    # Pile à planifier : SCHEDULED, order_index IS NULL, poules uniquement (MVP)
+    unscheduled = (
+        Match.objects
+        .filter(edition=edition, status=Match.Status.SCHEDULED,
+                order_index__isnull=True, stage=Match.Stage.GROUP)
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
+        .order_by("event_id", "id")
+    )
+
+    return JsonResponse({
+        "playDays": packed_play_days,
+        "unscheduled": [_pack_match(m) for m in unscheduled],
+    })
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_calendar_reorder(request, edition_id):
+    """
+    POST /api/editions/<id>/calendar/reorder/
+    Réordonne le calendrier de l'édition.
+    Body JSON : {"playDays": [{"playDayId": int, "items": [{"type": "match"|"break", "id": int}]}]}
+    """
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    play_day_sequences = data.get("playDays", [])
+    if not isinstance(play_day_sequences, list):
+        return JsonResponse({"error": "playDays doit être une liste"}, status=400)
+
+    try:
+        reorder_calendar(edition, play_day_sequences)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_matches_auto_arrange(request, event_id):
+    """
+    POST /api/events/<id>/matches/auto-arrange/
+    Pré-pose les matchs à planifier (SCHEDULED + GROUP + sans order_index) sur les journées.
+    Réponse : {"placed": N}
+    """
+    event = get_object_or_404(Event, pk=event_id)
+    try:
+        placed = auto_arrange_matches(event.edition)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"placed": placed})
+
+
+# ── Sprint 07 — TV : prochains matchs ────────────────────────────────────────
+
+@require_GET
+def api_tv_upcoming(request):
+    """
+    GET /api/tv/upcoming/
+    Lecture publique. Retourne le next match et les N prochains matchs planifiés
+    de la journée courante (ou prochaine), pour la TV (slide Programme + bandeau).
+    Paramètre ?n=5 (défaut 5, max 10).
+    """
+    edition = get_current_edition()
+    if edition is None:
+        return JsonResponse({"next": None, "upcoming": [], "currentPlayDay": None})
+
+    try:
+        n = min(int(request.GET.get("n", 5)), 10)
+    except (ValueError, TypeError):
+        n = 5
+
+    current_pd = (
+        PlayDay.objects.filter(edition=edition, date__gte=timezone.localdate())
+        .order_by("date")
+        .first()
+    )
+    if current_pd is None:
+        return JsonResponse({"next": None, "upcoming": [], "currentPlayDay": None})
+
+    matches = (
+        Match.objects.filter(
+            edition=edition,
+            status=Match.Status.SCHEDULED,
+            scheduled_time__date=current_pd.date,
+            order_index__isnull=False,
+        )
+        .select_related(
+            "court",
+            "side_a",
+            "side_a__player",
+            "side_b",
+            "side_b__player",
+            "group",
+            "event",
+        )
+        .order_by("order_index")[:n]
+    )
+
+    matches_list = list(matches)
+    next_match = matches_list[0] if matches_list else None
+
+    return JsonResponse({
+        "next": _pack_match(next_match) if next_match else None,
+        "upcoming": [_pack_match(m) for m in matches_list],
+        "currentPlayDay": _pack_play_day(current_pd),
+    })
+
+
+# ── Sprint 12 — Ajustements en cours de jeu ──────────────────────────────────
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_entry_withdraw(request, entry_id):
+    """POST /api/entries/<id>/withdraw/ — forfait / retrait d'un inscrit (EN_COURS requis).
+    Réponse : {entry, matchesWalkover}."""
+    entry = get_object_or_404(Entry.objects.select_related("event", "player", "team"), pk=entry_id)
+    try:
+        result = withdraw_entry(entry)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
+    return JsonResponse({"entry": _pack_entry(entry), "matchesWalkover": result["matches_walkover"]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_entry_add_late(request, event_id):
+    """POST /api/events/<id>/entries/late/ — ajout tardif d'un inscrit dans une poule.
+    Body JSON : {group_id, player?, team?}.
+    Réponse : {entry, createdCount, overCapacity}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    event = get_object_or_404(Event, pk=event_id)
+    group_id = data.get("group_id")
+    if not group_id:
+        return JsonResponse({"error": "group_id est requis"}, status=400)
+    group = get_object_or_404(Group, pk=group_id, event=event)
+
+    player = None
+    team = None
+    if "player" in data and data["player"] is not None:
+        player = get_object_or_404(Player, pk=data["player"])
+    if "team" in data and data["team"] is not None:
+        team = get_object_or_404(Team, pk=data["team"])
+
+    try:
+        entry, created_count, over_capacity = add_late_entry(event, group, player=player, team=team)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({
+        "entry": _pack_entry(entry),
+        "createdCount": created_count,
+        "overCapacity": over_capacity,
+    })
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_entry_replace(request, entry_id):
+    """POST /api/entries/<id>/replace/ — remplace le joueur/équipe d'un inscrit.
+    Body JSON : {player?, team?}.
+    Réponse : {entry}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    entry = get_object_or_404(Entry.objects.select_related("event__category", "player", "team"), pk=entry_id)
+
+    player = None
+    team = None
+    if "player" in data and data["player"] is not None:
+        player = get_object_or_404(Player, pk=data["player"])
+    if "team" in data and data["team"] is not None:
+        team = get_object_or_404(Team, pk=data["team"])
+
+    try:
+        entry = replace_entry_player(entry, player=player, team=team)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"entry": _pack_entry(entry)})

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Court, Match
+from .models import Court, Match, PlayDay, Break
 
 
 @admin.register(Court)
@@ -22,3 +22,17 @@ class MatchAdmin(admin.ModelAdmin):
                      "side_a__team__name",
                      "side_b__team__name")
     ordering = ("event", "scheduled_time", "order_index")
+
+
+@admin.register(PlayDay)
+class PlayDayAdmin(admin.ModelAdmin):
+    list_display = ("edition", "date", "start_time", "target_end_time")
+    list_filter = ("edition",)
+    ordering = ("edition", "date")
+
+
+@admin.register(Break)
+class BreakAdmin(admin.ModelAdmin):
+    list_display = ("play_day", "order_index", "label", "duration_min")
+    list_filter = ("play_day__edition",)
+    ordering = ("play_day", "order_index")

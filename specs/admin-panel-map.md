@@ -27,7 +27,7 @@ tournoi traverse 3 écrans :
 
 ```
 Tournoi (édition + épreuves, catégorie inline) → Inscriptions → Poules
-                                → puis Matchs → Tableau final
+                                → puis Calendrier → Tableau final
 ```
 
 Joueurs (registre) est hors chemin critique : écran de maintenance des fiches,
@@ -36,22 +36,27 @@ le registre se peuple au fil des inscriptions.
 Deux notions de contexte, à ne pas confondre (vocabulaire fixé par les specs) :
 - **Édition active** : globale, persistée en base (`TournamentEdition.is_active`) —
   on l'**Active** depuis l'écran Tournoi.
-- **Épreuve active** : sélection d'écran locale (sélecteur sidebar) — on la
-  **Sélectionne** ; elle pilote Inscriptions / Poules / Matchs / Tableau final.
+- **Épreuve active** : choix d'affichage **porté par l'URL** (segment
+  `/admin/events/:eventId/…`, voir [[routing-context]]) — on la **Sélectionne** via
+  le sélecteur en en-tête ; elle pilote Inscriptions / Poules / Planning / Tableau
+  final et **survit au rechargement** (décision 22).
 
 | # | Écran | Route | Réf design | Spec |
 |---|-------|-------|------------|------|
 | 0 | Shell admin (sidebar) | `/admin` (layout) | `admin.jsx → AdminSidebar` | ✅ [admin-shell.md](./screens/admin-shell.md) |
 | 1 | Tournoi | `/admin/tournoi` (défaut) | `extras.jsx → AdminTournoi` | ✅ [admin-tournoi.md](./screens/admin-tournoi.md) |
 | 2 | Joueurs (registre) | `/admin/players` | `admin.jsx → AdminJoueurs` (partiel) | ✅ [admin-joueurs.md](./screens/admin-joueurs.md) |
-| 3 | Inscriptions | `/admin/inscriptions` | — (dérivé d'AdminJoueurs) | ✅ [admin-inscriptions.md](./screens/admin-inscriptions.md) |
-| 4 | Poules | `/admin/groups` | `admin.jsx → AdminPoules` | ✅ [admin-poules.md](./screens/admin-poules.md) |
-| 5 | Matchs | `/admin/matches` | `admin.jsx → AdminMatchs` | ✅ [admin-matchs.md](./screens/admin-matchs.md) |
-| 6 | Tableau final | `/admin/bracket` | `admin.jsx → AdminTableau` | ✅ [admin-tableau-final.md](./screens/admin-tableau-final.md) |
+| 3 | Inscriptions | `/admin/events/:eventId/inscriptions` | — (dérivé d'AdminJoueurs) | ✅ [admin-inscriptions.md](./screens/admin-inscriptions.md) |
+| 4 | Poules | `/admin/events/:eventId/groups` | `admin.jsx → AdminPoules` | ✅ [admin-poules.md](./screens/admin-poules.md) |
+| 5 | Calendrier des matchs *(menu : Planning)* | `/admin/events/:eventId/matches` | `admin.jsx → AdminMatchs` (kanban, remplacé) | ✅ [admin-matchs.md](./screens/admin-matchs.md) |
+| 6 | Tableau final | `/admin/events/:eventId/bracket` | `admin.jsx → AdminTableau` | ✅ [admin-tableau-final.md](./screens/admin-tableau-final.md) |
+
+Le segment `:eventId` est l'**épreuve active** ; sa résolution, la garde de route et
+le rattrapage des liens périmés sont décrits dans [[routing-context]] (décision 22).
 
 Modales couvertes par les specs de leur écran hôte : Fiche joueur (Joueurs),
 Équipe (Inscriptions), Remplissage auto (Poules), Génération + panneau d'édition
-de match (Matchs), création de tableau (Tableau final), Édition + Épreuve avec
+de match (Calendrier), création de tableau (Tableau final), Édition + Épreuve avec
 création de catégorie inline (Tournoi), et la modale de confirmation commune
 (pattern `ConfirmModal` du design).
 
@@ -70,9 +75,12 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
   (bloquée si engagée dans un match).
 - **Poules** — remplir automatiquement (3|4, ordre/aléatoire), ajuster par
   glisser-déposer, écran verrouillé dès que les matchs de poule existent.
-- **Matchs** — générer le round-robin (action principale de CET écran),
-  ordonnancer la file au glisser-déposer, éditer un match (score correctif,
-  format verrouillé si LIVE, planning), mettre en avant (→ LIVE + antenne TV).
+- **Calendrier des matchs** — générer le round-robin (prérequis), planifier les
+  matchs par journée sur mono-court (pré-pose entrelacée + glisser-déposer),
+  suivre les heures estimées qui se recalent, repérer les conflits de repos,
+  éditer un match (score correctif, format verrouillé si LIVE), mettre en avant
+  (→ LIVE + antenne TV). Modèle détaillé : [[planning]] ; face publique :
+  [[tv-programme]].
 - **Tableau final** — créer le tableau (choix de l'étape de départ), assigner /
   vider les places depuis les qualifiés, poser les étiquettes de provenance,
   suivre la progression automatique des gagnants.
@@ -131,6 +139,47 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
     changer l'épreuve sur un écran le met à jour pour tous les autres.
 15. **Licence joueur : supprimée** (tournoi amateur — information sans usage dans
     ce contexte). Retirée de la fiche joueur et de la table du registre.
+17. **Calendrier remplace le kanban Matchs.** L'écran « Matchs » devient
+    « Calendrier des matchs » ; l'**entrée de menu** de la sidebar est renommée
+    « Planning » (libellé court tenant dans la nav — le titre complet reste porté
+    par l'en-tête de l'écran). C'est un agenda ordonné par journée sur mono-court (plus
+    de colonnes Backlog / File / Terminés). États dérivés, heures estimées,
+    pré-pose, pauses et alerte de capacité sont décrits dans [[planning]] ; la spec
+    [[admin-matchs]] est réécrite en ce sens.
+18. **Heures dérivées, pas saisies.** L'ordre (`order_index`) est la vérité ; les
+    heures sont **estimées** (durée par défaut ~25–30 min) et se recalent au fil du
+    tournoi. `scheduled_time` porte la journée (sa date) et l'ETA calculée. La
+    saisie « Heure prévue » du panneau d'édition disparaît.
+19. **Court retiré des cartes** (résout le point laissé ouvert en décision 12).
+    Mono-court : « Central » est rappelé une fois par l'en-tête de journée, plus sur
+    chaque ligne ni dans le panneau d'édition.
+20. **Public = greffe TV, pas de nouvel écran.** Une slide « Programme » dans le
+    carousel TV + un bandeau « À suivre » sur le scoreboard. Heures publiques
+    approximatives (`~HH:MM`). Voir [[tv-programme]].
+21. **Génération = validation des poules** (entériné, inchangé). Pas de gate
+    « valider les poules » séparée : générer les matchs verrouille les poules
+    ([[admin-poules]]) et crée les matchs « à planifier ». Sur mono-court, le seul
+    conflit est le **repos** (≥ 1 match d'écart entre deux matchs d'un joueur).
+22. **Épreuve active portée par l'URL.** Les écrans dépendants d'une épreuve
+    s'ouvrent sur `/admin/events/:eventId/…` ; l'URL est la **source de vérité** et
+    le store la reflète. Le sélecteur en en-tête **navigue** (`router.push`) au lieu
+    de muter le store, le choix se conserve d'un écran à l'autre et **survit au
+    rechargement** (corrige la perte de contexte : avant, l'épreuve retombait sur
+    `events[0]`). Une garde résout / valide le `:eventId` et rattrape les liens
+    périmés. L'**édition** reste une bascule globale serveur (décision 16 conservée :
+    le sélecteur reste en en-tête ; seul son **effet** passe désormais par l'URL).
+    Contrat complet : [[routing-context]].
+23. **Journées de jeu gérées dans l'app.** La gestion des `PlayDay` (création,
+    édition, suppression) passe par une modale **« Gérer les journées »** sur le
+    Calendrier ([[admin-matchs]]), et non plus par l'admin Django. Lève l'impasse
+    « Aucune journée configurée → créez-les via Django » sans point d'entrée.
+    Suppression refusée si la journée porte des matchs ou des pauses
+    (contrat : [[planning]], `CRUD PlayDay`).
+24. **Composition manuelle des poules.** L'écran Poules expose **« + Nouvelle
+    poule »** (création de poules vides) en plus du remplissage automatique : on
+    peut composer entièrement à la main avant de débuter l'épreuve, sans passer par
+    l'auto-fill ([[admin-poules]]). S'appuie sur l'endpoint existant
+    `POST /api/events/<id>/groups/create/`.
 
 ## API de référence (état : tout est exposé)
 

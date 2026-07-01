@@ -14,7 +14,7 @@ fichiers:
 
 ## Rôle de l'écran
 
-L'écran Inscriptions (`/admin/inscriptions`) rattache les joueurs du registre à
+L'écran Inscriptions (`/admin/events/:eventId/inscriptions`) rattache les joueurs du registre à
 l'**épreuve active** : il crée et retire des inscriptions. En épreuve **Simple**,
 on inscrit des joueurs individuels ; en épreuve **Double**, on inscrit des
 équipes de deux joueurs.
@@ -29,7 +29,9 @@ adapte son interface au mode de la catégorie (Simple / Double).
 ### En-tête de page
 
 - **Sélecteur d'épreuve** : liste déroulante des épreuves de l'édition active,
-  en lieu et place du fil d'ariane. Pilote l'épreuve active globale (voir [[admin-shell]]).
+  en lieu et place du fil d'ariane. Le **choix d'épreuve navigue** vers
+  `/admin/events/:eventId/…` (`router.push`) ; l'URL fait foi et survit au
+  rechargement (voir [[routing-context]]).
 - Titre « Inscriptions », sous-titre « N inscrit(s) ».
 - Action principale selon le mode :
   - **Simple** : « Inscrire les N affichés » — inscrit en masse tous les joueurs
@@ -108,10 +110,12 @@ Titre « Créer une équipe », sous-titre rappelant l'épreuve.
 1. L'admin clique « Retirer » sur un inscrit.
 2. Une **modale de confirmation** s'affiche : « Retirer {nom} de l'épreuve ? » —
    avec le rappel que l'historique du joueur est conservé.
-3. Règle serveur : le retrait est **refusé si le participant est déjà engagé
-   dans au moins un match** de l'épreuve. Dans ce cas l'écran affiche le message
-   d'erreur du serveur (« déjà utilisé dans un ou plusieurs matchs ») et la
-   liste reste inchangée.
+3. Règle serveur : le retrait **sec** est **refusé si le participant est déjà
+   engagé dans au moins un match** de l'épreuve (donc dès qu'elle est débutée) —
+   l'écran affiche le message serveur (« déjà utilisé dans un ou plusieurs
+   matchs ») et la liste reste inchangée. Une fois l'épreuve `EN_COURS`, sortir un
+   joueur passe par le **forfait / retrait en cours de jeu** (walkover en cascade),
+   pas par ce retrait sec — voir [[cycle-de-vie-epreuve]].
 4. Sinon, l'inscription disparaît ; en Simple, le joueur réapparaît dans
    « Joueurs disponibles ».
 
@@ -135,5 +139,9 @@ Titre « Créer une équipe », sous-titre rappelant l'épreuve.
 
 ## Données
 
+- L'**épreuve active** vient du segment d'URL `:eventId`
+  (`/admin/events/:eventId/inscriptions`) : l'URL fait foi, le store la reflète, et
+  un `:eventId` absent ou périmé est rattrapé par la garde de route (voir
+  [[routing-context]]). Recharger conserve l'épreuve.
 - Les listes (inscrits + registre) sont chargées au montage, rechargées au
   changement d'épreuve active et après chaque mutation réussie. Pas de polling.

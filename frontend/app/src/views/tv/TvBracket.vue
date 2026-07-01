@@ -10,7 +10,7 @@ usePolling(async () => {
   if (eventStore.activeEventId) {
     await eventStore.fetchBracket(eventStore.activeEventId)
   }
-}, 10000)
+}, 4000)
 
 const bracket = computed(() => eventStore.bracket)
 
@@ -22,6 +22,7 @@ const LB = {
   qf: [70, 230, 580, 740],
   sf: [150, 660],
   f: 401,
+  p3: 590,
   tr: 372,
 }
 
@@ -199,6 +200,28 @@ function setScoreB(slot: BracketSlot): string {
           </div>
         </div>
 
+        <!-- 3e place (optionnel) -->
+        <template v-if="bracket?.p3?.some(s => s.match)">
+          <div
+            v-for="slot in bracket!.p3"
+            :key="slot.slot"
+            class="brk-match brk-match--p3"
+            :class="{ live: isLive(slot) }"
+            :style="{ left: `${LB.fX}px`, top: `${LB.p3}px`, width: `${LB.finalW}px` }"
+          >
+            <span class="p3-label">3e PLACE</span>
+            <span v-if="isLive(slot)" class="live-pill">EN DIRECT</span>
+            <div class="bm-row" :class="{ winner: slot.match?.winnerSide === 'A' }">
+              <span class="bm-seed">{{ slot.match?.sideA?.seedHint ?? '—' }}</span>
+              <span class="bm-name">{{ slotName(slot) }}</span>
+            </div>
+            <div class="bm-row" :class="{ winner: slot.match?.winnerSide === 'B' }">
+              <span class="bm-seed">{{ slot.match?.sideB?.seedHint ?? '—' }}</span>
+              <span class="bm-name">{{ slotNameB(slot) }}</span>
+            </div>
+          </div>
+        </template>
+
         <!-- Trophée vainqueur -->
         <div
           class="brk-winner"
@@ -319,6 +342,20 @@ function setScoreB(slot: BracketSlot): string {
 
 .brk-match--final {
   background: linear-gradient(135deg, var(--bg-2), var(--bg-3));
+}
+
+.brk-match--p3 {
+  opacity: 0.85;
+  position: relative;
+}
+
+.p3-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-bottom: 2px;
 }
 
 .live-pill {
