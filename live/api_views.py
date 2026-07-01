@@ -1746,9 +1746,20 @@ def api_edition_calendar(request, edition_id):
         .order_by("event_id", "id")
     )
 
+    # Matchs annulés (quittent la séquence, poules uniquement — cohérent avec unscheduled)
+    canceled = (
+        Match.objects
+        .filter(edition=edition, status=Match.Status.CANCELED, stage=Match.Stage.GROUP)
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
+        .order_by("event_id", "id")
+    )
+
     return JsonResponse({
         "playDays": packed_play_days,
         "unscheduled": [_pack_match(m) for m in unscheduled],
+        "canceled": [_pack_match(m) for m in canceled],
     })
 
 

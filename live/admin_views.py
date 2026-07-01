@@ -603,6 +603,11 @@ def finalize_match_edit(match):
     if match.status == Match.Status.FINISHED:
         match.is_featured = False
 
+    if match.status == Match.Status.CANCELED:
+        match.order_index = None
+        match.scheduled_time = None
+        match.is_featured = False
+
     match.save()
 
     if match.status == Match.Status.FINISHED and match.stage in (Match.Stage.QF, Match.Stage.SF):
