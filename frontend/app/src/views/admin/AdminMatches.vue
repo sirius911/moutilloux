@@ -250,6 +250,16 @@ function isoToMin(iso: string): number {
   return d.getHours() * 60 + d.getMinutes()
 }
 
+// Compare `dateStr` (YYYY-MM-DD) à la date locale du jour — même convention que
+// `formatDate` (construction locale, pas UTC/`toISOString`). L'ancrage sur
+// « maintenant » ne doit s'appliquer qu'à la journée en cours (spec planning
+// §journées indépendantes).
+function isToday(dateStr: string): boolean {
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return dateStr === todayStr
+}
+
 // ── Moteur ETA frontal ─────────────────────────────────────────────────────
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
@@ -263,6 +273,7 @@ const computedETAs = computed<Map<string, string>>(() => {
   for (const day of calendarDays.value) {
     const items = dayItemsDnd.value[day.id] ?? []
     let cursor = timeToMin(day.startTime)
+    const anchorNow = isToday(day.date)
 
     for (const item of items) {
       if (item.kind === 'match') {
@@ -270,11 +281,11 @@ const computedETAs = computed<Map<string, string>>(() => {
         if (m.status === 'FINISHED' && m.finishedAt) {
           const ft = isoToMin(m.finishedAt)
           result.set(`m-${m.id}`, minToTime(ft))
-          cursor = ft
+          cursor = anchorNow ? Math.max(cursor, ft, nowMin) : Math.max(cursor, ft)
         } else if (m.status === 'LIVE') {
           result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
           const liveEnd = m.startedAt ? isoToMin(m.startedAt) + dur : cursor + dur
-          cursor = Math.max(nowMin, liveEnd)
+          cursor = anchorNow ? Math.max(cursor, liveEnd, nowMin) : Math.max(cursor, liveEnd)
         } else {
           result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
           cursor += dur
