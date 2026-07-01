@@ -327,7 +327,7 @@ function onDragStart() {
 
 function checkMove(evt: { draggedContext: { element: DayItem }; to: Element }): boolean {
   const el = evt.draggedContext.element
-  if (el.kind === 'match' && el.data.status === 'LIVE') return false
+  if (el.kind === 'match' && el.data.status !== 'SCHEDULED') return false
   if (el.kind === 'break' && evt.to.classList.contains('pile-draggable')) return false
   return true
 }
@@ -521,7 +521,7 @@ async function onDragEnd() {
                 <div
                   v-if="element.kind === 'match'"
                   class="cal-row"
-                  :class="[`state--${displayState(element.data as Match)}`, { 'no-drag': (element.data as Match).status === 'LIVE' }]"
+                  :class="[`state--${displayState(element.data as Match)}`, { 'no-drag': (element.data as Match).status !== 'SCHEDULED' }]"
                   role="button"
                   tabindex="0"
                   @click="editingMatch = element.data as Match"
@@ -557,8 +557,8 @@ async function onDragEnd() {
                     >★ EN AVANT</span>
                   </span>
                   <span
+                    v-if="(element.data as Match).status === 'SCHEDULED'"
                     class="drag-handle"
-                    :class="{ 'drag-handle--locked': (element.data as Match).status === 'LIVE' }"
                   >⋮⋮</span>
                 </div>
                 <div v-else class="cal-row cal-row--break">
@@ -1004,11 +1004,6 @@ async function onDragEnd() {
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
-}
-
-.drag-handle--locked {
-  cursor: not-allowed;
-  opacity: 0.3;
 }
 
 /* États DnD */
