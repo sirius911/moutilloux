@@ -602,7 +602,6 @@ def finalize_match_edit(match):
 
     if match.status == Match.Status.FINISHED:
         match.is_featured = False
-        match.order_index = None
 
     match.save()
 
@@ -638,13 +637,12 @@ def match_edit(request, event_id: int, match_id: int):
 def feature_match(match):
     """
     Service : met un match « en avant » et le démarre. Retire le drapeau des
-    autres matchs de l'event, met is_featured=True, order_index=None, puis
+    autres matchs de l'event, met is_featured=True, puis
     mark_live() (status=LIVE + started_at). Source : match_feature.
     Retourne le match.
     """
     Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
     match.is_featured = True
-    match.order_index = None
     match.mark_live()  # met status=LIVE + started_at si besoin
     match.save()
     return match
@@ -763,13 +761,12 @@ def withdraw_entry(entry):
         m.status = Match.Status.FINISHED
         m.is_walkover = True
         m.is_featured = False
-        m.order_index = None
         if not m.finished_at:
             m.finished_at = timezone.now()
 
         m.save(update_fields=[
             "winner_side", "games_a", "games_b",
-            "status", "is_walkover", "is_featured", "order_index", "finished_at",
+            "status", "is_walkover", "is_featured", "finished_at",
         ])
 
         if m.group_id:
