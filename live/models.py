@@ -18,6 +18,7 @@ class Match(models.Model):
         QF = "QF", "Quart"
         SF = "SF", "Demi"
         F = "F", "Finale"
+        P3 = "P3", "3e place"
 
     class Status(models.TextChoices):
         SCHEDULED = "SCHEDULED", "Planifié"
@@ -136,6 +137,7 @@ class Match(models.Model):
         B = "B", "B"
 
     winner_side = models.CharField(max_length=1, choices=WinnerSide.choices, null=True, blank=True)
+    is_walkover = models.BooleanField(default=False)
 
     def __str__(self) -> str:
         return f"{self.event}: {self.side_a} vs {self.side_b}"
@@ -147,12 +149,10 @@ class Match(models.Model):
                 .update(status=Match.Status.SCHEDULED)
 
             self.status = Match.Status.LIVE
-            # quand un match devient LIVE, il sort de la file
-            self.order_index = None
 
             if not self.started_at:
                 self.started_at = timezone.now()
-            self.save(update_fields=["status", "started_at", "order_index"])
+            self.save(update_fields=["status", "started_at"])
 
     def mark_finished(self):
         self.status = Match.Status.FINISHED
@@ -198,7 +198,7 @@ class Match(models.Model):
         if self.event_id:
             self.edition = self.event.edition
 
-        # ✅ Fix: si une heure a été saisie sans date -> Django l’a mise au 01/01/1900
+        # Fix: si une heure a été saisie sans date -> Django l’a mise au 01/01/1900
         if self.scheduled_time and self.scheduled_time.year == 1900:
             tz = timezone.get_current_timezone()
 
@@ -236,3 +236,34 @@ class Match(models.Model):
             self.finished_at = timezone.now()
 
         super().save(*args, **kwargs)
+
+
+class PlayDay(models.Model):
+    """Journée de jeu pré-déterminée par édition."""
+    edition = models.ForeignKey(
+        TournamentEdition, on_delete=models.CASCADE, related_name="play_days"
+    )
+    date = models.DateField()
+    start_time = models.TimeField()
+    target_end_time = models.TimeField()
+
+    class Meta:
+        ordering = ["edition", "date"]
+        unique_together = [("edition", "date")]
+
+    def __str__(self):
+        return f"{self.edition} — {self.date}"
+
+
+class Break(models.Model):
+    """Pause dans la séquence d'une journée (déjeuner, remise des prix…)."""
+    play_day = models.ForeignKey(PlayDay, on_delete=models.CASCADE, related_name="breaks")
+    order_index = models.PositiveIntegerField()
+    duration_min = models.PositiveIntegerField()
+    label = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ["play_day", "order_index"]
+
+    def __str__(self):
+        return f"{self.play_day.date} — {self.label} ({self.duration_min} min)"

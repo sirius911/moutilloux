@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-24 — Session #13 (6e de la journée)
-**Sprint actif :** 06 — Refacto Sélecteur & Joueurs
-**Roadmap :** 1 sprint (`06-refacto-selecteur` actif)
-**Tickets clôturés cette session :** 0 (clôture de sprint uniquement)
-**Sprint 05 terminé :** Milestone fermé ✅ — dossier archivé dans `done/05-admin-joueurs/`
-**Branche :** `claude/sprint/05-admin-joueurs` (push sur cette branche, Sprint 06 démarrera sur sa propre branche)
-**Contexte :** Sprint 05 clos manuellement (4e blocage consécutif). Les 3 dérives résiduelles (colonne Licence, filtre licence, section Compétition) sont dans Sprint 06 (#78, #79, #80). Sprint 06 — Refacto Sélecteur & Joueurs est maintenant le sprint actif. Démarrer Sprint 06 à la prochaine session planifiée.
+**Dernière session :** 2026-07-02 — Session #37
+**Sprint actif :** 15 — Cycle de vie d'un match : order_index persistant & Annulés
+**Roadmap :** 1 sprint restant (15).
+**Tickets clôturés cette session :** 1 (#163 ✅)
+**Branche :** `claude/sprint/15-cycle-vie-match`
+**Issues Sprint 15 restantes :** 2 (#164, #165)
+**Contexte :** Session 37 — continuation directe de la session #36 (même déclenchement horaire, chevauchement constaté : un commit `ae72baa` de clôture de la session #36 est apparu sur la branche sans avoir été produit par cette session-ci, contenu vérifié cohérent — voir `backlog/logs/session_2026-07-02_37.md` §Problèmes d'orchestration). #163 (verrou LIVE/FINISHED + poignée SCHEDULED seule dans `AdminMatches.vue`) implémenté et approuvé, aucun fichier partagé à câbler. Spec review ⚠️ (planning.md, admin-matchs.md — dérives couvertes par #164/#165 restants ; cycle-de-vie-epreuve.md ✅). 2 nouvelles dérives hors périmètre ticketées : #176 (stage_label P3 manquant), #177 (GenerateMatchesModal.vue orphelin). Parent effectif = `claude/sprint/14-correctifs` (PR #158 encore ouverte, pas mergée dans `main`) ; branche sprint 15 déjà à jour dessus, aucun merge nécessaire. PR sprint 15 : #169 (déjà ouverte). Sprint non terminé (2 issues front restantes, #164/#165) → suite à la prochaine échéance.

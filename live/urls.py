@@ -41,7 +41,6 @@ urlpatterns = [
     # ── API JSON — Phase 4 (planning, mutations) ───────────────────────
     path("api/matches/<int:match_id>/edit/", api_views.api_match_edit, name="api_match_edit"),
     path("api/matches/<int:match_id>/feature/", api_views.api_match_feature, name="api_match_feature"),
-    path("api/events/<int:event_id>/matches/reorder/", api_views.api_matches_reorder, name="api_matches_reorder"),
 
     # ── API JSON — Phase 5 (live, lecture d'un match) ──────────────────
     path("api/matches/<int:match_id>/", api_views.api_match_detail, name="api_match_detail"),
@@ -72,6 +71,32 @@ urlpatterns = [
     path("api/editions/<int:edition_id>/events/create/", api_views.api_event_create, name="api_event_create"),
     path("api/events/<int:event_id>/edit/", api_views.api_event_edit, name="api_event_edit"),
     path("api/events/<int:event_id>/delete/", api_views.api_event_delete, name="api_event_delete"),
+    path("api/events/<int:event_id>/start/", api_views.api_event_start, name="api_event_start"),
+    path("api/events/<int:event_id>/close/", api_views.api_event_close, name="api_event_close"),
+    path("api/events/<int:event_id>/reopen/", api_views.api_event_reopen, name="api_event_reopen"),
+
+    # ── API JSON — Sprint 12 (ajustements en cours de jeu) ───────────────────
+    path("api/entries/<int:entry_id>/withdraw/", api_views.api_entry_withdraw, name="api_entry_withdraw"),
+    path("api/events/<int:event_id>/entries/late/", api_views.api_entry_add_late, name="api_entry_add_late"),
+    path("api/entries/<int:entry_id>/replace/", api_views.api_entry_replace, name="api_entry_replace"),
+
+    # ── API JSON — Sprint 07 (calendrier : journées et pauses) ────────────────
+    # PlayDay
+    path("api/editions/<int:edition_id>/play-days/", api_views.api_play_days_list, name="api_play_days_list"),
+    path("api/editions/<int:edition_id>/play-days/create/", api_views.api_play_day_create, name="api_play_day_create"),
+    path("api/play-days/<int:play_day_id>/edit/", api_views.api_play_day_edit, name="api_play_day_edit"),
+    path("api/play-days/<int:play_day_id>/delete/", api_views.api_play_day_delete, name="api_play_day_delete"),
+    # Break
+    path("api/play-days/<int:play_day_id>/breaks/", api_views.api_breaks_list, name="api_breaks_list"),
+    path("api/play-days/<int:play_day_id>/breaks/create/", api_views.api_break_create, name="api_break_create"),
+    path("api/breaks/<int:break_id>/edit/", api_views.api_break_edit, name="api_break_edit"),
+    path("api/breaks/<int:break_id>/delete/", api_views.api_break_delete, name="api_break_delete"),
+    # Packer calendrier + mutations calendrier
+    path("api/editions/<int:edition_id>/calendar/", api_views.api_edition_calendar, name="api_edition_calendar"),
+    path("api/editions/<int:edition_id>/calendar/reorder/", api_views.api_calendar_reorder, name="api_calendar_reorder"),
+    path("api/events/<int:event_id>/matches/auto-arrange/", api_views.api_matches_auto_arrange, name="api_matches_auto_arrange"),
+    # TV : prochains matchs (lecture publique)
+    path("api/tv/upcoming/", api_views.api_tv_upcoming, name="api_tv_upcoming"),
 
     path("results/poules/", views.results_poules, name="results_poules"),
     path("results/poules/start/", views.results_poules_start, name="results_poules_start"),
