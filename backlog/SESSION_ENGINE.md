@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-01 — Session #35
+**Dernière session :** 2026-07-02 — Session #36
 **Sprint actif :** 15 — Cycle de vie d'un match : order_index persistant & Annulés
 **Roadmap :** 1 sprint restant (15).
-**Tickets clôturés cette session :** 2 (#159 ✅ #160 ✅)
+**Tickets clôturés cette session :** 2 (#161 ✅ #162 ✅)
 **Branche :** `claude/sprint/15-cycle-vie-match`
-**Issues Sprint 15 restantes :** 5 (#161, #162, #163, #164, #165)
-**Contexte :** Session 35 — Spec review ⚠️ (3 specs, dérives mineures couvertes par les tickets du sprint, 3 nouvelles issues hors périmètre créées : #166, #167, #168). #159 (order_index persistant à travers LIVE/FINISHED/forfait) et #160 (CANCELED quitte la journée + clé calendrier « Annulés ») implémentés et approuvés. Parent effectif = `claude/sprint/14-correctifs` (PR #158 encore ouverte, pas mergée dans `main`). PR sprint 15 créée : #169. Sprint non terminé → suite à la prochaine échéance.
+**Issues Sprint 15 restantes :** 3 (#163, #164, #165)
+**Contexte :** Session 36 — déclenchée le 2026-07-01 au soir, interrompue deux fois (état sauvegardé automatiquement), reprise et clôturée le 2026-07-02. Spec review ⚠️ déjà consignée (dérives couvertes par #161-165). #161 (`reorder_calendar` fige LIVE comme FINISHED) et #162 (retrait du flux kanban legacy `reorder_event_matches`) implémentés et approuvés ; câblage orchestrateur terminé (`live/urls.py`, `live/admin_urls.py`, `event.ts`). Parent effectif = `claude/sprint/14-correctifs` (PR #158 encore ouverte, pas mergée dans `main`) ; branche sprint 15 déjà à jour dessus, aucun merge nécessaire. PR sprint 15 : #169 (déjà ouverte). Sprint non terminé (3 issues front restantes, #163/#164/#165) → suite à la prochaine échéance.
