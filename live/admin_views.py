@@ -1997,17 +1997,18 @@ def reorder_calendar(edition, play_day_sequences):
       date = celle de la journée (temps = start_time de la journée, ETA approximative).
     - Chaque Break reçoit un order_index local = sa position dans la séquence de la journée.
     - Les matchs absents de toute journée perdent order_index et scheduled_time.
-    - Les matchs FINISHED ne sont jamais déplacés.
+    - Les matchs LIVE et FINISHED ne sont jamais déplacés : order_index persiste.
     """
     edition_play_days = {pd.id: pd for pd in PlayDay.objects.filter(edition=edition)}
     default_court = Court.objects.order_by("id").first()
 
-    # Matchs déplaçables : SCHEDULED ou LIVE (pas FINISHED, pas CANCELED)
-    movable_statuses = [Match.Status.SCHEDULED, Match.Status.LIVE]
+    # Matchs déplaçables : uniquement SCHEDULED (pas LIVE, pas FINISHED, pas CANCELED) —
+    # order_index persiste à travers LIVE/FINISHED (cf. specs/technical/planning.md).
+    movable_statuses = [Match.Status.SCHEDULED]
     movable_qs = Match.objects.filter(edition=edition, status__in=movable_statuses)
     edition_matches = {m.id: m for m in movable_qs.select_for_update()}
 
-    # Indices déjà utilisés par les matchs non-déplaçables (FINISHED)
+    # Indices déjà utilisés par les matchs non-déplaçables (LIVE, FINISHED)
     used_indices = set(
         Match.objects.filter(edition=edition, order_index__isnull=False)
         .exclude(id__in=edition_matches.keys())
