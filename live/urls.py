@@ -41,7 +41,6 @@ urlpatterns = [
     # ── API JSON — Phase 4 (planning, mutations) ───────────────────────
     path("api/matches/<int:match_id>/edit/", api_views.api_match_edit, name="api_match_edit"),
     path("api/matches/<int:match_id>/feature/", api_views.api_match_feature, name="api_match_feature"),
-    path("api/events/<int:event_id>/matches/reorder/", api_views.api_matches_reorder, name="api_matches_reorder"),
 
     # ── API JSON — Phase 5 (live, lecture d'un match) ──────────────────
     path("api/matches/<int:match_id>/", api_views.api_match_detail, name="api_match_detail"),

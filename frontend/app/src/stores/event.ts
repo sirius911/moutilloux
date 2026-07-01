@@ -249,11 +249,6 @@ export const useEventStore = defineStore('event', () => {
     await fetchMatches(eventId)
   }
 
-  async function reorderMatches(eventId: number, orderedIds: number[]) {
-    await post(`/api/events/${eventId}/matches/reorder/`, { queue: orderedIds })
-    await fetchMatches(eventId)
-  }
-
   async function featureMatch(eventId: number, matchId: number) {
     await post(`/api/matches/${matchId}/feature/`, {})
     await fetchMatches(eventId)
@@ -473,7 +468,7 @@ export const useEventStore = defineStore('event', () => {
     // Mutations — P3 poules
     assignGroup, createGroup, autofillGroups, generateMatches,
     // Mutations — P4 planning
-    editMatch, reorderMatches, featureMatch,
+    editMatch, featureMatch,
     // Mutations — Sprint 08 calendrier
     createPlayDay, updatePlayDay, deletePlayDay,
     createBreak, updateBreak, deleteBreak,

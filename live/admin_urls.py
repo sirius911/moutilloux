@@ -40,6 +40,5 @@ urlpatterns = [
     path("panel/event/<int:event_id>/player/<int:player_id>/edit/", admin_views.player_edit, name="panel_player_edit"),
     path("panel/event/<int:event_id>/groups/assign/", admin_views.group_assign, name="panel_group_assign"),
     path("panel/event/<int:event_id>/groups/unassign/", admin_views.group_unassign, name="panel_group_unassign"),
-    path("panel/event/<int:event_id>/matches/reorder/", admin_views.matches_reorder, name="panel_matches_reorder"),
 
 ]
