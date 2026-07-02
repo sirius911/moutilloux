@@ -188,6 +188,14 @@ def _pack_team(t):
     }
 
 
+def _format_label(m):
+    if m.match_format == Match.Format.MANUAL:
+        return "Manuel"
+    if m.best_of == 3:
+        return f"BO3 · TB à {m.tb_at}"
+    return f"1 set à {m.games_to_win} · TB à {m.tb_at}"
+
+
 def _pack_match(m):
     if m is None:
         return None
@@ -226,6 +234,7 @@ def _pack_match(m):
         "eventId": m.event_id,
         "stage": m.stage,
         "stageLabel": stage_label(m),
+        "formatLabel": _format_label(m),
         "status": m.status,
         "court": m.court.name if m.court else None,
         "orderIndex": m.order_index,
