@@ -25,8 +25,8 @@ const setsA = ref(props.match.setsA)
 const setsB = ref(props.match.setsB)
 const gamesA = ref(props.match.gamesA)
 const gamesB = ref(props.match.gamesB)
-const pointsA = ref(props.match.displayPointA)
-const pointsB = ref(props.match.displayPointB)
+const pointsA = ref(props.match.pointsA)
+const pointsB = ref(props.match.pointsB)
 const tbActive = ref(props.match.tbActive)
 const winnerSide = ref<'none' | 'A' | 'B'>(props.match.winnerSide ?? 'none')
 
@@ -165,9 +165,9 @@ async function save() {
   saving.value = true
   error.value = ''
   try {
-    // Édition via MatchEditForm. On omet les points bruts, court (mono-court,
-    // non éditable) et scheduled_time (ETA dérivée, lecture seule — décisions
-    // 18-19). Les champs de format sont inclus ; match_format ne bascule sur
+    // Édition via MatchEditForm. On omet le court (mono-court, non éditable)
+    // et scheduled_time (ETA dérivée, lecture seule — décisions 18-19). Les
+    // champs de format sont inclus ; match_format ne bascule sur
     // MANUAL que si les champs détaillés ont réellement changé (sinon
     // MatchEditForm.clean() réappliquerait le preset silencieusement, ou on
     // basculerait à tort le format sur « Manuel » lors d'une simple édition
@@ -185,6 +185,8 @@ async function save() {
       sets_b: setsB.value,
       games_a: gamesA.value,
       games_b: gamesB.value,
+      points_a: pointsA.value,
+      points_b: pointsB.value,
       tb_active: tbActive.value,
       winner_side:
         winnerSide.value === 'A' || winnerSide.value === 'B' ? winnerSide.value : null,
@@ -282,7 +284,7 @@ async function save() {
                   </span>
                   <input v-model.number="setsA" class="inp inp-num tab" type="number" min="0" />
                   <input v-model.number="gamesA" class="inp inp-num tab" type="number" min="0" />
-                  <input v-model="pointsA" class="inp inp-num tab" />
+                  <input v-model.number="pointsA" class="inp inp-num tab" type="number" min="0" />
                 </div>
                 <div class="score-grid-row">
                   <span class="score-grid-name">
@@ -292,7 +294,7 @@ async function save() {
                   </span>
                   <input v-model.number="setsB" class="inp inp-num tab" type="number" min="0" />
                   <input v-model.number="gamesB" class="inp inp-num tab" type="number" min="0" />
-                  <input v-model="pointsB" class="inp inp-num tab" />
+                  <input v-model.number="pointsB" class="inp inp-num tab" type="number" min="0" />
                 </div>
               </div>
               <label class="sw" style="margin-top: 14px">

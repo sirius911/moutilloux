@@ -8,3 +8,4 @@
 | #3 | 2026-07-02 | ⚠️ | 8 dérives (toutes déjà connues, 0 nouvelle) — #175 vérifiée résolue et fermée | 0 | 8 |
 | #4 | 2026-07-02 | ⚠️ | 7 dérives (6 confirmées toujours présentes + 1 nouvelle) | #226 (mineure) | 7 |
 | #5 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md → ✅) | 6 dérives (5 confirmées toujours présentes + 1 nouvelle) | #227 (mineure, duplication reopen) | 6 |
+| #6 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md toujours ✅) | 4 dérives (toutes déjà connues, 0 nouvelle) | 0 | 4 |

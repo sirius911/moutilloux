@@ -22,6 +22,8 @@ export interface MatchEditPayload {
   sets_b?: number
   games_a?: number
   games_b?: number
+  points_a?: number
+  points_b?: number
   tb_active?: boolean
   tb_points_a?: number
   tb_points_b?: number
