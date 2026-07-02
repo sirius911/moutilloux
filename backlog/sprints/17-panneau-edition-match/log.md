@@ -5,3 +5,4 @@
 | — | 2026-07-02 | — | Sprint planifié (audit admin) | #189-194 (+ #7, #168, #175 réutilisées) | 9 |
 | #1 | 2026-07-02 | ❌ | 11 dérives (9 confirmées toujours présentes + 2 nouvelles majeures) | #220, #221 (+ #222 hors périmètre sprint, sans milestone) | 11 |
 | #2 | 2026-07-02 | ⚠️ | 11 dérives (9 confirmées toujours présentes + 2 nouvelles) | #224 (majeure), #225 (mineure) | 11 |
+| #3 | 2026-07-02 | ⚠️ | 8 dérives (toutes déjà connues, 0 nouvelle) — #175 vérifiée résolue et fermée | 0 | 8 |

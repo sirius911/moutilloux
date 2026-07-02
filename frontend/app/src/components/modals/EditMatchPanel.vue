@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
+import { extractApiError } from '@/lib/apiError'
 import type { Match } from '@/types'
 
 const props = defineProps<{ match: Match }>()
@@ -194,7 +195,7 @@ async function save() {
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = extractApiError(e, 'Erreur lors de la sauvegarde.')
   } finally {
     saving.value = false
   }
