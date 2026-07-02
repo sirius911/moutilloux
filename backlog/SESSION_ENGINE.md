@@ -373,46 +373,49 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #54
-**Sprint actif :** 17 — Panneau d'édition de match (6ᵉ session consécutive).
-Spec review : `specs/technical/cycle-de-vie-match.md` reste **✅ Conforme**
-(golden path revérifié : invariant mono-LIVE, gardes Démarrer/Terminer,
-FINISHED avec vainqueur, CANCELED sans vainqueur). `specs/screens/admin-matchs.md`
-reste ⚠️ Dérive mineure — 4 dérives déjà connues confirmées présentes
-(#193, #194, #226, #227), 0 nouvelle dérive détectée cette session.
+**Dernière session :** 2026-07-02 — Session #55
+**Sprint actif :** 17 — Panneau d'édition de match (7ᵉ session consécutive).
+Spec review (faite en début de session, avant traitement des tickets) :
+`specs/technical/cycle-de-vie-match.md` reste **✅ Conforme**.
+`specs/screens/admin-matchs.md` était encore ⚠️ Dérive mineure au moment de la
+review — 2 dérives déjà connues confirmées présentes (#226, #227), 0 nouvelle
+dérive détectée. Vérification empirique sans régression sur les correctifs
+#193/#194 (session #54).
 **Roadmap :** 5 sprints planifiés (17 → 21), 17 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#193](https://github.com/sirius911/moutilloux/issues/193)
-(✅ Approuvé, points du jeu en cours désormais enregistrés — champs Points de
-l'onglet Score alignés sur Sets/Jeux, édition des entiers bruts du modèle) et
-[#194](https://github.com/sirius911/moutilloux/issues/194) (✅ Approuvé après
-correction en review, `ConfirmModal` remplace `window.confirm` pour l'activation
-de la mise en avant, et la désactivation fonctionne désormais via le payload
-générique d'édition — voir « Problèmes d'orchestration » ci-dessous pour la
-régression détectée et corrigée en session sur ce ticket).
+**Tickets clôturés cette session :** 2 — [#226](https://github.com/sirius911/moutilloux/issues/226)
+(✅ Approuvé, sélecteur de préréglage nommé + 3 champs manquants — écart de
+2 points, mode du set décisif, points du super tie-break — ajoutés à l'onglet
+Format d'`EditMatchPanel.vue`, logique `matchFormatToSend` corrigée pour
+permettre de resélectionner un preset nommé après une édition manuelle) et
+[#227](https://github.com/sirius911/moutilloux/issues/227) (✅ Approuvé,
+refactor pur : extraction de la fonction de service mutualisée `reopen_match()`
+dans `live/admin_views.py`, réutilisée par `finalize_match_edit` — chemin admin
+— et `referee_action('reopen')` — chemin arbitre — aucun changement de
+comportement observable, vérifié ligne à ligne en review).
 **Nouveaux tickets créés :** Aucun.
 **Branche :** `claude/sprint/17-panneau-edition-match`
-**Contexte :** Session 54 — sprint 17 pas encore clôturable : spec review
-⚠️ sur `admin-matchs.md` (pas encore ✅ Conforme sur les 2 specs), et 2 issues
-restent ouvertes sur le milestone (`#226, #227`) après les 2 tickets traités
-cette session (max 2/session). Toutes mineures — le sprint continue de se
-rapprocher de sa clôture (11 → 4 dérives depuis le début du sprint). La
-prochaine session planifiée continuera le backlog engine sur ce même sprint
-(pas de changement de sprint actif) — probablement #226 (onglet Format
-incomplet côté front) et #227 (duplication back de la logique reopen).
+**Contexte :** Session 55 — le milestone « Sprint 17 » se retrouve à **0 issue
+ouverte** après cette session. Sprint **pas encore clôturé** pour autant : la
+condition de clôture exige que la spec review *de la session courante* (faite
+en étape 1, avant les 2 tickets) soit ✅ sur toutes les specs — ce qui n'était
+littéralement pas le cas ici puisque cette review précède la correction de
+#226/#227. La prochaine session planifiée devra donc simplement refaire une
+spec review fraîche : si elle confirme ✅ Conforme sur `admin-matchs.md` (ce qui
+est attendu, les 2 dérives connues ayant été corrigées) et que le milestone
+reste à 0 issue ouverte, le sprint 17 pourra être clôturé dès cette prochaine
+session (fermeture du milestone, sprint retiré de la roadmap, dossier déplacé
+vers `done/`).
 
-**Problèmes d'orchestration (session #54) :** le plan d'implémentation de
-#194 proposait de remplacer l'ancien appel dédié `eventStore.featureMatch(...)`
-(qui route vers `start_match()`/`mark_live()`, gérant l'invariant mono-LIVE)
-par une simple inclusion de `is_featured` dans le payload générique d'édition.
-Combiné à la garde anti-contournement ajoutée dans `MatchEditForm.clean()`
-(qui neutralise toute transition `False→True` via ce formulaire — volontaire,
-pour empêcher un contournement de l'invariant mono-LIVE), ceci cassait
-silencieusement l'**activation** de la mise en avant (aucune erreur visible).
-Détecté et vérifié empiriquement par l'agent de review (verdict ❌ À corriger
-en première passe), corrigé par l'orchestrateur (appel dédié à
-`eventStore.featureMatch(...)` restauré pour le cas d'activation uniquement),
-puis reconfirmé ✅ par une seconde review. Le filet de sécurité plan→implém→review
-a fonctionné comme prévu.
+**Problèmes d'orchestration (session #55) :** en tout début de session, la
+session #54 précédente s'est révélée interrompue après avoir écrit son log
+(`backlog/logs/session_2026-07-02_54.md`) et mis à jour cette section 6, mais
+avant le commit + push finaux (working tree modifié/untracked au démarrage).
+L'orchestrateur a d'abord commité et poussé cet état résiduel (commit
+`13a6e34`, `infra: log session 2026-07-02_54 — Sprint 17 (#193 ✅, #194 ✅)`)
+avant de démarrer le protocole de la session #55 — aucune perte de travail
+(la PR #223 existait déjà côté GitHub). Aucun autre écart au protocole cette
+session ; les deux tickets ont été approuvés du premier coup en review, sans
+correction nécessaire.
 
 Parent effectif : `claude/sprint/16-arbitre-demarrer-match` (le sprint 16 est
 clos côté planification/milestone, mais sa PR #178 n'est pas encore mergée
