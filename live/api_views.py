@@ -610,8 +610,6 @@ def api_arbitre_matches(request):
             edition=edition,
             status__in=[Match.Status.LIVE, Match.Status.SCHEDULED],
         )
-        .exclude(side_a__isnull=True)
-        .exclude(side_b__isnull=True)
         .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
         .order_by("-status", "order_index", "scheduled_time", "id")
     )
@@ -622,8 +620,6 @@ def api_arbitre_matches(request):
             edition=edition,
             status=Match.Status.FINISHED,
         )
-        .exclude(side_a__isnull=True)
-        .exclude(side_b__isnull=True)
         .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
         .order_by("-id")[:20]
     )
