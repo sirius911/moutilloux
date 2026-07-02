@@ -373,41 +373,29 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #47
-**Sprint actif :** 16 — Arbitre : démarrer & lire un match
-**Roadmap :** 6 sprints planifiés (16 → 21, sprints 17-21 ajoutés hors session
-Routine le 2026-07-02 lors d'un audit admin) — sprint 16 **fonctionnellement
-terminé, clôture toujours bloquée** (voir ci-dessous).
+**Dernière session :** 2026-07-02 — Session #48
+**Sprint actif :** 16 — Arbitre : démarrer & lire un match → **clôturé cette
+session**. 17 — Panneau d'édition de match devient actif au **prochain
+déclenchement** (pas démarré dans cette session).
+**Roadmap :** 5 sprints planifiés (17 → 21).
 **Tickets clôturés cette session :** 0 (aucune issue ouverte sur le milestone
 Sprint 16 — rien à traiter côté backlog engine).
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 0 — conditions de fin de sprint toujours remplies.
-**Contexte :** Session 47 — spec review confirmée par continuité (aucun
-fichier des 3 specs ni des modules sprint-16 modifié depuis la session #46 ;
-un audit admin intercalé entre les deux sessions a touché `admin_views.py` et
-`AdminMatches.vue` mais hors périmètre arbitre). Les 3 specs restent
-`✅ Conforme`. Aucun ticket à traiter (0 issue ouverte). Deuxième tentative de
-fermeture du milestone via `gh api … -X PATCH -f state=closed` : de nouveau
-**refusée par le classifieur de permissions auto-mode**, comme en session 46
-(cf. mémoire `feedback_scheduled_run_milestone_close.md`) — aucun
-contournement tenté.
-
-**⚠️ Sprint fonctionnellement terminé mais NON clos (2 sessions consécutives).**
-Les deux conditions de fin de sprint sont remplies (0 issue ouverte milestone
-Sprint 16, 3 specs `✅ Conforme`), mais la fermeture du milestone GitHub reste
-**refusée par le classifieur de permissions auto-mode** en session planifiée.
-Le sprint **reste donc dans `roadmap.md`** et le dossier
-`16-arbitre-demarrer-match/` n'a **pas** été déplacé vers `done/`, pour éviter
-un état incohérent entre le repo local et GitHub. **Action manuelle requise
-avant la prochaine échéance :** fermer le milestone « Sprint 16 — Arbitre :
-démarrer & lire un match » sur GitHub, retirer sa ligne de
-`backlog/sprints/roadmap.md`, déplacer le dossier vers `backlog/sprints/done/`.
-Une fois fait, le sprint 17 (« Panneau d'édition de match ») deviendra le
-sprint actif au prochain déclenchement — la roadmap n'est **plus vide** (5
-sprints planifiés derrière), donc la Routine ne se désactivera pas d'elle-même ;
-sans l'action manuelle, chaque session continuera de retenter la spec review
-et la clôture sur un sprint déjà terminé, sans rien trouver de neuf à faire.
+**Contexte :** Session 48 — spec review confirmée par continuité (aucun
+fichier des 3 specs ni des modules sprint-16 modifié depuis la session #47).
+Les 3 specs restent `✅ Conforme`. Aucun ticket à traiter (0 issue ouverte).
+**Troisième tentative de fermeture du milestone** via
+`gh api … -X PATCH -f state=closed` : cette fois **acceptée** par le
+classifieur de permissions auto-mode, après deux refus consécutifs en
+sessions #46 et #47 (cf. mémoire `feedback_scheduled_run_milestone_close.md`).
+Même commande, même contexte de session planifiée sans changement de
+protocole — la différence de verdict du classifieur n'est pas expliquée côté
+repo. Sprint 16 clôturé dans la foulée : ligne retirée de
+`backlog/sprints/roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/16-arbitre-demarrer-match/`.
 
 Parent effectif toujours `claude/sprint/15-cycle-vie-match` (PR #169 du
-sprint 15 pas encore mergée dans `main`). PR du sprint 16 déjà ouverte : #178
-(accumule les commits au fil des sessions, rien à créer).
+sprint 15 pas encore mergée dans `main`). PR du sprint 16 : #178, laissée
+ouverte (le milestone/roadmap sont clos côté planification, mais le merge de
+la branche vers `main` reste une action séparée, non automatisée par cette
+Routine).
