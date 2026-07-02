@@ -373,32 +373,46 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #53
-**Sprint actif :** 17 — Panneau d'édition de match (5ᵉ session consécutive).
-Progrès notable : `specs/technical/cycle-de-vie-match.md` passe à **✅ Conforme**
-sur le golden path (invariant mono-LIVE, gardes Démarrer/Terminer, FINISHED
-avec vainqueur, CANCELED sans vainqueur — tous vérifiés en place et
-fonctionnels). `specs/screens/admin-matchs.md` reste ⚠️ Dérive mineure. 1
-nouvelle dérive détectée (duplication de la logique de réouverture entre
-`admin_views.py` et `referee_views.py`, cf. #227 — pas de bug fonctionnel,
-dette de duplication contraire à CLAUDE.md §5).
+**Dernière session :** 2026-07-02 — Session #54
+**Sprint actif :** 17 — Panneau d'édition de match (6ᵉ session consécutive).
+Spec review : `specs/technical/cycle-de-vie-match.md` reste **✅ Conforme**
+(golden path revérifié : invariant mono-LIVE, gardes Démarrer/Terminer,
+FINISHED avec vainqueur, CANCELED sans vainqueur). `specs/screens/admin-matchs.md`
+reste ⚠️ Dérive mineure — 4 dérives déjà connues confirmées présentes
+(#193, #194, #226, #227), 0 nouvelle dérive détectée cette session.
 **Roadmap :** 5 sprints planifiés (17 → 21), 17 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#192](https://github.com/sirius911/moutilloux/issues/192)
-(✅ Approuvé, retrait de l'onglet Historique, décision 5) et
-[#168](https://github.com/sirius911/moutilloux/issues/168) (✅ Approuvé,
-retrait de l'option « Abandon » du sélecteur Vainqueur, décision 6).
-**Nouveaux tickets créés :** [#227](https://github.com/sirius911/moutilloux/issues/227)
-(logique de réouverture FINISHED→LIVE dupliquée entre `finalize_match_edit`
-et `referee_action('reopen')`, mineure, milestone Sprint 17 — extraire un
-service `reopen_match()` réutilisable).
+**Tickets clôturés cette session :** 2 — [#193](https://github.com/sirius911/moutilloux/issues/193)
+(✅ Approuvé, points du jeu en cours désormais enregistrés — champs Points de
+l'onglet Score alignés sur Sets/Jeux, édition des entiers bruts du modèle) et
+[#194](https://github.com/sirius911/moutilloux/issues/194) (✅ Approuvé après
+correction en review, `ConfirmModal` remplace `window.confirm` pour l'activation
+de la mise en avant, et la désactivation fonctionne désormais via le payload
+générique d'édition — voir « Problèmes d'orchestration » ci-dessous pour la
+régression détectée et corrigée en session sur ce ticket).
+**Nouveaux tickets créés :** Aucun.
 **Branche :** `claude/sprint/17-panneau-edition-match`
-**Contexte :** Session 53 — sprint 17 pas encore clôturable : spec review
-⚠️ sur `admin-matchs.md` (pas encore ✅ Conforme sur les 2 specs), et 4 issues
-restent ouvertes sur le milestone (`#193, #194, #226, #227`) après les 2
-tickets traités cette session (max 2/session). Toutes mineures — le sprint
-continue de se rapprocher de sa clôture. La prochaine session planifiée
-continuera le backlog engine sur ce même sprint (pas de changement de sprint
-actif).
+**Contexte :** Session 54 — sprint 17 pas encore clôturable : spec review
+⚠️ sur `admin-matchs.md` (pas encore ✅ Conforme sur les 2 specs), et 2 issues
+restent ouvertes sur le milestone (`#226, #227`) après les 2 tickets traités
+cette session (max 2/session). Toutes mineures — le sprint continue de se
+rapprocher de sa clôture (11 → 4 dérives depuis le début du sprint). La
+prochaine session planifiée continuera le backlog engine sur ce même sprint
+(pas de changement de sprint actif) — probablement #226 (onglet Format
+incomplet côté front) et #227 (duplication back de la logique reopen).
+
+**Problèmes d'orchestration (session #54) :** le plan d'implémentation de
+#194 proposait de remplacer l'ancien appel dédié `eventStore.featureMatch(...)`
+(qui route vers `start_match()`/`mark_live()`, gérant l'invariant mono-LIVE)
+par une simple inclusion de `is_featured` dans le payload générique d'édition.
+Combiné à la garde anti-contournement ajoutée dans `MatchEditForm.clean()`
+(qui neutralise toute transition `False→True` via ce formulaire — volontaire,
+pour empêcher un contournement de l'invariant mono-LIVE), ceci cassait
+silencieusement l'**activation** de la mise en avant (aucune erreur visible).
+Détecté et vérifié empiriquement par l'agent de review (verdict ❌ À corriger
+en première passe), corrigé par l'orchestrateur (appel dédié à
+`eventStore.featureMatch(...)` restauré pour le cas d'activation uniquement),
+puis reconfirmé ✅ par une seconde review. Le filet de sécurité plan→implém→review
+a fonctionné comme prévu.
 
 Parent effectif : `claude/sprint/16-arbitre-demarrer-match` (le sprint 16 est
 clos côté planification/milestone, mais sa PR #178 n'est pas encore mergée
