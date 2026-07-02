@@ -192,6 +192,9 @@ class MatchEditForm(forms.ModelForm):
         inst = self.instance
         fmt = cleaned.get("match_format")
 
+        if cleaned.get("status") == Match.Status.FINISHED and not cleaned.get("winner_side"):
+            self.add_error(None, "Un match Terminé doit avoir un vainqueur (Vainqueur : A ou B).")
+
         # Ne pas appliquer de preset si match en cours
         if inst and inst.pk and inst.status == Match.Status.LIVE:
             return cleaned
