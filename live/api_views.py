@@ -72,6 +72,7 @@ from live.admin_views import (
     reorder_calendar,
     auto_arrange_matches,
 )
+from live.referee_views import referee_required
 
 
 # ── CSRF ─────────────────────────────────────────────────────────────────────
@@ -602,12 +603,12 @@ def api_event_bracket(request, event_id):
 
 
 @require_GET
-@login_required
+@referee_required
 def api_arbitre_matches(request):
     """
     GET /api/arbitre/matches/
     Matchs LIVE et SCHEDULED pour l'arbitre (sélection de match).
-    Requiert d'être connecté.
+    Requiert le rôle Arbitre (ou superuser).
     """
     edition = get_current_edition()
     if not edition:
