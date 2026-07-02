@@ -138,6 +138,22 @@ def referee_action(request, match_id: int):
     if match.status == Match.Status.FINISHED and action not in ("reopen", "edit"):
         return JsonResponse({"ok": False, "error": "Match terminé. Réouvre-le si besoin."}, status=400)
 
+    # Sécurité : le scoring et ses corrections supposent un match en cours (LIVE).
+    # Pas de scoring implicite sur un match SCHEDULED (ou CANCELED) — il doit
+    # d'abord être démarré ("start" est justement l'action qui l'y fait passer).
+    SCORING_ACTIONS = {
+        "point_left", "point_right", "server_left", "server_right", "toggle_service",
+        "reset_points", "game_left", "game_right", "set_left", "set_right",
+        "game_left_plus", "game_left_minus", "game_right_plus", "game_right_minus",
+        "set_left_plus", "set_left_minus", "set_right_plus", "set_right_minus",
+        "tb_on", "tb_off", "finish_left", "finish_right", "finish_winner",
+    }
+    if action in SCORING_ACTIONS and match.status != Match.Status.LIVE:
+        return JsonResponse(
+            {"ok": False, "error": "Le match doit être en cours (LIVE) pour cette action."},
+            status=400,
+        )
+
     def rules():
         # Si tu veux que MANUAL désactive toute logique auto
         if match.match_format == Match.Format.MANUAL:
