@@ -373,35 +373,39 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #50
-**Sprint actif :** 17 — Panneau d'édition de match (2ᵉ session consécutive).
-Spec review passée de ❌ (session #49) à ⚠️ Dérive mineure à modérée sur les 2
-specs ciblées — amélioration confirmée, correctifs #189/#190 en place et
-corrects.
+**Dernière session :** 2026-07-02 — Session #51
+**Sprint actif :** 17 — Panneau d'édition de match (3ᵉ session consécutive).
+Spec review toujours ⚠️ Dérive mineure sur les 2 specs ciblées — 0 nouvelle
+dérive détectée (les 8 dérives connues restent présentes, hors #224/#191
+traités cette session et #175 vérifiée résolue).
 **Roadmap :** 5 sprints planifiés (17 → 21), 17 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#7](https://github.com/sirius911/moutilloux/issues/7)
-(✅ Approuvé, onglet Format branché sur le payload d'édition — nécessite
-l'extension de `MatchEditPayload` dans `event.ts`, câblée par l'orchestrateur)
-et [#221](https://github.com/sirius911/moutilloux/issues/221) (✅ Approuvé,
-réouverture FINISHED→LIVE réinitialise désormais `winner_side`, aligné sur
-`referee_action('reopen')`).
-**Nouveaux tickets créés :** [#224](https://github.com/sirius911/moutilloux/issues/224)
-(message d'erreur de la garde #190 invisible côté `EditMatchPanel.vue` —
-`extractApiError` ne lit pas `parsed.fields` —, majeure, milestone Sprint 17 :
-bloque le golden path « garde » du DoD du sprint), [#225](https://github.com/sirius911/moutilloux/issues/225)
-(passage à `CANCELED` ne réinitialise pas `winner_side`, symétrique de #221,
-mineure, milestone Sprint 17).
+**Tickets clôturés cette session :** 2 — [#224](https://github.com/sirius911/moutilloux/issues/224)
+(✅ Approuvé, `extractApiError` priorise désormais `parsed.fields.__all__` avant
+`parsed.error` ; `EditMatchPanel.vue::save()` l'utilise au lieu de `e.message`
+brut — le golden path « garde FINISHED sans vainqueur » affiche maintenant le
+message métier précis) et [#191](https://github.com/sirius911/moutilloux/issues/191)
+(✅ Approuvé, confirmation via `ConfirmModal` avant de démarrer un match si un
+autre est déjà `LIVE`, câblée sur le bouton « Démarrer » d'`AdminMatches.vue`
+et sur le passage Statut → En direct dans `EditMatchPanel.vue`).
+**Issue fermée en housekeeping (spec review, sans implémentation) :**
+[#175](https://github.com/sirius911/moutilloux/issues/175) (docstring
+`api_match_feature` déjà corrigée, vérifiée puis fermée directement).
+**Nouveaux tickets créés :** aucun.
 **Branche :** `claude/sprint/17-panneau-edition-match`
-**Contexte :** Session 50 — sprint 17 pas encore clôturable : spec review
-⚠️ (pas encore ✅ Conforme), et 9 issues restent ouvertes sur le milestone
-(`#168, #175, #191, #192, #193, #194, #220, #224, #225`) après les 2 tickets
-traités cette session (max 2/session). La prochaine session planifiée
-continuera le backlog engine sur ce même sprint (pas de changement de sprint
-actif). Note pour la suite : #224 mérite d'être traité tôt, car il conditionne
-la visibilité du golden path « garde FINISHED sans vainqueur » explicitement
-listé dans la Définition de terminé du sprint 17.
+**Contexte :** Session 51 — sprint 17 pas encore clôturable : spec review
+⚠️ (pas encore ✅ Conforme), et 6 issues restent ouvertes sur le milestone
+(`#168, #192, #193, #194, #220, #225`) après les 2 tickets traités cette
+session (max 2/session). La prochaine session planifiée continuera le backlog
+engine sur ce même sprint (pas de changement de sprint actif). Note pour la
+suite : #220 (Terminer sans confirmation, majeure) est le symétrique de #191
+côté transition « Terminer » — bon candidat prioritaire pour la session #52,
+avec le même patron `ConfirmModal` déjà en place dans `EditMatchPanel.vue`.
+#225 (CANCELED ne réinitialise pas `winner_side`, mineure) est le symétrique
+back de #221, déjà résolu par la session #50 — pattern de correction identique
+disponible dans `live/referee_views.py:711`.
 
 Parent effectif : `claude/sprint/16-arbitre-demarrer-match` (le sprint 16 est
 clos côté planification/milestone, mais sa PR #178 n'est pas encore mergée
 dans `main` — branche créée depuis celle-ci, comme prévu par la résolution du
-parent effectif via `backlog/sprints/done/`).
+parent effectif via `backlog/sprints/done/`). Déjà synchronisé cette session,
+aucun merge nécessaire.
