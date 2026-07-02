@@ -373,39 +373,40 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #46
+**Dernière session :** 2026-07-02 — Session #47
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
-**Roadmap :** 1 sprint restant (16) — **fonctionnellement terminé, clôture bloquée** (voir ci-dessous).
-**Tickets clôturés cette session :** 2 (#187 ✅, #188 ✅)
+**Roadmap :** 6 sprints planifiés (16 → 21, sprints 17-21 ajoutés hors session
+Routine le 2026-07-02 lors d'un audit admin) — sprint 16 **fonctionnellement
+terminé, clôture toujours bloquée** (voir ci-dessous).
+**Tickets clôturés cette session :** 0 (aucune issue ouverte sur le milestone
+Sprint 16 — rien à traiter côté backlog engine).
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 0 — conditions de fin de sprint remplies.
-**Contexte :** Session 46 — spec review des 3 specs : arbitre-match ✅
-Conforme, cycle-de-vie-match ✅ Conforme, arbitre-home ⚠️ (1 dérive
-résiduelle : note obsolète sur l'auth `@login_required` alors que
-`@referee_required` est en place, non couverte par #187 en session 45) →
-corrigée dans la session via #188. Tickets traités cette session (2, max
-atteint) : #187 (retrait des 4 notes ⚠ obsolètes dans les 3 specs —
-`reopen`/`set_scores`, `order_index`, `formatLabel`, pause polling onglet
-caché — chaque affirmation reverifiée en code avant édition, nettoyage doc
-pur) et #188 (créé et fermé dans la même session — note ⚠ résiduelle
-`@login_required` retirée de `arbitre-home.md`, vérifié `@referee_required`
-effectif sur `GET /api/arbitre/matches/`). Aucun fichier partagé câblé
-(travail 100% doc, aucun code touché).
+**Issues Sprint 16 restantes :** 0 — conditions de fin de sprint toujours remplies.
+**Contexte :** Session 47 — spec review confirmée par continuité (aucun
+fichier des 3 specs ni des modules sprint-16 modifié depuis la session #46 ;
+un audit admin intercalé entre les deux sessions a touché `admin_views.py` et
+`AdminMatches.vue` mais hors périmètre arbitre). Les 3 specs restent
+`✅ Conforme`. Aucun ticket à traiter (0 issue ouverte). Deuxième tentative de
+fermeture du milestone via `gh api … -X PATCH -f state=closed` : de nouveau
+**refusée par le classifieur de permissions auto-mode**, comme en session 46
+(cf. mémoire `feedback_scheduled_run_milestone_close.md`) — aucun
+contournement tenté.
 
-**⚠️ Sprint fonctionnellement terminé mais NON clos.** Les deux conditions de
-fin de sprint sont remplies (0 issue ouverte milestone Sprint 16, 3 specs
-`✅ Conforme`), mais la fermeture du milestone GitHub a été **refusée par le
-classifieur de permissions auto-mode** (action d'écriture externe non
-explicitement autorisée pour une session planifiée). Le sprint **reste donc
-dans `roadmap.md`** et le dossier `16-arbitre-demarrer-match/` n'a **pas**
-été déplacé vers `done/`, pour éviter un état incohérent entre le repo local
-et GitHub. **Action manuelle requise avant la prochaine échéance :** fermer
-le milestone « Sprint 16 — Arbitre : démarrer & lire un match » sur GitHub,
-retirer sa ligne de `backlog/sprints/roadmap.md`, déplacer le dossier vers
-`backlog/sprints/done/`. Une fois fait, `roadmap.md` sera vide (aucun autre
-sprint planifié) et la Routine se désactivera d'elle-même au prochain
-déclenchement — sinon la prochaine session retentera la spec review sur un
-sprint déjà terminé sans rien trouver de neuf à faire.
+**⚠️ Sprint fonctionnellement terminé mais NON clos (2 sessions consécutives).**
+Les deux conditions de fin de sprint sont remplies (0 issue ouverte milestone
+Sprint 16, 3 specs `✅ Conforme`), mais la fermeture du milestone GitHub reste
+**refusée par le classifieur de permissions auto-mode** en session planifiée.
+Le sprint **reste donc dans `roadmap.md`** et le dossier
+`16-arbitre-demarrer-match/` n'a **pas** été déplacé vers `done/`, pour éviter
+un état incohérent entre le repo local et GitHub. **Action manuelle requise
+avant la prochaine échéance :** fermer le milestone « Sprint 16 — Arbitre :
+démarrer & lire un match » sur GitHub, retirer sa ligne de
+`backlog/sprints/roadmap.md`, déplacer le dossier vers `backlog/sprints/done/`.
+Une fois fait, le sprint 17 (« Panneau d'édition de match ») deviendra le
+sprint actif au prochain déclenchement — la roadmap n'est **plus vide** (5
+sprints planifiés derrière), donc la Routine ne se désactivera pas d'elle-même ;
+sans l'action manuelle, chaque session continuera de retenter la spec review
+et la clôture sur un sprint déjà terminé, sans rien trouver de neuf à faire.
 
 Parent effectif toujours `claude/sprint/15-cycle-vie-match` (PR #169 du
 sprint 15 pas encore mergée dans `main`). PR du sprint 16 déjà ouverte : #178
