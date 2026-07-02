@@ -609,10 +609,16 @@ def finalize_match_edit(match, was_live: bool = False):
     if match.status == Match.Status.LIVE and not was_live:
         # invariant mono-LIVE : router vers start_match() (mark_live + featured +
         # rétrogradation) plutôt que de laisser le form poser le statut brut
-        # (cf. specs/technical/cycle-de-vie-match.md).
+        # (cf. specs/technical/cycle-de-vie-match.md). Réinitialise aussi winner_side
+        # (no-op si le match n'était pas FINISHED) — même comportement que
+        # referee_action('reopen'), live/referee_views.py:703-718.
         match.status = Match.Status.SCHEDULED
+        match.winner_side = None
         match.save()
         start_match(match)
+        if match.stage == Match.Stage.GROUP and match.group_id:
+            from competition.standings import recalc_one_group
+            recalc_one_group(match.group_id)
         return match
 
     for f in ["points_a", "points_b", "games_a", "games_b", "sets_a", "sets_b", "tb_points_a", "tb_points_b"]:
