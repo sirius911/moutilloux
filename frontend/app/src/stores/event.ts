@@ -26,6 +26,11 @@ export interface MatchEditPayload {
   tb_points_a?: number
   tb_points_b?: number
   winner_side?: 'A' | 'B' | null
+  match_format?: string
+  best_of?: number
+  games_to_win?: number
+  tb_at?: number
+  tb_points_to_win?: number
 }
 
 // ── Payloads Phase 9 (configuration) — clés snake_case attendues par l'API ──

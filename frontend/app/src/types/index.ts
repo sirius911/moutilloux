@@ -134,6 +134,11 @@ export interface Match {
 
   // Score
   server: MatchSide
+  matchFormat: string        // "GROUP_SET5_TB_4_4" | "QF_SET5_TB_5_5" | "NORMAL_1SET" | "BO3" | "MANUAL"
+  bestOf: number
+  gamesToWin: number
+  tbAt: number
+  tbPointsToWin: number
   setsA: number
   setsB: number
   gamesA: number

@@ -10,6 +10,10 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const eventStore = useEventStore()
 
+// Mapping formatSets (index UI 1/2/3) ↔ best_of (nombre de sets back 1/3/5)
+const FORMAT_SETS_TO_BEST_OF: Record<number, number> = { 1: 1, 2: 3, 3: 5 }
+const BEST_OF_TO_FORMAT_SETS: Record<number, number> = { 1: 1, 3: 2, 5: 3 }
+
 const tab = ref<'score' | 'format' | 'planning' | 'history'>('score')
 const saving = ref(false)
 const error = ref('')
@@ -25,11 +29,19 @@ const tbActive = ref(props.match.tbActive)
 const winnerSide = ref<'none' | 'A' | 'B' | 'abandon'>(props.match.winnerSide ?? 'none')
 
 // Format tab
-const formatSets = ref(1)
-const formatGames = ref('5')
-const formatTb = ref('4')
-const formatTbPoints = ref('7')
-const formatServer = ref<'A' | 'B' | 'rand'>(props.match.server ?? 'A')
+const formatSets = ref(BEST_OF_TO_FORMAT_SETS[props.match.bestOf] ?? 1)
+const formatGames = ref(String(props.match.gamesToWin ?? 5))
+const formatTb = ref(String(props.match.tbAt ?? 4))
+const formatTbPoints = ref(String(props.match.tbPointsToWin ?? 7))
+const formatServer = ref<'A' | 'B'>(props.match.server === 'B' ? 'B' : 'A')
+
+const initialFormatSnapshot = {
+  formatSets: formatSets.value,
+  formatGames: formatGames.value,
+  formatTb: formatTb.value,
+  formatTbPoints: formatTbPoints.value,
+  formatServer: formatServer.value,
+}
 
 // Planning tab
 const status = ref<'scheduled' | 'live' | 'finished' | 'canceled'>(
@@ -120,7 +132,6 @@ const formatSetsOptions = [
 const serverOptions = computed(() => [
   { value: 'A', label: nameA.value },
   { value: 'B', label: nameB.value },
-  { value: 'rand', label: 'Tirage au sort' },
 ])
 
 const planningStatusOptions = [
@@ -136,9 +147,20 @@ async function save() {
   saving.value = true
   error.value = ''
   try {
-    // Édition via MatchEditForm. On omet les points bruts, les champs de
-    // format (onglet décoratif), court (mono-court, non éditable) et
-    // scheduled_time (ETA dérivée, lecture seule — décisions 18-19).
+    // Édition via MatchEditForm. On omet les points bruts, court (mono-court,
+    // non éditable) et scheduled_time (ETA dérivée, lecture seule — décisions
+    // 18-19). Les champs de format sont inclus ; match_format ne bascule sur
+    // MANUAL que si les champs détaillés ont réellement changé (sinon
+    // MatchEditForm.clean() réappliquerait le preset silencieusement, ou on
+    // basculerait à tort le format sur « Manuel » lors d'une simple édition
+    // de score).
+    const formatChanged =
+      formatSets.value !== initialFormatSnapshot.formatSets ||
+      formatGames.value !== initialFormatSnapshot.formatGames ||
+      formatTb.value !== initialFormatSnapshot.formatTb ||
+      formatTbPoints.value !== initialFormatSnapshot.formatTbPoints ||
+      formatServer.value !== initialFormatSnapshot.formatServer
+
     await eventStore.editMatch(eventId, props.match.id, {
       status: status.value.toUpperCase(),
       sets_a: setsA.value,
@@ -148,6 +170,12 @@ async function save() {
       tb_active: tbActive.value,
       winner_side:
         winnerSide.value === 'A' || winnerSide.value === 'B' ? winnerSide.value : null,
+      match_format: formatChanged ? 'MANUAL' : props.match.matchFormat,
+      best_of: FORMAT_SETS_TO_BEST_OF[formatSets.value] ?? 1,
+      games_to_win: Number(formatGames.value),
+      tb_at: Number(formatTb.value),
+      tb_points_to_win: Number(formatTbPoints.value),
+      server: formatServer.value,
     })
     if (featured.value && !props.match.isFeatured) {
       const ok = window.confirm(
