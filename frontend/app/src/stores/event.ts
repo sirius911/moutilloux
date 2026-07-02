@@ -34,6 +34,9 @@ export interface MatchEditPayload {
   games_to_win?: number
   tb_at?: number
   tb_points_to_win?: number
+  tb_win_by_two?: boolean
+  deciding_set_mode?: 'FULL_SET' | 'SUPER_TB'
+  deciding_tb_points_to_win?: number
 }
 
 // ── Payloads Phase 9 (configuration) — clés snake_case attendues par l'API ──

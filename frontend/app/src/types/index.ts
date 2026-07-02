@@ -139,6 +139,9 @@ export interface Match {
   gamesToWin: number
   tbAt: number
   tbPointsToWin: number
+  tbWinByTwo: boolean
+  decidingSetMode: string      // "FULL_SET" | "SUPER_TB"
+  decidingTbPointsToWin: number
   setsA: number
   setsB: number
   gamesA: number

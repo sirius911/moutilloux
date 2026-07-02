@@ -36,6 +36,11 @@ const formatGames = ref(String(props.match.gamesToWin ?? 5))
 const formatTb = ref(String(props.match.tbAt ?? 4))
 const formatTbPoints = ref(String(props.match.tbPointsToWin ?? 7))
 const formatServer = ref<'A' | 'B'>(props.match.server === 'B' ? 'B' : 'A')
+const formatTbWinByTwo = ref(props.match.tbWinByTwo ?? true)
+const formatDecidingSetMode = ref<'FULL_SET' | 'SUPER_TB'>(
+  props.match.decidingSetMode === 'SUPER_TB' ? 'SUPER_TB' : 'FULL_SET'
+)
+const formatDecidingTbPoints = ref(String(props.match.decidingTbPointsToWin ?? 10))
 
 const initialFormatSnapshot = {
   formatSets: formatSets.value,
@@ -43,6 +48,52 @@ const initialFormatSnapshot = {
   formatTb: formatTb.value,
   formatTbPoints: formatTbPoints.value,
   formatServer: formatServer.value,
+  formatTbWinByTwo: formatTbWinByTwo.value,
+  formatDecidingSetMode: formatDecidingSetMode.value,
+  formatDecidingTbPoints: formatDecidingTbPoints.value,
+}
+
+// Sélecteur de préréglage nommé (Poule / Quart / Demi / Finale / Manuel)
+const formatPreset = ref(props.match.matchFormat || 'MANUAL')
+
+const formatPresetOptions = [
+  { value: 'G_SET5_TB44', label: 'Poule : 1 set à 5, TB à 4-4' },
+  { value: 'QF_SET5_TB55', label: 'Quart : 1 set à 6, TB à 5-5' },
+  { value: 'NORMAL_1SET', label: 'Demi : 1 set normal' },
+  { value: 'BO3', label: 'Finale : 2 sets gagnants' },
+  { value: 'MANUAL', label: 'Manuel' },
+]
+
+const decidingSetModeOptions = [
+  { value: 'FULL_SET', label: 'Set complet' },
+  { value: 'SUPER_TB', label: 'Super tie-break' },
+]
+
+const PRESET_VALUES: Record<string, {
+  formatSets: number; formatGames: string; formatTb: string; formatTbPoints: string
+  formatTbWinByTwo: boolean
+  formatDecidingSetMode?: 'FULL_SET' | 'SUPER_TB'
+  formatDecidingTbPoints?: string
+}> = {
+  G_SET5_TB44: { formatSets: 1, formatGames: '5', formatTb: '4', formatTbPoints: '7', formatTbWinByTwo: true },
+  QF_SET5_TB55: { formatSets: 1, formatGames: '6', formatTb: '5', formatTbPoints: '7', formatTbWinByTwo: true },
+  NORMAL_1SET: { formatSets: 1, formatGames: '6', formatTb: '6', formatTbPoints: '7', formatTbWinByTwo: true },
+  BO3: {
+    formatSets: 2, formatGames: '6', formatTb: '6', formatTbPoints: '7', formatTbWinByTwo: true,
+    formatDecidingSetMode: 'FULL_SET', formatDecidingTbPoints: '10',
+  },
+}
+
+function applyPresetToFields() {
+  const preset = PRESET_VALUES[formatPreset.value]
+  if (!preset) return // MANUAL : ne touche à rien, l'admin garde ses valeurs actuelles
+  formatSets.value = preset.formatSets
+  formatGames.value = preset.formatGames
+  formatTb.value = preset.formatTb
+  formatTbPoints.value = preset.formatTbPoints
+  formatTbWinByTwo.value = preset.formatTbWinByTwo
+  if (preset.formatDecidingSetMode) formatDecidingSetMode.value = preset.formatDecidingSetMode
+  if (preset.formatDecidingTbPoints) formatDecidingTbPoints.value = preset.formatDecidingTbPoints
 }
 
 // Planning tab
@@ -183,7 +234,25 @@ async function save() {
       formatGames.value !== initialFormatSnapshot.formatGames ||
       formatTb.value !== initialFormatSnapshot.formatTb ||
       formatTbPoints.value !== initialFormatSnapshot.formatTbPoints ||
-      formatServer.value !== initialFormatSnapshot.formatServer
+      formatServer.value !== initialFormatSnapshot.formatServer ||
+      formatTbWinByTwo.value !== initialFormatSnapshot.formatTbWinByTwo ||
+      formatDecidingSetMode.value !== initialFormatSnapshot.formatDecidingSetMode ||
+      formatDecidingTbPoints.value !== initialFormatSnapshot.formatDecidingTbPoints
+
+    // match_format à envoyer :
+    // - si le sélecteur de préréglage a changé vers un preset nommé (≠ MANUAL) :
+    //   on envoie ce preset — le serveur (MatchEditForm.clean()) réapplique alors
+    //   lui-même le détail exact, la source de vérité reste le back.
+    // - si le sélecteur est resté sur MANUAL (ou est lui-même MANUAL) et qu'un champ
+    //   détaillé a divergé de l'instantané initial : on force MANUAL (comportement #7).
+    // - sinon (rien n'a changé) : on renvoie le matchFormat actuel du match, inchangé.
+    const presetChanged = formatPreset.value !== props.match.matchFormat
+    const matchFormatToSend =
+      presetChanged && formatPreset.value !== 'MANUAL'
+        ? formatPreset.value
+        : formatChanged
+          ? 'MANUAL'
+          : props.match.matchFormat
 
     await eventStore.editMatch(eventId, props.match.id, {
       status: status.value.toUpperCase(),
@@ -196,11 +265,14 @@ async function save() {
       tb_active: tbActive.value,
       winner_side:
         winnerSide.value === 'A' || winnerSide.value === 'B' ? winnerSide.value : null,
-      match_format: formatChanged ? 'MANUAL' : props.match.matchFormat,
+      match_format: matchFormatToSend,
       best_of: FORMAT_SETS_TO_BEST_OF[formatSets.value] ?? 1,
       games_to_win: Number(formatGames.value),
       tb_at: Number(formatTb.value),
       tb_points_to_win: Number(formatTbPoints.value),
+      tb_win_by_two: formatTbWinByTwo.value,
+      deciding_set_mode: formatDecidingSetMode.value,
+      deciding_tb_points_to_win: Number(formatDecidingTbPoints.value),
       server: formatServer.value,
       is_featured: featured.value,
     })
@@ -323,6 +395,12 @@ async function save() {
                 <h4>Format du match</h4>
                 <div class="fld-col">
                   <label class="fld">
+                    <span class="fld-lbl">Préréglage</span>
+                    <select v-model="formatPreset" class="inp" @change="applyPresetToFields">
+                      <option v-for="p in formatPresetOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
+                    </select>
+                  </label>
+                  <label class="fld">
                     <span class="fld-lbl">Sets à gagner</span>
                     <Segmented v-model="formatSets" :options="formatSetsOptions" />
                   </label>
@@ -350,6 +428,19 @@ async function save() {
                   <label class="fld">
                     <span class="fld-lbl">Service initial</span>
                     <Segmented v-model="formatServer" :options="serverOptions" />
+                  </label>
+                  <label class="sw">
+                    <input v-model="formatTbWinByTwo" type="checkbox" />
+                    <i />
+                    <span>Tie-break : 2 points d'écart</span>
+                  </label>
+                  <label class="fld">
+                    <span class="fld-lbl">Set décisif (égalité en sets)</span>
+                    <Segmented v-model="formatDecidingSetMode" :options="decidingSetModeOptions" />
+                  </label>
+                  <label v-if="formatDecidingSetMode === 'SUPER_TB'" class="fld">
+                    <span class="fld-lbl">Points du super tie-break décisif</span>
+                    <input v-model="formatDecidingTbPoints" class="inp tab" type="number" min="1" />
                   </label>
                 </div>
               </div>

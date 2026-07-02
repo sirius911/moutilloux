@@ -9,3 +9,4 @@
 | #4 | 2026-07-02 | ⚠️ | 7 dérives (6 confirmées toujours présentes + 1 nouvelle) | #226 (mineure) | 7 |
 | #5 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md → ✅) | 6 dérives (5 confirmées toujours présentes + 1 nouvelle) | #227 (mineure, duplication reopen) | 6 |
 | #6 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md toujours ✅) | 4 dérives (toutes déjà connues, 0 nouvelle) | 0 | 4 |
+| #7 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md toujours ✅) | 2 dérives (toutes déjà connues, 0 nouvelle) — #193/#194 revérifiées sans régression | 0 | 2 |
