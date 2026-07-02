@@ -598,7 +598,7 @@ def reopen_event(event):
 # Actions : Matches (edit + feature)
 # -----------------------
 
-def finalize_match_edit(match, was_live: bool = False):
+def finalize_match_edit(match, was_live: bool = False, was_finished: bool = False):
     """
     Service : logique post-sauvegarde commune à l'édition d'un match
     (sanitisation des valeurs négatives, cohérence du tie-break, retrait
@@ -610,25 +610,30 @@ def finalize_match_edit(match, was_live: bool = False):
     `was_live` : statut LIVE du match *avant* l'édition (déterminé par l'appelant
     avant que le form ne mute l'instance). Si le form vient de faire passer le
     match à LIVE alors qu'il ne l'était pas avant, on route vers start_match()
-    plutôt que de laisser le statut brut posé par le form, afin de préserver
-    l'invariant mono-LIVE (rétrogradation des autres matchs + is_featured +
-    started_at — cf. specs/technical/cycle-de-vie-match.md).
+    (ou reopen_match() si le match était FINISHED, cf. `was_finished`) plutôt que
+    de laisser le statut brut posé par le form, afin de préserver l'invariant
+    mono-LIVE (rétrogradation des autres matchs + is_featured + started_at —
+    cf. specs/technical/cycle-de-vie-match.md).
+
+    `was_finished` : statut FINISHED du match *avant* l'édition (déterminé par
+    l'appelant, comme `was_live`). Permet de distinguer une reprise depuis
+    SCHEDULED (start_match) d'une réouverture depuis FINISHED (reopen_match).
 
     Retourne le match.
     """
     if match.status == Match.Status.LIVE and not was_live:
-        # invariant mono-LIVE : router vers start_match() (mark_live + featured +
-        # rétrogradation) plutôt que de laisser le form poser le statut brut
-        # (cf. specs/technical/cycle-de-vie-match.md). Réinitialise aussi winner_side
-        # (no-op si le match n'était pas FINISHED) — même comportement que
-        # referee_action('reopen'), live/referee_views.py:703-718.
-        match.status = Match.Status.SCHEDULED
-        match.winner_side = None
-        match.save()
-        start_match(match)
-        if match.stage == Match.Stage.GROUP and match.group_id:
-            from competition.standings import recalc_one_group
-            recalc_one_group(match.group_id)
+        # invariant mono-LIVE : router vers start_match()/reopen_match() plutôt que
+        # de laisser le form poser le statut brut (cf. specs/technical/cycle-de-vie-match.md).
+        if was_finished:
+            reopen_match(match)
+        else:
+            match.status = Match.Status.SCHEDULED
+            match.winner_side = None
+            match.save()
+            start_match(match)
+            if match.stage == Match.Stage.GROUP and match.group_id:
+                from competition.standings import recalc_one_group
+                recalc_one_group(match.group_id)
         return match
 
     for f in ["points_a", "points_b", "games_a", "games_b", "sets_a", "sets_b", "tb_points_a", "tb_points_b"]:
@@ -676,12 +681,13 @@ def match_edit(request, event_id: int, match_id: int):
     event = get_object_or_404(Event, id=event_id)
     match = get_object_or_404(Match, id=match_id, event=event)
     was_live = match.status == Match.Status.LIVE
+    was_finished = match.status == Match.Status.FINISHED
 
     form = MatchEditForm(request.POST or None, instance=match)
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        finalize_match_edit(form.instance, was_live=was_live)
+        finalize_match_edit(form.instance, was_live=was_live, was_finished=was_finished)
         messages.success(request, "Match mis à jour.")
         return redirect("panel_matches", event_id=event.id)
 
@@ -716,6 +722,34 @@ def start_match(match):
 # (match_feature / api_match_feature — action « mettre en avant » côté admin,
 # effet identique à « démarrer »).
 feature_match = start_match
+
+
+@transaction.atomic
+def reopen_match(match):
+    """
+    Service : rouvre un match terminé (FINISHED -> LIVE), ADMIN uniquement.
+    Réutilisé par referee_action('reopen') et par finalize_match_edit()
+    (panneau d'édition admin) — cf. specs/technical/cycle-de-vie-match.md, § « Rouvrir ».
+
+    Conserve set_scores et l'historique (aucun champ de score n'est touché).
+    Retire is_featured des autres matchs de l'édition, met ce match en avant,
+    réinitialise winner_side, puis mark_live() (status=LIVE + started_at si vide,
+    rétrogradation de l'éventuel autre match LIVE — invariant mono-LIVE).
+    Ne touche jamais order_index (persistance calendrier — sprint 15 / #159).
+
+    Retourne le match.
+    """
+    Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
+    match.is_featured = True
+    match.winner_side = None
+    match.mark_live()  # repasse LIVE (+ started_at si besoin), conserve set_scores
+    match.save(update_fields=["is_featured", "winner_side"])
+
+    if match.stage == Match.Stage.GROUP and match.group_id:
+        from competition.standings import recalc_one_group
+        recalc_one_group(match.group_id)
+
+    return match
 
 
 @superuser_required
