@@ -32,8 +32,22 @@ export function usePolling(fn: () => Promise<void>, interval: number) {
     }
   }
 
-  onMounted(start)
-  onUnmounted(stop)
+  function onVisibilityChange() {
+    if (document.hidden) {
+      stop()
+    } else {
+      start()
+    }
+  }
+
+  onMounted(() => {
+    start()
+    document.addEventListener('visibilitychange', onVisibilityChange)
+  })
+  onUnmounted(() => {
+    stop()
+    document.removeEventListener('visibilitychange', onVisibilityChange)
+  })
 
   return { loading, error, refresh: run }
 }
