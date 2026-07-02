@@ -91,9 +91,8 @@ statut, mis à jour à chaque rafraîchissement.
   synchronisation se mettent à jour ensemble.
 - **Pause onglet caché** : le polling se suspend quand l'onglet n'est pas visible
   (`usePolling`, `visibilitychange`) et reprend au retour.
-- **Auth** : l'endpoint **doit** exiger le rôle arbitre (`@referee_required`).
-  *(⚠ Aujourd'hui `@login_required` seul — tout compte connecté y accède ;
-  à durcir, voir [[cycle-de-vie-match]].)* La route `/arbitre/*` est déjà gardée par
+- **Auth** : l'endpoint exige le rôle arbitre (`@referee_required`, voir
+  [[cycle-de-vie-match]]). La route `/arbitre/*` est déjà gardée par
   `requiresReferee` côté front ([[routing-context]]).
 
 ---
