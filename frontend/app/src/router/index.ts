@@ -48,11 +48,39 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
       children: [
         { path: 'players', component: () => import('@/views/admin/AdminPlayers.vue') },
-        { path: 'inscriptions', component: () => import('@/views/admin/AdminInscriptions.vue') },
-        { path: 'groups',  component: () => import('@/views/admin/AdminGroups.vue') },
-        { path: 'matches', component: () => import('@/views/admin/AdminMatches.vue') },
-        { path: 'bracket', component: () => import('@/views/admin/AdminBracket.vue') },
         { path: 'tournoi', component: () => import('@/views/admin/AdminTournoi.vue') },
+        // Écrans dépendants d'une épreuve — :eventId est la source de vérité
+        {
+          path: 'events/:eventId',
+          beforeEnter: async (to) => {
+            const { useEventStore } = await import('@/stores/event')
+            const eventStore = useEventStore()
+            if (!eventStore.events.length) {
+              await eventStore.fetchEditions()
+            }
+            const requestedId = Number(to.params.eventId)
+            const found = eventStore.events.find(e => e.id === requestedId)
+            if (!requestedId || !found) {
+              const defaultEvent = eventStore.events[0]
+              if (defaultEvent) {
+                // Remplace le segment :eventId dans le chemin courant
+                const correctedPath = to.path.replace(
+                  /\/events\/[^/]+/,
+                  `/events/${defaultEvent.id}`,
+                )
+                return { path: correctedPath, query: to.query, replace: true }
+              }
+              // Aucune épreuve → laisser passer (état vide géré par l'écran)
+            }
+            return true
+          },
+          children: [
+            { path: 'inscriptions', component: () => import('@/views/admin/AdminInscriptions.vue') },
+            { path: 'groups',       component: () => import('@/views/admin/AdminGroups.vue') },
+            { path: 'matches',      component: () => import('@/views/admin/AdminMatches.vue') },
+            { path: 'bracket',      component: () => import('@/views/admin/AdminBracket.vue') },
+          ],
+        },
       ],
     },
 

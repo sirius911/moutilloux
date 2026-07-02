@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
+from live.admin_views import start_match
 
 
 def is_referee(user):
@@ -263,7 +264,6 @@ def referee_action(request, match_id: int):
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
                 match.is_featured = False
-                match.order_index = None
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
                 # on garde games_a/games_b comme score final du set si match en 1 set
@@ -273,10 +273,14 @@ def referee_action(request, match_id: int):
                 # ✅ Recalcul classement poule
                 if match.stage == Match.Stage.GROUP and match.group_id:
                     gid = match.group_id
+                    _ev = match.event
                     transaction.on_commit(lambda: recalc_one_group(gid))
+                    from live.bracket import sync_final_bracket_for_event
+                    transaction.on_commit(lambda ev=_ev: sync_final_bracket_for_event(ev))
                 if match.stage in (Match.Stage.QF, Match.Stage.SF):
-                    from live.bracket import sync_final_winners_for_event
+                    from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
                     transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+                    transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
                 return
 
             # Sinon BO3 : set suivant
@@ -306,7 +310,6 @@ def referee_action(request, match_id: int):
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
                 match.is_featured = False
-                match.order_index = None
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
                 # IMPORTANT: on garde games_a/games_b comme score final du set en 1 set
@@ -316,10 +319,14 @@ def referee_action(request, match_id: int):
                 # ✅ Recalcul classement poule
                 if match.stage == Match.Stage.GROUP and match.group_id:
                     gid = match.group_id
+                    _ev = match.event
                     transaction.on_commit(lambda: recalc_one_group(gid))
+                    from live.bracket import sync_final_bracket_for_event
+                    transaction.on_commit(lambda ev=_ev: sync_final_bracket_for_event(ev))
                 if match.stage in (Match.Stage.QF, Match.Stage.SF):
-                    from live.bracket import sync_final_winners_for_event
+                    from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
                     transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+                    transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
                 return
 
             # BO3 : set suivant
@@ -436,7 +443,7 @@ def referee_action(request, match_id: int):
             "set_scores",
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -450,7 +457,7 @@ def referee_action(request, match_id: int):
             "set_scores",
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -511,7 +518,7 @@ def referee_action(request, match_id: int):
             "tb_active", "tb_points_a", "tb_points_b",
             "sets_a", "sets_b",
             "set_scores",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -536,7 +543,7 @@ def referee_action(request, match_id: int):
             "tb_active", "tb_points_a", "tb_points_b",
             "sets_a", "sets_b",
             "set_scores",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -583,45 +590,62 @@ def referee_action(request, match_id: int):
 
     # --- Démarrer / finir / réouvrir ---
     if action == "start":
-        # enlever le featured ailleurs
-        Match.objects.filter(event=match.event, is_featured=True).exclude(id=match.id).update(is_featured=False)
-
-        match.is_featured = True
-        match.order_index = None
-        match.mark_live()   # ✅ met status=LIVE + started_at si vide
-        match.save()
-
+        start_match(match)
         return JsonResponse({"ok": True})
 
     if action == "finish_left":
         match.winner_side = side_from_left()
         match.is_featured = False
-        match.order_index = None
         match.mark_finished()   # ✅ met status=FINISHED + finished_at
         match.save()
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             gid = match.group_id
+            _ev_left = match.event
             transaction.on_commit(lambda: recalc_one_group(gid))
+            from live.bracket import sync_final_bracket_for_event
+            transaction.on_commit(lambda ev=_ev_left: sync_final_bracket_for_event(ev))
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
-            from live.bracket import sync_final_winners_for_event
+            from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+            transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
+        if match.stage == Match.Stage.F:
+            _event = match.event
+            def _try_close_left(ev=_event):
+                from live.admin_views import close_event
+                try:
+                    close_event(ev)
+                except ValueError:
+                    pass
+            transaction.on_commit(_try_close_left)
 
         return JsonResponse({"ok": True})
 
     if action == "finish_right":
         match.winner_side = side_from_right()
         match.is_featured = False
-        match.order_index = None
         match.mark_finished()
         match.save()
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             gid = match.group_id
+            _ev_right = match.event
             transaction.on_commit(lambda: recalc_one_group(gid))
+            from live.bracket import sync_final_bracket_for_event
+            transaction.on_commit(lambda ev=_ev_right: sync_final_bracket_for_event(ev))
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
-            from live.bracket import sync_final_winners_for_event
+            from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+            transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
+        if match.stage == Match.Stage.F:
+            _event = match.event
+            def _try_close_right(ev=_event):
+                from live.admin_views import close_event
+                try:
+                    close_event(ev)
+                except ValueError:
+                    pass
+            transaction.on_commit(_try_close_right)
 
         return JsonResponse({"ok": True})
 
@@ -632,16 +656,28 @@ def referee_action(request, match_id: int):
 
         match.winner_side = winner          # repère modèle direct, pas de swap
         match.is_featured = False
-        match.order_index = None
         match.mark_finished()
         match.save()
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             gid = match.group_id
+            _ev_winner = match.event
             transaction.on_commit(lambda: recalc_one_group(gid))
+            from live.bracket import sync_final_bracket_for_event
+            transaction.on_commit(lambda ev=_ev_winner: sync_final_bracket_for_event(ev))
         if match.stage in (Match.Stage.QF, Match.Stage.SF):
-            from live.bracket import sync_final_winners_for_event
+            from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
             transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+            transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
+        if match.stage == Match.Stage.F:
+            _event = match.event
+            def _try_close_winner(ev=_event):
+                from live.admin_views import close_event
+                try:
+                    close_event(ev)
+                except ValueError:
+                    pass
+            transaction.on_commit(_try_close_winner)
 
         return JsonResponse({"ok": True})
 
@@ -669,7 +705,6 @@ def referee_action(request, match_id: int):
         match.set_scores = []
         match.status = Match.Status.SCHEDULED
         match.is_featured = False
-        match.order_index = None
         match.save(update_fields=[
             "points_a", "points_b",
             "games_a", "games_b",
@@ -677,7 +712,7 @@ def referee_action(request, match_id: int):
             "tb_active", "tb_points_a", "tb_points_b",
             "winner_side",
             "set_scores",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
         ])
         return JsonResponse({"ok": True})
 

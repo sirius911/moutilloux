@@ -43,7 +43,9 @@ tête de série sur une fiche joueur.
 |---|---|
 | Joueur | Avatar à initiales (couleur stable dérivée du nom) + nom complet |
 | Genre | Homme / Femme / Autre, ou « — » si non renseigné |
-| Né(e) en | Année de naissance ou « — » |
+| Âge | Âge calculé à partir de l'année de naissance (année courante − année de naissance), suffixé « ans », ou « — » si l'année n'est pas renseignée |
+| Téléphone | Numéro de téléphone ou « — » si non renseigné |
+| Email | Adresse email ou « — » si non renseignée |
 | Actions | **Éditer** → modale Fiche joueur en édition |
 
 - Tri par défaut : ordre alphabétique nom puis prénom.
@@ -80,6 +82,10 @@ en édition, sinon « Le joueur sera ajouté au registre. »).
 **Comportement**
 - Le bouton d'enregistrement est désactivé tant que prénom ou nom sont vides,
   et pendant la soumission (anti double-clic).
+- L'**année de naissance** saisie est persistée telle quelle (champ `birth_year`,
+  année seule) — **à la création comme à l'édition**. Le contrat d'API est
+  identique des deux côtés (`birth_year`) : une année saisie en création doit
+  réapparaître immédiatement dans la colonne Âge, sans ré-édition.
 - En **édition**, les champs non modifiés sont préservés : enregistrer sans
   toucher au téléphone ne l'efface pas.
 - À la réussite : la modale se ferme et la table se rafraîchit ; en création, le

@@ -26,8 +26,7 @@ const filtered = computed(() => {
   if (!search.value.trim()) return eventStore.allPlayers
   const q = search.value.toLowerCase()
   return eventStore.allPlayers.filter((p) =>
-    p.fullName.toLowerCase().includes(q) ||
-    (p.licenseNumber?.toLowerCase().includes(q) ?? false)
+    p.fullName.toLowerCase().includes(q)
   )
 })
 
@@ -95,9 +94,10 @@ function genderLabel(g: string | undefined | null) {
             <thead>
               <tr>
                 <th>Joueur</th>
-                <th>Licence</th>
                 <th>Genre</th>
-                <th>Né(e) en</th>
+                <th>Âge</th>
+                <th>Téléphone</th>
+                <th>Email</th>
                 <th class="col-actions-h">Actions</th>
               </tr>
             </thead>
@@ -110,23 +110,26 @@ function genderLabel(g: string | undefined | null) {
                   <span class="player-name">{{ p.fullName }}</span>
                 </td>
                 <td>
-                  <span class="license-number">{{ p.licenseNumber || '—' }}</span>
-                </td>
-                <td>
                   <span class="player-meta">{{ genderLabel(p.gender) }}</span>
                 </td>
                 <td>
-                  <span class="player-meta">{{ p.birthYear ?? '—' }}</span>
+                  <span class="player-meta">{{ p.birthYear ? (new Date().getFullYear() - p.birthYear) + ' ans' : '—' }}</span>
+                </td>
+                <td>
+                  <span class="player-meta">{{ p.phone || '—' }}</span>
+                </td>
+                <td>
+                  <span class="player-meta">{{ p.email || '—' }}</span>
                 </td>
                 <td class="col-actions">
                   <button class="row-btn" type="button" @click="openEdit(p)">Éditer</button>
                 </td>
               </tr>
               <tr v-if="filtered.length === 0 && !search.trim()">
-                <td colspan="5" class="empty-row">Aucun joueur dans le registre. Ajoutez votre premier joueur.</td>
+                <td colspan="6" class="empty-row">Aucun joueur dans le registre. Ajoutez votre premier joueur.</td>
               </tr>
               <tr v-else-if="filtered.length === 0">
-                <td colspan="5" class="empty-row">Aucun joueur trouvé</td>
+                <td colspan="6" class="empty-row">Aucun joueur trouvé</td>
               </tr>
             </tbody>
           </table>
@@ -265,7 +268,6 @@ function genderLabel(g: string | undefined | null) {
 
 .player-name { font-weight: 500; color: var(--ink-0); }
 .player-meta { font-size: 13px; color: var(--ink-3); }
-.license-number { font-family: monospace; font-size: 13px; color: var(--ink-2); }
 
 .col-actions-h { text-align: right; }
 .col-actions { text-align: right; white-space: nowrap; }

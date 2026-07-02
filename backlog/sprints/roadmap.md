@@ -10,4 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 06 — Refacto Sélecteur & Joueurs | `backlog/sprints/06-refacto-selecteur/sprint.md` |
+| 1 | 16 — Arbitre : démarrer & lire un match | `backlog/sprints/16-arbitre-demarrer-match/sprint.md` |
