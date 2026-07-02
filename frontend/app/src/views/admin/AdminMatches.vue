@@ -120,6 +120,7 @@ const totalScheduledMatches = computed(() =>
 // ── Pauses ─────────────────────────────────────────────────────────────────
 const addingPause = ref<Record<number, boolean>>({})
 const deletingBreak = ref<Record<number, boolean>>({})
+const starting = ref<Record<number, boolean>>({})
 
 async function addPause(dayId: number) {
   addingPause.value[dayId] = true
@@ -142,6 +143,18 @@ async function deletePause(breakId: number) {
     bannerError.value = e instanceof Error ? e.message : 'Erreur lors de la suppression de la pause.'
   } finally {
     deletingBreak.value[breakId] = false
+  }
+}
+
+async function startMatch(matchId: number) {
+  starting.value[matchId] = true
+  bannerError.value = ''
+  try {
+    await eventStore.startMatch(matchId)
+  } catch (e) {
+    bannerError.value = e instanceof Error ? e.message : 'Erreur lors du démarrage du match.'
+  } finally {
+    starting.value[matchId] = false
   }
 }
 
@@ -591,6 +604,15 @@ async function onDragEnd() {
                     {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
                   </span>
                   <span class="cal-badges">
+                    <button
+                      v-if="(element.data as Match).status === 'SCHEDULED'"
+                      class="row-start-btn"
+                      type="button"
+                      :disabled="starting[element.data.id]"
+                      @click.stop="startMatch(element.data.id)"
+                    >
+                      {{ starting[element.data.id] ? 'Démarrage…' : 'Démarrer' }}
+                    </button>
                     <span
                       v-if="restWarnings.has(element.data.id)"
                       class="rest-warning"
@@ -1064,6 +1086,25 @@ async function onDragEnd() {
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+.row-start-btn {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #000;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 3px 10px;
+  border-radius: var(--r-xs);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 150ms;
+}
+
+.row-start-btn:hover { opacity: 0.9; }
+.row-start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .drag-handle {
   font-size: 14px;

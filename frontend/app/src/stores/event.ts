@@ -254,6 +254,12 @@ export const useEventStore = defineStore('event', () => {
     await fetchMatches(eventId)
   }
 
+  async function startMatch(matchId: number) {
+    const editionId = activeEdition.value?.id
+    await post(`/api/matches/${matchId}/start/`, {})
+    await fetchCalendar(editionId)
+  }
+
   // ── Mutations — Sprint 08 (calendrier) ────────────────────────────────
 
   async function createPlayDay(editionId: number, payload: PlayDayPayload) {
@@ -468,7 +474,7 @@ export const useEventStore = defineStore('event', () => {
     // Mutations — P3 poules
     assignGroup, createGroup, autofillGroups, generateMatches,
     // Mutations — P4 planning
-    editMatch, featureMatch,
+    editMatch, featureMatch, startMatch,
     // Mutations — Sprint 08 calendrier
     createPlayDay, updatePlayDay, deletePlayDay,
     createBreak, updateBreak, deleteBreak,
