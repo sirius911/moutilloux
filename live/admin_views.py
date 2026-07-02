@@ -645,9 +645,9 @@ def start_match(match):
     Réutilisé par referee_action('start') et par l'API admin.
     Idempotent : si le match est déjà LIVE, no-op (pas de re-déclenchement de la
     rétrogradation des autres matchs ni du featured).
-    Retire is_featured des autres matchs de l'event, met is_featured=True, puis
-    mark_live() (status=LIVE + started_at si vide). Ne touche jamais order_index
-    (persistance calendrier — sprint 15 / #159).
+    Retire is_featured des autres matchs de l'edition, met is_featured=True,
+    puis mark_live() (status=LIVE + started_at si vide). Ne touche jamais
+    order_index (persistance calendrier — sprint 15 / #159).
     Retourne le match.
     """
     if match.status == Match.Status.LIVE:
@@ -656,7 +656,7 @@ def start_match(match):
     if match.side_a_id is None or match.side_b_id is None:
         raise ValueError("Les deux joueurs doivent être connus avant de démarrer le match.")
 
-    Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
+    Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
     match.is_featured = True
     match.mark_live()  # met status=LIVE + started_at si besoin
     match.save()

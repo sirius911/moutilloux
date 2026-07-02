@@ -706,7 +706,7 @@ def referee_action(request, match_id: int):
                 {"ok": False, "error": "Réouverture réservée à l'administrateur."},
                 status=403,
             )
-        Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
+        Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
         match.is_featured = True
         match.winner_side = None
         match.mark_live()  # repasse LIVE (+ started_at si besoin), conserve set_scores
