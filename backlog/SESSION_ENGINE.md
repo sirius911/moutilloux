@@ -373,36 +373,34 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #51
-**Sprint actif :** 17 — Panneau d'édition de match (3ᵉ session consécutive).
-Spec review toujours ⚠️ Dérive mineure sur les 2 specs ciblées — 0 nouvelle
-dérive détectée (les 8 dérives connues restent présentes, hors #224/#191
-traités cette session et #175 vérifiée résolue).
+**Dernière session :** 2026-07-02 — Session #52
+**Sprint actif :** 17 — Panneau d'édition de match (4ᵉ session consécutive).
+Spec review toujours ⚠️ Dérive mineure sur les 2 specs ciblées — 1 nouvelle
+dérive détectée (onglet Format incomplet, cf. #226), les 6 dérives connues
+avant cette session restent présentes (hors #220/#225 traités cette session).
+Aucune régression sur les 6 correctifs précédents.
 **Roadmap :** 5 sprints planifiés (17 → 21), 17 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#224](https://github.com/sirius911/moutilloux/issues/224)
-(✅ Approuvé, `extractApiError` priorise désormais `parsed.fields.__all__` avant
-`parsed.error` ; `EditMatchPanel.vue::save()` l'utilise au lieu de `e.message`
-brut — le golden path « garde FINISHED sans vainqueur » affiche maintenant le
-message métier précis) et [#191](https://github.com/sirius911/moutilloux/issues/191)
-(✅ Approuvé, confirmation via `ConfirmModal` avant de démarrer un match si un
-autre est déjà `LIVE`, câblée sur le bouton « Démarrer » d'`AdminMatches.vue`
-et sur le passage Statut → En direct dans `EditMatchPanel.vue`).
-**Issue fermée en housekeeping (spec review, sans implémentation) :**
-[#175](https://github.com/sirius911/moutilloux/issues/175) (docstring
-`api_match_feature` déjà corrigée, vérifiée puis fermée directement).
-**Nouveaux tickets créés :** aucun.
+**Tickets clôturés cette session :** 2 — [#220](https://github.com/sirius911/moutilloux/issues/220)
+(✅ Approuvé, confirmation `ConfirmModal` avant de Terminer un match — même
+patron que #191/Démarrer) et [#225](https://github.com/sirius911/moutilloux/issues/225)
+(✅ Approuvé, `finalize_match_edit` réinitialise `winner_side` sur passage à
+`CANCELED` — symétrique d'une ligne de #221).
+**Nouveaux tickets créés :** [#226](https://github.com/sirius911/moutilloux/issues/226)
+(onglet Format incomplet — pas de sélecteur de préréglage nommé ni de champs
+`tb_win_by_two`/`deciding_set_mode`/`deciding_tb_points_to_win`, mineure à
+moyenne, milestone Sprint 17 ; documenté comme hors scope explicite dans le
+plan de #7, ticketé maintenant que #7 est clos).
 **Branche :** `claude/sprint/17-panneau-edition-match`
-**Contexte :** Session 51 — sprint 17 pas encore clôturable : spec review
-⚠️ (pas encore ✅ Conforme), et 6 issues restent ouvertes sur le milestone
-(`#168, #192, #193, #194, #220, #225`) après les 2 tickets traités cette
-session (max 2/session). La prochaine session planifiée continuera le backlog
-engine sur ce même sprint (pas de changement de sprint actif). Note pour la
-suite : #220 (Terminer sans confirmation, majeure) est le symétrique de #191
-côté transition « Terminer » — bon candidat prioritaire pour la session #52,
-avec le même patron `ConfirmModal` déjà en place dans `EditMatchPanel.vue`.
-#225 (CANCELED ne réinitialise pas `winner_side`, mineure) est le symétrique
-back de #221, déjà résolu par la session #50 — pattern de correction identique
-disponible dans `live/referee_views.py:711`.
+**Contexte :** Session 52 — sprint 17 pas encore clôturable : spec review
+⚠️ (pas encore ✅ Conforme), et 5 issues restent ouvertes sur le milestone
+(`#168, #192, #193, #194, #226`) après les 2 tickets traités cette session
+(max 2/session). La prochaine session planifiée continuera le backlog engine
+sur ce même sprint (pas de changement de sprint actif). Les 5 issues
+restantes sont toutes mineures — le sprint se rapproche de sa clôture (plus
+aucune majeure ouverte). Note pour la suite : cette session (#52) faisait
+suite à une session #51 déroulée hors de cette conversation (branche déjà
+avancée de 2 commits au démarrage) — aucun conflit à la reprise, protocole
+d'étape 0 (fetch/resync/dirty-check) suffisant pour absorber ce cas.
 
 Parent effectif : `claude/sprint/16-arbitre-demarrer-match` (le sprint 16 est
 clos côté planification/milestone, mais sa PR #178 n'est pas encore mergée
