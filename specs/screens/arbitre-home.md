@@ -89,8 +89,8 @@ statut, mis à jour à chaque rafraîchissement.
 - **Rafraîchissement périodique** ~5 s (`usePolling`), pour refléter les passages
   En direct / Terminé et l'ordre recalé par l'admin. La liste et l'horloge de
   synchronisation se mettent à jour ensemble.
-- **Pause onglet caché** : le polling **doit** se suspendre quand l'onglet n'est pas
-  visible (à implémenter dans `usePolling`, TODO transversal) et reprendre au retour.
+- **Pause onglet caché** : le polling se suspend quand l'onglet n'est pas visible
+  (`usePolling`, `visibilitychange`) et reprend au retour.
 - **Auth** : l'endpoint **doit** exiger le rôle arbitre (`@referee_required`).
   *(⚠ Aujourd'hui `@login_required` seul — tout compte connecté y accède ;
   à durcir, voir [[cycle-de-vie-match]].)* La route `/arbitre/*` est déjà gardée par

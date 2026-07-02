@@ -140,12 +140,9 @@ son score** ; il pourra être repris).
   signale l'erreur, l'admin corrige.
 - **Effet** : repasse `LIVE` en **conservant** le score et l'historique des sets
   (`set_scores`). Les corrections se font ensuite (drawer arbitre ou onglet Score
-  admin) ; le recalcul poule/tableau est rejoué à la clôture suivante.
-- **⚠ Correction attendue vs code actuel** : `reopen` (`referee_views.py:695`)
-  **efface aujourd'hui `set_scores`** et repasse en `SCHEDULED` — ce qui détruit le
-  score qu'on veut corriger. La spec impose de **conserver** `set_scores` et de
-  repasser en `LIVE`. La ré-ouverture d'urgence côté épreuve
-  ([[cycle-de-vie-epreuve]], « Rouvrir ») partage cette contrainte.
+  admin) ; le recalcul poule/tableau est rejoué à la clôture suivante. La
+  ré-ouverture d'urgence côté épreuve ([[cycle-de-vie-epreuve]], « Rouvrir »)
+  partage cette contrainte.
 
 ---
 
@@ -168,12 +165,6 @@ Le match **garde son `order_index`** en passant `LIVE` puis `FINISHED` : un matc
 joué **reste à sa place** dans la journée (verrouillé), les heures estimées aval se
 recalant sur son heure réelle (voir [[planning]] et [[admin-matchs]]). Seuls
 l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`order_index`.
-
-> **⚠ Correction attendue vs code actuel.** Aujourd'hui `démarrer`, `terminer` et
-> `forfait` posent tous `match.order_index = None` (`referee_views.py`), ce qui
-> **arrache** le match de sa séquence dès qu'on le lance. La spec impose la
-> **persistance** de `order_index` à travers `LIVE`/`FINISHED`. *(C'est l'objet du
-> sprint 15 « cycle de vie d'un match ».)*
 
 ---
 

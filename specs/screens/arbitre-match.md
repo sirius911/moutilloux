@@ -56,7 +56,7 @@ L'écran a **trois modes**, dictés par `status` :
 - **Retour** (←) vers l'accueil ([[arbitre-home]]).
 - **Étape + format** au centre : l'étape (« Poule A », « Quart »…) et un **libellé de
   format lisible** (« 1 set à 5 · TB à 4 »), pour que l'arbitre voie les règles qu'il
-  applique. *(⚠ `formatLabel` est à ajouter à `_pack_match` — voir [[cycle-de-vie-match]].)*
+  applique (`formatLabel` dans `_pack_match` — voir [[cycle-de-vie-match]]).
 - **Badge d'état** : EN COURS / JEU DÉCISIF (tie-break actif) / TERMINÉ.
 
 ### Bloc score
@@ -164,8 +164,8 @@ match à zéro (`SCHEDULED`, score effacé). À réserver aux vrais faux départ
 - **Rafraîchissement** ~2 s (`usePolling`). Après **chaque action**, l'écran
   **refait un fetch immédiat** (le moteur renvoie `{ok:true}` sans l'état) pour un
   retour instantané, sans attendre le tick suivant.
-- **Pause onglet caché** : le polling **doit** se suspendre onglet non visible
-  (TODO transversal `usePolling`).
+- **Pause onglet caché** : le polling se suspend onglet non visible (`usePolling`,
+  `visibilitychange`).
 - **Connectivité** : mode **en ligne** (v1). Si un tap échoue (réseau), l'action est
   **perdue** et l'erreur s'affiche — pas de file d'attente optimiste. Le prochain tick
   resynchronise l'état réel depuis le serveur. *(Une saisie hors-ligne avec rejeu est
