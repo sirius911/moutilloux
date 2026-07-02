@@ -16,7 +16,7 @@ const eventStore = useEventStore()
 const FORMAT_SETS_TO_BEST_OF: Record<number, number> = { 1: 1, 2: 3, 3: 5 }
 const BEST_OF_TO_FORMAT_SETS: Record<number, number> = { 1: 1, 3: 2, 5: 3 }
 
-const tab = ref<'score' | 'format' | 'planning' | 'history'>('score')
+const tab = ref<'score' | 'format' | 'planning'>('score')
 const saving = ref(false)
 const error = ref('')
 
@@ -115,7 +115,6 @@ const tabItems = [
   { id: 'score' as const, label: 'Score' },
   { id: 'format' as const, label: 'Format' },
   { id: 'planning' as const, label: 'Planning' },
-  { id: 'history' as const, label: 'Historique' },
 ]
 
 const winnerOptions = computed(() => [
@@ -402,18 +401,6 @@ async function save() {
               <p class="slide-hint">
                 Un seul match peut être mis en avant à la fois. Si vous activez ce match, celui qui est actuellement à l'antenne sera retiré.
               </p>
-            </div>
-          </template>
-
-          <!-- Historique -->
-          <template v-if="tab === 'history'">
-            <div class="slide-section">
-              <h4>Activité</h4>
-              <div class="log">
-                <div class="log-row log-empty">
-                  <span>Historique non disponible pour ce match.</span>
-                </div>
-              </div>
             </div>
           </template>
         </div>
@@ -783,38 +770,6 @@ async function save() {
 
 .sw input:checked ~ i { background: var(--accent); }
 .sw input:checked ~ i::after { transform: translateX(16px); }
-
-/* History log */
-.log {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-.log-row {
-  display: grid;
-  grid-template-columns: 90px 160px 1fr;
-  gap: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  border-bottom: 1px solid var(--line-1);
-  align-items: center;
-}
-
-.log-row:last-child { border-bottom: none; }
-
-.log-empty {
-  grid-template-columns: 1fr;
-  color: var(--ink-3);
-  text-align: center;
-  padding: 20px;
-}
-
-.log-time { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
-.log-who { font-size: 12px; color: var(--ink-2); font-weight: 500; }
-.log-what { color: var(--ink-0); }
 
 /* ── Format lock ──────────────────────────────────────────────────── */
 .format-lock-banner {
