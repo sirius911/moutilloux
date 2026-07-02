@@ -373,30 +373,31 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #42
+**Dernière session :** 2026-07-02 — Session #43
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
 **Roadmap :** 1 sprint restant (16), en cours.
-**Tickets clôturés cette session :** 2 (#185 ✅, #182 ✅)
+**Tickets clôturés cette session :** 2 (#172 ⚠️, #174 ✅)
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 5 (#172, #173, #174, #183, #184) — sprint non clos
-**Contexte :** Session 42 — spec review de suivi des 3 specs du sprint : toujours
+**Issues Sprint 16 restantes :** 3 (#173, #183, #184) — sprint non clos
+**Contexte :** Session 43 — spec review de suivi des 3 specs du sprint : toujours
 `⚠️ Dérive mineure` sur les 3, aucune nouvelle dérive (les 5 restantes étaient déjà
-ticketées) ; confirmation que #180/#181 (corrigés en session #41) sont bien
-effectifs en code (file arbitre : sides non résolus visibles, tri calendaire
-correct). Tickets traités cette session (2, max atteint) : #185 (`reopen` dans
-`live/referee_views.py` repassait le match en `SCHEDULED` et effaçait
-`set_scores` au lieu de repasser en `LIVE` en conservant le score — corrigé via
-`match.mark_live()`, comme `start_match`, avec `is_featured` remis à `True` et
-`winner_side` réinitialisé) et #182 (aucune garde serveur n'empêchait le
-scoring d'un match `SCHEDULED` via appel API direct — ajout d'un ensemble
-`SCORING_ACTIONS` dans `referee_action` rejeté (400) si `match.status !=
-LIVE`, sauf `start` ; protège aussi les matchs `CANCELED` en effet de bord).
-Les deux vérifiés en shell Django (transaction rollback, non persisté) et
-approuvés sans réserve ; aucun fichier partagé à câbler (seul
-`live/referee_views.py` touché, blocs disjoints). Sprint 16 non clos : 5
-issues restantes (#172 formatLabel, #173 affichage format, #174 durcissement
-auth, #183 bouton Démarrer non désactivé, #184 portée `is_featured`) —
-reprise à la **prochaine échéance planifiée**. Parent effectif toujours
-`claude/sprint/15-cycle-vie-match` (PR #169 du sprint 15 pas encore mergée
-dans `main`). PR du sprint 16 déjà ouverte : #178 (accumule les commits au
-fil des sessions, rien à créer).
+ticketées) ; confirmation que #182/#185 (corrigés en session #42) sont bien
+effectifs en code (garde serveur scoring hors LIVE, reopen conserve
+`set_scores`). Tickets traités cette session (2, max atteint) : #172
+(`_format_label` ajouté à `live/api_views.py`, clé `formatLabel` exposée dans
+`_pack_match`, dérivée de `games_to_win`/`tb_at`/`best_of` — `MANUAL` →
+« Manuel », sinon « 1 set à N · TB à M » ou « BO3 · TB à M » — vérifié contre
+les 5 presets réels ; approuvé **avec réserves** : le contenu narratif des
+specs `arbitre-match.md`/`cycle-de-vie-match.md` reste inchangé, conforme au
+protocole qui ne permet à l'agent de maintenance de toucher que le champ
+`fichiers:` YAML, déjà à jour) et #174 (`api_arbitre_matches` passée de
+`@login_required` à `@referee_required` dans `live/api_views.py`, cohérente
+avec la garde déjà en place sur `POST /arbitre/match/<id>/action/` ; pas
+d'import circulaire vérifié, approuvé sans réserve). Aucun fichier partagé à
+câbler (seul `live/api_views.py` touché, blocs disjoints). Aucune nouvelle
+issue créée (spec review sans dérive inédite). Sprint 16 non clos : 3 issues
+restantes (#173 affichage format front, #183 bouton Démarrer non désactivé,
+#184 portée `is_featured`) — reprise à la **prochaine échéance planifiée**.
+Parent effectif toujours `claude/sprint/15-cycle-vie-match` (PR #169 du
+sprint 15 pas encore mergée dans `main`). PR du sprint 16 déjà ouverte : #178
+(accumule les commits au fil des sessions, rien à créer).
