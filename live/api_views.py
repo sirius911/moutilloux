@@ -1074,7 +1074,10 @@ def api_match_start(request, match_id):
     Aucun payload attendu.
     """
     match = get_object_or_404(Match, pk=match_id)
-    start_match(match)
+    try:
+        start_match(match)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"match": _pack_match(match)})
 
 

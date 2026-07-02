@@ -606,7 +606,10 @@ def referee_action(request, match_id: int):
 
     # --- Démarrer / finir / réouvrir ---
     if action == "start":
-        start_match(match)
+        try:
+            start_match(match)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
         return JsonResponse({"ok": True})
 
     if action == "finish_left":

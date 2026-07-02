@@ -653,6 +653,9 @@ def start_match(match):
     if match.status == Match.Status.LIVE:
         return match
 
+    if match.side_a_id is None or match.side_b_id is None:
+        raise ValueError("Les deux joueurs doivent être connus avant de démarrer le match.")
+
     Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
     match.is_featured = True
     match.mark_live()  # met status=LIVE + started_at si besoin

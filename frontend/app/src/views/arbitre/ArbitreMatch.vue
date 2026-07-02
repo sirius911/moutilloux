@@ -232,7 +232,12 @@ async function handleStart() {
       <!-- Footer actions -->
       <footer class="arb-footer">
         <template v-if="isScheduled">
-          <button class="action-btn action-btn--primary" title="Démarrer le match" @click="handleStart">
+          <button
+            class="action-btn action-btn--primary"
+            title="Démarrer le match"
+            :disabled="!match?.sideA || !match?.sideB"
+            @click="handleStart"
+          >
             <span class="action-icon">▶</span>
             <span class="action-label">Démarrer le match</span>
           </button>
