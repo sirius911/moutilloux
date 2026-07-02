@@ -373,28 +373,31 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #40
+**Dernière session :** 2026-07-02 — Session #41
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
 **Roadmap :** 1 sprint restant (16), en cours.
-**Tickets clôturés cette session :** 2 (#6 ✅, #179 ✅)
+**Tickets clôturés cette session :** 2 (#180 ✅, #181 ✅)
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 8 (#172, #173, #174, #180, #181, #182, #183, #184) — sprint non clos
-**Contexte :** Session 40 — spec review complète des 3 specs du sprint (relecture
-point par point du code réel, pas seulement des commits). Les 3 specs ressortent
-`⚠️ Dérive mineure` (à 🟠 par endroits), avec 6 nouvelles dérives non encore
-ticketées : 🟠 aucune garde serveur admin-seul sur `reopen` (#179, **corrigé
-cette session**), 🟠 file arbitre exclut totalement les matchs à sides non
-résolus au lieu d'afficher les étiquettes de provenance (#180), 🟠 tri
-`-status` en clé primaire casse l'ordre calendaire dans l'onglet « Tous »
-(#181), 🟠 aucune garde serveur n'empêche le scoring d'un match encore
-`SCHEDULED` via appel API direct (#182), 🟡 bouton Démarrer non désactivé si
-joueurs non résolus (#183), 🟡 portée `is_featured` (event) incohérente avec
-l'invariant `LIVE` (edition) (#184). Tickets traités cette session (2, max
-atteint) : #6 (usePolling — pause sur `visibilitychange`, fichier partagé
-`usePolling.ts` implémenté directement par l'orchestrateur, pas délégué) et
-#179 (garde 403 sur `reopen` si non-superuser, dans `referee_action` /
-`live/referee_views.py`). Les deux approuvés sans réserve bloquante. Sprint 16
-non clos : 8 issues restantes (#172 formatLabel, #173 affichage format, #174
-durcissement auth, #180, #181, #182, #183, #184) — reprise à la **prochaine
-échéance planifiée**. Parent effectif toujours `claude/sprint/15-cycle-vie-match`
-(PR #169 du sprint 15 pas encore mergée dans `main`).
+**Issues Sprint 16 restantes :** 7 (#172, #173, #174, #182, #183, #184, #185) — sprint non clos
+**Contexte :** Session 41 — spec review de suivi des 3 specs du sprint : toujours
+`⚠️ Dérive mineure` (à 🟠 par endroits) sur les 3, mais confirmation que #6 et
+#179 (corrigés en session #40) sont bien effectifs en code (`usePolling.ts`
+pause bien sur `visibilitychange` ; `reopen` renvoie bien 403 si non-superuser).
+1 nouvelle dérive trouvée et ticketée : 🟠 `reopen` repasse le match en
+`SCHEDULED` et efface `set_scores` au lieu de repasser en `LIVE` en conservant
+le score (#185 — la garde d'accès #179 a corrigé le *qui peut appeler*, pas la
+*transition elle-même*). Tickets traités cette session (2, max atteint) : #180
+(file arbitre — retrait des `.exclude(side_a__isnull=True).exclude(side_b__isnull=True)`
+dans `api_arbitre_matches`, `live/api_views.py`, pour laisser apparaître les
+matchs de tableau à sides non résolus avec repli sur les étiquettes de
+provenance) et #181 (même fonction — retrait de `"-status"` du tri primaire de
+`active_qs`, qui cassait l'ordre calendaire de l'onglet « Tous » en plaçant
+tous les `SCHEDULED` avant tous les `LIVE`). Les deux approuvés sans réserve,
+aucun fichier partagé à câbler (seul `live/api_views.py` touché, hors
+périmètre de contention). Sprint 16 non clos : 7 issues restantes (#172
+formatLabel, #173 affichage format, #174 durcissement auth, #182 garde
+scoring SCHEDULED, #183 bouton Démarrer non désactivé, #184 portée
+`is_featured`, #185 reopen/set_scores) — reprise à la **prochaine échéance
+planifiée**. Parent effectif toujours `claude/sprint/15-cycle-vie-match`
+(PR #169 du sprint 15 pas encore mergée dans `main`). PR du sprint 16 déjà
+ouverte : #178 (accumule les commits au fil des sessions, rien à créer).
