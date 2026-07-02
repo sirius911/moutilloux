@@ -18,6 +18,7 @@ export interface MatchEditPayload {
   scheduled_time?: string | null
   court?: string | null
   server?: 'A' | 'B' | null
+  is_featured?: boolean
   sets_a?: number
   sets_b?: number
   games_a?: number

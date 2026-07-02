@@ -97,7 +97,7 @@ class MatchEditForm(forms.ModelForm):
         model = Match
         fields = [
             # Gestion
-            "status", "scheduled_time", "court", "order_index",
+            "status", "scheduled_time", "court", "order_index", "is_featured",
 
             # Règles modulables
             "match_format", "games_to_win", "tb_at", "best_of",
@@ -116,6 +116,7 @@ class MatchEditForm(forms.ModelForm):
             "scheduled_time": "Heure prévue",
             "court": "Court",
             "order_index": "Ordre (file)",
+            "is_featured": "Mis en avant (TV)",
 
             # Règles
             "match_format": "Format (preset)",
@@ -194,6 +195,15 @@ class MatchEditForm(forms.ModelForm):
 
         if cleaned.get("status") == Match.Status.FINISHED and not cleaned.get("winner_side"):
             self.add_error(None, "Un match Terminé doit avoir un vainqueur (Vainqueur : A ou B).")
+
+        # is_featured : seule la transition vers False est acceptée par ce form
+        # (extinction depuis le panneau d'édition). L'activation reste réservée à
+        # start_match()/api_match_feature, qui gèrent l'invariant mono-LIVE
+        # (rétrogradation des autres matchs featured) — cf.
+        # specs/technical/cycle-de-vie-match.md. Toute tentative de passer
+        # False -> True par ce form est ignorée silencieusement.
+        if cleaned.get("is_featured") and not (inst and inst.pk and inst.is_featured):
+            cleaned["is_featured"] = False
 
         # Ne pas appliquer de preset si match en cours
         if inst and inst.pk and inst.status == Match.Status.LIVE:

@@ -143,6 +143,7 @@ const planningStatusOptions = [
 
 const showStartConfirm = ref(false)
 const showFinishConfirm = ref(false)
+const showFeatureConfirm = ref(false)
 
 function hasOtherLiveMatch(): boolean {
   const allMatches = eventStore.calendar?.playDays.flatMap((d) => d.matches) ?? []
@@ -157,6 +158,11 @@ async function save() {
 
   if (status.value === 'finished' && props.match.status !== 'FINISHED' && !showFinishConfirm.value) {
     showFinishConfirm.value = true
+    return
+  }
+
+  if (featured.value && !props.match.isFeatured && !showFeatureConfirm.value) {
+    showFeatureConfirm.value = true
     return
   }
 
@@ -196,19 +202,15 @@ async function save() {
       tb_at: Number(formatTb.value),
       tb_points_to_win: Number(formatTbPoints.value),
       server: formatServer.value,
+      is_featured: featured.value,
     })
     if (featured.value && !props.match.isFeatured) {
-      const ok = window.confirm(
-        'Ce match passe EN DIRECT et devient le match affiché sur la TV. Le match actuellement à l\'antenne est retiré.\n\nConfirmer ?'
-      )
-      if (!ok) {
-        featured.value = false
-        // Les autres modifications ont déjà été enregistrées — on ferme sans
-        // déclencher la mise en avant.
-        emit('saved')
-        emit('close')
-        return
-      }
+      // L'activation doit toujours passer par start_match() (mark_live +
+      // rétrogradation des autres matchs featured, invariant mono-LIVE —
+      // cf. specs/technical/cycle-de-vie-match.md) : MatchEditForm.clean()
+      // neutralise silencieusement toute activation via le payload générique
+      // ci-dessus si le statut n'est pas lui-même passé à LIVE, donc c'est
+      // ce second appel dédié qui active réellement la mise en avant.
       await eventStore.featureMatch(eventId, props.match.id)
     }
     emit('saved')
@@ -434,6 +436,15 @@ async function save() {
       :danger="false"
       @confirm="save"
       @close="showFinishConfirm = false"
+    />
+    <ConfirmModal
+      v-if="showFeatureConfirm"
+      title="Mettre ce match en avant ?"
+      body="Ce match passe EN DIRECT et devient le match affiché sur la TV. Le match actuellement à l'antenne est retiré."
+      confirm-label="Mettre en avant"
+      :danger="false"
+      @confirm="save"
+      @close="showFeatureConfirm = false"
     />
   </Teleport>
 </template>
