@@ -373,27 +373,28 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #39
+**Dernière session :** 2026-07-02 — Session #40
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
 **Roadmap :** 1 sprint restant (16), en cours.
-**Tickets clôturés cette session :** 2 (#170 ✅, #171 ✅)
+**Tickets clôturés cette session :** 2 (#6 ✅, #179 ✅)
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 4 (#172, #173, #174, #6) — sprint non clos
-**Contexte :** Session 39 — premiers tickets du Sprint 16, socle back + cœur front.
-Spec review en début de session : `arbitre-match.md` ❌ (aucune gestion des 3
-états, corrigée cette session par #171), `arbitre-home.md` ⚠️ (auth
-`@login_required` seul, déjà ticketée #174), `cycle-de-vie-match.md` ⚠️
-(`démarrer` dupliqué arbitre/admin, déjà ticketée #170). Aucune nouvelle issue
-créée (dérives déjà couvertes par la planification du 2026-07-01). #170 (service
-`start_match` consolidé depuis `feature_match` existant dans `admin_views.py`,
-idempotent, alias `feature_match` conservé, nouvel endpoint admin
-`api_match_start`, route câblée par l'orchestrateur dans `live/urls.py`) et #171
-(ArbitreMatch : 3 états SCHEDULED/LIVE/FINISHED, bouton Démarrer avec
-confirmation si un autre match est déjà LIVE, Reset désactivé en FINISHED)
-implémentés et approuvés sans réserve, séquencés l'un après l'autre (#171
-dépendait du service livré par #170). Aucune nouvelle dérive hors périmètre.
-Sprint 16 non clos : 4 issues restantes (#172 formatLabel, #173 affichage
-format, #174 durcissement auth, #6 pause polling onglet caché) — reprise à la
-**prochaine échéance planifiée**. PR sprint 16 : à créer/mettre à jour après
-push (parent effectif encore `claude/sprint/15-cycle-vie-match`, PR #169 du
-sprint 15 pas encore mergée dans `main`).
+**Issues Sprint 16 restantes :** 8 (#172, #173, #174, #180, #181, #182, #183, #184) — sprint non clos
+**Contexte :** Session 40 — spec review complète des 3 specs du sprint (relecture
+point par point du code réel, pas seulement des commits). Les 3 specs ressortent
+`⚠️ Dérive mineure` (à 🟠 par endroits), avec 6 nouvelles dérives non encore
+ticketées : 🟠 aucune garde serveur admin-seul sur `reopen` (#179, **corrigé
+cette session**), 🟠 file arbitre exclut totalement les matchs à sides non
+résolus au lieu d'afficher les étiquettes de provenance (#180), 🟠 tri
+`-status` en clé primaire casse l'ordre calendaire dans l'onglet « Tous »
+(#181), 🟠 aucune garde serveur n'empêche le scoring d'un match encore
+`SCHEDULED` via appel API direct (#182), 🟡 bouton Démarrer non désactivé si
+joueurs non résolus (#183), 🟡 portée `is_featured` (event) incohérente avec
+l'invariant `LIVE` (edition) (#184). Tickets traités cette session (2, max
+atteint) : #6 (usePolling — pause sur `visibilitychange`, fichier partagé
+`usePolling.ts` implémenté directement par l'orchestrateur, pas délégué) et
+#179 (garde 403 sur `reopen` si non-superuser, dans `referee_action` /
+`live/referee_views.py`). Les deux approuvés sans réserve bloquante. Sprint 16
+non clos : 8 issues restantes (#172 formatLabel, #173 affichage format, #174
+durcissement auth, #180, #181, #182, #183, #184) — reprise à la **prochaine
+échéance planifiée**. Parent effectif toujours `claude/sprint/15-cycle-vie-match`
+(PR #169 du sprint 15 pas encore mergée dans `main`).
