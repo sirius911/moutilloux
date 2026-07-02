@@ -1023,6 +1023,7 @@ def api_match_edit(request, match_id):
         return JsonResponse({"error": "Corps JSON invalide"}, status=400)
 
     match = get_object_or_404(Match, pk=match_id)
+    was_live = match.status == Match.Status.LIVE
 
     fields = MatchEditForm.Meta.fields
     merged = {}
@@ -1040,8 +1041,10 @@ def api_match_edit(request, match_id):
 
     try:
         form.save()
-        finalize_match_edit(form.instance)
+        finalize_match_edit(form.instance, was_live=was_live)
     except IntegrityError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
     return JsonResponse({"match": _pack_match(form.instance)})

@@ -585,7 +585,7 @@ def reopen_event(event):
 # Actions : Matches (edit + feature)
 # -----------------------
 
-def finalize_match_edit(match):
+def finalize_match_edit(match, was_live: bool = False):
     """
     Service : logique post-sauvegarde commune à l'édition d'un match
     (sanitisation des valeurs négatives, cohérence du tie-break, retrait
@@ -593,8 +593,25 @@ def finalize_match_edit(match):
     synchronisation du tableau — mêmes effets que le chemin arbitre,
     cf. specs/technical/cycle-de-vie-match.md).
     Le match est supposé déjà passé par MatchEditForm.save().
+
+    `was_live` : statut LIVE du match *avant* l'édition (déterminé par l'appelant
+    avant que le form ne mute l'instance). Si le form vient de faire passer le
+    match à LIVE alors qu'il ne l'était pas avant, on route vers start_match()
+    plutôt que de laisser le statut brut posé par le form, afin de préserver
+    l'invariant mono-LIVE (rétrogradation des autres matchs + is_featured +
+    started_at — cf. specs/technical/cycle-de-vie-match.md).
+
     Retourne le match.
     """
+    if match.status == Match.Status.LIVE and not was_live:
+        # invariant mono-LIVE : router vers start_match() (mark_live + featured +
+        # rétrogradation) plutôt que de laisser le form poser le statut brut
+        # (cf. specs/technical/cycle-de-vie-match.md).
+        match.status = Match.Status.SCHEDULED
+        match.save()
+        start_match(match)
+        return match
+
     for f in ["points_a", "points_b", "games_a", "games_b", "sets_a", "sets_b", "tb_points_a", "tb_points_b"]:
         val = getattr(match, f, 0)
         if val is None or val < 0:
@@ -638,12 +655,13 @@ def finalize_match_edit(match):
 def match_edit(request, event_id: int, match_id: int):
     event = get_object_or_404(Event, id=event_id)
     match = get_object_or_404(Match, id=match_id, event=event)
+    was_live = match.status == Match.Status.LIVE
 
     form = MatchEditForm(request.POST or None, instance=match)
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        finalize_match_edit(form.instance)
+        finalize_match_edit(form.instance, was_live=was_live)
         messages.success(request, "Match mis à jour.")
         return redirect("panel_matches", event_id=event.id)
 
