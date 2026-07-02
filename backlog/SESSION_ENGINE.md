@@ -373,34 +373,32 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #52
-**Sprint actif :** 17 — Panneau d'édition de match (4ᵉ session consécutive).
-Spec review toujours ⚠️ Dérive mineure sur les 2 specs ciblées — 1 nouvelle
-dérive détectée (onglet Format incomplet, cf. #226), les 6 dérives connues
-avant cette session restent présentes (hors #220/#225 traités cette session).
-Aucune régression sur les 6 correctifs précédents.
+**Dernière session :** 2026-07-02 — Session #53
+**Sprint actif :** 17 — Panneau d'édition de match (5ᵉ session consécutive).
+Progrès notable : `specs/technical/cycle-de-vie-match.md` passe à **✅ Conforme**
+sur le golden path (invariant mono-LIVE, gardes Démarrer/Terminer, FINISHED
+avec vainqueur, CANCELED sans vainqueur — tous vérifiés en place et
+fonctionnels). `specs/screens/admin-matchs.md` reste ⚠️ Dérive mineure. 1
+nouvelle dérive détectée (duplication de la logique de réouverture entre
+`admin_views.py` et `referee_views.py`, cf. #227 — pas de bug fonctionnel,
+dette de duplication contraire à CLAUDE.md §5).
 **Roadmap :** 5 sprints planifiés (17 → 21), 17 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#220](https://github.com/sirius911/moutilloux/issues/220)
-(✅ Approuvé, confirmation `ConfirmModal` avant de Terminer un match — même
-patron que #191/Démarrer) et [#225](https://github.com/sirius911/moutilloux/issues/225)
-(✅ Approuvé, `finalize_match_edit` réinitialise `winner_side` sur passage à
-`CANCELED` — symétrique d'une ligne de #221).
-**Nouveaux tickets créés :** [#226](https://github.com/sirius911/moutilloux/issues/226)
-(onglet Format incomplet — pas de sélecteur de préréglage nommé ni de champs
-`tb_win_by_two`/`deciding_set_mode`/`deciding_tb_points_to_win`, mineure à
-moyenne, milestone Sprint 17 ; documenté comme hors scope explicite dans le
-plan de #7, ticketé maintenant que #7 est clos).
+**Tickets clôturés cette session :** 2 — [#192](https://github.com/sirius911/moutilloux/issues/192)
+(✅ Approuvé, retrait de l'onglet Historique, décision 5) et
+[#168](https://github.com/sirius911/moutilloux/issues/168) (✅ Approuvé,
+retrait de l'option « Abandon » du sélecteur Vainqueur, décision 6).
+**Nouveaux tickets créés :** [#227](https://github.com/sirius911/moutilloux/issues/227)
+(logique de réouverture FINISHED→LIVE dupliquée entre `finalize_match_edit`
+et `referee_action('reopen')`, mineure, milestone Sprint 17 — extraire un
+service `reopen_match()` réutilisable).
 **Branche :** `claude/sprint/17-panneau-edition-match`
-**Contexte :** Session 52 — sprint 17 pas encore clôturable : spec review
-⚠️ (pas encore ✅ Conforme), et 5 issues restent ouvertes sur le milestone
-(`#168, #192, #193, #194, #226`) après les 2 tickets traités cette session
-(max 2/session). La prochaine session planifiée continuera le backlog engine
-sur ce même sprint (pas de changement de sprint actif). Les 5 issues
-restantes sont toutes mineures — le sprint se rapproche de sa clôture (plus
-aucune majeure ouverte). Note pour la suite : cette session (#52) faisait
-suite à une session #51 déroulée hors de cette conversation (branche déjà
-avancée de 2 commits au démarrage) — aucun conflit à la reprise, protocole
-d'étape 0 (fetch/resync/dirty-check) suffisant pour absorber ce cas.
+**Contexte :** Session 53 — sprint 17 pas encore clôturable : spec review
+⚠️ sur `admin-matchs.md` (pas encore ✅ Conforme sur les 2 specs), et 4 issues
+restent ouvertes sur le milestone (`#193, #194, #226, #227`) après les 2
+tickets traités cette session (max 2/session). Toutes mineures — le sprint
+continue de se rapprocher de sa clôture. La prochaine session planifiée
+continuera le backlog engine sur ce même sprint (pas de changement de sprint
+actif).
 
 Parent effectif : `claude/sprint/16-arbitre-demarrer-match` (le sprint 16 est
 clos côté planification/milestone, mais sa PR #178 n'est pas encore mergée
