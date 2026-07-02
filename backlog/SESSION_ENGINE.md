@@ -373,35 +373,40 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #45
+**Dernière session :** 2026-07-02 — Session #46
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
-**Roadmap :** 1 sprint restant (16), en cours.
-**Tickets clôturés cette session :** 2 (#184 ⚠️, #186 ⚠️)
+**Roadmap :** 1 sprint restant (16) — **fonctionnellement terminé, clôture bloquée** (voir ci-dessous).
+**Tickets clôturés cette session :** 2 (#187 ✅, #188 ✅)
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 1 (#187, mineure) — sprint non clos
-**Contexte :** Session 45 — spec review des 3 specs du sprint : arbitre-match
-⚠️ et cycle-de-vie-match ⚠️ (dérive majeure relevée par le reviewer — tiroir
-Corrections jamais câblé côté front — confirmée **explicitement hors-périmètre
-sprint 16**, déjà réservée au sprint 17 dans `sprint.md`, donc pas de nouveau
-ticket), arbitre-home reste ✅ Conforme. 1 nouvelle dérive ticketée : #187
-(notes ⚠ obsolètes dans les 3 specs pour des correctifs déjà livrés —
+**Issues Sprint 16 restantes :** 0 — conditions de fin de sprint remplies.
+**Contexte :** Session 46 — spec review des 3 specs : arbitre-match ✅
+Conforme, cycle-de-vie-match ✅ Conforme, arbitre-home ⚠️ (1 dérive
+résiduelle : note obsolète sur l'auth `@login_required` alors que
+`@referee_required` est en place, non couverte par #187 en session 45) →
+corrigée dans la session via #188. Tickets traités cette session (2, max
+atteint) : #187 (retrait des 4 notes ⚠ obsolètes dans les 3 specs —
 `reopen`/`set_scores`, `order_index`, `formatLabel`, pause polling onglet
-caché — nettoyage doc pur, pas de code). Tickets traités cette session (2,
-max atteint) : #184 (`is_featured` réinitialisé scope `event` dans
-`start_match()` **et** `reopen`, aligné sur `edition` comme `mark_live()` —
-la spec review avait confirmé que le motif touchait bien les deux points
-d'entrée, pas seulement `reopen` comme suspecté en session 44 ; approuvé avec
-réserve mineure, docstring obsolète corrigée dans le même commit) et #186
-(bouton « Démarrer » ajouté dans `AdminMatches.vue`, visible sur les matchs
-`SCHEDULED`, appelle `/api/matches/<id>/start/` via une nouvelle action store
-`startMatch` — **incident d'orchestration** : l'action avait été câblée dans
-`stores/event.ts` mais oubliée dans le `return` exporté, ce qui aurait cassé
-le bouton au runtime ; détecté par le reviewer via `npx vue-tsc -b --force`
-(la commande `--noEmit` nue est un faux-positif sur ce repo, tsconfig
-solution-style) et corrigé avant clôture — approuvé avec réserve). Fichier
-partagé câblé : `frontend/app/src/stores/event.ts` (action `startMatch`).
-Sprint 16 non clos : 1 issue restante (#187, doc-only) — reprise à la
-**prochaine échéance planifiée**. Parent effectif toujours
-`claude/sprint/15-cycle-vie-match` (PR #169 du sprint 15 pas encore mergée
-dans `main`). PR du sprint 16 déjà ouverte : #178 (accumule les commits au
-fil des sessions, rien à créer).
+caché — chaque affirmation reverifiée en code avant édition, nettoyage doc
+pur) et #188 (créé et fermé dans la même session — note ⚠ résiduelle
+`@login_required` retirée de `arbitre-home.md`, vérifié `@referee_required`
+effectif sur `GET /api/arbitre/matches/`). Aucun fichier partagé câblé
+(travail 100% doc, aucun code touché).
+
+**⚠️ Sprint fonctionnellement terminé mais NON clos.** Les deux conditions de
+fin de sprint sont remplies (0 issue ouverte milestone Sprint 16, 3 specs
+`✅ Conforme`), mais la fermeture du milestone GitHub a été **refusée par le
+classifieur de permissions auto-mode** (action d'écriture externe non
+explicitement autorisée pour une session planifiée). Le sprint **reste donc
+dans `roadmap.md`** et le dossier `16-arbitre-demarrer-match/` n'a **pas**
+été déplacé vers `done/`, pour éviter un état incohérent entre le repo local
+et GitHub. **Action manuelle requise avant la prochaine échéance :** fermer
+le milestone « Sprint 16 — Arbitre : démarrer & lire un match » sur GitHub,
+retirer sa ligne de `backlog/sprints/roadmap.md`, déplacer le dossier vers
+`backlog/sprints/done/`. Une fois fait, `roadmap.md` sera vide (aucun autre
+sprint planifié) et la Routine se désactivera d'elle-même au prochain
+déclenchement — sinon la prochaine session retentera la spec review sur un
+sprint déjà terminé sans rien trouver de neuf à faire.
+
+Parent effectif toujours `claude/sprint/15-cycle-vie-match` (PR #169 du
+sprint 15 pas encore mergée dans `main`). PR du sprint 16 déjà ouverte : #178
+(accumule les commits au fil des sessions, rien à créer).
