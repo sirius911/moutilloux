@@ -373,31 +373,33 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #49
-**Sprint actif :** 17 — Panneau d'édition de match → **démarré cette session**
-(premier passage : spec review ❌ sur les 2 specs ciblées — attendu, aucun
-développement du sprint n'était encore commité).
+**Dernière session :** 2026-07-02 — Session #50
+**Sprint actif :** 17 — Panneau d'édition de match (2ᵉ session consécutive).
+Spec review passée de ❌ (session #49) à ⚠️ Dérive mineure à modérée sur les 2
+specs ciblées — amélioration confirmée, correctifs #189/#190 en place et
+corrects.
 **Roadmap :** 5 sprints planifiés (17 → 21), 17 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#189](https://github.com/sirius911/moutilloux/issues/189)
-(✅ Approuvé, invariant mono-LIVE via `start_match()`) et
-[#190](https://github.com/sirius911/moutilloux/issues/190) (⚠️ Approuvé avec
-réserves, garde FINISHED sans vainqueur — réserve purement documentaire sur
-le plan, code impeccable).
-**Nouveaux tickets créés :** [#220](https://github.com/sirius911/moutilloux/issues/220)
-(Terminer sans confirmation, majeure, milestone Sprint 17),
-[#221](https://github.com/sirius911/moutilloux/issues/221) (réouverture
-FINISHED→LIVE ne réinitialise pas `winner_side`, majeure, milestone Sprint 17,
-à traiter avec attention lors d'une future correction de #189 — même chemin
-`finalize_match_edit`), [#222](https://github.com/sirius911/moutilloux/issues/222)
-(Annulé sans indication d'effet, mineure, **hors périmètre strict du sprint
-17 → sans milestone**, à trier plus tard).
+**Tickets clôturés cette session :** 2 — [#7](https://github.com/sirius911/moutilloux/issues/7)
+(✅ Approuvé, onglet Format branché sur le payload d'édition — nécessite
+l'extension de `MatchEditPayload` dans `event.ts`, câblée par l'orchestrateur)
+et [#221](https://github.com/sirius911/moutilloux/issues/221) (✅ Approuvé,
+réouverture FINISHED→LIVE réinitialise désormais `winner_side`, aligné sur
+`referee_action('reopen')`).
+**Nouveaux tickets créés :** [#224](https://github.com/sirius911/moutilloux/issues/224)
+(message d'erreur de la garde #190 invisible côté `EditMatchPanel.vue` —
+`extractApiError` ne lit pas `parsed.fields` —, majeure, milestone Sprint 17 :
+bloque le golden path « garde » du DoD du sprint), [#225](https://github.com/sirius911/moutilloux/issues/225)
+(passage à `CANCELED` ne réinitialise pas `winner_side`, symétrique de #221,
+mineure, milestone Sprint 17).
 **Branche :** `claude/sprint/17-panneau-edition-match`
-**Contexte :** Session 49 — sprint 17 pas encore clôturable : spec review
-❌ sur les 2 specs ciblées, et 9 issues restent ouvertes sur le milestone
-(`#7, #168, #175, #191, #192, #193, #194, #220, #221`) après les 2 tickets
-traités cette session (max 2/session, comme prévu par le protocole). La
-prochaine session planifiée continuera le backlog engine sur ce même sprint
-(pas de changement de sprint actif).
+**Contexte :** Session 50 — sprint 17 pas encore clôturable : spec review
+⚠️ (pas encore ✅ Conforme), et 9 issues restent ouvertes sur le milestone
+(`#168, #175, #191, #192, #193, #194, #220, #224, #225`) après les 2 tickets
+traités cette session (max 2/session). La prochaine session planifiée
+continuera le backlog engine sur ce même sprint (pas de changement de sprint
+actif). Note pour la suite : #224 mérite d'être traité tôt, car il conditionne
+la visibilité du golden path « garde FINISHED sans vainqueur » explicitement
+listé dans la Définition de terminé du sprint 17.
 
 Parent effectif : `claude/sprint/16-arbitre-demarrer-match` (le sprint 16 est
 clos côté planification/milestone, mais sa PR #178 n'est pas encore mergée
