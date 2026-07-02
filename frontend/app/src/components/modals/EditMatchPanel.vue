@@ -28,7 +28,7 @@ const gamesB = ref(props.match.gamesB)
 const pointsA = ref(props.match.displayPointA)
 const pointsB = ref(props.match.displayPointB)
 const tbActive = ref(props.match.tbActive)
-const winnerSide = ref<'none' | 'A' | 'B' | 'abandon'>(props.match.winnerSide ?? 'none')
+const winnerSide = ref<'none' | 'A' | 'B'>(props.match.winnerSide ?? 'none')
 
 // Format tab
 const formatSets = ref(BEST_OF_TO_FORMAT_SETS[props.match.bestOf] ?? 1)
@@ -121,7 +121,6 @@ const winnerOptions = computed(() => [
   { value: 'none', label: 'À déterminer' },
   { value: 'A', label: nameA.value },
   { value: 'B', label: nameB.value },
-  { value: 'abandon', label: 'Abandon' },
 ])
 
 const formatSetsOptions = [
