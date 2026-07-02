@@ -144,6 +144,7 @@ const planningStatusOptions = [
 ]
 
 const showStartConfirm = ref(false)
+const showFinishConfirm = ref(false)
 
 function hasOtherLiveMatch(): boolean {
   const allMatches = eventStore.calendar?.playDays.flatMap((d) => d.matches) ?? []
@@ -153,6 +154,11 @@ function hasOtherLiveMatch(): boolean {
 async function save() {
   if (status.value === 'live' && props.match.status !== 'LIVE' && hasOtherLiveMatch() && !showStartConfirm.value) {
     showStartConfirm.value = true
+    return
+  }
+
+  if (status.value === 'finished' && props.match.status !== 'FINISHED' && !showFinishConfirm.value) {
+    showFinishConfirm.value = true
     return
   }
 
@@ -431,6 +437,15 @@ async function save() {
       :danger="false"
       @confirm="save"
       @close="showStartConfirm = false"
+    />
+    <ConfirmModal
+      v-if="showFinishConfirm"
+      title="Terminer ce match ?"
+      body="Le vainqueur sera figé, la mise en avant retirée si active, et le classement/tableau final recalculés. Une réouverture reste possible ensuite (admin)."
+      confirm-label="Terminer"
+      :danger="false"
+      @confirm="save"
+      @close="showFinishConfirm = false"
     />
   </Teleport>
 </template>
