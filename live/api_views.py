@@ -36,6 +36,7 @@ from live.admin_views import (
     unassign_entry,
     finalize_match_edit,
     feature_match,
+    start_match,
     set_match_bracket_labels,
     assign_bracket_entry,
     clear_bracket_entry,
@@ -1047,11 +1048,27 @@ def api_match_feature(request, match_id):
     """
     POST /api/matches/<id>/feature/
     Met le match en avant (source : admin_views.feature_match). Aucun payload.
-    Effet : is_featured=True, order_index=None, mark_live() → statut LIVE ;
+    Effet : is_featured=True, mark_live() → statut LIVE ; order_index inchangé ;
     devient le hero de /api/score_state/.
     """
     match = get_object_or_404(Match, pk=match_id)
     feature_match(match)
+    return JsonResponse({"match": _pack_match(match)})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_match_start(request, match_id):
+    """
+    POST /api/matches/<id>/start/
+    Démarre le match (SCHEDULED -> LIVE), le met en avant TV (source :
+    admin_views.start_match — service partagé avec referee_action('start')).
+    Idempotent : si déjà LIVE, no-op ; répond quand même 200 avec le match packé.
+    Aucun payload attendu.
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    start_match(match)
     return JsonResponse({"match": _pack_match(match)})
 
 

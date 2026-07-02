@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
+from live.admin_views import start_match
 
 
 def is_referee(user):
@@ -589,13 +590,7 @@ def referee_action(request, match_id: int):
 
     # --- Démarrer / finir / réouvrir ---
     if action == "start":
-        # enlever le featured ailleurs
-        Match.objects.filter(event=match.event, is_featured=True).exclude(id=match.id).update(is_featured=False)
-
-        match.is_featured = True
-        match.mark_live()   # ✅ met status=LIVE + started_at si vide
-        match.save()
-
+        start_match(match)
         return JsonResponse({"ok": True})
 
     if action == "finish_left":

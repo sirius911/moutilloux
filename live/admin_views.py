@@ -639,18 +639,31 @@ def match_edit(request, event_id: int, match_id: int):
     return render(request, "live/panel_match_form.html", {"event": event, "match": match, "form": form})
 
 
-def feature_match(match):
+def start_match(match):
     """
-    Service : met un match « en avant » et le démarre. Retire le drapeau des
-    autres matchs de l'event, met is_featured=True, puis
-    mark_live() (status=LIVE + started_at). Source : match_feature.
+    Service : démarre un match (SCHEDULED -> LIVE), le met en avant TV.
+    Réutilisé par referee_action('start') et par l'API admin.
+    Idempotent : si le match est déjà LIVE, no-op (pas de re-déclenchement de la
+    rétrogradation des autres matchs ni du featured).
+    Retire is_featured des autres matchs de l'event, met is_featured=True, puis
+    mark_live() (status=LIVE + started_at si vide). Ne touche jamais order_index
+    (persistance calendrier — sprint 15 / #159).
     Retourne le match.
     """
+    if match.status == Match.Status.LIVE:
+        return match
+
     Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
     match.is_featured = True
     match.mark_live()  # met status=LIVE + started_at si besoin
     match.save()
     return match
+
+
+# Alias historique : conservé pour ne pas casser les appelants existants
+# (match_feature / api_match_feature — action « mettre en avant » côté admin,
+# effet identique à « démarrer »).
+feature_match = start_match
 
 
 @superuser_required
