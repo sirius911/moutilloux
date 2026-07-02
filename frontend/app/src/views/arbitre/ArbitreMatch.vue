@@ -170,6 +170,7 @@ async function handleStart() {
         <button class="btn-back" @click="router.push('/arbitre')">←</button>
         <div class="arb-header-center">
           <span class="arb-category">{{ match?.stageLabel ?? '—' }}</span>
+          <span v-if="match?.formatLabel" class="arb-format">{{ match.formatLabel }}</span>
           <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled }">
             {{ statusLabel }}
           </span>
@@ -379,6 +380,13 @@ async function handleStart() {
   font-weight: 600;
   color: var(--ink-1);
   letter-spacing: 0.04em;
+}
+
+.arb-format {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
 }
 
 .arb-status-badge {
