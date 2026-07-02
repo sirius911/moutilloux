@@ -373,31 +373,33 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #43
+**Dernière session :** 2026-07-02 — Session #44
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
 **Roadmap :** 1 sprint restant (16), en cours.
-**Tickets clôturés cette session :** 2 (#172 ⚠️, #174 ✅)
+**Tickets clôturés cette session :** 2 (#173 ✅, #183 ✅)
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 3 (#173, #183, #184) — sprint non clos
-**Contexte :** Session 43 — spec review de suivi des 3 specs du sprint : toujours
-`⚠️ Dérive mineure` sur les 3, aucune nouvelle dérive (les 5 restantes étaient déjà
-ticketées) ; confirmation que #182/#185 (corrigés en session #42) sont bien
-effectifs en code (garde serveur scoring hors LIVE, reopen conserve
-`set_scores`). Tickets traités cette session (2, max atteint) : #172
-(`_format_label` ajouté à `live/api_views.py`, clé `formatLabel` exposée dans
-`_pack_match`, dérivée de `games_to_win`/`tb_at`/`best_of` — `MANUAL` →
-« Manuel », sinon « 1 set à N · TB à M » ou « BO3 · TB à M » — vérifié contre
-les 5 presets réels ; approuvé **avec réserves** : le contenu narratif des
-specs `arbitre-match.md`/`cycle-de-vie-match.md` reste inchangé, conforme au
-protocole qui ne permet à l'agent de maintenance de toucher que le champ
-`fichiers:` YAML, déjà à jour) et #174 (`api_arbitre_matches` passée de
-`@login_required` à `@referee_required` dans `live/api_views.py`, cohérente
-avec la garde déjà en place sur `POST /arbitre/match/<id>/action/` ; pas
-d'import circulaire vérifié, approuvé sans réserve). Aucun fichier partagé à
-câbler (seul `live/api_views.py` touché, blocs disjoints). Aucune nouvelle
-issue créée (spec review sans dérive inédite). Sprint 16 non clos : 3 issues
-restantes (#173 affichage format front, #183 bouton Démarrer non désactivé,
-#184 portée `is_featured`) — reprise à la **prochaine échéance planifiée**.
-Parent effectif toujours `claude/sprint/15-cycle-vie-match` (PR #169 du
-sprint 15 pas encore mergée dans `main`). PR du sprint 16 déjà ouverte : #178
-(accumule les commits au fil des sessions, rien à créer).
+**Issues Sprint 16 restantes :** 2 (#184, #186) — sprint non clos
+**Contexte :** Session 44 — spec review des 3 specs du sprint : arbitre-match
+⚠️ et cycle-de-vie-match ⚠️ (dérives déjà ticketées confirmées présentes,
+aucune régression sur #170/#172/#174/#179/#180/#181/#182/#185, tous vérifiés
+effectifs en code), arbitre-home passe à ✅ Conforme. 1 nouvelle dérive
+ticketée : #186 (`AdminMatches.vue` n'a aucun bouton « Démarrer » alors que
+l'endpoint back `/api/matches/<id>/start/` existe déjà — le golden path du
+sprint mentionne explicitement « tablette ou admin »). Point de vigilance
+noté sans nouveau ticket (même dérive que #184) : le motif `is_featured`
+scopé `event` existe aussi dans `reopen` (`live/referee_views.py:706`), pas
+seulement dans `start_match` — à couvrir en même temps que #184. Tickets
+traités cette session (2, max atteint) : #173 (`formatLabel` affiché dans
+l'en-tête `ArbitreMatch.vue`, type `Match` complété dans `types/index.ts`,
+approuvé sans réserve, `vue-tsc --noEmit` propre) et #183 (garde « joueurs non
+résolus » sur Démarrer — back : `raise ValueError` dans `start_match()`
+(`live/admin_views.py`) traduit en JSON 400 par `referee_action` et
+`api_match_start` ; front : bouton désactivé si `sideA`/`sideB` non résolus,
+toast d'erreur existant déjà capable d'afficher le refus 400 si accès direct
+par URL ; approuvé sans réserve, back+front implémentés en parallèle par deux
+agents sur fichiers disjoints). Aucun fichier partagé à câbler. Sprint 16 non
+clos : 2 issues restantes (#184 portée `is_featured`, #186 bouton Démarrer
+admin) — reprise à la **prochaine échéance planifiée**. Parent effectif
+toujours `claude/sprint/15-cycle-vie-match` (PR #169 du sprint 15 pas encore
+mergée dans `main`). PR du sprint 16 déjà ouverte : #178 (accumule les
+commits au fil des sessions, rien à créer).
