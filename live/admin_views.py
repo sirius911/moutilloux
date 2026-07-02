@@ -516,6 +516,8 @@ def start_event(event):
     Retourne {"created": int, "unplaced": [Entry, ...]}.
     Lève ValueError si le statut n'est pas INSCRIPTION ou si aucune poule jouable.
     """
+    from live.bracket import ensure_final_bracket_exists
+
     if event.status != Event.Status.INSCRIPTION:
         raise ValueError(f"Impossible de démarrer : statut actuel = {event.status}.")
 
@@ -587,7 +589,9 @@ def finalize_match_edit(match):
     """
     Service : logique post-sauvegarde commune à l'édition d'un match
     (sanitisation des valeurs négatives, cohérence du tie-break, retrait
-    featured/file si terminé, puis synchronisation des gagnants du bracket).
+    featured/file si terminé, puis recalcul des classements de poule et
+    synchronisation du tableau — mêmes effets que le chemin arbitre,
+    cf. specs/technical/cycle-de-vie-match.md).
     Le match est supposé déjà passé par MatchEditForm.save().
     Retourne le match.
     """
@@ -610,9 +614,16 @@ def finalize_match_edit(match):
 
     match.save()
 
+    # Recalcul inconditionnel : une correction, une annulation ou une réouverture
+    # changent aussi le classement (recalc_one_group resynchronise le bracket).
+    if match.stage == Match.Stage.GROUP and match.group_id:
+        from competition.standings import recalc_one_group
+        recalc_one_group(match.group_id)
+
     if match.status == Match.Status.FINISHED and match.stage in (Match.Stage.QF, Match.Stage.SF):
-        from live.bracket import sync_final_winners_for_event
+        from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
         sync_final_winners_for_event(match.event)
+        sync_p3_losers_for_event(match.event)
 
     if match.status == Match.Status.FINISHED and match.stage == Match.Stage.F:
         try:
@@ -744,7 +755,7 @@ def withdraw_entry(entry):
     - Tous les matchs non terminés (SCHEDULED/LIVE) → FINISHED, is_walkover=True,
       winner_side = adversaire, score de convention (games_to_win / 0).
     - Recalcule les standings de chaque poule affectée.
-    - Propage les vainqueurs du tableau (QF/SF/F).
+    - Propage les vainqueurs du tableau (QF/SF/F) et les perdants des demies (P3).
     Lève ValueError si l'event n'est pas EN_COURS.
     Retourne {"matches_walkover": int}.
     """
@@ -806,8 +817,9 @@ def withdraw_entry(entry):
         sync_final_bracket_for_event(event)
 
     if has_qf_sf:
-        from live.bracket import sync_final_winners_for_event
+        from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
         sync_final_winners_for_event(event)
+        sync_p3_losers_for_event(event)
 
     if has_finale:
         try:
@@ -1514,121 +1526,6 @@ def _pick(group, rank):
 #         else:
 #             # 3 poules : règle à définir
 #             raise ValueError("3 poules : règle de tableau final non définie pour l’instant.")
-
-
-def _resolve_label_to_entry(event, label: str):
-    """
-    label ex: "A1" => poule A, rank 1
-    Retourne Entry ou None
-    """
-    if not label or len(label) < 2:
-        return None
-
-    group_name = label[0].upper()
-    try:
-        rank = int(label[1:])
-    except ValueError:
-        return None
-
-    g = Group.objects.filter(event=event, name__iexact=group_name).first()
-    if not g:
-        return None
-
-    s = GroupStanding.objects.filter(group=g, rank=rank).select_related("entry").first()
-    return s.entry if s else None
-
-
-def ensure_final_bracket_exists(event):
-    """
-    Crée le squelette du tableau final (QF ou SF) avec bracket_slot + labels (A1, D2...).
-    Ne remplit pas forcément side_a/side_b.
-    - 4 poules => QF1..QF4 (A1-D2, C1-B2, B1-C2, D1-A2)
-    - 2 poules => SF1..SF2 (A1-B2, B1-A2)
-    - 1 poule => rien
-    - 3 poules => rien (règle non définie pour l’instant)
-    """
-    groups = list(Group.objects.filter(event=event).order_by("name"))
-    n = len(groups)
-
-    if event.qualified_per_group != 2:
-        return  # on gère plus tard d'autres cas
-
-    by_name = {g.name.upper(): g for g in groups}
-
-    # helper create if missing
-    def get_or_create(stage, slot, a_label, b_label, fmt):
-        m = Match.objects.filter(event=event, stage=stage, bracket_slot=slot).first()
-        if m:
-            # met à jour les labels si besoin (sans toucher si match live/finished)
-            if m.status == Match.Status.SCHEDULED:
-                m.side_a_label = a_label
-                m.side_b_label = b_label
-                m.match_format = fmt
-                m.save()
-            return m
-
-        return Match.objects.create(
-            edition=event.edition,
-            event=event,
-            stage=stage,
-            bracket_slot=slot,
-            match_format=fmt,
-            status=Match.Status.SCHEDULED,
-            side_a=None,
-            side_b=None,
-            side_a_label=a_label,
-            side_b_label=b_label,
-        )
-
-    if n == 4 and all(k in by_name for k in ["A", "B", "C", "D"]):
-        get_or_create(Match.Stage.QF, "QF1", "A1", "D2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF2", "C1", "B2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF3", "B1", "C2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.QF, "QF4", "D1", "A2", Match.Format.QF_SET5_TB_5_5)
-        get_or_create(Match.Stage.SF, "SF1", "WQF1", "WQF2", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.SF, "SF2", "WQF3", "WQF4", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
-
-    elif n == 2 and all(k in by_name for k in ["A", "B"]):
-        get_or_create(Match.Stage.SF, "SF1", "A1", "B2", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.SF, "SF2", "B1", "A2", Match.Format.NORMAL_1SET)
-        get_or_create(Match.Stage.F, "F1", "WSF1", "WSF2", Match.Format.BO3)
-
-    else:
-        # 1 poule => rien ; 3 poules => non géré
-        return
-
-
-def sync_final_bracket_for_event(event):
-    """
-    Remplit side_a/side_b des matchs de tableau final dès que les ranks existent.
-    Ne modifie que les matchs SCHEDULED.
-    """
-    ensure_final_bracket_exists(event)
-
-    qs = Match.objects.filter(
-        event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
-        status=Match.Status.SCHEDULED,
-    )
-
-    for m in qs:
-        changed = False
-
-        if m.side_a_id is None and m.side_a_label:
-            ea = _resolve_label_to_entry(event, m.side_a_label)
-            if ea:
-                m.side_a = ea
-                changed = True
-
-        if m.side_b_id is None and m.side_b_label:
-            eb = _resolve_label_to_entry(event, m.side_b_label)
-            if eb:
-                m.side_b = eb
-                changed = True
-
-        if changed:
-            m.save()
 
 
 # =========================================================================
