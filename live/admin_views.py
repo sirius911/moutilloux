@@ -637,6 +637,7 @@ def finalize_match_edit(match, was_live: bool = False):
         match.order_index = None
         match.scheduled_time = None
         match.is_featured = False
+        match.winner_side = None
 
     match.save()
 
