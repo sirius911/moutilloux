@@ -373,33 +373,35 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #44
+**Dernière session :** 2026-07-02 — Session #45
 **Sprint actif :** 16 — Arbitre : démarrer & lire un match
 **Roadmap :** 1 sprint restant (16), en cours.
-**Tickets clôturés cette session :** 2 (#173 ✅, #183 ✅)
+**Tickets clôturés cette session :** 2 (#184 ⚠️, #186 ⚠️)
 **Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Issues Sprint 16 restantes :** 2 (#184, #186) — sprint non clos
-**Contexte :** Session 44 — spec review des 3 specs du sprint : arbitre-match
-⚠️ et cycle-de-vie-match ⚠️ (dérives déjà ticketées confirmées présentes,
-aucune régression sur #170/#172/#174/#179/#180/#181/#182/#185, tous vérifiés
-effectifs en code), arbitre-home passe à ✅ Conforme. 1 nouvelle dérive
-ticketée : #186 (`AdminMatches.vue` n'a aucun bouton « Démarrer » alors que
-l'endpoint back `/api/matches/<id>/start/` existe déjà — le golden path du
-sprint mentionne explicitement « tablette ou admin »). Point de vigilance
-noté sans nouveau ticket (même dérive que #184) : le motif `is_featured`
-scopé `event` existe aussi dans `reopen` (`live/referee_views.py:706`), pas
-seulement dans `start_match` — à couvrir en même temps que #184. Tickets
-traités cette session (2, max atteint) : #173 (`formatLabel` affiché dans
-l'en-tête `ArbitreMatch.vue`, type `Match` complété dans `types/index.ts`,
-approuvé sans réserve, `vue-tsc --noEmit` propre) et #183 (garde « joueurs non
-résolus » sur Démarrer — back : `raise ValueError` dans `start_match()`
-(`live/admin_views.py`) traduit en JSON 400 par `referee_action` et
-`api_match_start` ; front : bouton désactivé si `sideA`/`sideB` non résolus,
-toast d'erreur existant déjà capable d'afficher le refus 400 si accès direct
-par URL ; approuvé sans réserve, back+front implémentés en parallèle par deux
-agents sur fichiers disjoints). Aucun fichier partagé à câbler. Sprint 16 non
-clos : 2 issues restantes (#184 portée `is_featured`, #186 bouton Démarrer
-admin) — reprise à la **prochaine échéance planifiée**. Parent effectif
-toujours `claude/sprint/15-cycle-vie-match` (PR #169 du sprint 15 pas encore
-mergée dans `main`). PR du sprint 16 déjà ouverte : #178 (accumule les
-commits au fil des sessions, rien à créer).
+**Issues Sprint 16 restantes :** 1 (#187, mineure) — sprint non clos
+**Contexte :** Session 45 — spec review des 3 specs du sprint : arbitre-match
+⚠️ et cycle-de-vie-match ⚠️ (dérive majeure relevée par le reviewer — tiroir
+Corrections jamais câblé côté front — confirmée **explicitement hors-périmètre
+sprint 16**, déjà réservée au sprint 17 dans `sprint.md`, donc pas de nouveau
+ticket), arbitre-home reste ✅ Conforme. 1 nouvelle dérive ticketée : #187
+(notes ⚠ obsolètes dans les 3 specs pour des correctifs déjà livrés —
+`reopen`/`set_scores`, `order_index`, `formatLabel`, pause polling onglet
+caché — nettoyage doc pur, pas de code). Tickets traités cette session (2,
+max atteint) : #184 (`is_featured` réinitialisé scope `event` dans
+`start_match()` **et** `reopen`, aligné sur `edition` comme `mark_live()` —
+la spec review avait confirmé que le motif touchait bien les deux points
+d'entrée, pas seulement `reopen` comme suspecté en session 44 ; approuvé avec
+réserve mineure, docstring obsolète corrigée dans le même commit) et #186
+(bouton « Démarrer » ajouté dans `AdminMatches.vue`, visible sur les matchs
+`SCHEDULED`, appelle `/api/matches/<id>/start/` via une nouvelle action store
+`startMatch` — **incident d'orchestration** : l'action avait été câblée dans
+`stores/event.ts` mais oubliée dans le `return` exporté, ce qui aurait cassé
+le bouton au runtime ; détecté par le reviewer via `npx vue-tsc -b --force`
+(la commande `--noEmit` nue est un faux-positif sur ce repo, tsconfig
+solution-style) et corrigé avant clôture — approuvé avec réserve). Fichier
+partagé câblé : `frontend/app/src/stores/event.ts` (action `startMatch`).
+Sprint 16 non clos : 1 issue restante (#187, doc-only) — reprise à la
+**prochaine échéance planifiée**. Parent effectif toujours
+`claude/sprint/15-cycle-vie-match` (PR #169 du sprint 15 pas encore mergée
+dans `main`). PR du sprint 16 déjà ouverte : #178 (accumule les commits au
+fil des sessions, rien à créer).
