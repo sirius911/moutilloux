@@ -687,11 +687,11 @@ def referee_action(request, match_id: int):
                 {"ok": False, "error": "Réouverture réservée à l'administrateur."},
                 status=403,
             )
-        match.status = Match.Status.SCHEDULED
-        match.is_featured = False
+        Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
+        match.is_featured = True
         match.winner_side = None
-        match.set_scores = []
-        match.save(update_fields=["status", "is_featured", "winner_side", "set_scores"])
+        match.mark_live()  # repasse LIVE (+ started_at si besoin), conserve set_scores
+        match.save(update_fields=["is_featured", "winner_side"])
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             recalc_one_group(match.group_id)
