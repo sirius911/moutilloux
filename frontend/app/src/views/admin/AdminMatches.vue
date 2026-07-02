@@ -7,6 +7,7 @@ import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import PlayDayModal from '@/components/modals/PlayDayModal.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -189,7 +190,14 @@ async function deletePause(breakId: number) {
   }
 }
 
-async function startMatch(matchId: number) {
+const pendingStartMatchId = ref<number | null>(null)
+
+function hasOtherLiveMatch(matchId: number): boolean {
+  const allMatches = eventStore.calendar?.playDays.flatMap((d) => d.matches) ?? []
+  return allMatches.some((m) => m.status === 'LIVE' && m.id !== matchId)
+}
+
+async function doStartMatch(matchId: number) {
   starting.value[matchId] = true
   bannerError.value = ''
   try {
@@ -199,6 +207,20 @@ async function startMatch(matchId: number) {
   } finally {
     starting.value[matchId] = false
   }
+}
+
+async function startMatch(matchId: number) {
+  if (hasOtherLiveMatch(matchId)) {
+    pendingStartMatchId.value = matchId
+    return
+  }
+  await doStartMatch(matchId)
+}
+
+async function confirmStartMatch() {
+  const matchId = pendingStartMatchId.value
+  pendingStartMatchId.value = null
+  if (matchId !== null) await doStartMatch(matchId)
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -496,6 +518,15 @@ async function onDragEnd() {
       :match="editingMatch"
       @close="editingMatch = null"
       @saved="onMatchSaved"
+    />
+    <ConfirmModal
+      v-if="pendingStartMatchId !== null"
+      title="Démarrer ce match ?"
+      body="Un autre match est en cours — le démarrer le mettra en pause (il repasse Prévu, score conservé)."
+      confirm-label="Démarrer"
+      :danger="false"
+      @confirm="confirmStartMatch"
+      @close="pendingStartMatchId = null"
     />
 
     <!-- ── Corps ────────────────────────────────────────────────────────── -->

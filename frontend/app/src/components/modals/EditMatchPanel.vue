@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { extractApiError } from '@/lib/apiError'
 import type { Match } from '@/types'
 
@@ -142,7 +143,19 @@ const planningStatusOptions = [
   { value: 'canceled', label: 'Annulé' },
 ]
 
+const showStartConfirm = ref(false)
+
+function hasOtherLiveMatch(): boolean {
+  const allMatches = eventStore.calendar?.playDays.flatMap((d) => d.matches) ?? []
+  return allMatches.some((m) => m.status === 'LIVE' && m.id !== props.match.id)
+}
+
 async function save() {
+  if (status.value === 'live' && props.match.status !== 'LIVE' && hasOtherLiveMatch() && !showStartConfirm.value) {
+    showStartConfirm.value = true
+    return
+  }
+
   const eventId = eventStore.activeEventId
   if (!eventId) return
   saving.value = true
@@ -410,6 +423,15 @@ async function save() {
         </footer>
       </aside>
     </div>
+    <ConfirmModal
+      v-if="showStartConfirm"
+      title="Démarrer ce match ?"
+      body="Un autre match est en cours — le démarrer le mettra en pause (il repasse Prévu, score conservé)."
+      confirm-label="Démarrer"
+      :danger="false"
+      @confirm="save"
+      @close="showStartConfirm = false"
+    />
   </Teleport>
 </template>
 
