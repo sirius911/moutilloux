@@ -682,6 +682,11 @@ def referee_action(request, match_id: int):
         return JsonResponse({"ok": True})
 
     if action == "reopen":
+        if not request.user.is_superuser:
+            return JsonResponse(
+                {"ok": False, "error": "Réouverture réservée à l'administrateur."},
+                status=403,
+            )
         match.status = Match.Status.SCHEDULED
         match.is_featured = False
         match.winner_side = None
