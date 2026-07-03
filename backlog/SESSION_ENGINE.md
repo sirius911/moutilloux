@@ -373,46 +373,53 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #71
-**Sprint actif :** 19 — Poules & inscriptions : ajustements (6ᵉ session du sprint).
+**Dernière session :** 2026-07-03 — Session #72
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (7ᵉ session du sprint).
 
 **Parent effectif inchangé :** `claude/sprint/18-tableau-final-conformite` (sprint 18
-toujours non mergé dans `main` — point récurrent depuis les sessions #65 à #70,
+toujours non mergé dans `main` — point récurrent depuis les sessions #65 à #71,
 à traiter côté humain, hors périmètre de la Routine). Working tree propre au
 démarrage, merge avec le parent effectif : déjà à jour, rien à fusionner.
 
-**Spec review session #71 :** `admin-poules.md` → ⚠️ (#241 confirmée toujours
-présente au moment de la review, aucune nouvelle — #240/#205/#237/#238
-revérifiées sans régression) ; `admin-inscriptions.md` → ✅ Conforme (1
-nouvelle dérive cosmétique détectée : messages d'erreur non harmonisés avec
-`apiErrorMessage`) ; `cycle-de-vie-epreuve.md` → ✅ Conforme. 1 nouvelle issue
-créée (#242, mineure).
+**Spec review session #72 (relance complète demandée par la session #71,
+milestone à 0 issue ouverte au démarrage) :** `admin-poules.md` → ⚠️ (2
+nouvelles dérives : #243 resync manquante après échec de drag & drop, #245
+duplication locale de `apiErrorMessage` au lieu de l'import partagé) ;
+`admin-inscriptions.md` → ⚠️ (1 nouvelle dérive : #244 `CreateTeamModal.vue`
+non harmonisé avec `apiErrorMessage`, #242 n'avait couvert que
+`AdminInscriptions.vue`) ; `cycle-de-vie-epreuve.md` → ✅ Conforme (même
+duplication `apiErrorMessage` notée en écho, pas de doublon créé). Les 7
+tickets historiques (#201, #166, #202, #203, #204, #205, #206) tous
+reconfirmés effectivement corrigés dans le code, aucune régression. 3
+nouvelles issues créées (#243, #244, #245 — toutes mineures).
 
-**Tickets traités session #71 :** 2 — #241 (AdminGroups : la colonne « Non
-assignés » distingue désormais « aucun inscrit du tout »
-(`eventStore.players.length === 0`, message dédié + lien vers l'écran
-Inscriptions) de « tout le monde est déjà placé » (message inchangé), ✅
-Approuvé) et #242 (AdminInscriptions : les 3 handlers d'erreur utilisent
-désormais `apiErrorMessage` importé de `useApi.ts` au lieu de `e.message`
-brut, harmonisation avec `AdminGroups.vue`/`AutoFillModal.vue`, ✅ Approuvé).
-Commits `7660aa0` et `e2d2712`. Aucun fichier partagé modifié (import en
-lecture seule de `useApi.ts` pour #242). Milestone Sprint 19 à **0 issue
-ouverte** en sortie de session.
+**Tickets traités session #72 :** 2 — #243 (AdminGroups : ajout d'une
+fonction `resyncAfterError()` appelée dans les `catch` de `onDropToGroup` et
+`removeFromGroup`, rappelle `fetchGroups`/`fetchPlayers` du store pour
+resynchroniser l'affichage après un échec de drag & drop ou de retrait, ✅
+Approuvé) et #244 (CreateTeamModal : import de `apiErrorMessage` depuis
+`useApi.ts`, remplace le message brut `e.message` par
+`apiErrorMessage(e, 'Erreur inconnue.')`, cohérent avec
+`AdminInscriptions.vue`/`AutoFillModal.vue`, ✅ Approuvé). Commits `0de6b9c`
+et `9a8ffbf`. Aucun fichier partagé modifié (appels en lecture seule à des
+fonctions déjà exportées par `event.ts`/`useApi.ts`). Milestone Sprint 19 à
+**1 issue ouverte** en sortie de session (#245, mineure, non traitée —
+au-delà du max 2 tickets/session).
 
-**Point d'attention process :** sprint **non clôturé malgré 0 issue ouverte**
-— la spec review de l'étape 1 (avant correctifs) a rendu ⚠️ sur
-`admin-poules.md` à cause de #241, encore ouverte à ce moment-là. Le
-protocole (étape 3) exige que la spec review **de la session** soit déjà ✅
-Conforme sur toutes les specs pour clôturer, ce qui n'était formellement pas
-le cas ici même si #241 a été corrigée dans la foulée. Lecture stricte du
-protocole appliquée par prudence — pas d'action corrective nécessaire, mais
-point à noter pour la prochaine session.
+**Point d'attention process :** sprint **non clôturable ce cycle** — les deux
+conditions de l'étape 3 sont non remplies : (1) la spec review de cette
+session a rendu ⚠️ sur `admin-poules.md` et `admin-inscriptions.md` (dérives
+découvertes en tout début de session, avant correctifs) et (2) #245 reste
+ouverte en fin de session. Continuation normale — pas d'action corrective
+nécessaire.
 
 **Ordre d'exécution restant (voir `19-poules-inscriptions-ajustements/sprint.md`)** :
-aucun ticket sprint-19 ouvert. Sprint très proche de la clôture : la
-prochaine session doit relancer une spec review complète (post-#241/#242) ;
-si elle rend ✅ Conforme sur `admin-poules.md` et `admin-inscriptions.md` sans
-nouvelle dérive, le sprint 19 pourra être clos dès cette prochaine échéance.
+1 ticket sprint-19 ouvert (#245, mineure — dupliquer `apiErrorMessage` importé
+au lieu de redéfini localement dans `AdminGroups.vue`, fichier disjoint des
+tickets #243/#244 déjà traités). La prochaine session devrait pouvoir traiter
+#245 puis relancer une spec review complète ; si elle rend ✅ Conforme sur
+les 3 specs sans nouvelle dérive, le sprint 19 pourra être clos dès cette
+prochaine échéance.
 
 **Sprint 17/18 — PRs non mergées :** toujours d'actualité, ni la PR #223
 (sprint 17) ni celle du sprint 18 ne semblent mergées dans `main`. Point à
@@ -421,4 +428,4 @@ automatique.
 
 **Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête et toujours en cours
 (non terminé cette session — prochaine échéance devrait pouvoir le clore si
-la spec review de relance est ✅ Conforme).
+#245 est traitée et que la spec review de relance est ✅ Conforme).
