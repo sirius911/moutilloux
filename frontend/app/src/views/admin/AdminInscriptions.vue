@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { apiErrorMessage } from '@/composables/useApi'
 import CreateTeamModal from '@/components/modals/CreateTeamModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 
@@ -48,7 +49,7 @@ async function inscrire(playerId: number) {
   try {
     await eventStore.addRegistration(eventStore.activeEventId, playerId)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     busy.value = false
   }
@@ -63,7 +64,7 @@ async function inscrireTout() {
   try {
     await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     busy.value = false
   }
@@ -91,7 +92,7 @@ async function executeRetrait() {
       await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
     }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     busy.value = false
   }
