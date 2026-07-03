@@ -373,46 +373,39 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #58
-**Sprint actif :** 18 — Tableau final conforme (1ʳᵉ session).
+**Dernière session :** 2026-07-03 — Session #59
+**Sprint actif :** 18 — Tableau final conforme (2ᵉ session).
 Spec review (faite en début de session, avant traitement des tickets) :
-`specs/screens/admin-tableau-final.md` → **❌ Dérive bloquante** — attendu,
-sprint venant de démarrer. 7 dérives confirmées correspondant exactement au
-périmètre planifié (#195-200, #176) + 1 nouvelle dérive mineure ticketée en
-#230 (type front `Bracket.p3` optionnel alors que l'API le renvoie toujours).
+`specs/screens/admin-tableau-final.md` → **⚠️ Dérive mineure** (passé de ❌ à
+⚠️ depuis la session #58 : plus aucune dérive bloquante). Les corrections de
+#196/#197 tiennent sans régression. 7 dérives déjà connues confirmées, 0
+nouvelle.
 **Roadmap :** 4 sprints planifiés (18 → 21), 18 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#196](https://github.com/sirius911/moutilloux/issues/196)
-(✅ Approuvé, `Match.Stage.P3` ajouté aux 5 querysets `stage__in` du bracket —
-`_final_matches_qs`, `assign_bracket_entry`, `clear_bracket_entry`,
-`panel_final_label_update`, `api_bracket_labels` — QF/SF/F conservés, `manage.py
-check` OK) et [#197](https://github.com/sirius911/moutilloux/issues/197)
-(✅ Approuvé avec réserve corrigée avant clôture : nouvelle fonction
-`recreate_final_bracket_for_event` dans `live/bracket.py`, garde LIVE/FINISHED
-inconditionnelle, suppression réelle des matchs SCHEDULED + régénération via
-`ensure_final_bracket_exists` si `force=True`, `api_bracket_create` branché
-dessus, `start_stage` retiré du contrat ; réserve du reviewer — doc
-`roadmap/phase-7-bracket.md` obsolète — corrigée par l'orchestrateur, fichier
-local non versionné).
-**Nouveaux tickets créés :** 2 — #230 (🟡 mineure, typage `Bracket.p3`), #231
-(🟡 mineure, nettoyage front `start_stage` obsolète, signalé par le reviewer de
-#197, hors périmètre de ce ticket).
-**Branche :** `claude/sprint/18-tableau-final-conformite` (créée cette session
-depuis le parent effectif).
+**Tickets clôturés cette session :** 2 — [#195](https://github.com/sirius911/moutilloux/issues/195)
+(✅ Approuvé, `AdminBracket.vue` : sélecteur d'épreuve `<select>` en en-tête,
+pattern identique à `AdminMatches.vue`) et [#198](https://github.com/sirius911/moutilloux/issues/198)
+(✅ Approuvé avec réserve corrigée avant clôture : `usePolling(..., 4000)` pour
+suivre la progression automatique du bracket ; réserve du reviewer — double
+fetch au montage — corrigée par l'orchestrateur en retirant `immediate: true`
+du `watch`, devenu redondant avec le premier `run()` de `usePolling`).
+**Nouveaux tickets créés :** 0.
+**Branche :** `claude/sprint/18-tableau-final-conformite`.
 
-**Sprint 17 (session précédente) :** clôturé en session #57 — pour mémoire,
+**Sprint 17 (sessions précédentes) :** clôturé en session #57 — pour mémoire,
 non concerné par cette session.
 
-**Problèmes d'orchestration (session #58) :** pour #197, le reviewer a rendu
-`⚠️ Approuvé avec réserves` (documentation `roadmap/phase-7-bracket.md`
-obsolète après le changement de contrat). Plutôt que clore avec la réserve non
-résolue, l'orchestrateur a corrigé directement la documentation (fichier
-`roadmap/`, gitignoré/non versionné), puis clos en ✅ avec la correction
-documentée dans le commentaire GitHub — même pattern qu'en session #56 pour
-#229. Aucun autre écart au protocole.
+**Problèmes d'orchestration (session #59) :** pour #198, le reviewer a rendu
+`⚠️ Approuvé avec réserves` (double fetch au montage initial). Plutôt que clore
+avec la réserve non résolue, l'orchestrateur a appliqué directement le
+correctif d'une ligne suggéré par le reviewer, revérifié le type-check, puis
+clos en ✅ avec la correction documentée dans le commentaire GitHub — même
+pattern qu'en sessions #56 et #58. En cours de review, une divergence entre
+`CLAUDE.md` et le code a été repérée (pause du polling sur onglet caché en
+réalité déjà implémentée dans `usePolling.ts`, contrairement au TODO qui y
+était noté) et corrigée par l'orchestrateur, conformément à la convention
+« doc suit le code » (hors `specs/`). Aucun autre écart au protocole.
 
-Parent effectif pour la session #58 : `claude/sprint/17-panneau-edition-match`
+Parent effectif pour la session #59 : `claude/sprint/17-panneau-edition-match`
 (le sprint 17 est clos côté planification/milestone depuis la session #57,
-mais sa PR #223 n'est pas encore mergée dans `main`). Branche sprint 18 créée
-depuis celle-ci cette session (nouvelle branche, aucun merge nécessaire). Le
-prochain parent effectif (pour le sprint 19, quand 18 sera clos) devra être
-recalculé au prochain déclenchement via `backlog/sprints/done/`.
+mais sa PR #223 n'est toujours pas mergée dans `main`). Déjà synchronisé cette
+session, aucun merge nécessaire.
