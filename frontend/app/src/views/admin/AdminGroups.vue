@@ -212,8 +212,12 @@ async function onDropToUnassigned() {
   if (draggingEntryId === null || eventStore.groupsLocked) return
   const id = draggingEntryId
   draggingEntryId = null
+  await removeFromGroup(id)
+}
+
+async function removeFromGroup(entryId: number) {
   try {
-    await unassign(id)
+    await unassign(entryId)
     dropError.value = ''
   } catch (e) {
     dropError.value = apiErrorMessage(e, 'Erreur lors du retrait.')
@@ -332,7 +336,7 @@ async function onDropToUnassigned() {
                 <span v-if="row.qualified" class="q-badge">Q</span>
                 <span v-if="row.withdrawn" class="w-badge">WO</span>
                 <!-- Actions déverrouillées : retrait libre -->
-                <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="unassign(row.entryId)" @mousedown.stop>✕</button>
+                <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="removeFromGroup(row.entryId)" @mousedown.stop>✕</button>
                 <!-- Ajustements en cours de jeu (épreuve EN_COURS) -->
                 <template v-if="eventStore.groupsLocked && !row.withdrawn">
                   <button class="pill-action" type="button" :disabled="adjustBusy" @click.stop="openForfait(row.entryId, row.name)">Forfait</button>
