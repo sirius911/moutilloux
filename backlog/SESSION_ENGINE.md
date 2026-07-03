@@ -373,40 +373,44 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #68
-**Sprint actif :** 19 — Poules & inscriptions : ajustements (3ᵉ session du sprint).
+**Dernière session :** 2026-07-03 — Session #69
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (4ᵉ session du sprint).
 
 **Parent effectif inchangé :** `claude/sprint/18-tableau-final-conformite` (sprint 18
-toujours non mergé dans `main` — point récurrent depuis les sessions #65/#66/#67/#68,
+toujours non mergé dans `main` — point récurrent depuis les sessions #65/#66/#67/#68/#69,
 à traiter côté humain, hors périmètre de la Routine). Working tree propre au
 démarrage, merge avec le parent effectif : déjà à jour, rien à fusionner.
 
-**Spec review session #68 :** `admin-poules.md` → ⚠️ (#204 corrigée cette
-session, #205 et #206 confirmées — #206 corrigée cette session ; 2 nouvelles
-dérives mineures : bouton « Remplir automatiquement » pas désactivé si aucun
-inscrit, message « aucun inscrit » manquant dans « Non assignés ») ;
-`admin-inscriptions.md` → ✅ Conforme (0 nouvelle dérive) ; `cycle-de-vie-epreuve.md`
-→ ✅ Conforme dans le périmètre du sprint 19. Nouvelles issues créées : #240, #241.
+**Spec review session #69 :** `admin-poules.md` → ⚠️ (#205/#240/#241 déjà
+connues confirmées, aucune nouvelle) ; `admin-inscriptions.md` → ⚠️ (#238 déjà
+connue confirmée, aucune nouvelle) ; `cycle-de-vie-epreuve.md` → ✅ Conforme.
+0 nouvelle issue créée. Les points cœur du sprint (#201 Retirer≠Forfait, #166
+garde `remove_entry`, #202 overCapacity, #203 première lettre libre) ont été
+revérifiés directement dans le code actuel (pas seulement supposés acquis des
+sessions antérieures) et confirmés corrects.
 
-**Tickets traités session #68 :** 2 — #204 (« Équipe {id} » dans Non assignés
-→ `entry.displayName`, ✅ Approuvé) et #206 (✕ de retrait de poule sans gestion
-d'erreur → route désormais par `removeFromGroup` qui capture l'erreur serveur
-dans `dropError`, ✅ Approuvé). Commits `b8ed5be` et `e832c8d`. Aucun fichier
-partagé câblé (les deux tickets ne touchaient que `AdminGroups.vue`). Milestone
-Sprint 19 à 5 issues ouvertes en sortie de session (205, 237, 238, 240, 241) —
-sprint non clôturable cette session.
+**Tickets traités session #69 :** 2 — #205 (AutoFillModal : `groupSize`
+initialisé sur `activeEvent.groupSizeDefault` au lieu de `4` en dur, ✅
+Approuvé) et #237 (AutoFillModal affichait le message d'erreur technique brut
+au lieu du message serveur → export `apiErrorMessage` ajouté dans
+`useApi.ts`, réutilisé par `AutoFillModal.vue`, ✅ Approuvé). Commits
+`767d31f` et `6c7f482`. Fichier partagé câblé : `useApi.ts` (export
+`apiErrorMessage`, logique identique au helper local d'`AdminGroups.vue` qui
+garde sa copie — pas de refactor superflu). Milestone Sprint 19 à 3 issues
+ouvertes en sortie de session (238, 240, 241) — sprint non clôturable cette
+session.
 
-**Point d'attention process :** la spec review (agent en tâche de fond) a
-évalué `AdminGroups.vue` en partie avant l'application du fix #206 — son
-verdict sur #206 était donc obsolète au moment de la lecture ; vérifié
-manuellement que le commit `e832c8d` corrige bien le problème. Deux écritures
-GitHub (`gh issue close`/`gh issue create`) ont été bloquées une fois chacune
-par le classifieur auto mode puis acceptées au retry immédiat, sans changement
-de commande — comportement intermittent déjà connu.
+**Point d'attention process :** aucun — session sans incident, aucune
+écriture GitHub bloquée par le classifieur (contrairement aux sessions
+#66/#68). Note de l'agent de spec review (pas une action requise) :
+`frontend/app/src/stores/event.ts` a été modifié par des sessions de tickets
+antérieures (#201, #202) alors qu'il est réservé à l'orchestrateur — diffs
+mineurs, sans câblage cross-écran, acceptable en l'absence de parallélisme
+d'agents sur ce sprint ; à surveiller si le sprint redevient parallèle.
 
 **Ordre d'exécution restant (voir `19-poules-inscriptions-ajustements/sprint.md`)** :
-#205 (AutoFillModal, indépendant) ; #237/#238 (AutoFillModal/AdminInscriptions,
-indépendants) ; #240/#241 (nouvelles, `AdminGroups.vue`).
+#238 (AdminInscriptions, indépendant) ; #240/#241 (`AdminGroups.vue`,
+séquentiels entre eux).
 
 **Sprint 17/18 — PRs non mergées :** toujours d'actualité, ni la PR #223
 (sprint 17) ni celle du sprint 18 ne semblent mergées dans `main`. Point à
@@ -414,4 +418,4 @@ traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
 automatique.
 
 **Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête et toujours en cours
-(non terminé cette session — prochaine échéance reprendra sur #205/#237/#238/#240/#241).
+(non terminé cette session — prochaine échéance reprendra sur #238/#240/#241).
