@@ -373,39 +373,37 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #59
-**Sprint actif :** 18 — Tableau final conforme (2ᵉ session).
+**Dernière session :** 2026-07-03 — Session #60
+**Sprint actif :** 18 — Tableau final conforme (3ᵉ session).
 Spec review (faite en début de session, avant traitement des tickets) :
-`specs/screens/admin-tableau-final.md` → **⚠️ Dérive mineure** (passé de ❌ à
-⚠️ depuis la session #58 : plus aucune dérive bloquante). Les corrections de
-#196/#197 tiennent sans régression. 7 dérives déjà connues confirmées, 0
-nouvelle.
+`specs/screens/admin-tableau-final.md` → **⚠️ Dérive mineure** (stable depuis
+la session #59). Les corrections de #195/#198 tiennent sans régression. 5
+dérives déjà connues confirmées (#199, #200, #176, #230, #231), 0 nouvelle.
 **Roadmap :** 4 sprints planifiés (18 → 21), 18 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#195](https://github.com/sirius911/moutilloux/issues/195)
-(✅ Approuvé, `AdminBracket.vue` : sélecteur d'épreuve `<select>` en en-tête,
-pattern identique à `AdminMatches.vue`) et [#198](https://github.com/sirius911/moutilloux/issues/198)
-(✅ Approuvé avec réserve corrigée avant clôture : `usePolling(..., 4000)` pour
-suivre la progression automatique du bracket ; réserve du reviewer — double
-fetch au montage — corrigée par l'orchestrateur en retirant `immediate: true`
-du `watch`, devenu redondant avec le premier `run()` de `usePolling`).
+**Tickets clôturés cette session :** 2 — [#200](https://github.com/sirius911/moutilloux/issues/200)
+(✅ Approuvé, `AdminBracket.vue` : état vide invitant à débuter en
+`INSCRIPTION`, plus de bouton « Créer le tableau » avant que l'épreuve soit
+débutée) et [#199](https://github.com/sirius911/moutilloux/issues/199)
+(✅ Approuvé avec réserve corrigée avant clôture : `window.confirm()` remplacé
+par une `ConfirmModal` dédiée pour la recréation, erreur serveur affichée
+dans la modale ; réserve du reviewer — manque de séparation visuelle
+warning/erreur — corrigée par l'orchestrateur avec un préfixe « Erreur : »,
+sans toucher au composant partagé `ConfirmModal.vue`).
 **Nouveaux tickets créés :** 0.
 **Branche :** `claude/sprint/18-tableau-final-conformite`.
 
 **Sprint 17 (sessions précédentes) :** clôturé en session #57 — pour mémoire,
 non concerné par cette session.
 
-**Problèmes d'orchestration (session #59) :** pour #198, le reviewer a rendu
-`⚠️ Approuvé avec réserves` (double fetch au montage initial). Plutôt que clore
-avec la réserve non résolue, l'orchestrateur a appliqué directement le
-correctif d'une ligne suggéré par le reviewer, revérifié le type-check, puis
-clos en ✅ avec la correction documentée dans le commentaire GitHub — même
-pattern qu'en sessions #56 et #58. En cours de review, une divergence entre
-`CLAUDE.md` et le code a été repérée (pause du polling sur onglet caché en
-réalité déjà implémentée dans `usePolling.ts`, contrairement au TODO qui y
-était noté) et corrigée par l'orchestrateur, conformément à la convention
-« doc suit le code » (hors `specs/`). Aucun autre écart au protocole.
+**Problèmes d'orchestration (session #60) :** pour #199, le reviewer a rendu
+`⚠️ Approuvé avec réserves` (message d'erreur serveur concaténé au warning
+sans séparation visuelle dans la modale). Plutôt que clore avec la réserve
+non résolue, l'orchestrateur a appliqué un ajustement textuel d'une ligne
+(préfixe « Erreur : ») dans `AdminBracket.vue` uniquement, sans modifier le
+composant partagé, revérifié le type-check, puis clos en ✅ — même pattern
+qu'en sessions #56, #58 et #59. Aucun autre écart au protocole.
 
-Parent effectif pour la session #59 : `claude/sprint/17-panneau-edition-match`
+Parent effectif pour la session #60 : `claude/sprint/17-panneau-edition-match`
 (le sprint 17 est clos côté planification/milestone depuis la session #57,
 mais sa PR #223 n'est toujours pas mergée dans `main`). Déjà synchronisé cette
 session, aucun merge nécessaire.
