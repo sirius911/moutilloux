@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import type { BracketSlot, Entry } from '@/types'
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
 
 watch(() => eventStore.activeEventId, (id) => {
   if (id) {
@@ -33,6 +35,11 @@ function extractError(e: unknown): string {
     if (parsed && typeof parsed.error === 'string') return parsed.error
   } catch { /* message non-JSON : on retombe sur le générique */ }
   return 'Action impossible.'
+}
+
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
 }
 
 async function createOrRecreate() {
@@ -156,10 +163,20 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
 <template>
   <div class="admin-page">
     <header class="page-header">
-      <div>
-        <p class="breadcrumb">Tournoi · {{ eventStore.events.find(e => e.id === eventStore.activeEventId)?.name ?? '—' }}</p>
-        <h1 class="page-title">Tableau final</h1>
-        <p class="page-sub">Glissez les qualifiés dans les slots du bracket</p>
+      <div class="header-left">
+        <select
+          class="event-selector"
+          :value="eventStore.activeEventId"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">
+            {{ ev.name }}
+          </option>
+        </select>
+        <div>
+          <h1 class="page-title">Tableau final</h1>
+          <p class="page-sub">Glissez les qualifiés dans les slots du bracket</p>
+        </div>
       </div>
       <div class="header-actions">
         <button v-if="hasBracket" class="adm-btn" type="button" @click="createOrRecreate">Recréer le tableau</button>
@@ -514,7 +531,23 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
   gap: 16px;
 }
 
-.breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+.header-left { display: flex; flex-direction: column; gap: 6px; }
+
+.event-selector {
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-family: inherit;
+  max-width: 220px;
+}
+
+.event-selector:focus { outline: none; border-color: var(--accent); }
+
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-2); }
 
