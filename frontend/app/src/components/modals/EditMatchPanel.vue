@@ -195,6 +195,7 @@ const planningStatusOptions = [
 const showStartConfirm = ref(false)
 const showFinishConfirm = ref(false)
 const showFeatureConfirm = ref(false)
+const showReopenConfirm = ref(false)
 
 function hasOtherLiveMatch(): boolean {
   const allMatches = eventStore.calendar?.playDays.flatMap((d) => d.matches) ?? []
@@ -202,7 +203,13 @@ function hasOtherLiveMatch(): boolean {
 }
 
 async function save() {
+  if (props.match.status === 'FINISHED' && status.value === 'live' && !showReopenConfirm.value) {
+    showReopenConfirm.value = true
+    return
+  }
+
   if (status.value === 'live' && props.match.status !== 'LIVE' && hasOtherLiveMatch() && !showStartConfirm.value) {
+    showReopenConfirm.value = false
     showStartConfirm.value = true
     return
   }
@@ -510,6 +517,15 @@ async function save() {
         </footer>
       </aside>
     </div>
+    <ConfirmModal
+      v-if="showReopenConfirm"
+      title="Rouvrir ce match ?"
+      body="Le match repasse EN DIRECT, le score actuel est conservé. Cette action est réservée aux administrateurs."
+      confirm-label="Rouvrir"
+      :danger="false"
+      @confirm="save"
+      @close="showReopenConfirm = false"
+    />
     <ConfirmModal
       v-if="showStartConfirm"
       title="Démarrer ce match ?"
