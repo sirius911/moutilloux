@@ -808,8 +808,14 @@ def add_players_entries(event, player_ids):
 def remove_entry(event, entry):
     """
     Service : retire une Entry de l'event.
-    Refuse (ValueError) si l'Entry est déjà engagée dans un match.
+    Refuse (ValueError) si l'épreuve est débutée (retrait sec réservé à
+    la phase INSCRIPTION) ou si l'Entry est déjà engagée dans un match.
     """
+    if event.status != Event.Status.INSCRIPTION:
+        raise ValueError(
+            f"Impossible de retirer {entry} : l'épreuve est débutée "
+            "(utiliser le forfait/retrait en cours de jeu)."
+        )
     used_in_matches = Match.objects.filter(event=event, side_a=entry).exists() or \
         Match.objects.filter(event=event, side_b=entry).exists()
     if used_in_matches:
