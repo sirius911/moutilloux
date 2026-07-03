@@ -67,9 +67,9 @@ Décrivent des règles globales qui s'appliquent à plusieurs écrans ou composa
 
 | Module | Fichier | Statut |
 |--------|---------|--------|
-| — | — | À créer |
+| erreurs-api | [transverse/erreurs-api.md](./transverse/erreurs-api.md) | ✅ Actif |
 
-*Exemples à prévoir : auth (guards, session, logout), polling (intervalles, pause onglet caché), gestion des erreurs API.*
+*Exemples à prévoir : auth (guards, session, logout), polling (intervalles, pause onglet caché).*
 
 ---
 

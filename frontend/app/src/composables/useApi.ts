@@ -25,9 +25,7 @@ async function apiFetch<T>(
   }
 
   if (isWrite) {
-    const csrf = getCsrfToken()
-    console.log(`[useApi] ${options.method} ${path} — csrf="${csrf || '(vide !)'}"`)
-    headers['X-CSRFToken'] = csrf
+    headers['X-CSRFToken'] = getCsrfToken()
   }
 
   const res = await fetch(url, {
@@ -36,24 +34,28 @@ async function apiFetch<T>(
     headers,
   })
 
-  console.log(`[useApi] ${options.method ?? 'GET'} ${path} → ${res.status} ${res.url !== url ? `(redirect → ${res.url})` : ''}`)
-
   // Session expirée : Django redirige vers /accounts/login/ → HTML, pas JSON
   if (res.redirected && res.url.includes('/accounts/login')) {
     window.location.href = '/login'
     throw new Error('Session expirée — redirection vers /login')
   }
 
+  // 401 JSON : session expirée sur un endpoint qui répond en JSON plutôt que
+  // par la redirection HTML ci-dessus. /api/me/ et /api/auth/ renvoient un 401
+  // "attendu" (vérif. de session, identifiants incorrects) — voir erreurs-api.
+  if (res.status === 401 && !path.startsWith('/api/me/') && !path.startsWith('/api/auth/')) {
+    window.location.href = '/login'
+    throw new Error('Session expirée — redirection vers /login')
+  }
+
   if (!res.ok) {
     const text = await res.text()
-    console.error(`[useApi] erreur ${res.status} sur ${path}:`, text.slice(0, 300))
     throw new Error(`[${res.status}] ${path} — ${text}`)
   }
 
   const contentType = res.headers.get('content-type') ?? ''
   if (!contentType.includes('application/json')) {
     const text = await res.text()
-    console.error(`[useApi] réponse non-JSON pour ${path} (content-type: ${contentType}):`, text.slice(0, 300))
     throw new Error(`Réponse non-JSON pour ${path}`)
   }
 

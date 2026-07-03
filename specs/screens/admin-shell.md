@@ -112,7 +112,7 @@ elle reste ouverte (le sélecteur n'est pas accessible sous l'overlay d'une moda
   états neutres et l'écran courant son état d'erreur ou vide ; l'application ne
   casse pas.
 - Session expirée (réponse 401 sur un appel) : l'utilisateur est renvoyé vers
-  `/login` (règle transverse, voir [[useapi-401]]).
+  `/login` (règle transverse, voir [[erreurs-api]]).
 
 ---
 
