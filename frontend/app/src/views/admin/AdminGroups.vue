@@ -248,7 +248,7 @@ async function removeFromGroup(entryId: number) {
           :disabled="eventStore.groupsLocked || createGroupBusy"
           @click="createGroup"
         >+ Nouvelle poule</button>
-        <button class="adm-btn" type="button" :disabled="eventStore.groupsLocked" @click="showAutoFill = true">Remplir automatiquement</button>
+        <button class="adm-btn" type="button" :disabled="eventStore.groupsLocked || eventStore.players.length === 0" @click="showAutoFill = true">Remplir automatiquement</button>
       </div>
     </header>
 
