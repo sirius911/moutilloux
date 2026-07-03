@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { useAuthStore } from '@/stores/auth'
+import type { BracketSlot } from '@/types'
 
 const eventStore = useEventStore()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+const editionsLoaded = ref(false)
+const playersLoaded = ref(false)
 
 async function handleLogout() {
   await authStore.logout()
@@ -17,11 +21,13 @@ async function handleLogout() {
 onMounted(async () => {
   try {
     await eventStore.fetchEditions()
+    editionsLoaded.value = true
   } catch {
     // sidebar affiche ses états neutres (activeEdition null, events vide)
   }
   try {
     await eventStore.fetchAllPlayers()
+    playersLoaded.value = true
   } catch {
     // compteur Joueurs reste vide
   }
@@ -45,16 +51,18 @@ const navItems = computed(() => {
   const matchCount = kanban === null
     ? null
     : kanban.backlog.length + kanban.queue.length + kanban.finished.length
+  const countMatches = (slots: BracketSlot[]) =>
+    slots.filter(s => s.match !== null).length
   const bracketCount = bracket === null
     ? null
-    : bracket.qf.length + bracket.sf.length + bracket.f.length
+    : countMatches(bracket.qf) + countMatches(bracket.sf) + countMatches(bracket.f)
 
   const eid = eventStore.activeEventId
   const base = eid ? `/admin/events/${eid}` : null
 
   return [
-    { path: '/admin/tournoi',                   label: 'Tournoi',       icon: '🏛', count: eventStore.events.length },
-    { path: '/admin/players',                   label: 'Joueurs',       icon: '👤', count: eventStore.allPlayers.length },
+    { path: '/admin/tournoi',                   label: 'Tournoi',       icon: '🏛', count: editionsLoaded.value ? eventStore.events.length : null },
+    { path: '/admin/players',                   label: 'Joueurs',       icon: '👤', count: playersLoaded.value ? eventStore.allPlayers.length : null },
     { path: base ? `${base}/inscriptions` : '', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
     { path: base ? `${base}/groups` : '',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
     { path: base ? `${base}/matches` : '',      label: 'Planning',      icon: '⚡', count: matchCount },
