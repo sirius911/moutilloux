@@ -373,38 +373,42 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #61
-**Sprint actif :** 18 — Tableau final conforme (4ᵉ session).
+**Dernière session :** 2026-07-03 — Session #62
+**Sprint actif :** 18 — Tableau final conforme (5ᵉ session).
 Spec review (faite en début de session, avant traitement des tickets) :
-`specs/screens/admin-tableau-final.md` → **⚠️ Dérive mineure** (stable depuis
-la session #59). Les corrections de #199/#200 tiennent sans régression. 3
-dérives déjà connues confirmées (#176, #230, #231), 0 nouvelle.
+`specs/screens/admin-tableau-final.md` → **⚠️ Dérive mineure** — une seule
+dérive comptant sur cette spec (#231), #233 confirmée hors périmètre (relève
+de `live/views.py`, transverse au scoreboard, pas de cette spec). Les
+corrections de #176/#230 tiennent sans régression.
 **Roadmap :** 4 sprints planifiés (18 → 21), 18 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#176](https://github.com/sirius911/moutilloux/issues/176)
-(✅ Approuvé, `stage_label` renvoie « 3e place » pour P3 dans `_pack_match` ;
-doublon actif repéré dans `live/views.py::score_state`, ticketé séparément en
-#233) et [#230](https://github.com/sirius911/moutilloux/issues/230)
-(✅ Approuvé, type front `Bracket.p3` rendu non-optionnel, conforme au
-contrat réel de `_pack_event_bracket`).
-**Nouveaux tickets créés :** 1 — [#233](https://github.com/sirius911/moutilloux/issues/233)
-(🟡 mineure, doublon de `stage_label` dans `live/views.py::score_state`,
-signalé par le reviewer de #176).
+**Tickets clôturés cette session :** 2 — [#231](https://github.com/sirius911/moutilloux/issues/231)
+(✅ Approuvé, `AdminBracket.vue::createBracketNow` simplifié, `stores/event.ts::createBracket`
+câblé par l'orchestrateur avec la nouvelle signature `(eventId, force)` sans
+`startStage`, sur spécification exacte laissée par l'agent front dans son
+plan) et [#233](https://github.com/sirius911/moutilloux/issues/233)
+(✅ Approuvé, `live/views.py::score_state` : libellé « 3e place » pour P3
+aligné sur `live/api_views.py`, pas de fusion des deux fonctions dupliquées —
+refactoring hors périmètre).
+**Nouveaux tickets créés :** 0.
 **Branche :** `claude/sprint/18-tableau-final-conformite`.
 
 **Sprint 17 (sessions précédentes) :** clôturé en session #57 — pour mémoire,
 non concerné par cette session.
 
-**Problèmes d'orchestration (session #61) :** écart au protocole §4 (règle
-« séquentiel ») — l'implémentation de #230 a été lancée avant que la review
-de #176 ne soit terminée, les deux tickets ont donc tourné en partie en
-parallèle au lieu d'être strictement séquentiels. Les deux tickets touchaient
-des fichiers strictement disjoints (`live/api_views.py` vs
-`frontend/app/src/types/index.ts`), aucune casse constatée (vérifié
-explicitement par les deux reviewers), mais c'est un écart réel à corriger :
-revenir à un traitement strictement séquentiel dans les sessions suivantes,
-même quand les fichiers semblent disjoints.
+**Problèmes d'orchestration (session #62) :** aucun. Traitement strictement
+séquentiel cette fois — correction de l'écart noté en session #61 (#231
+entièrement terminé, y compris le câblage du fichier partagé `stores/event.ts`,
+avant de démarrer #233).
 
-Parent effectif pour la session #61 : `claude/sprint/17-panneau-edition-match`
+**Sprint 18 — pas encore clôturé.** Le milestone est à **0 issue ouverte** en
+fin de session, mais la condition de clôture exige que la spec review *de la
+session courante* (avant traitement des tickets) soit ✅ — ce qui n'était pas
+le cas ici (⚠️, #231 encore ouverte au moment de la review). Même situation
+que pour le sprint 17 (sessions #55-#57) : la prochaine session devra refaire
+une review fraîche ; si elle confirme ✅ Conforme et que le milestone reste à
+0 issue ouverte, le sprint 18 pourra être clôturé dès cette prochaine session.
+
+Parent effectif pour la session #62 : `claude/sprint/17-panneau-edition-match`
 (le sprint 17 est clos côté planification/milestone depuis la session #57,
 mais sa PR #223 n'est toujours pas mergée dans `main`). Déjà synchronisé cette
 session, aucun merge nécessaire.
