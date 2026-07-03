@@ -373,48 +373,48 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #65
-**Sprint actif :** 19 — Poules & inscriptions : ajustements (devient actif
-cette session, pas encore démarré).
+**Dernière session :** 2026-07-03 — Session #66
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (démarré cette
+session, 1ʳᵉ session du sprint).
 
-**Sprint 18 — Tableau final conforme : CLÔTURÉ cette session (8ᵉ et dernière
-session du sprint).** Spec review de la session #65, relecture complète ligne
-par ligne de `specs/screens/admin-tableau-final.md` contre `AdminBracket.vue`,
-`ConfirmModal.vue`, `stores/event.ts`, `live/api_views.py`,
-`live/admin_views.py`, `live/bracket.py` → **✅ Conforme**, 0 dérive. Milestone
-GitHub #17 à 0 issue ouverte. Les deux conditions de clôture réunies :
-milestone fermé, ligne retirée de `backlog/sprints/roadmap.md`, dossier
-déplacé vers `backlog/sprints/done/18-tableau-final-conformite/`.
-**Tickets traités session #65 :** 0 (rien à traiter, milestone déjà à 0 en
-entrant en session).
+**Sprint 19 — démarrage.** Branche `claude/sprint/19-poules-inscriptions-ajustements`
+créée depuis `origin/claude/sprint/18-tableau-final-conformite` (résolu comme
+parent effectif : le sprint 18 est bien le dernier `done/` avec un numéro <
+19, mais sa branche **n'est pas encore mergée dans `main`** — cf. point déjà
+soulevé en session #65 pour le sprint 17/PR #223, même situation pour le
+sprint 18 dont la PR n'a apparemment pas non plus été mergée. À surveiller :
+si plusieurs PRs de sprints consécutifs restent ouvertes sans être mergées,
+les branches sprint vont s'empiler les unes sur les autres au lieu de partir
+de `main` — pas bloquant pour l'algorithme (qui gère bien la chaîne), mais
+signe qu'il faudrait merger les PRs #223 (sprint 17) et celle du sprint 18
+côté `main` pour repartir sur une base saine.
 
-**Anomalie d'orchestration (session #65) :** en entrant en session, un
-fichier `backlog/logs/session_2026-07-03_64.md` était présent mais non
-committé — la session #64 (qui avait traité #236, commit `e68cc07`) s'était
-arrêtée avant de finaliser son étape 4 (commit du log, mise à jour section 6,
-push). Contenu du log #64 vérifié cohérent avec le commit `e68cc07` et
-conservé tel quel ; committé au tout début de la session #65 (étape 0,
-« working tree sale »), avant la review fraîche qui a mené à la clôture du
-sprint. Aucune perte de travail. Fait suite à l'anomalie de la session #63
-(issues apparues hors flux) — à surveiller sur les prochaines sessions,
-notamment si une session s'interrompt de nouveau avant son push final.
+**Spec review session #66 :** `admin-poules.md` → ⚠️ (1 nouvelle dérive
+mineure, #237 : message d'erreur brut dans AutoFillModal) ; `admin-inscriptions.md`
+→ ⚠️ (1 nouvelle dérive mineure, #238 : état « registre vide » non distingué) ;
+`cycle-de-vie-epreuve.md` → ✅ Conforme, avec un constat notable : la
+majorité des briques que la spec listait comme « à créer » (statut Event,
+forfait/walkover, seeding généralisé à séparation maximale, byes, P3) sont en
+réalité **déjà implémentées de bout en bout** — la spec elle-même est
+périmée sur ce point, déjà couvert par l'issue #218 (Sprint 21). Les 7
+dérives déjà connues du sprint (#201, #166, #202-206) confirmées, non
+re-signalées.
 
-**Sessions #63-#64 (pour mémoire, résumé) :** #63 a ticketé et corrigé #234 ;
-a aussi vu apparaître hors flux normal #235/#236 (anomalie documentée dans
-`backlog/logs/session_2026-07-03_63.md`), #235 corrigée la même session. #64 a
-corrigé #236 (`ConfirmModal.vue` : prop `isError` → `role="alert"` ciblé) et
-revérifié #234/#235 sans régression (commit `e68cc07`), mais n'a pas finalisé
-sa clôture de session (voir anomalie ci-dessus, résolue en #65).
+**Tickets traités session #66 :** 2 — #166 (garde de statut sur
+`remove_entry`, ✅ Approuvé) et #201 (distinction Retirer/Forfait : le
+retrait supprime maintenant l'affichage poule via un nouveau paramètre
+`remove_from_group` sur `withdraw_entry`, ✅ Approuvé). Commits `6a26d8d` et
+`4ec2bff`. Milestone Sprint 19 à 7 issues ouvertes en sortie de session (202,
+203, 204, 205, 206, 237, 238) — sprint non clôturable cette session.
 
-**Sprint 17 :** clôturé en session #57 côté planification/milestone — sa PR
-#223 reste non mergée dans `main`, donc reste le parent effectif de la
-branche du sprint 18 (`claude/sprint/18-tableau-final-conformite`, ahead de
-`claude/sprint/17-panneau-edition-match`). Point à surveiller pour le sprint
-19 : sa branche devra être créée depuis `main` (le sprint 17, terminé, n'est
-plus dans `backlog/sprints/done/` avec un numéro < 19 qui changerait ce
-calcul — à revérifier avec l'algorithme de résolution du parent à l'étape 0
-de la prochaine session).
+**Ordre d'exécution restant (voir `19-poules-inscriptions-ajustements/sprint.md`)** :
+#202 → #203 → #204 → #206 séquentiel sur `AdminGroups.vue` ; #205 et les
+nouveaux #237/#238 indépendants (fichiers disjoints ou peu de contention).
 
-**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête. Le sprint 19 n'a pas
-été démarré dans cette session (protocole : un sprint ne démarre qu'à la
-prochaine échéance planifiée).
+**Sprint 17/18 — PRs non mergées :** à date, ni la PR #223 (sprint 17) ni
+celle du sprint 18 ne semblent mergées dans `main` (déduit de la résolution
+du parent effectif ci-dessus). Point à traiter côté humain (revue/merge des
+PRs), hors périmètre de la Routine automatique.
+
+**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête et maintenant en
+cours (non terminé cette session — prochaine échéance reprendra sur #202).
