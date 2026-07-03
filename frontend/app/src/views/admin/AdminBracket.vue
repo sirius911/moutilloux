@@ -31,6 +31,10 @@ usePolling(async () => {
 const bracket = computed(() => eventStore.bracket)
 const error = ref('')
 
+const activeEvent = computed(() =>
+  eventStore.events.find((e) => e.id === eventStore.activeEventId),
+)
+
 // Un tableau existe dès qu'au moins un slot porte un match (y compris P3).
 const hasBracket = computed(() =>
   [...(bracket.value?.qf ?? []), ...(bracket.value?.sf ?? []),
@@ -203,7 +207,12 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
     <div v-else class="page-content">
       <p v-if="error" class="bracket-error" role="alert">{{ error }}</p>
 
-      <div v-if="!hasBracket" class="bracket-empty bracket-empty--cta">
+      <div v-if="activeEvent?.status === 'INSCRIPTION'" class="empty-state">
+        <p>L'épreuve n'a pas encore été débutée.</p>
+        <RouterLink to="/admin/tournoi">Débuter depuis l'écran Tournoi →</RouterLink>
+      </div>
+
+      <div v-else-if="!hasBracket" class="bracket-empty bracket-empty--cta">
         <p>Aucun tableau final créé pour cette épreuve.</p>
         <button class="adm-btn primary" type="button" @click="createOrRecreate">Créer le tableau</button>
       </div>
