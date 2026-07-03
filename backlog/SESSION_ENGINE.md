@@ -373,56 +373,44 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #74
-**Sprint actif :** 20 — Transverse : erreurs API & routing (démarré cette
-session — première session du sprint).
+**Dernière session :** 2026-07-03 — Session #75
+**Sprint actif :** 20 — Transverse : erreurs API & routing (2ᵉ session).
 
-**Git — premier démarrage du sprint 20 :** branche `claude/sprint/20-transverse-erreurs-routing`
-créée depuis le parent effectif `claude/sprint/19-poules-inscriptions-ajustements`
+**Git :** branche `claude/sprint/20-transverse-erreurs-routing`, déjà à jour
+avec le parent effectif `claude/sprint/19-poules-inscriptions-ajustements`
 (sprint 19 toujours non mergé dans `main` — point récurrent, à traiter côté
-humain, hors périmètre de la Routine). Merge avec le parent : déjà à jour,
-rien à fusionner. Working tree propre au démarrage.
+humain). Working tree propre au démarrage.
 
-**Spec review session #74 (première passe du sprint) :**
-`specs/technical/routing-context.md` → ⚠️ Dérive mineure (« Sélectionner »
-sur l'écran Tournoi mute directement `activeEventId` au lieu de naviguer via
-`router.push`, contredit le principe « l'URL fait foi » — #208, déjà
-ticketée) ; `specs/screens/admin-shell.md` → ⚠️ Dérive mineure (compteurs
-sidebar affichant `0` avant chargement au lieu d'un état neutre — #209, déjà
-ticketée ; lien mort `[[useapi-401]]` — #207, déjà ticketée, **corrigé en
-session**). 0 nouvelle issue créée : les 7 dérives de l'audit du 2026-07-02
-couvrent tout ce qui a été observé.
+**Spec review session #75 :** `specs/technical/routing-context.md` →
+⚠️ Dérive mineure (confirmation de #208 à `AdminTournoi.vue:229`, résolue
+cette session) ; `specs/screens/admin-shell.md` → ⚠️ Dérive mineure
+(confirmation de #209 à `AdminLayout.vue:56-59`, portée un peu plus large que
+le libellé initial : 4 compteurs sur 6 touchés). 0 nouvelle issue créée, 0
+lien mort résiduel.
 
-**Tickets traités session #74 :** 2 (3 issues fermées) —
-- **#207** (majeure, « socle du sprint ») : création de
-  `specs/transverse/erreurs-api.md` (contrats `{error}`/`{fields}` par statut
-  400/401/409, convention `extractApiError` unique, redirection 401) ;
-  correction du lien `[[useapi-401]]` → `[[erreurs-api]]` dans
-  `admin-shell.md` ; référencement dans `specs/INDEX.md` ; ajout dans
-  `useApi.ts` de la redirection `/login` sur 401 JSON (à l'exclusion de
-  `/api/me/` et `/api/auth/`, pour ne pas casser `fetchMe()` ni l'écran de
-  connexion). ✅ Approuvé. Commit `fd772de`.
-- **#20** (embarqué avec #207, même fichier réservé `useApi.ts`, une seule
-  intervention orchestrateur comme prévu par `sprint.md`) : suppression des
-  `console.log`/`console.error` de mise au point dans `useApi.ts`. ✅ Approuvé.
-  Commit `fd772de`.
-- **#17** : migration des 4 derniers fichiers utilisant l'ancienne fonction
-  dupliquée `apiErrorMessage` (`AutoFillModal.vue`, `AdminGroups.vue`,
-  `AdminInscriptions.vue`, `CreateTeamModal.vue`) vers `extractApiError`
-  (`lib/apiError.ts`), signature identique, gain fonctionnel sur
-  `fields.__all__`. Suppression de `apiErrorMessage` de `useApi.ts` (dead
-  code, plus aucun appelant). ✅ Approuvé. Commit `32f167d`.
+**Tickets traités session #75 :** 2 (3 issues fermées) —
+- **#208** : suppression du bouton « Sélectionner »/« Sélectionnée ✓ » dans
+  `AdminTournoi.vue` (mutait `eventStore.activeEventId` directement, contredit
+  « l'URL fait foi »). Décision retenue : retrait plutôt que navigation — les
+  boutons Inscriptions/Poules/Matchs de la même carte naviguent déjà
+  explicitement avec `:eventId`. Aucun fichier partagé touché. ✅ Approuvé.
+  Commit `4ed55bc`.
+- **#177 + #210** (même geste, fichiers disjoints) : suppression des 3
+  modales orphelines `GenerateMatchesModal.vue`, `CategoryModal.vue`,
+  `CourtModal.vue` (aucune référence dans le code) ; retrait de la ligne
+  `GenerateMatchesModal.vue` dans le champ `fichiers:` de
+  `specs/screens/admin-matchs.md`. ⚠️ Approuvé avec réserves (réserve non
+  bloquante : working tree partagé avec #208 au moment de la revue, corrigée
+  en séparant les commits). Commit `32dd110`.
 
 `vue-tsc --noEmit` OK après chaque ticket. Deux revues indépendantes (agent
-`reviewer`, lecture seule) confirment l'absence de régression sur les flux
-`fetchMe`/`LoginView`/`logout` et l'absence de toute référence résiduelle à
-`apiErrorMessage` dans le dépôt.
+`reviewer`, lecture seule).
 
-**Fin de sprint :** non atteinte — 4 issues encore ouvertes sous le milestone
-Sprint 20 (#208, #209, #177, #210). Le sprint continue à la prochaine
+**Fin de sprint :** non atteinte — 1 issue encore ouverte sous le milestone
+Sprint 20 (#209, compteurs sidebar). Le sprint continue à la prochaine
 échéance.
 
 **Sprint 17/18/19 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
-**Roadmap :** 2 sprints planifiés (20 → 21), 20 en tête, en cours (1 session).
+**Roadmap :** 2 sprints planifiés (20 → 21), 20 en tête, en cours (2 sessions).
