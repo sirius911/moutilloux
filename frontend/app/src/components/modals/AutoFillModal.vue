@@ -8,7 +8,11 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const eventStore = useEventStore()
 
-const groupSize = ref<3 | 4>(4)
+const activeEvent = computed(() =>
+  eventStore.events.find((e) => e.id === eventStore.activeEventId) ?? null
+)
+
+const groupSize = ref<3 | 4>(activeEvent.value?.groupSizeDefault === 3 ? 3 : 4)
 const method = ref<'order' | 'random'>('order')
 const saving = ref(false)
 const error = ref('')
