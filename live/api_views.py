@@ -1262,7 +1262,7 @@ def api_courts(request):
 @superuser_required
 @transaction.atomic
 def api_edition_create(request):
-    """POST /api/editions/create/ — {name, year, start_dt?, end_dt?, activate?}."""
+    """POST /api/editions/create/ — {name, year, start_dt?, end_dt?}."""
     data, err = _json_body(request)
     if err:
         return err
@@ -1272,7 +1272,6 @@ def api_edition_create(request):
             year=data.get("year"),
             start_dt=_parse_edition_dt(data.get("start_dt"), "Date de début"),
             end_dt=_parse_edition_dt(data.get("end_dt"), "Date de fin"),
-            activate=bool(data.get("activate")),
         )
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)

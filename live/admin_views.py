@@ -1654,20 +1654,22 @@ def _parse_year(value):
 
 # ── Éditions ─────────────────────────────────────────────────────────────
 
-def create_edition(name, year, start_dt=None, end_dt=None, activate=False):
-    """Crée une édition. `year` unique. start/end_dt = datetime|None déjà parsés."""
+def create_edition(name, year, start_dt=None, end_dt=None):
+    """Crée une édition. `year` unique. start/end_dt = datetime|None déjà parsés.
+    Devient active automatiquement si aucune édition active n'existe (1er lancement)."""
     name = (name or "").strip()
     if not name:
         raise ValueError("Le nom de l'édition est requis.")
     year = _parse_year(year)
     if TournamentEdition.objects.filter(year=year).exists():
         raise ValueError(f"Une édition existe déjà pour l'année {year}.")
+    is_first_active = not TournamentEdition.objects.filter(is_active=True).exists()
     edition = TournamentEdition(
         name=name,
         year=year,
         start_dt=start_dt or None,
         end_dt=end_dt or None,
-        is_active=bool(activate),
+        is_active=is_first_active,
     )
     edition.save()  # save() force l'exclusivité de is_active
     return edition

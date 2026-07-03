@@ -40,8 +40,7 @@ async function save() {
     if (props.editing) {
       await eventStore.editEdition(props.editing.id, base)
     } else {
-      // Activation automatique si aucune édition active n'existe (spec §modale-édition)
-      await eventStore.createEdition({ ...base, activate: !eventStore.activeEdition })
+      await eventStore.createEdition(base)
     }
     emit('saved')
     emit('close')

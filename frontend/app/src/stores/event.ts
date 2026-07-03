@@ -45,7 +45,6 @@ export interface EditionPayload {
   year?: number
   start_dt?: string | null
   end_dt?: string | null
-  activate?: boolean
 }
 
 export interface CategoryPayload {
