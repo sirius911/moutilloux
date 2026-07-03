@@ -1100,14 +1100,30 @@ def api_match_start(request, match_id):
 def api_bracket_create(request, event_id):
     """
     POST /api/events/<id>/bracket/create/
-    Crée ou met à jour le squelette du tableau final (générateur général : N poules × qpg, byes,
-    séparation maximale). Idempotent — aucun match lancé/terminé n'est touché.
+    Crée ou (re)crée le squelette du tableau final (générateur général : N poules × qpg, byes,
+    séparation maximale — source : live.bracket.recreate_final_bracket_for_event).
+    Body JSON optionnel : {force: bool} (défaut false).
+    - Sans tableau existant : le squelette est créé (force sans effet).
+    - Tableau existant, force=false : idempotent, rien n'est effacé.
+    - Tableau existant, force=true : les matchs planifiés (SCHEDULED) sont effacés puis
+      le squelette est reposé.
+    - Refusé (400) si un match du tableau est déjà LIVE/FINISHED, que force soit vrai ou non.
     Réponse : structure du bracket (même format que GET /api/events/<id>/bracket/).
     """
     event = get_object_or_404(Event.objects.select_related("edition"), pk=event_id)
 
-    from live.bracket import ensure_final_bracket_exists
-    ensure_final_bracket_exists(event)
+    try:
+        data = json.loads(request.body) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    force = bool(data.get("force", False))
+
+    from live.bracket import recreate_final_bracket_for_event
+    try:
+        recreate_final_bracket_for_event(event, force=force)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
 
     return JsonResponse(_pack_event_bracket(event))
 

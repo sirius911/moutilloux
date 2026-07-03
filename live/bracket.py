@@ -211,6 +211,34 @@ def ensure_final_bracket_exists(event):
             )
 
 
+def recreate_final_bracket_for_event(event, force=False):
+    """
+    Service réutilisable : (re)pose le squelette du tableau final dérivé des poules
+    (même forme que ``ensure_final_bracket_exists`` — N poules × qualified_per_group,
+    byes, séparation maximale).
+
+    - Aucun tableau existant : régénère directement (``force`` sans effet).
+    - Tableau existant, tous les matchs ``SCHEDULED``, ``force=False`` : no-op idempotent
+      (délègue à ``ensure_final_bracket_exists``, comme l'appel initial au « Débuter »).
+    - Tableau existant, tous les matchs ``SCHEDULED``, ``force=True`` : supprime les
+      matchs du tableau puis régénère un squelette neuf.
+    - Tableau existant avec au moins un match ``LIVE``/``FINISHED`` : toujours refusé
+      (``ValueError``), que ``force`` soit vrai ou non.
+    """
+    existing = Match.objects.filter(
+        event=event,
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+    )
+
+    if existing.exists():
+        if existing.exclude(status=Match.Status.SCHEDULED).exists():
+            raise ValueError("Impossible de recréer : un match est déjà en cours ou terminé.")
+        if force:
+            existing.delete()
+
+    ensure_final_bracket_exists(event)
+
+
 def sync_final_bracket_for_event(event):
     """
     Met à jour side_a/side_b dès que les ranks existent (labels positionnels : A1/B2/…).
