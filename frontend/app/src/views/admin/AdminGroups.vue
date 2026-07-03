@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { apiErrorMessage } from '@/composables/useApi'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
@@ -177,15 +178,6 @@ async function executeAddLate() {
   } finally {
     adjustBusy.value = false
   }
-}
-
-function apiErrorMessage(e: unknown, fallback: string): string {
-  if (!(e instanceof Error)) return fallback
-  const match = e.message.match(/— (.+)$/)
-  if (match) {
-    try { const p = JSON.parse(match[1]); if (p.error) return p.error } catch {}
-  }
-  return e.message
 }
 
 // Drag state
