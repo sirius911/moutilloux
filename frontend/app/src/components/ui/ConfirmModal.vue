@@ -6,9 +6,15 @@ withDefaults(defineProps<{
   body: string
   confirmLabel?: string
   danger?: boolean
+  /** Le body est un message d'erreur serveur (pas un simple texte de
+   * confirmation statique) : porte `role="alert"` pour l'annoncer aux
+   * lecteurs d'écran. Voir specs/screens/admin-tableau-final.md §Gestion
+   * des erreurs. */
+  isError?: boolean
 }>(), {
   confirmLabel: 'Supprimer',
   danger: true,
+  isError: false,
 })
 
 const emit = defineEmits<{ confirm: []; close: [] }>()
@@ -23,7 +29,7 @@ const emit = defineEmits<{ confirm: []; close: [] }>()
         <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
     </template>
-    <p class="confirm-body">{{ body }}</p>
+    <p class="confirm-body" :role="isError ? 'alert' : undefined">{{ body }}</p>
     <template #footer>
       <button class="mdl-btn" type="button" @click="emit('close')">Annuler</button>
       <button

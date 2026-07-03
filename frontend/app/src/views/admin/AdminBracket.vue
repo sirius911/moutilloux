@@ -244,6 +244,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
       :body="recreateModalBody"
       confirm-label="Recréer"
       :danger="true"
+      :is-error="!!recreateError"
       @confirm="confirmRecreate"
       @close="closeRecreateConfirm"
     />
