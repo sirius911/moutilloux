@@ -4,7 +4,6 @@ module: admin/matchs
 fichiers:
   - frontend/app/src/views/admin/AdminMatches.vue
   - frontend/app/src/components/modals/EditMatchPanel.vue
-  - frontend/app/src/components/modals/GenerateMatchesModal.vue
   - frontend/app/src/stores/event.ts
   - live/api_views.py
   - live/admin_views.py
