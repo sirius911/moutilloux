@@ -81,9 +81,10 @@ Les subagents `vue-screen` et `django-api` héritent du modèle de session (`mod
   `get/post/patch`) — jamais de `fetch` brut dans une SFC.
   L'état partagé vit dans les stores Pinia (`auth`, `event`, `live`).
 - **Temps réel** : utiliser le composable `usePolling(fetcher, intervalMs)`.
-  État actuel du code : ~2 s (arbitre + scoreboard) / ~5 s (file arbitre, calendrier).
-  Cible ~4 s poules/bracket TV — **non encore appliquée**. Pause si onglet caché :
-  **non implémentée** dans `usePolling` (TODO).
+  État actuel du code : ~2 s (arbitre + scoreboard) / ~5 s (file arbitre, calendrier,
+  poules TV). Cible ~4 s bracket (TV + admin) — **appliquée** sur `TvBracket.vue` et
+  `AdminBracket.vue` (poules TV reste à ~5 s, migration non encore faite). Pause si
+  onglet caché : **implémentée** dans `usePolling` (`visibilitychange` → stop/restart).
 - **Rôles / routing** : cible = Admin → garde `isAdmin` ; Arbitre → garde `isReferee` ;
   Spectateur (TV) → public. **État actuel** : `router/index.ts` vérifie `requiresAuth`,
   `requiresAdmin` (garde `isAdmin` sur `/admin/*`) **et `requiresReferee`** (garde

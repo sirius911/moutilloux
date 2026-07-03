@@ -2,19 +2,31 @@
 import { computed, watch, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { usePolling } from '@/composables/usePolling'
 import type { BracketSlot, Entry } from '@/types'
 
 const eventStore = useEventStore()
 const route = useRoute()
 const router = useRouter()
 
+async function loadEventData(id: number) {
+  await eventStore.fetchBracket(id)
+  await eventStore.fetchGroups(id)
+  await eventStore.fetchPlayers(id)
+}
+
 watch(() => eventStore.activeEventId, (id) => {
-  if (id) {
-    eventStore.fetchBracket(id)
-    eventStore.fetchGroups(id)
-    eventStore.fetchPlayers(id)
-  }
-}, { immediate: true })
+  if (id) loadEventData(id)
+})
+
+// Rafraîchissement périodique pour suivre la progression automatique des
+// gagnants (saisie arbitre) pendant la phase finale — cadence alignée sur
+// TvBracket (cible poules/bracket : ~4s). Couvre aussi le chargement initial
+// (usePolling lance fn() immédiatement au montage), le watch ci-dessus n'a
+// donc pas besoin d'`immediate: true` — évite un double fetch au montage.
+usePolling(async () => {
+  if (eventStore.activeEventId) await loadEventData(eventStore.activeEventId)
+}, 4000)
 
 const bracket = computed(() => eventStore.bracket)
 const error = ref('')
