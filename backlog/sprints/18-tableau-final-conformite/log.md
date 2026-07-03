@@ -6,3 +6,4 @@
 | #1 | 2026-07-03 | ❌ | 8 dérives (7 confirmées attendues + 1 nouvelle mineure) | #230 (mineure) | 8 |
 | #2 | 2026-07-03 | ⚠️ | 7 dérives (toutes déjà connues, 0 nouvelle) — #196/#197 revérifiées sans régression | 0 | 7 |
 | #3 | 2026-07-03 | ⚠️ | 5 dérives (toutes déjà connues, 0 nouvelle) — #195/#198 revérifiées sans régression | 0 | 5 |
+| #4 | 2026-07-03 | ⚠️ | 3 dérives (toutes déjà connues, 0 nouvelle) — #199/#200 revérifiées sans régression | 0 | 3 |

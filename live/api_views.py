@@ -225,6 +225,7 @@ def _pack_match(m):
             Match.Stage.QF: "Quart de finale",
             Match.Stage.SF: "Demi-finale",
             Match.Stage.F: "Finale",
+            Match.Stage.P3: "3e place",
         }
         if match.stage == Match.Stage.GROUP and match.group:
             return f"Match de poule — Poule {match.group.name}"
