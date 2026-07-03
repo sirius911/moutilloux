@@ -196,6 +196,15 @@ function onDragStart(entryId: number) {
   draggingEntryId = entryId
 }
 
+// Resynchronise l'affichage avec l'état serveur après un échec de drag & drop,
+// pour éviter un état visuel mensonger (ex. poules verrouillées entre-temps).
+async function resyncAfterError() {
+  const id = eventStore.activeEventId
+  if (!id) return
+  await eventStore.fetchGroups(id)
+  await eventStore.fetchPlayers(id)
+}
+
 async function onDropToGroup(groupId: number) {
   if (draggingEntryId === null || eventStore.groupsLocked) return
   const id = draggingEntryId
@@ -205,6 +214,7 @@ async function onDropToGroup(groupId: number) {
     dropError.value = ''
   } catch (e) {
     dropError.value = apiErrorMessage(e, 'Erreur lors de l\'assignation.')
+    await resyncAfterError()
   }
 }
 
@@ -221,6 +231,7 @@ async function removeFromGroup(entryId: number) {
     dropError.value = ''
   } catch (e) {
     dropError.value = apiErrorMessage(e, 'Erreur lors du retrait.')
+    await resyncAfterError()
   }
 }
 </script>
