@@ -373,34 +373,40 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #67
-**Sprint actif :** 19 — Poules & inscriptions : ajustements (2ᵉ session du sprint).
+**Dernière session :** 2026-07-03 — Session #68
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (3ᵉ session du sprint).
 
 **Parent effectif inchangé :** `claude/sprint/18-tableau-final-conformite` (sprint 18
-toujours non mergé dans `main` — point récurrent depuis les sessions #65/#66/#67,
+toujours non mergé dans `main` — point récurrent depuis les sessions #65/#66/#67/#68,
 à traiter côté humain, hors périmètre de la Routine). Working tree propre au
 démarrage, merge avec le parent effectif : déjà à jour, rien à fusionner.
 
-**Spec review session #67 :** `admin-poules.md` → ⚠️ (0 nouvelle dérive, 4
-connues confirmées : #202→maintenant clos cette session, #203→idem, #204,
-#206 toujours ouvertes) ; `admin-inscriptions.md` → ⚠️ (0 nouvelle, #238
-confirmée) ; `cycle-de-vie-epreuve.md` → ✅ Conforme, comportement Forfait/Retirer
-issu de #201 (session #66) relu et confirmé conforme à la spec. Aucune
-nouvelle issue créée cette session.
+**Spec review session #68 :** `admin-poules.md` → ⚠️ (#204 corrigée cette
+session, #205 et #206 confirmées — #206 corrigée cette session ; 2 nouvelles
+dérives mineures : bouton « Remplir automatiquement » pas désactivé si aucun
+inscrit, message « aucun inscrit » manquant dans « Non assignés ») ;
+`admin-inscriptions.md` → ✅ Conforme (0 nouvelle dérive) ; `cycle-de-vie-epreuve.md`
+→ ✅ Conforme dans le périmètre du sprint 19. Nouvelles issues créées : #240, #241.
 
-**Tickets traités session #67 :** 2 — #202 (ajout tardif : bouton toujours
-visible en EN_COURS, avertissement non bloquant `overCapacity` affiché après
-succès au lieu de masquer le bouton, ✅ Approuvé) et #203 (« + Nouvelle
-poule » : première lettre libre A→Z au lieu de dernière+1, ✅ Approuvé).
-Commits `05e5084` et `7f98a6b`. Fichier partagé câblé par l'orchestrateur :
-`frontend/app/src/stores/event.ts` (`addLateEntry` retourne désormais
-`{ overCapacity: boolean }`). Milestone Sprint 19 à 5 issues ouvertes en
-sortie de session (204, 205, 206, 237, 238) — sprint non clôturable cette
-session.
+**Tickets traités session #68 :** 2 — #204 (« Équipe {id} » dans Non assignés
+→ `entry.displayName`, ✅ Approuvé) et #206 (✕ de retrait de poule sans gestion
+d'erreur → route désormais par `removeFromGroup` qui capture l'erreur serveur
+dans `dropError`, ✅ Approuvé). Commits `b8ed5be` et `e832c8d`. Aucun fichier
+partagé câblé (les deux tickets ne touchaient que `AdminGroups.vue`). Milestone
+Sprint 19 à 5 issues ouvertes en sortie de session (205, 237, 238, 240, 241) —
+sprint non clôturable cette session.
+
+**Point d'attention process :** la spec review (agent en tâche de fond) a
+évalué `AdminGroups.vue` en partie avant l'application du fix #206 — son
+verdict sur #206 était donc obsolète au moment de la lecture ; vérifié
+manuellement que le commit `e832c8d` corrige bien le problème. Deux écritures
+GitHub (`gh issue close`/`gh issue create`) ont été bloquées une fois chacune
+par le classifieur auto mode puis acceptées au retry immédiat, sans changement
+de commande — comportement intermittent déjà connu.
 
 **Ordre d'exécution restant (voir `19-poules-inscriptions-ajustements/sprint.md`)** :
-#204 → #206 séquentiel sur `AdminGroups.vue` ; #205 (AutoFillModal) et
-#237/#238 indépendants (fichiers disjoints ou peu de contention).
+#205 (AutoFillModal, indépendant) ; #237/#238 (AutoFillModal/AdminInscriptions,
+indépendants) ; #240/#241 (nouvelles, `AdminGroups.vue`).
 
 **Sprint 17/18 — PRs non mergées :** toujours d'actualité, ni la PR #223
 (sprint 17) ni celle du sprint 18 ne semblent mergées dans `main`. Point à
@@ -408,4 +414,4 @@ traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
 automatique.
 
 **Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête et toujours en cours
-(non terminé cette session — prochaine échéance reprendra sur #204).
+(non terminé cette session — prochaine échéance reprendra sur #205/#237/#238/#240/#241).
