@@ -28,6 +28,8 @@ def score_state(request):
             return "Demi-finale"
         if m.stage == Match.Stage.F:
             return "Finale"
+        if m.stage == Match.Stage.P3:
+            return "3e place"
         return ""
 
     def stage_event_label(m):
