@@ -44,7 +44,7 @@ async function unassign(entryId: number) {
 }
 
 function entryDisplayName(entry: Entry): string {
-  return entry.player?.fullName ?? `Équipe ${entry.id}`
+  return entry.displayName
 }
 
 function setActiveEvent(id: string) {
