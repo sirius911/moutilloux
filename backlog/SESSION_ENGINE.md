@@ -373,48 +373,39 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #66
-**Sprint actif :** 19 — Poules & inscriptions : ajustements (démarré cette
-session, 1ʳᵉ session du sprint).
+**Dernière session :** 2026-07-03 — Session #67
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (2ᵉ session du sprint).
 
-**Sprint 19 — démarrage.** Branche `claude/sprint/19-poules-inscriptions-ajustements`
-créée depuis `origin/claude/sprint/18-tableau-final-conformite` (résolu comme
-parent effectif : le sprint 18 est bien le dernier `done/` avec un numéro <
-19, mais sa branche **n'est pas encore mergée dans `main`** — cf. point déjà
-soulevé en session #65 pour le sprint 17/PR #223, même situation pour le
-sprint 18 dont la PR n'a apparemment pas non plus été mergée. À surveiller :
-si plusieurs PRs de sprints consécutifs restent ouvertes sans être mergées,
-les branches sprint vont s'empiler les unes sur les autres au lieu de partir
-de `main` — pas bloquant pour l'algorithme (qui gère bien la chaîne), mais
-signe qu'il faudrait merger les PRs #223 (sprint 17) et celle du sprint 18
-côté `main` pour repartir sur une base saine.
+**Parent effectif inchangé :** `claude/sprint/18-tableau-final-conformite` (sprint 18
+toujours non mergé dans `main` — point récurrent depuis les sessions #65/#66/#67,
+à traiter côté humain, hors périmètre de la Routine). Working tree propre au
+démarrage, merge avec le parent effectif : déjà à jour, rien à fusionner.
 
-**Spec review session #66 :** `admin-poules.md` → ⚠️ (1 nouvelle dérive
-mineure, #237 : message d'erreur brut dans AutoFillModal) ; `admin-inscriptions.md`
-→ ⚠️ (1 nouvelle dérive mineure, #238 : état « registre vide » non distingué) ;
-`cycle-de-vie-epreuve.md` → ✅ Conforme, avec un constat notable : la
-majorité des briques que la spec listait comme « à créer » (statut Event,
-forfait/walkover, seeding généralisé à séparation maximale, byes, P3) sont en
-réalité **déjà implémentées de bout en bout** — la spec elle-même est
-périmée sur ce point, déjà couvert par l'issue #218 (Sprint 21). Les 7
-dérives déjà connues du sprint (#201, #166, #202-206) confirmées, non
-re-signalées.
+**Spec review session #67 :** `admin-poules.md` → ⚠️ (0 nouvelle dérive, 4
+connues confirmées : #202→maintenant clos cette session, #203→idem, #204,
+#206 toujours ouvertes) ; `admin-inscriptions.md` → ⚠️ (0 nouvelle, #238
+confirmée) ; `cycle-de-vie-epreuve.md` → ✅ Conforme, comportement Forfait/Retirer
+issu de #201 (session #66) relu et confirmé conforme à la spec. Aucune
+nouvelle issue créée cette session.
 
-**Tickets traités session #66 :** 2 — #166 (garde de statut sur
-`remove_entry`, ✅ Approuvé) et #201 (distinction Retirer/Forfait : le
-retrait supprime maintenant l'affichage poule via un nouveau paramètre
-`remove_from_group` sur `withdraw_entry`, ✅ Approuvé). Commits `6a26d8d` et
-`4ec2bff`. Milestone Sprint 19 à 7 issues ouvertes en sortie de session (202,
-203, 204, 205, 206, 237, 238) — sprint non clôturable cette session.
+**Tickets traités session #67 :** 2 — #202 (ajout tardif : bouton toujours
+visible en EN_COURS, avertissement non bloquant `overCapacity` affiché après
+succès au lieu de masquer le bouton, ✅ Approuvé) et #203 (« + Nouvelle
+poule » : première lettre libre A→Z au lieu de dernière+1, ✅ Approuvé).
+Commits `05e5084` et `7f98a6b`. Fichier partagé câblé par l'orchestrateur :
+`frontend/app/src/stores/event.ts` (`addLateEntry` retourne désormais
+`{ overCapacity: boolean }`). Milestone Sprint 19 à 5 issues ouvertes en
+sortie de session (204, 205, 206, 237, 238) — sprint non clôturable cette
+session.
 
 **Ordre d'exécution restant (voir `19-poules-inscriptions-ajustements/sprint.md`)** :
-#202 → #203 → #204 → #206 séquentiel sur `AdminGroups.vue` ; #205 et les
-nouveaux #237/#238 indépendants (fichiers disjoints ou peu de contention).
+#204 → #206 séquentiel sur `AdminGroups.vue` ; #205 (AutoFillModal) et
+#237/#238 indépendants (fichiers disjoints ou peu de contention).
 
-**Sprint 17/18 — PRs non mergées :** à date, ni la PR #223 (sprint 17) ni
-celle du sprint 18 ne semblent mergées dans `main` (déduit de la résolution
-du parent effectif ci-dessus). Point à traiter côté humain (revue/merge des
-PRs), hors périmètre de la Routine automatique.
+**Sprint 17/18 — PRs non mergées :** toujours d'actualité, ni la PR #223
+(sprint 17) ni celle du sprint 18 ne semblent mergées dans `main`. Point à
+traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
+automatique.
 
-**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête et maintenant en
-cours (non terminé cette session — prochaine échéance reprendra sur #202).
+**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête et toujours en cours
+(non terminé cette session — prochaine échéance reprendra sur #204).
