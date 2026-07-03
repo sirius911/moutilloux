@@ -60,6 +60,15 @@ async function apiFetch<T>(
   return res.json() as Promise<T>
 }
 
+export function apiErrorMessage(e: unknown, fallback: string): string {
+  if (!(e instanceof Error)) return fallback
+  const match = e.message.match(/— (.+)$/)
+  if (match) {
+    try { const p = JSON.parse(match[1]); if (p.error) return p.error } catch {}
+  }
+  return e.message
+}
+
 export function useApi() {
   function get<T>(path: string): Promise<T> {
     return apiFetch<T>(path)

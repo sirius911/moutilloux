@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useEventStore } from '@/stores/event'
+import { apiErrorMessage } from '@/composables/useApi'
 
 const emit = defineEmits<{ close: []; saved: [] }>()
 
@@ -55,7 +56,7 @@ async function fill() {
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     saving.value = false
   }
