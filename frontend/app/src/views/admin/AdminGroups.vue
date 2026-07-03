@@ -56,10 +56,12 @@ const dropError = ref('')
 const createGroupBusy = ref(false)
 
 const nextGroupLetter = computed(() => {
-  if (eventStore.groups.length === 0) return 'A'
-  const letters = eventStore.groups.map((g) => g.name.toUpperCase()).sort()
-  const last = letters[letters.length - 1]
-  return String.fromCharCode(last.charCodeAt(0) + 1)
+  const used = new Set(eventStore.groups.map((g) => g.name.toUpperCase()))
+  for (let code = 'A'.charCodeAt(0); code <= 'Z'.charCodeAt(0); code++) {
+    const letter = String.fromCharCode(code)
+    if (!used.has(letter)) return letter
+  }
+  return 'A'
 })
 
 async function createGroup() {
