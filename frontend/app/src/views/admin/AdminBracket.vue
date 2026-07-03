@@ -377,6 +377,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
                     class="slot-side"
@@ -385,6 +386,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
               </div>
@@ -436,6 +438,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
                     class="slot-side"
@@ -444,6 +447,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
               </div>
@@ -495,6 +499,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
                     class="slot-side"
@@ -503,6 +508,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
               </div>
