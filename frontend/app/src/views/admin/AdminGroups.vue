@@ -285,7 +285,14 @@ async function removeFromGroup(entryId: number) {
             <span class="gc-count">{{ unassigned.length }}</span>
           </div>
 
-          <div v-if="unassigned.length === 0" class="gc-empty">
+          <div v-if="unassigned.length === 0 && eventStore.players.length === 0" class="gc-empty">
+            <p>
+              Aucun joueur inscrit.
+              <RouterLink :to="`/admin/events/${eventStore.activeEventId}/inscriptions`">Inscrire des joueurs →</RouterLink>
+            </p>
+          </div>
+
+          <div v-else-if="unassigned.length === 0" class="gc-empty">
             <span>✓</span>
             <p>Tous les joueurs sont placés</p>
           </div>
