@@ -373,37 +373,38 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #60
-**Sprint actif :** 18 — Tableau final conforme (3ᵉ session).
+**Dernière session :** 2026-07-03 — Session #61
+**Sprint actif :** 18 — Tableau final conforme (4ᵉ session).
 Spec review (faite en début de session, avant traitement des tickets) :
 `specs/screens/admin-tableau-final.md` → **⚠️ Dérive mineure** (stable depuis
-la session #59). Les corrections de #195/#198 tiennent sans régression. 5
-dérives déjà connues confirmées (#199, #200, #176, #230, #231), 0 nouvelle.
+la session #59). Les corrections de #199/#200 tiennent sans régression. 3
+dérives déjà connues confirmées (#176, #230, #231), 0 nouvelle.
 **Roadmap :** 4 sprints planifiés (18 → 21), 18 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#200](https://github.com/sirius911/moutilloux/issues/200)
-(✅ Approuvé, `AdminBracket.vue` : état vide invitant à débuter en
-`INSCRIPTION`, plus de bouton « Créer le tableau » avant que l'épreuve soit
-débutée) et [#199](https://github.com/sirius911/moutilloux/issues/199)
-(✅ Approuvé avec réserve corrigée avant clôture : `window.confirm()` remplacé
-par une `ConfirmModal` dédiée pour la recréation, erreur serveur affichée
-dans la modale ; réserve du reviewer — manque de séparation visuelle
-warning/erreur — corrigée par l'orchestrateur avec un préfixe « Erreur : »,
-sans toucher au composant partagé `ConfirmModal.vue`).
-**Nouveaux tickets créés :** 0.
+**Tickets clôturés cette session :** 2 — [#176](https://github.com/sirius911/moutilloux/issues/176)
+(✅ Approuvé, `stage_label` renvoie « 3e place » pour P3 dans `_pack_match` ;
+doublon actif repéré dans `live/views.py::score_state`, ticketé séparément en
+#233) et [#230](https://github.com/sirius911/moutilloux/issues/230)
+(✅ Approuvé, type front `Bracket.p3` rendu non-optionnel, conforme au
+contrat réel de `_pack_event_bracket`).
+**Nouveaux tickets créés :** 1 — [#233](https://github.com/sirius911/moutilloux/issues/233)
+(🟡 mineure, doublon de `stage_label` dans `live/views.py::score_state`,
+signalé par le reviewer de #176).
 **Branche :** `claude/sprint/18-tableau-final-conformite`.
 
 **Sprint 17 (sessions précédentes) :** clôturé en session #57 — pour mémoire,
 non concerné par cette session.
 
-**Problèmes d'orchestration (session #60) :** pour #199, le reviewer a rendu
-`⚠️ Approuvé avec réserves` (message d'erreur serveur concaténé au warning
-sans séparation visuelle dans la modale). Plutôt que clore avec la réserve
-non résolue, l'orchestrateur a appliqué un ajustement textuel d'une ligne
-(préfixe « Erreur : ») dans `AdminBracket.vue` uniquement, sans modifier le
-composant partagé, revérifié le type-check, puis clos en ✅ — même pattern
-qu'en sessions #56, #58 et #59. Aucun autre écart au protocole.
+**Problèmes d'orchestration (session #61) :** écart au protocole §4 (règle
+« séquentiel ») — l'implémentation de #230 a été lancée avant que la review
+de #176 ne soit terminée, les deux tickets ont donc tourné en partie en
+parallèle au lieu d'être strictement séquentiels. Les deux tickets touchaient
+des fichiers strictement disjoints (`live/api_views.py` vs
+`frontend/app/src/types/index.ts`), aucune casse constatée (vérifié
+explicitement par les deux reviewers), mais c'est un écart réel à corriger :
+revenir à un traitement strictement séquentiel dans les sessions suivantes,
+même quand les fichiers semblent disjoints.
 
-Parent effectif pour la session #60 : `claude/sprint/17-panneau-edition-match`
+Parent effectif pour la session #61 : `claude/sprint/17-panneau-edition-match`
 (le sprint 17 est clos côté planification/milestone depuis la session #57,
 mais sa PR #223 n'est toujours pas mergée dans `main`). Déjà synchronisé cette
 session, aucun merge nécessaire.
