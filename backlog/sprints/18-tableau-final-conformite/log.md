@@ -3,3 +3,4 @@
 | # | Date | Verdict spec | Dérives | Nouvelles issues | Issues sprint restantes |
 |---|------|-------------|---------|-----------------|------------------------|
 | — | 2026-07-02 | — | Sprint planifié (audit admin) | #195-200 (+ #176 réutilisée) | 7 |
+| #1 | 2026-07-03 | ❌ | 8 dérives (7 confirmées attendues + 1 nouvelle mineure) | #230 (mineure) | 8 |

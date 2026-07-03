@@ -1128,7 +1128,7 @@ def api_bracket_labels(request, match_id):
     match = get_object_or_404(
         Match,
         pk=match_id,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
     )
 
     try:

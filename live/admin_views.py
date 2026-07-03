@@ -1149,7 +1149,7 @@ def panel_matches(request, event_id: int):
 def _final_matches_qs(event):
     return Match.objects.filter(
         event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
     )
 
 
@@ -1167,7 +1167,7 @@ def assign_bracket_entry(event, match_id: int, entry_id: int, side: str):
         Match,
         id=match_id,
         event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
     )
     entry = get_object_or_404(Entry, id=entry_id, event=event)
 
@@ -1203,7 +1203,7 @@ def clear_bracket_entry(event, match_id: int, side: str):
         Match,
         id=match_id,
         event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
     )
 
     if match.status != Match.Status.SCHEDULED:
@@ -1359,7 +1359,12 @@ def panel_final_create(request, event_id: int):
 @require_POST
 def panel_final_label_update(request, event_id: int, match_id: int):
     event = get_object_or_404(Event, id=event_id)
-    match = get_object_or_404(Match, id=match_id, event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F])
+    match = get_object_or_404(
+        Match,
+        id=match_id,
+        event=event,
+        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+    )
 
     try:
         set_match_bracket_labels(match, request.POST.get("side_a_label"), request.POST.get("side_b_label"))
