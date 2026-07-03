@@ -373,44 +373,46 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #75
-**Sprint actif :** 20 — Transverse : erreurs API & routing (2ᵉ session).
+**Dernière session :** 2026-07-04 — Session #76
+**Sprint actif :** 21 — Durcissements API & specs (pas encore démarré).
 
 **Git :** branche `claude/sprint/20-transverse-erreurs-routing`, déjà à jour
 avec le parent effectif `claude/sprint/19-poules-inscriptions-ajustements`
 (sprint 19 toujours non mergé dans `main` — point récurrent, à traiter côté
 humain). Working tree propre au démarrage.
 
-**Spec review session #75 :** `specs/technical/routing-context.md` →
-⚠️ Dérive mineure (confirmation de #208 à `AdminTournoi.vue:229`, résolue
-cette session) ; `specs/screens/admin-shell.md` → ⚠️ Dérive mineure
-(confirmation de #209 à `AdminLayout.vue:56-59`, portée un peu plus large que
-le libellé initial : 4 compteurs sur 6 touchés). 0 nouvelle issue créée, 0
-lien mort résiduel.
+**Spec review session #76 :** `specs/technical/routing-context.md` →
+✅ Conforme (URL fait foi, watcher store, sélecteur navigue via `router.push`
+sur les 4 écrans dépendants — confirmé) ; `specs/screens/admin-shell.md` →
+⚠️ Dérive mineure au moment de la review (confirmation de #209 à
+`AdminLayout.vue:48-58` : compteur Tableau final comptait 7 slots fixes,
+compteurs Tournoi/Joueurs à 0 avant chargement), **résolue dans cette même
+session**. 0 nouvelle issue créée.
 
-**Tickets traités session #75 :** 2 (3 issues fermées) —
-- **#208** : suppression du bouton « Sélectionner »/« Sélectionnée ✓ » dans
-  `AdminTournoi.vue` (mutait `eventStore.activeEventId` directement, contredit
-  « l'URL fait foi »). Décision retenue : retrait plutôt que navigation — les
-  boutons Inscriptions/Poules/Matchs de la même carte naviguent déjà
-  explicitement avec `:eventId`. Aucun fichier partagé touché. ✅ Approuvé.
-  Commit `4ed55bc`.
-- **#177 + #210** (même geste, fichiers disjoints) : suppression des 3
-  modales orphelines `GenerateMatchesModal.vue`, `CategoryModal.vue`,
-  `CourtModal.vue` (aucune référence dans le code) ; retrait de la ligne
-  `GenerateMatchesModal.vue` dans le champ `fichiers:` de
-  `specs/screens/admin-matchs.md`. ⚠️ Approuvé avec réserves (réserve non
-  bloquante : working tree partagé avec #208 au moment de la revue, corrigée
-  en séparant les commits). Commit `32dd110`.
+**Tickets traités session #76 :** 1 —
+- **#209** : `AdminLayout.vue` — le compteur « Tableau final » ne compte
+  désormais que les slots avec un match assigné (`slot.match !== null` sur
+  QF+SF+F, plus le 4+2+1=7 fixe) ; ajout de deux flags locaux
+  `editionsLoaded`/`playersLoaded` pour distinguer « non chargé » (badge
+  masqué) de « 0 réel » sur les compteurs Tournoi et Joueurs. Aucun fichier
+  partagé touché (store `event.ts` non modifié, vérifié par le reviewer).
+  ✅ Approuvé (remarque mineure non bloquante : la reformulation de
+  `admin-shell.md` proposée dans le plan n'a pas été appliquée — hors
+  périmètre de la maintenance auto de specs, qui ne touche que le champ
+  `fichiers:`). Commit `bb9bbc8`.
 
-`vue-tsc --noEmit` OK après chaque ticket. Deux revues indépendantes (agent
-`reviewer`, lecture seule).
+`vue-tsc --noEmit` OK. Plan → implémentation → review réalisés par 3 agents
+distincts (dont `reviewer`, lecture seule).
 
-**Fin de sprint :** non atteinte — 1 issue encore ouverte sous le milestone
-Sprint 20 (#209, compteurs sidebar). Le sprint continue à la prochaine
-échéance.
+**Fin de sprint atteinte :** specs conformes (dérive #209 résolue), 0 issue
+ouverte sous le milestone Sprint 20. Milestone fermé (id 19). Sprint déplacé
+vers `backlog/sprints/done/20-transverse-erreurs-routing/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
 
 **Sprint 17/18/19 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
-**Roadmap :** 2 sprints planifiés (20 → 21), 20 en tête, en cours (2 sessions).
+**Roadmap :** 1 sprint restant (21 — Durcissements API & specs), devenu actif
+mais **non démarré cette session** (clôture de sprint et démarrage du suivant
+ne s'enchaînent pas dans le même run) — traité à la prochaine échéance
+planifiée.

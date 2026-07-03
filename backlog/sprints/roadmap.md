@@ -10,5 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 20 — Transverse : erreurs API & routing | `backlog/sprints/20-transverse-erreurs-routing/sprint.md` |
-| 2 | 21 — Durcissements API & specs | `backlog/sprints/21-durcissements-api-specs/sprint.md` |
+| 1 | 21 — Durcissements API & specs | `backlog/sprints/21-durcissements-api-specs/sprint.md` |
