@@ -252,7 +252,13 @@ function initials(name: string): string {
                   </button>
                 </td>
               </tr>
-              <tr v-if="availablePlayers.length === 0">
+              <tr v-if="availablePlayers.length === 0 && eventStore.allPlayers.length === 0">
+                <td colspan="2" class="empty-row">
+                  Aucune fiche joueur dans le registre.
+                  <RouterLink to="/admin/players">Créer une fiche joueur →</RouterLink>
+                </td>
+              </tr>
+              <tr v-else-if="availablePlayers.length === 0">
                 <td colspan="2" class="empty-row">Tous les joueurs du registre sont inscrits</td>
               </tr>
             </tbody>
