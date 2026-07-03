@@ -11,3 +11,4 @@
 | #6 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md toujours ✅) | 4 dérives (toutes déjà connues, 0 nouvelle) | 0 | 4 |
 | #7 | 2026-07-02 | ⚠️ (cycle-de-vie-match.md toujours ✅) | 2 dérives (toutes déjà connues, 0 nouvelle) — #193/#194 revérifiées sans régression | 0 | 2 |
 | #8 | 2026-07-03 | ❌ (admin-matchs.md ⚠️, cycle-de-vie-match.md ❌ — régression sur #227) | 2 dérives (2 nouvelles) | #228 (majeure/bloquante), #229 (mineure) | 2 |
+| #9 | 2026-07-03 | ✅ (admin-matchs.md ✅, cycle-de-vie-match.md ✅) | 0 dérive | 0 | 0 — sprint clôturé |

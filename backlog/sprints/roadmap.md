@@ -10,8 +10,7 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 17 — Panneau d'édition de match | `backlog/sprints/17-panneau-edition-match/sprint.md` |
-| 2 | 18 — Tableau final conforme | `backlog/sprints/18-tableau-final-conformite/sprint.md` |
-| 3 | 19 — Poules & inscriptions : ajustements | `backlog/sprints/19-poules-inscriptions-ajustements/sprint.md` |
-| 4 | 20 — Transverse : erreurs API & routing | `backlog/sprints/20-transverse-erreurs-routing/sprint.md` |
-| 5 | 21 — Durcissements API & specs | `backlog/sprints/21-durcissements-api-specs/sprint.md` |
+| 1 | 18 — Tableau final conforme | `backlog/sprints/18-tableau-final-conformite/sprint.md` |
+| 2 | 19 — Poules & inscriptions : ajustements | `backlog/sprints/19-poules-inscriptions-ajustements/sprint.md` |
+| 3 | 20 — Transverse : erreurs API & routing | `backlog/sprints/20-transverse-erreurs-routing/sprint.md` |
+| 4 | 21 — Durcissements API & specs | `backlog/sprints/21-durcissements-api-specs/sprint.md` |
