@@ -93,9 +93,9 @@ async function createOrRecreate() {
 
 async function createBracketNow() {
   if (!eventStore.activeEventId) return
-  // Étape de départ dérivée du nombre de poules : 4 poules → quarts, sinon demies.
-  const startStage = eventStore.groups.length >= 4 ? 'QF' : 'SF'
-  await eventStore.createBracket(eventStore.activeEventId, startStage, hasBracket.value)
+  // Étape de départ (QF vs SF) dérivée du nombre de poules côté serveur depuis
+  // #197 — le front ne transmet plus start_stage, seulement force.
+  await eventStore.createBracket(eventStore.activeEventId, hasBracket.value)
 }
 
 async function confirmRecreate() {

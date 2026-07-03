@@ -322,14 +322,11 @@ export const useEventStore = defineStore('event', () => {
 
   // ── Mutations — Phase 7 (bracket) ─────────────────────────────────────
 
-  async function createBracket(
-    eventId: number,
-    startStage: 'QF' | 'SF' | 'F',
-    force = false,
-  ) {
+  async function createBracket(eventId: number, force = false) {
     // L'endpoint renvoie la structure du bracket : on l'applique directement.
+    // Forme du tableau (QF vs SF) dérivée du nombre de poules côté serveur
+    // depuis #197 — le front ne transmet plus start_stage.
     bracket.value = await post<Bracket>(`/api/events/${eventId}/bracket/create/`, {
-      start_stage: startStage,
       force,
     })
   }
