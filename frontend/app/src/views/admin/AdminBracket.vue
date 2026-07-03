@@ -3,6 +3,7 @@ import { computed, watch, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { BracketSlot, Entry } from '@/types'
 
 const eventStore = useEventStore()
@@ -58,16 +59,54 @@ function setActiveEvent(id: string) {
   if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
 }
 
+// ── Recréation du tableau — modale de confirmation ─────────────────────────
+
+const showRecreateConfirm = ref(false)
+const recreateError = ref('')
+
+const recreateModalBody = computed(() => {
+  const warning = 'Recréer le tableau efface les matchs planifiés actuels.'
+  return recreateError.value ? `${warning} Erreur : ${recreateError.value}` : warning
+})
+
+function closeRecreateConfirm() {
+  showRecreateConfirm.value = false
+  recreateError.value = ''
+}
+
 async function createOrRecreate() {
   if (!eventStore.activeEventId) return
-  // Étape de départ dérivée du nombre de poules : 4 poules → quarts, sinon demies.
-  const startStage = eventStore.groups.length >= 4 ? 'QF' : 'SF'
-  if (hasBracket.value && !confirm('Recréer le tableau effacera les matchs planifiés actuels. Continuer ?')) return
+  // La recréation (tableau déjà existant) exige une confirmation explicite ;
+  // la création initiale (pas encore de tableau) ne demande rien.
+  if (hasBracket.value) {
+    recreateError.value = ''
+    showRecreateConfirm.value = true
+    return
+  }
   try {
-    await eventStore.createBracket(eventStore.activeEventId, startStage, hasBracket.value)
+    await createBracketNow()
     error.value = ''
   } catch (e) {
     error.value = extractError(e)
+  }
+}
+
+async function createBracketNow() {
+  if (!eventStore.activeEventId) return
+  // Étape de départ dérivée du nombre de poules : 4 poules → quarts, sinon demies.
+  const startStage = eventStore.groups.length >= 4 ? 'QF' : 'SF'
+  await eventStore.createBracket(eventStore.activeEventId, startStage, hasBracket.value)
+}
+
+async function confirmRecreate() {
+  try {
+    await createBracketNow()
+    recreateError.value = ''
+    showRecreateConfirm.value = false
+  } catch (e) {
+    // Règle serveur : refus si un match du tableau est déjà LIVE/FINISHED —
+    // le message reste affiché dans la modale, qui ne se ferme pas.
+    recreateError.value = extractError(e)
   }
 }
 
@@ -198,6 +237,16 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
         <button v-if="hasBracket" class="adm-btn" type="button" @click="createOrRecreate">Recréer le tableau</button>
       </div>
     </header>
+
+    <ConfirmModal
+      v-if="showRecreateConfirm"
+      title="Recréer le tableau ?"
+      :body="recreateModalBody"
+      confirm-label="Recréer"
+      :danger="true"
+      @confirm="confirmRecreate"
+      @close="closeRecreateConfirm"
+    />
 
     <div v-if="eventStore.events.length === 0" class="empty-state">
       <p>Aucune épreuve active.</p>
