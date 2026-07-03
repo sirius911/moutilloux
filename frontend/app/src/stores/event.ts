@@ -386,8 +386,8 @@ export const useEventStore = defineStore('event', () => {
 
   // ── Mutations — Sprint 12 (ajustements en cours de jeu) ──────────────
 
-  async function withdrawEntry(entryId: number) {
-    await post(`/api/entries/${entryId}/withdraw/`, {})
+  async function withdrawEntry(entryId: number, removeFromGroup = false) {
+    await post(`/api/entries/${entryId}/withdraw/`, { remove_from_group: removeFromGroup })
     const id = activeEventId.value
     if (!id) return
     await fetchGroups(id)

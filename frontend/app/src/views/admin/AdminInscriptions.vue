@@ -86,7 +86,7 @@ async function executeRetrait() {
   error.value = ''
   try {
     if (isEnCours.value) {
-      await eventStore.withdrawEntry(confirmState.value.entryId)
+      await eventStore.withdrawEntry(confirmState.value.entryId, true)
     } else {
       await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
     }

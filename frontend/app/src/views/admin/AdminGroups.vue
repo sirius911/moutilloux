@@ -121,7 +121,7 @@ async function executeWithdraw() {
   adjustBusy.value = true
   adjustError.value = ''
   try {
-    await eventStore.withdrawEntry(confirmState.value.entryId)
+    await eventStore.withdrawEntry(confirmState.value.entryId, confirmState.value.action === 'retrait')
   } catch (e) {
     adjustError.value = apiErrorMessage(e, 'Erreur lors du forfait.')
   } finally {
