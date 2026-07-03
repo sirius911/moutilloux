@@ -373,46 +373,54 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #76
-**Sprint actif :** 21 — Durcissements API & specs (pas encore démarré).
+**Dernière session :** 2026-07-04 — Session #77
+**Sprint actif :** 21 — Durcissements API & specs (démarré cette session).
 
-**Git :** branche `claude/sprint/20-transverse-erreurs-routing`, déjà à jour
-avec le parent effectif `claude/sprint/19-poules-inscriptions-ajustements`
-(sprint 19 toujours non mergé dans `main` — point récurrent, à traiter côté
-humain). Working tree propre au démarrage.
+**Git :** nouvelle branche `claude/sprint/21-durcissements-api-specs`, créée
+depuis le parent effectif `claude/sprint/20-transverse-erreurs-routing`
+(résolu via `backlog/sprints/done/` — sprint 20 toujours non mergé dans
+`main`, donc pas `main` mais la branche 20 ; point récurrent depuis plusieurs
+sessions, à traiter côté humain). Working tree propre au démarrage, pas de
+conflit de merge.
 
-**Spec review session #76 :** `specs/technical/routing-context.md` →
-✅ Conforme (URL fait foi, watcher store, sélecteur navigue via `router.push`
-sur les 4 écrans dépendants — confirmé) ; `specs/screens/admin-shell.md` →
-⚠️ Dérive mineure au moment de la review (confirmation de #209 à
-`AdminLayout.vue:48-58` : compteur Tableau final comptait 7 slots fixes,
-compteurs Tournoi/Joueurs à 0 avant chargement), **résolue dans cette même
-session**. 0 nouvelle issue créée.
+**Spec review session #77 :** 4 specs du sprint relues (`admin-tournoi.md`,
+`planning.md`, `cycle-de-vie-epreuve.md`, `cycle-de-vie-match.md`) →
+⚠️ Dérive mineure sur les 4 (détail complet dans
+`backlog/logs/session_2026-07-04_77.md`). Toutes les dérives constatées en
+code correspondent exactement aux tickets déjà ouverts du sprint (#211-219,
+origine audit externe du 2026-07-02) — vérifié directement en code
+(`Event.status`, `PlayDay`/`Break`, `Entry.withdrawn`/`is_walkover` déjà
+présents ; `Match.end_reason` toujours absent ; `_resolve_court_pk` fait
+toujours du `get_or_create` ; `scheduled_time`/`court` toujours éditables ;
+`delete_play_day` toujours bloqué sans décision produit ; durée par défaut
+toujours sans UI). 0 nouvelle issue créée.
 
-**Tickets traités session #76 :** 1 —
-- **#209** : `AdminLayout.vue` — le compteur « Tableau final » ne compte
-  désormais que les slots avec un match assigné (`slot.match !== null` sur
-  QF+SF+F, plus le 4+2+1=7 fixe) ; ajout de deux flags locaux
-  `editionsLoaded`/`playersLoaded` pour distinguer « non chargé » (badge
-  masqué) de « 0 réel » sur les compteurs Tournoi et Joueurs. Aucun fichier
-  partagé touché (store `event.ts` non modifié, vérifié par le reviewer).
-  ✅ Approuvé (remarque mineure non bloquante : la reformulation de
-  `admin-shell.md` proposée dans le plan n'a pas été appliquée — hors
-  périmètre de la maintenance auto de specs, qui ne touche que le champ
-  `fichiers:`). Commit `bb9bbc8`.
+**Tickets traités session #77 :** 2 —
+- **#211** : règle d'activation automatique de la première édition déplacée
+  du front (`EditionModal.vue`) vers le serveur (`create_edition`,
+  `live/admin_views.py`) ; paramètre `activate` retiré de l'API
+  (`api_edition_create`) et du payload front. Fichier partagé câblé par
+  l'orchestrateur : `frontend/app/src/stores/event.ts` (retrait du champ mort
+  `activate?: boolean` du type `EditionPayload`). ✅ Approuvé. Commit
+  `273563f`.
+- **#212** : `api_players`/`api_player_create` passés de `@login_required` à
+  `@superuser_required` (alignés sur `api_player_edit` ; confirmé qu'aucun
+  écran Arbitre ne les consomme). Nouvelle spec transverse
+  `specs/transverse/auth-matrice-acces.md` documentant la matrice complète des
+  ~55 endpoints `/api/` (public / connecté / arbitre / superuser), référencée
+  dans `specs/INDEX.md`. ✅ Approuvé (échantillon de 8 endpoints vérifié en
+  revue contre le code réel, aucune incohérence). Commit `46f6bee`.
 
-`vue-tsc --noEmit` OK. Plan → implémentation → review réalisés par 3 agents
-distincts (dont `reviewer`, lecture seule).
+`vue-tsc --noEmit` et `manage.py check` OK sur les deux tickets. Plan →
+implémentation → review réalisés par 3 agents distincts par ticket (dont
+`reviewer`, lecture seule).
 
-**Fin de sprint atteinte :** specs conformes (dérive #209 résolue), 0 issue
-ouverte sous le milestone Sprint 20. Milestone fermé (id 19). Sprint déplacé
-vers `backlog/sprints/done/20-transverse-erreurs-routing/`, ligne retirée de
-`backlog/sprints/roadmap.md`.
+**Fin de sprint non atteinte :** 7 issues encore ouvertes sous le milestone
+Sprint 21 (#213-219). Session arrêtée au maximum de 2 tickets par run — la
+suite sera traitée à la prochaine échéance planifiée.
 
-**Sprint 17/18/19 — PRs non mergées :** toujours d'actualité. Point à traiter
+**Sprint 19/20 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
-**Roadmap :** 1 sprint restant (21 — Durcissements API & specs), devenu actif
-mais **non démarré cette session** (clôture de sprint et démarrage du suivant
-ne s'enchaînent pas dans le même run) — traité à la prochaine échéance
-planifiée.
+**Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
+(2/9 tickets clos).
