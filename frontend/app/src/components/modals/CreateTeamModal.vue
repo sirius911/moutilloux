@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import { useEventStore } from '@/stores/event'
-import { apiErrorMessage } from '@/composables/useApi'
+import { extractApiError } from '@/lib/apiError'
 import type { Player } from '@/types'
 
 const emit = defineEmits<{ close: []; saved: [] }>()
@@ -61,7 +61,7 @@ async function save() {
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = apiErrorMessage(e, 'Erreur inconnue.')
+    error.value = extractApiError(e, 'Erreur inconnue.')
   } finally {
     saving.value = false
   }
