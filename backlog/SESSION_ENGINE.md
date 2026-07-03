@@ -373,45 +373,48 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #63
-**Sprint actif :** 18 — Tableau final conforme (6ᵉ session).
-Spec review (faite en début de session, relecture exhaustive car milestone à
-0 issue avant review) : `specs/screens/admin-tableau-final.md` → **⚠️ Dérive
-mineure**. Une dérive **jamais repérée jusqu'ici** trouvée : bouton ✕ de
-vidage absent hors Quarts (SF/F/P3), ticketée en #234 et corrigée dans la
-même session.
-**⚠️ Anomalie (voir détail dans `backlog/logs/session_2026-07-03_63.md`) :**
-deux issues (#235, #236) sont apparues en cours de session sans avoir été
-créées par le flux normal, citant « session #63 » dans leur corps, et
-contredisant la spec review de cette même session qui les avait déclarées
-conformes à tort. Vérification directe du code : les deux décrivent des bugs
-réels (confirmés). Traitées comme légitimes ; #235 corrigée cette session,
-#236 restante. Aucune trace de push concurrent sur la branche. À surveiller —
-recommandation de vérifier un éventuel double déclenchement de la Routine.
-**Roadmap :** 4 sprints planifiés (18 → 21), 18 toujours en tête.
-**Tickets clôturés cette session :** 2 — [#234](https://github.com/sirius911/moutilloux/issues/234)
-(✅ Approuvé, bouton `.slot-clear` ajouté en SF/F/P3, pattern identique à QF)
-et [#235](https://github.com/sirius911/moutilloux/issues/235)
-(✅ Approuvé, `stores/event.ts` : `try/finally` ajouté à `updateBracketLabels`/
-`assignBracket`/`clearBracket` pour recharger le bracket même en cas d'erreur ;
-fichier partagé câblé par l'orchestrateur sur la base d'un plan d'analyse
-produit par un agent).
-**Nouveaux tickets créés :** 1 — #234 (🟠 majeure, par cette session).
-**Branche :** `claude/sprint/18-tableau-final-conformite`.
+**Dernière session :** 2026-07-03 — Session #65
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (devient actif
+cette session, pas encore démarré).
 
-**Sprint 17 (sessions précédentes) :** clôturé en session #57 — pour mémoire,
-non concerné par cette session.
+**Sprint 18 — Tableau final conforme : CLÔTURÉ cette session (8ᵉ et dernière
+session du sprint).** Spec review de la session #65, relecture complète ligne
+par ligne de `specs/screens/admin-tableau-final.md` contre `AdminBracket.vue`,
+`ConfirmModal.vue`, `stores/event.ts`, `live/api_views.py`,
+`live/admin_views.py`, `live/bracket.py` → **✅ Conforme**, 0 dérive. Milestone
+GitHub #17 à 0 issue ouverte. Les deux conditions de clôture réunies :
+milestone fermé, ligne retirée de `backlog/sprints/roadmap.md`, dossier
+déplacé vers `backlog/sprints/done/18-tableau-final-conformite/`.
+**Tickets traités session #65 :** 0 (rien à traiter, milestone déjà à 0 en
+entrant en session).
 
-**Problèmes d'orchestration (session #63) :** voir « Anomalie » ci-dessus.
-Traitement resté séquentiel malgré l'anomalie ; push effectué juste après le
-premier ticket (#234) pour limiter la fenêtre de risque en cas de session
-concurrente réelle.
+**Anomalie d'orchestration (session #65) :** en entrant en session, un
+fichier `backlog/logs/session_2026-07-03_64.md` était présent mais non
+committé — la session #64 (qui avait traité #236, commit `e68cc07`) s'était
+arrêtée avant de finaliser son étape 4 (commit du log, mise à jour section 6,
+push). Contenu du log #64 vérifié cohérent avec le commit `e68cc07` et
+conservé tel quel ; committé au tout début de la session #65 (étape 0,
+« working tree sale »), avant la review fraîche qui a mené à la clôture du
+sprint. Aucune perte de travail. Fait suite à l'anomalie de la session #63
+(issues apparues hors flux) — à surveiller sur les prochaines sessions,
+notamment si une session s'interrompt de nouveau avant son push final.
 
-**Sprint 18 — pas encore clôturé.** Milestone à 1 issue ouverte (#236,
-mineure) en fin de session. Spec review de cette session ⚠️ (pas ✅). La
-prochaine session devra traiter #236 puis refaire une review fraîche.
+**Sessions #63-#64 (pour mémoire, résumé) :** #63 a ticketé et corrigé #234 ;
+a aussi vu apparaître hors flux normal #235/#236 (anomalie documentée dans
+`backlog/logs/session_2026-07-03_63.md`), #235 corrigée la même session. #64 a
+corrigé #236 (`ConfirmModal.vue` : prop `isError` → `role="alert"` ciblé) et
+revérifié #234/#235 sans régression (commit `e68cc07`), mais n'a pas finalisé
+sa clôture de session (voir anomalie ci-dessus, résolue en #65).
 
-Parent effectif pour la session #63 : `claude/sprint/17-panneau-edition-match`
-(le sprint 17 est clos côté planification/milestone depuis la session #57,
-mais sa PR #223 n'est toujours pas mergée dans `main`). Déjà synchronisé cette
-session, aucun merge nécessaire.
+**Sprint 17 :** clôturé en session #57 côté planification/milestone — sa PR
+#223 reste non mergée dans `main`, donc reste le parent effectif de la
+branche du sprint 18 (`claude/sprint/18-tableau-final-conformite`, ahead de
+`claude/sprint/17-panneau-edition-match`). Point à surveiller pour le sprint
+19 : sa branche devra être créée depuis `main` (le sprint 17, terminé, n'est
+plus dans `backlog/sprints/done/` avec un numéro < 19 qui changerait ce
+calcul — à revérifier avec l'algorithme de résolution du parent à l'étape 0
+de la prochaine session).
+
+**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête. Le sprint 19 n'a pas
+été démarré dans cette session (protocole : un sprint ne démarre qu'à la
+prochaine échéance planifiée).

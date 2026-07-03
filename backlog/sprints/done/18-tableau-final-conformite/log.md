@@ -11,3 +11,4 @@
 | #6 | 2026-07-03 | ⚠️ | 1 nouvelle dérive — relecture exhaustive (milestone à 0 avant review) : bouton ✕ de vidage absent hors Quarts (SF/F/P3), jamais repérée jusqu'ici | #234 (majeure) | 1 |
 | #7 | 2026-07-03 | ⚠️ | #234 corrigée ; #235/#236 apparues hors flux normal de session (anomalie documentée dans le log de session #63), confirmées réelles après vérification directe du code, #235 corrigée | 0 (créées hors session) | 1 (#236) |
 | #8 | 2026-07-03 | ⚠️ | 1 seule dérive (#236) — review rigoureuse ligne par ligne, #234/#235 revérifiées et confirmées correctes (corrige l'erreur de review de la session #63) | 0 | 1 (#236) |
+| #9 | 2026-07-03 | ✅ | 0 dérive — relecture complète ligne par ligne (`AdminBracket.vue`, `ConfirmModal.vue`, `stores/event.ts`, `live/api_views.py`, `live/admin_views.py`, `live/bracket.py`) ; #234/#235/#236 revérifiées et confirmées correctes | 0 | 0 |
