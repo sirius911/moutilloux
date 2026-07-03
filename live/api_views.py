@@ -1032,6 +1032,7 @@ def api_match_edit(request, match_id):
 
     match = get_object_or_404(Match, pk=match_id)
     was_live = match.status == Match.Status.LIVE
+    was_finished = match.status == Match.Status.FINISHED
 
     fields = MatchEditForm.Meta.fields
     merged = {}
@@ -1049,7 +1050,7 @@ def api_match_edit(request, match_id):
 
     try:
         form.save()
-        finalize_match_edit(form.instance, was_live=was_live)
+        finalize_match_edit(form.instance, was_live=was_live, was_finished=was_finished)
     except IntegrityError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     except ValueError as exc:
