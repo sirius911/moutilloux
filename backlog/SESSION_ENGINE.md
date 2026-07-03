@@ -373,36 +373,46 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #57
-**Sprint actif :** — (Sprint 17 clôturé cette session ; **Sprint 18 — Tableau
-final conforme** devient le sprint actif à la prochaine échéance).
-Spec review (faite en début de session) : `specs/screens/admin-matchs.md`
-(§ Panneau d'édition de match) → **✅ Conforme**, `specs/technical/cycle-de-vie-match.md`
-(§ Invariant mono-LIVE, § Démarrer, § Terminer, § Rouvrir) → **✅ Conforme**.
-Les deux dérives corrigées en session #56 (#228, #229) sont confirmées résolues
-sans régression : `was_finished` bien calculé avant mutation dans
-`api_match_edit` et routé vers `reopen_match()`, `ConfirmModal` de réouverture
-sans empilement avec la modale de conflit mono-LIVE.
-**Roadmap :** 4 sprints planifiés (18 → 21), 18 en tête.
-**Tickets clôturés cette session :** 0 (0 issue ouverte sur le milestone en
-entrant en session).
-**Nouveaux tickets créés :** 0.
-**Branche :** `claude/sprint/17-panneau-edition-match` (sprint clos — la PR
-[#223](https://github.com/sirius911/moutilloux/pull/223) reste ouverte pour
-merge manuel ; le sprint 18 démarrera sur sa propre branche `claude/sprint/18-…`
-depuis le parent effectif résolu via `backlog/sprints/done/`).
+**Dernière session :** 2026-07-03 — Session #58
+**Sprint actif :** 18 — Tableau final conforme (1ʳᵉ session).
+Spec review (faite en début de session, avant traitement des tickets) :
+`specs/screens/admin-tableau-final.md` → **❌ Dérive bloquante** — attendu,
+sprint venant de démarrer. 7 dérives confirmées correspondant exactement au
+périmètre planifié (#195-200, #176) + 1 nouvelle dérive mineure ticketée en
+#230 (type front `Bracket.p3` optionnel alors que l'API le renvoie toujours).
+**Roadmap :** 4 sprints planifiés (18 → 21), 18 toujours en tête.
+**Tickets clôturés cette session :** 2 — [#196](https://github.com/sirius911/moutilloux/issues/196)
+(✅ Approuvé, `Match.Stage.P3` ajouté aux 5 querysets `stage__in` du bracket —
+`_final_matches_qs`, `assign_bracket_entry`, `clear_bracket_entry`,
+`panel_final_label_update`, `api_bracket_labels` — QF/SF/F conservés, `manage.py
+check` OK) et [#197](https://github.com/sirius911/moutilloux/issues/197)
+(✅ Approuvé avec réserve corrigée avant clôture : nouvelle fonction
+`recreate_final_bracket_for_event` dans `live/bracket.py`, garde LIVE/FINISHED
+inconditionnelle, suppression réelle des matchs SCHEDULED + régénération via
+`ensure_final_bracket_exists` si `force=True`, `api_bracket_create` branché
+dessus, `start_stage` retiré du contrat ; réserve du reviewer — doc
+`roadmap/phase-7-bracket.md` obsolète — corrigée par l'orchestrateur, fichier
+local non versionné).
+**Nouveaux tickets créés :** 2 — #230 (🟡 mineure, typage `Bracket.p3`), #231
+(🟡 mineure, nettoyage front `start_stage` obsolète, signalé par le reviewer de
+#197, hors périmètre de ce ticket).
+**Branche :** `claude/sprint/18-tableau-final-conformite` (créée cette session
+depuis le parent effectif).
 
-**Sprint 17 clôturé cette session.** Les deux conditions étaient réunies : spec
-review de la session ✅ sur les deux specs du sprint (admin-matchs.md,
-cycle-de-vie-match.md) et milestone à 0 issue ouverte. Milestone GitHub #16
-fermé, ligne retirée de `backlog/sprints/roadmap.md` (renumérotation 18→21 en
-1→4), dossier déplacé vers `backlog/sprints/done/17-panneau-edition-match/`.
+**Sprint 17 (session précédente) :** clôturé en session #57 — pour mémoire,
+non concerné par cette session.
 
-**Problèmes d'orchestration (session #57) :** aucun.
+**Problèmes d'orchestration (session #58) :** pour #197, le reviewer a rendu
+`⚠️ Approuvé avec réserves` (documentation `roadmap/phase-7-bracket.md`
+obsolète après le changement de contrat). Plutôt que clore avec la réserve non
+résolue, l'orchestrateur a corrigé directement la documentation (fichier
+`roadmap/`, gitignoré/non versionné), puis clos en ✅ avec la correction
+documentée dans le commentaire GitHub — même pattern qu'en session #56 pour
+#229. Aucun autre écart au protocole.
 
-Parent effectif pour la session #57 : `claude/sprint/16-arbitre-demarrer-match`
-(le sprint 16 est clos côté planification/milestone, mais sa PR #178 n'est pas
-encore mergée dans `main`). Déjà synchronisé, aucun merge nécessaire. Le
-prochain parent effectif (pour le sprint 18) devra être recalculé au prochain
-déclenchement via `backlog/sprints/done/` (16 reste le sprint le plus récent
-< 18 tant que sa PR n'est pas mergée dans `main`).
+Parent effectif pour la session #58 : `claude/sprint/17-panneau-edition-match`
+(le sprint 17 est clos côté planification/milestone depuis la session #57,
+mais sa PR #223 n'est pas encore mergée dans `main`). Branche sprint 18 créée
+depuis celle-ci cette session (nouvelle branche, aucun merge nécessaire). Le
+prochain parent effectif (pour le sprint 19, quand 18 sera clos) devra être
+recalculé au prochain déclenchement via `backlog/sprints/done/`.
