@@ -95,6 +95,7 @@ watch(() => eventStore.groupsLocked, (locked) => {
 
 const adjustBusy = ref(false)
 const adjustError = ref('')
+const overCapacityNotice = ref('')
 
 const confirmState = ref<{ show: boolean; entryId: number; name: string; action: 'forfait' | 'retrait' }>({
   show: false, entryId: 0, name: '', action: 'forfait',
@@ -159,12 +160,16 @@ async function executeAddLate() {
   if (!selectedAddPlayerId.value || !eventStore.activeEventId) return
   adjustBusy.value = true
   adjustError.value = ''
+  const groupName = addLateState.value.groupName
   try {
-    await eventStore.addLateEntry(eventStore.activeEventId, {
+    const result = await eventStore.addLateEntry(eventStore.activeEventId, {
       group_id: addLateState.value.groupId,
       player: selectedAddPlayerId.value,
     })
     addLateState.value.show = false
+    overCapacityNotice.value = result?.overCapacity
+      ? `Poule ${groupName} au-delà de l'effectif prévu — vérifiez la composition.`
+      : ''
   } catch (e) {
     adjustError.value = apiErrorMessage(e, "Erreur lors de l'ajout.")
   } finally {
@@ -258,6 +263,10 @@ async function onDropToUnassigned() {
       </div>
       <p v-if="dropError" class="adm-error">{{ dropError }}</p>
       <p v-if="adjustError" class="adm-error">{{ adjustError }}</p>
+      <p v-if="overCapacityNotice" class="adm-warning">
+        {{ overCapacityNotice }}
+        <button type="button" class="adm-warning-dismiss" @click="overCapacityNotice = ''">✕</button>
+      </p>
       <div class="groups-layout">
         <!-- Non assignés -->
         <div
@@ -335,9 +344,9 @@ async function onDropToUnassigned() {
               Glissez un joueur ici
             </div>
 
-            <!-- Ajouter tardif : visible si poule sous l'effectif et épreuve EN_COURS -->
+            <!-- Ajouter tardif : visible dès que l'épreuve est EN_COURS (dépassement d'effectif autorisé, avec avertissement) -->
             <div
-              v-if="eventStore.groupsLocked && activeEvent && group.standings.filter(s => !s.withdrawn).length < activeEvent.groupSizeDefault"
+              v-if="eventStore.groupsLocked && activeEvent"
               class="gc-add-late"
             >
               <button class="gc-add-late-btn" type="button" :disabled="adjustBusy" @click="openAddLate(group.id, group.name)">
@@ -773,4 +782,31 @@ async function onDropToUnassigned() {
   color: var(--danger);
   font-size: 13px;
 }
+
+.adm-warning {
+  margin: 0 0 8px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border: 1px solid var(--gold);
+  color: var(--ink-1);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.adm-warning-dismiss {
+  background: none;
+  border: none;
+  color: var(--ink-3);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.adm-warning-dismiss:hover { color: var(--ink-0); }
 </style>

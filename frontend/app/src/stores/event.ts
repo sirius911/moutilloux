@@ -397,9 +397,10 @@ export const useEventStore = defineStore('event', () => {
   }
 
   async function addLateEntry(eventId: number, payload: AddLateEntryPayload) {
-    await post(`/api/events/${eventId}/entries/late/`, payload)
+    const result = await post<{ overCapacity: boolean }>(`/api/events/${eventId}/entries/late/`, payload)
     await fetchGroups(eventId)
     await fetchPlayers(eventId)
+    return result
   }
 
   async function replacePlayer(entryId: number, payload: ReplacePlayerPayload) {
