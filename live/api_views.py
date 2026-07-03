@@ -10,7 +10,6 @@ from django.http import JsonResponse
 from django.db import transaction, IntegrityError
 from django.db.models import Count
 from django.contrib.auth import authenticate, login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import get_object_or_404
@@ -648,22 +647,22 @@ def api_arbitre_matches(request):
 
 
 @require_GET
-@login_required
+@superuser_required
 def api_players(request):
     """
     GET /api/players/
-    Retourne tous les joueurs du registre global.
+    Retourne tous les joueurs du registre global. Requiert le rôle superuser (admin).
     """
     players = Player.objects.all().order_by("last_name", "first_name")
     return JsonResponse([_pack_player(p) for p in players], safe=False)
 
 
 @require_POST
-@login_required
+@superuser_required
 def api_player_create(request):
     """
     POST /api/players/create/
-    Crée un joueur dans le registre global. Requiert d'être connecté.
+    Crée un joueur dans le registre global. Requiert le rôle superuser (admin).
     """
     try:
         data = json.loads(request.body)

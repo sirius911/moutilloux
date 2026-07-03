@@ -68,8 +68,9 @@ Décrivent des règles globales qui s'appliquent à plusieurs écrans ou composa
 | Module | Fichier | Statut |
 |--------|---------|--------|
 | erreurs-api | [transverse/erreurs-api.md](./transverse/erreurs-api.md) | ✅ Actif |
+| auth / matrice d'accès | [transverse/auth-matrice-acces.md](./transverse/auth-matrice-acces.md) | ✅ Actif |
 
-*Exemples à prévoir : auth (guards, session, logout), polling (intervalles, pause onglet caché).*
+*Exemples à prévoir : polling (intervalles, pause onglet caché).*
 
 ---
 
