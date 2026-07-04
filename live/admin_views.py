@@ -1872,7 +1872,8 @@ def delete_play_day(play_day):
     )
     if finished_matches.exists():
         raise ValueError(
-            "Impossible de supprimer cette journée : elle contient des matchs terminés."
+            "Impossible de supprimer cette journée : des matchs y ont été joués. "
+            "Une journée jouée est conservée comme archive."
         )
     play_day.delete()
 

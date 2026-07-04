@@ -4,6 +4,7 @@ module: admin/matchs
 fichiers:
   - frontend/app/src/views/admin/AdminMatches.vue
   - frontend/app/src/components/modals/EditMatchPanel.vue
+  - frontend/app/src/components/modals/PlayDayModal.vue
   - frontend/app/src/stores/event.ts
   - live/api_views.py
   - live/admin_views.py
@@ -195,10 +196,14 @@ l'**édition** courante — le calendrier étant édition-scoped (voir [[plannin
   matchs).
 - **Modifier** : édite date / début / fin cible. Les heures estimées des matchs de
   la journée sont recalculées (voir [[planning]]).
-- **Supprimer** : **refusée par le serveur** si la journée porte encore des matchs
-  ou des pauses — le message est affiché et invite à renvoyer d'abord ses matchs
-  vers la pile « à planifier ». Une journée **vide** se supprime après une
-  confirmation simple.
+- **Supprimer** : **refusée par le serveur** si la journée porte encore des pauses,
+  ou des matchs `SCHEDULED`/`LIVE` — le message est affiché et invite à renvoyer
+  d'abord ses matchs vers la pile « à planifier » (**actionnable**, on peut
+  réessayer ensuite). Si la journée porte au moins un match `FINISHED`, le refus
+  est **définitif** : la journée est conservée comme **archive** et le message
+  l'indique explicitement. Dans ce cas, le bouton **Supprimer** est **désactivé**
+  côté UI (`PlayDayModal.vue`) dès qu'un match de la journée a le statut
+  `FINISHED`. Une journée **vide** se supprime après une confirmation simple.
 - Les heures ne sont jamais saisies sur les matchs (décision 18) ; cette modale ne
   règle que les **bornes de journée**, l'ETA reste dérivée.
 - Erreurs serveur affichées dans la modale, saisie conservée.

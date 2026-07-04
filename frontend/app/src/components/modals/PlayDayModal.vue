@@ -24,6 +24,10 @@ const deleting = ref<Record<number, boolean>>({})
 
 const calendarDays = computed<CalendarDay[]>(() => eventStore.calendar?.playDays ?? [])
 
+function isArchived(day: CalendarDay): boolean {
+  return day.matches.some((m) => m.status === 'FINISHED')
+}
+
 function itemCount(day: CalendarDay): string {
   const m = day.matches.length
   const b = day.breaks.length
@@ -143,7 +147,15 @@ async function confirmDelete(id: number) {
           </template>
           <template v-else>
             <button class="row-btn" type="button" @click="openEdit(day)">Modifier</button>
-            <button class="row-btn" type="button" @click="askDelete(day.id)">Supprimer</button>
+            <button
+              class="row-btn"
+              type="button"
+              :disabled="isArchived(day)"
+              :title="isArchived(day) ? 'Journée archivée — matchs terminés' : undefined"
+              @click="askDelete(day.id)"
+            >
+              Supprimer
+            </button>
           </template>
         </div>
         <p v-if="deleteError[day.id]" class="pd-row-error">{{ deleteError[day.id] }}</p>
