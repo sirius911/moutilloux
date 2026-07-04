@@ -178,6 +178,11 @@ toucher à ce qui est déjà placé :
 | `POST /api/editions/<id>/calendar/reorder/` | applique l'ordre complet du calendrier (drag) ; (ré)attribue `order_index` par journée. Les matchs `LIVE`/`FINISHED` sont **fixes** : leur rang est préservé, jamais recalculé. **Contrat** : le payload couvre toutes les journées avec la **séquence complète de l'édition** — tout match `SCHEDULED` absent du payload est **renvoyé à la pile** (`order_index` et `scheduled_time` effacés) ; c'est ainsi qu'un drag vers la pile dé-planifie. Un client ne doit donc **jamais filtrer** la séquence (par épreuve ou autre) avant de la renvoyer. |
 | `POST /api/matches/<id>/edit/` | édition fine (score correctif, format, statut, journée, mise en avant). |
 | `POST /api/matches/<id>/feature/` | passe le match à l'antenne (→ `LIVE`, `is_featured`) **sans effacer son `order_index`** : le match reste à sa place. |
+| `POST /api/events/<id>/matches/auto-arrange/` | applique l'heuristique de pré-pose côté serveur (`live/urls.py:98`, `api_matches_auto_arrange` — `api_views.py:1799`). |
+| CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des matchs ou des pauses (`live/urls.py:86-89` ; `api_play_days_list:1541`, `api_play_day_create:1551`, `api_play_day_edit:1576`, `api_play_day_delete:1611`). |
+| CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier) (`live/urls.py:91-94` ; `api_breaks_list:1623`, `api_break_create:1633`, `api_break_edit:1659`, `api_break_delete:1691`). |
+| Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA peuvent être calculées côté front. |
+| Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-programme]] (`live/urls.py:100`, `api_tv_upcoming` — `api_views.py:1817`). |
 
 > **Retrait.** L'ancien endpoint kanban `POST /api/events/<id>/matches/reorder/`
 > (`reorder_event_matches`) est **supprimé** : il remettait à `NULL` l'`order_index`
@@ -186,16 +191,6 @@ toucher à ce qui est déjà placé :
 > fin de match arbitre, forfait, édition → `FINISHED`, mise en avant) n'efface plus
 > `order_index` ; seules la **génération** (pile) et l'**annulation** le laissent /
 > le remettent à `NULL`.
-
-### À créer
-
-| Endpoint | Rôle |
-|---|---|
-| `POST /api/events/<id>/matches/auto-arrange/` | applique l'heuristique de pré-pose côté serveur. |
-| CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des matchs ou des pauses. |
-| CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier). |
-| Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`). Les ETA peuvent être calculées côté front. |
-| Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-programme]]. |
 
 > Conventions back (CLAUDE.md §5) : chaque mutation est d'abord une **fonction de
 > service** réutilisable dans `admin_views.py`, exposée ensuite par un endpoint
