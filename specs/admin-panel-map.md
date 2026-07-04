@@ -80,7 +80,7 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
   suivre les heures estimées qui se recalent, repérer les conflits de repos,
   éditer un match (score correctif, format verrouillé si LIVE), mettre en avant
   (→ LIVE + antenne TV). Modèle détaillé : [[planning]] ; face publique :
-  [[tv-programme]].
+  [[tv-live]].
 - **Tableau final** — créer le tableau (choix de l'étape de départ), assigner /
   vider les places depuis les qualifiés, poser les étiquettes de provenance,
   suivre la progression automatique des gagnants.
@@ -155,7 +155,7 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
     chaque ligne ni dans le panneau d'édition.
 20. **Public = greffe TV, pas de nouvel écran.** Une slide « Programme » dans le
     carousel TV + un bandeau « À suivre » sur le scoreboard. Heures publiques
-    approximatives (`~HH:MM`). Voir [[tv-programme]].
+    approximatives (`~HH:MM`). Voir [[tv-live]].
 21. **Génération = validation des poules** (entériné, inchangé). Pas de gate
     « valider les poules » séparée : générer les matchs verrouille les poules
     ([[admin-poules]]) et crée les matchs « à planifier ». Sur mono-court, le seul

@@ -64,7 +64,7 @@ Statut stocké sur `Match.status` (déjà présent, `models.py:23`) :
 `mark_live()` (`models.py:147`) rétrograde **automatiquement** tout autre match
 `LIVE` de la même édition en `SCHEDULED` avant de passer celui-ci `LIVE`. C'est la
 traduction du modèle **court central unique** : on ne joue qu'un match à la fois,
-et le match `LIVE` **est** le match affiché sur la TV ([[tv-programme]]). Démarrer le
+et le match `LIVE` **est** le match affiché sur la TV ([[tv-live]]). Démarrer le
 match suivant « met en pause » le précédent (il repasse `SCHEDULED` en **conservant
 son score** ; il pourra être repris).
 

@@ -13,7 +13,7 @@ fichiers:
 
 > Modèle de données, états dérivés et algorithmes communs au **Calendrier des
 > matchs** (admin, [[admin-matchs]]) et à ses surfaces publiques TV
-> ([[tv-programme]]). Source de vérité du « fonctionnement » du calendrier : les
+> ([[tv-live]]). Source de vérité du « fonctionnement » du calendrier : les
 > specs d'écran décrivent l'UI, celle-ci décrit les règles.
 
 ## Principe
@@ -123,7 +123,7 @@ Propriétés garanties :
   débordement de la veille ne décale pas le lendemain.
 
 Les heures publiques sont affichées **approximatives** (préfixe `~`), voir
-[[tv-programme]].
+[[tv-live]].
 
 ---
 
@@ -182,7 +182,7 @@ toucher à ce qui est déjà placé :
 | CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des matchs ou des pauses (`live/urls.py:86-89` ; `api_play_days_list:1541`, `api_play_day_create:1551`, `api_play_day_edit:1576`, `api_play_day_delete:1611`). |
 | CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier) (`live/urls.py:91-94` ; `api_breaks_list:1623`, `api_break_create:1633`, `api_break_edit:1659`, `api_break_delete:1691`). |
 | Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA peuvent être calculées côté front. |
-| Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-programme]] (`live/urls.py:100`, `api_tv_upcoming` — `api_views.py:1817`). |
+| Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-live]] (`live/urls.py:100`, `api_tv_upcoming` — `api_views.py:1817`). |
 
 > **Retrait.** L'ancien endpoint kanban `POST /api/events/<id>/matches/reorder/`
 > (`reorder_event_matches`) est **supprimé** : il remettait à `NULL` l'`order_index`
