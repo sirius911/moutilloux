@@ -91,6 +91,7 @@ Décrivent les modèles de données, contrats d'API, structures de stores.
 | routing | [technical/routing-context.md](./technical/routing-context.md) | ✅ Actif |
 | classement-poule | [technical/classement-poule.md](./technical/classement-poule.md) | ✅ Actif |
 | tv-state | [technical/tv-state.md](./technical/tv-state.md) | ✅ Actif |
+| affiche-match | [technical/affiche-match.md](./technical/affiche-match.md) | ✅ Actif |
 
 *Exemples à prévoir : match (structure `_pack_match`), event/edition, entry.*
 

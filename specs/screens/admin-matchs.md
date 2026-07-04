@@ -211,10 +211,11 @@ l'**édition** courante — le calendrier étant édition-scoped (voir [[plannin
 ## Panneau d'édition de match (volet latéral)
 
 Ouvert au clic sur une ligne. En-tête : étape, « {A} vs {B} », badges d'état
-(PRÉVU / EN DIRECT / TERMINÉ / ANNULÉ), heure estimée, « ★ MIS EN AVANT ». Trois
-onglets : **Score**, **Format**, **Planning**. Pied : « Annuler » et
+(PRÉVU / EN DIRECT / TERMINÉ / ANNULÉ), heure estimée, « ★ MIS EN AVANT ». Quatre
+onglets : **Score**, **Format**, **Planning**, **Affiche**. Pied : « Annuler » et
 « Enregistrer » (désactivé pendant la sauvegarde ; les erreurs s'affichent dans le
-pied sans fermer le panneau).
+pied sans fermer le panneau). Un raccourci **« Affiche »** sur la ligne du
+calendrier ouvre le panneau directement sur cet onglet.
 
 ### Onglet Score
 
@@ -261,6 +262,26 @@ pied sans fermer le panneau).
   (un seul match à la fois ; l'activer retire l'actuel).
 - La **position** dans la séquence se règle par glisser-déposer, pas dans ce
   panneau.
+
+### Onglet Affiche
+
+Génération et choix de l'**affiche IA** du match (mécanique complète :
+[[affiche-match]]) :
+
+- **Affiche retenue** : aperçu de `Match.poster` si elle existe, avec action
+  **Retirer** (confirmation simple).
+- **Formulaire de génération** : un champ « attitude » par joueur, pré-rempli
+  depuis la fiche (`Player.attitude`), modifiable à la volée. Bouton
+  **« Générer 2 propositions »** — désactivé (avec explication) si un joueur
+  n'a pas de photo, si les deux sides ne sont pas résolus, ou si une
+  génération est déjà en cours.
+- **Suivi** : pendant la génération (asynchrone, ~1-2 min), l'onglet affiche la
+  progression par polling ; on peut fermer le panneau et revenir.
+- **Galerie de choix** : les 2 candidates du lot côte à côte ; **Choisir**
+  promeut l'élue en affiche du match et purge le lot ; **Relancer** remplace le
+  lot (les non-retenues ne sont jamais conservées).
+- Erreurs (clé API absente, refus de modération, échec réseau) : message
+  serveur affiché dans l'onglet, jamais d'échec silencieux.
 
 ---
 

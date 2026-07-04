@@ -71,6 +71,8 @@ en édition, sinon « Le joueur sera ajouté au registre. »).
 | Nom | Requis |
 | Genre | Homme / Femme / Autre (segmenté) ; optionnel |
 | Année de naissance | Optionnelle (année seule, pas de date complète) |
+| Photo | Optionnelle — portrait (jpg/png/webp, ≤ 10 Mo), avec aperçu dans la modale. Sert d'avatar (repli : initiales) et de source aux **affiches de match** (voir [[affiche-match]]). Upload en multipart dédié. |
+| Attitude | Optionnelle — adjectif de mise en scène pour les affiches (« charmeuse », « furieux »…), pré-rempli à la génération d'affiche, modifiable à la volée (voir [[affiche-match]]). |
 
 **Section Contact**
 

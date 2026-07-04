@@ -92,6 +92,13 @@ Contrat de données, définition du *next*, annonces et cadences :
 10. **Pas de têtes de série à l'écran** (décision 3 d'[[admin-panel-map]]
     réaffirmée) : les places vides affichent l'étiquette de provenance
     (« A1 », « WSF1 »…) ou « À désigner » — jamais de « ? ».
+11. **Affiches de match IA** (brainstorm du 2026-07-04, intégration de la
+    PR #1) : générées et choisies **côté admin** (onglet Affiche du panneau de
+    match), stockées sur le match (`Match.poster` → `posterUrl` de
+    `_pack_match`). La TV **n'affiche que le résultat** : fond du scoreboard
+    LIVE (enjeu par-dessus, semi-transparent) + slide « Affiche » du carousel
+    (prochain match). Le carousel passe à **7 slides**. Contrat complet :
+    [[affiche-match]].
 
 ## API de référence (cible)
 
