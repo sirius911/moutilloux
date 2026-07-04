@@ -14,11 +14,17 @@ const name = ref(props.editing?.name ?? '')
 const year = ref(String(props.editing?.year ?? new Date().getFullYear()))
 const startDt = ref(props.editing?.startDt ? props.editing.startDt.slice(0, 10) : '')
 const endDt = ref(props.editing?.endDt ? props.editing.endDt.slice(0, 10) : '')
+const defaultMatchDurationMin = ref(
+  props.editing?.defaultMatchDurationMin != null ? String(props.editing.defaultMatchDurationMin) : '27',
+)
 const saving = ref(false)
 const error = ref('')
 
 const yearNum = computed(() => Number.parseInt(year.value, 10))
 const canSave = computed(() => !!name.value.trim() && Number.isFinite(yearNum.value))
+
+const durationNum = computed(() => Number.parseInt(defaultMatchDurationMin.value, 10))
+const durationValid = computed(() => Number.isInteger(durationNum.value) && durationNum.value >= 1)
 
 const subtitle = computed(() =>
   props.editing
@@ -36,6 +42,7 @@ async function save() {
       year: yearNum.value,
       start_dt: startDt.value || null,
       end_dt: endDt.value || null,
+      ...(durationValid.value ? { default_match_duration_min: durationNum.value } : {}),
     }
     if (props.editing) {
       await eventStore.editEdition(props.editing.id, base)
@@ -82,6 +89,10 @@ async function save() {
         <label class="fld">
           <span class="fld-lbl">Date de fin</span>
           <input v-model="endDt" class="inp" type="date" />
+        </label>
+        <label class="fld">
+          <span class="fld-lbl">Durée de match par défaut (min)</span>
+          <input v-model="defaultMatchDurationMin" class="inp" type="number" min="1" inputmode="numeric" placeholder="27" />
         </label>
       </div>
 

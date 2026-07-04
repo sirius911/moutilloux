@@ -106,6 +106,7 @@ récente à la plus ancienne :
 | Année | Requise, entier ; **unique** parmi les éditions |
 | Date de début | Optionnelle |
 | Date de fin | Optionnelle |
+| Durée de match par défaut (min) | Optionnelle, entier ≥ 1 (défaut 27) ; sert de base au moteur d'ETA du calendrier |
 
 **Comportement**
 - Le bouton d'enregistrement est désactivé tant que nom ou année sont vides,

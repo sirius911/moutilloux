@@ -45,6 +45,7 @@ export interface EditionPayload {
   year?: number
   start_dt?: string | null
   end_dt?: string | null
+  default_match_duration_min?: number
 }
 
 export interface CategoryPayload {
