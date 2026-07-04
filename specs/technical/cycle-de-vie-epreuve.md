@@ -89,7 +89,7 @@ joueront pas tant qu'on ne revient pas les ajouter — voir Ajustements).
 **Effets (atomiques) :**
 1. **Génère le round-robin** de chaque poule (service existant
    `generate_group_matches_for_event`, déjà **idempotent et additif** —
-   `admin_views.py:444`). Matchs en `SCHEDULED`, sans `order_index` (= « à
+   `admin_views.py:255`). Matchs en `SCHEDULED`, sans `order_index` (= « à
    planifier », voir [[planning]]).
 2. **Verrouille la structure** des poules : composition en lecture seule
    (le verrouillage ne dépend plus de « un match existe » mais de `status ≥ EN_COURS`).
@@ -124,8 +124,8 @@ jamais réécrit par un ajustement** ; seuls les matchs `SCHEDULED` sont touché
 |---|---|---|
 | **Remplacer un joueur** | échange le `player`/`team` porté par l'`Entry`, **même place** en poule. Aucun match touché, résultats déjà joués conservés. | faible |
 | **Ajout tardif** | nouvelle `Entry` + `GroupMembership` dans une poule **sous l'effectif** ; re-run de la génération (additive) → crée **uniquement** les matchs manquants du nouveau venu. Avertissement si l'effectif dépasse `group_size_default`. | faible–moyen |
-| **Forfait** | voir ci-dessous (walkover). | présent — `withdraw_entry` (live/admin_views.py:829) |
-| **Retrait sans remplaçant** | = forfait, **plus** retrait de l'affichage poule. Forfaits en cascade sur tous ses matchs non joués. | présent — `withdraw_entry` (live/admin_views.py:829) |
+| **Forfait** | voir ci-dessous (walkover). | présent — `withdraw_entry` (live/admin_views.py:589) |
+| **Retrait sans remplaçant** | = forfait, **plus** retrait de l'affichage poule. Forfaits en cascade sur tous ses matchs non joués. | présent — `withdraw_entry` (live/admin_views.py:589) |
 
 ### Forfait / walkover (logique neuve)
 
@@ -303,13 +303,13 @@ métier est maintenant livré ; seule la généralisation du tableau au-delà de
 
 | Élément | Nature |
 |---|---|
-| `Event.status` + transitions Débuter/Clôturer | livré (`competition/models.py:38-40` ; `live/admin_views.py:523` `start_event`, `:563` `close_event`, `:590` réouverture) |
+| `Event.status` + transitions Débuter/Clôturer | livré (`competition/models.py:38-40` ; `live/admin_views.py:311` `start_event`, `:351` `close_event`, `:373` réouverture) |
 | `Event.has_third_place` | livré (`competition/models.py:37`) |
 | `Entry.withdrawn`, `Match.is_walkover` | livré (`competition/models.py:62` ; `live/models.py:140`) |
-| Service forfait (cascade walkover + recalcul) | livré (`withdraw_entry`, `live/admin_views.py:829-918`) |
+| Service forfait (cascade walkover + recalcul) | livré (`withdraw_entry`, `live/admin_views.py:589-681`) |
 | Généralisation du tableau (N poules, byes, séparation) | livré pour N ≤ 4 (`bracket.py:_bracket_layout`) ; N > 4 reste non templé — à faire si besoin |
 | Propagation des **perdants** (3e place) | livré (`sync_p3_losers_for_event`, `live/bracket.py:363-395`) |
-| Ajout tardif post-Débuter (déverrouillage ciblé + re-génération additive) | livré (`add_late_entry`, `live/admin_views.py:921-951`) |
+| Ajout tardif post-Débuter (déverrouillage ciblé + re-génération additive) | livré (`add_late_entry`, `live/admin_views.py:682-715`) |
 
 > La généralisation du tableau au-delà de 4 poules reste la seule brique à
 > **spécifier puis implémenter** comme logique métier neuve ; le reste est
