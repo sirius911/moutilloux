@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #89
+**Dernière session :** 2026-07-04 — Session #90
 **Sprint traité :** 22 — État TV : contrat back (poursuite)
 
 **Git :** branche `claude/sprint/22-tv-state-back`, parent effectif
@@ -381,35 +381,40 @@ et exécute le protocole complet (étapes 0 à 4).
 `backlog/sprints/done/` — toujours pas mergée dans `origin/main`, merge sans
 conflit : already up to date). Working tree propre au démarrage.
 
-**Spec review session #89 :** review de `specs/technical/tv-state.md`.
-Verdict ❌ Dérive bloquante (attendu, comme #88) — au moment de la review
-(début de session), `tv/state`/`tv/idle` n'étaient pas encore câblés. Aucune
-nouvelle dérive, aucune nouvelle issue.
+**Spec review session #90 :** review de `specs/technical/tv-state.md`.
+Verdict ❌ Dérive bloquante (attendu) — au moment de la review (début de
+session, avant traitement des tickets), `tv/state`/`tv/idle` étaient câblés
+mais `_pack_tv_stake` portait encore le bug `hero.event.name` (#253) et le
+CRUD Announcement (#256) n'était pas codé ; côté front, `stores/live.ts`/
+`types/index.ts` restent sur le legacy (`fetchScoreState`/`fetchUpcoming`) —
+attendu, retraits prévus au sprint 23. Aucune nouvelle dérive, aucune
+nouvelle issue.
 
-**Tickets traités session #89 :** 2 — #253 (❌ À corriger : `_pack_tv_stake`
-utilise `hero.event.name`, champ inexistant sur `Event` — seul
-`event.category.name` existe. `AttributeError` → 500 sur le chemin nominal
-d'un hero LIVE avec stake résolvable. Le reste de la livraison est conforme
-au contrat. Label `à-reprendre` posé, détail dans
-`backlog/plan/253-tv-state-endpoint.md` et le commentaire GitHub — sera
-repris en priorité à la prochaine session) et #254 (✅ Approuvé : endpoint
-`GET /api/tv/idle/` — stats, 5 derniers résultats, épreuves
-groups/bracket, programme avec bascule today/tomorrow/finished dérivée de
-`get_tv_next`, annonces actives ; n'utilise pas `_pack_edition`, endpoint
-public. A pris soin de ne pas reproduire le bug `event.name` de #253 :
-utilise `event.category.name`). Route `api/tv/idle/` câblée par
-l'orchestrateur dans `live/urls.py`.
+**Tickets traités session #90 :** 2 — #253 (✅ Approuvé, reprise : fix
+ciblé de `_pack_tv_stake`, `hero.event.name` → `hero.event.category.name`
+aux deux occurrences ; `select_related` déjà correct côté `get_hero_match`,
+aucun N+1 introduit ; reste du contrat `GET /api/tv/state/` conforme,
+`python manage.py check` OK) et #256 (✅ Approuvé : CRUD Announcement —
+services `create_announcement`/`update_announcement`/`delete_announcement`
+dans `admin_views.py` sur le pattern `PlayDay`/`Break`, 4 endpoints fins
+dans `api_views.py` avec `_pack_announcement` camelCase ; filtre
+`is_active=True` de `tv/idle` non cassé). 4 routes câblées par
+l'orchestrateur dans `live/urls.py` (`api/editions/<id>/announcements/`,
+`.../create/`, `api/announcements/<id>/edit/`, `.../delete/`).
 
-**Fin de sprint non atteinte :** 2 issues encore ouvertes sous le milestone
-Sprint 22 (#253 à-reprendre, #256 pas encore traité) — les deux conditions
-de clôture ne sont pas réunies. Le sprint continue à la prochaine échéance
-planifiée ; #253 sera repris en priorité (label `à-reprendre`).
+**Fin de sprint non atteinte :** 0 issue ouverte sous le milestone Sprint
+22, mais la spec review de cette session (menée avant le traitement des
+tickets, par construction du protocole) a rendu ❌ — les deux conditions de
+clôture ne sont donc pas réunies. Le sprint continue à la prochaine échéance
+planifiée ; une review au tout début de la session #91, désormais avec
+#253/#256 déjà corrigés, devrait pouvoir confirmer un contrat back conforme
+(front/retraits restant hors périmètre jusqu'au sprint 23).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 22 actif (2/5 tickets restants : #253 à-reprendre,
-#256), puis 23 — TV live : écran & retraits legacy, puis 24 — Affiches de
-match.
+**Roadmap :** sprint 22 actif (0 ticket ouvert restant — clôture possible
+dès que la spec review confirme ✅ sur le périmètre back), puis 23 — TV
+live : écran & retraits legacy, puis 24 — Affiches de match.
