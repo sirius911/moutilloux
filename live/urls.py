@@ -98,6 +98,8 @@ urlpatterns = [
     path("api/events/<int:event_id>/matches/auto-arrange/", api_views.api_matches_auto_arrange, name="api_matches_auto_arrange"),
     # TV : prochains matchs (lecture publique)
     path("api/tv/upcoming/", api_views.api_tv_upcoming, name="api_tv_upcoming"),
+    # TV : état chaud unifié (sprint 22)
+    path("api/tv/state/", api_views.api_tv_state, name="api_tv_state"),
 
     path("results/poules/", views.results_poules, name="results_poules"),
     path("results/poules/start/", views.results_poules_start, name="results_poules_start"),

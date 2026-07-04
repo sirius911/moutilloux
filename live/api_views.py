@@ -19,7 +19,7 @@ from django.utils.dateparse import parse_datetime, parse_date, parse_time
 from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
 from live.models import Match, Court, PlayDay, Break
-from live.views import build_event_group_tables
+from live.views import build_event_group_tables, get_hero_match
 from live.admin_views import (
     superuser_required,
     PlayerForm,
@@ -1851,6 +1851,78 @@ def get_tv_next(edition):
             return match
 
     return None
+
+
+def _pack_tv_stake(hero):
+    """Dérive l'enjeu (« stake ») du match hero : sa poule, ou le tableau de
+    son épreuve. `None` si le hero est `None` ou si l'enjeu n'est pas
+    résolvable (pas de groupe ni stage de tableau)."""
+    if hero is None:
+        return None
+
+    if hero.stage == Match.Stage.GROUP and hero.group_id:
+        standings_qs = (
+            GroupStanding.objects.filter(group=hero.group)
+            .select_related("entry", "entry__player", "entry__team__player1", "entry__team__player2")
+            .order_by("rank", "-points", "-games_won")
+        )
+        qualified_per_group = hero.event.qualified_per_group
+        standings = [
+            {
+                "entryId": s.entry_id,
+                "rank": s.rank,
+                "name": _entry_display_name(s.entry),
+                "wins": s.wins,
+                "losses": s.losses,
+                "points": s.points,
+                "qualified": bool(s.rank) and s.rank <= qualified_per_group,
+            }
+            for s in standings_qs
+        ]
+        return {
+            "kind": "group",
+            "groupName": hero.group.name,
+            "eventName": hero.event.name,
+            "standings": standings,
+        }
+
+    if hero.stage in (Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3) and hero.event_id:
+        return {
+            "kind": "bracket",
+            "eventName": hero.event.name,
+            "bracket": _pack_event_bracket(hero.event),
+        }
+
+    return None
+
+
+@require_GET
+def api_tv_state(request):
+    """
+    GET /api/tv/state/
+    Lecture publique. État chaud de la TV (pollé ~2 s) : match hero (LIVE),
+    next (définition unique `get_tv_next`) et l'enjeu (stake) du hero.
+    """
+    edition = get_current_edition()
+    if edition is None:
+        return JsonResponse({
+            "editionYear": None,
+            "now": timezone.localtime(timezone.now()).strftime("%Hh%M"),
+            "hero": None,
+            "next": None,
+            "stake": None,
+        })
+
+    hero = get_hero_match(edition)
+    next_match = get_tv_next(edition)
+
+    return JsonResponse({
+        "editionYear": edition.year,
+        "now": timezone.localtime(timezone.now()).strftime("%Hh%M"),
+        "hero": _pack_match(hero),
+        "next": _pack_match(next_match),
+        "stake": _pack_tv_stake(hero),
+    })
 
 
 @require_GET
