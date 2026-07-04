@@ -373,33 +373,42 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-05 — Session #92
+**Dernière session :** 2026-07-05 — Session #93
 **Sprint traité :** 23 — TV live : écran & retraits legacy
 
-**Git :** branche `claude/sprint/23-tv-live-front` (créée cette session),
-parent effectif `claude/sprint/22-tv-state-back` (résolu via
-`backlog/sprints/done/` — toujours pas mergée dans `origin/main`, merge
-fast-forward sans conflit). Working tree propre au démarrage et en fin de
-session.
+**Git :** branche `claude/sprint/23-tv-live-front`, parent effectif
+`claude/sprint/22-tv-state-back` (résolu via `backlog/sprints/done/` —
+toujours pas mergée dans `origin/main`, merge fast-forward sans conflit).
+Working tree propre au démarrage et en fin de session.
 
-**Spec review session #92 :** review de `specs/screens/tv-live.md`,
-`specs/tv-map.md`, `specs/technical/tv-state.md`. Verdict ⚠️ Dérive mineure
-(front encore sur l'ancien contrat / legacy back en place) — mais 0 nouvelle
-dérive : tous les écarts observés sont exactement le périmètre déclaré du
-sprint 23 (déjà couvert par #257-262, #3, #21). Back sprint 22 revérifié en
-passant : conforme sans réserve.
+**Spec review session #93 :** review de `specs/screens/tv-live.md`,
+`specs/tv-map.md`, `specs/technical/tv-state.md`. Verdict ⚠️ Dérive mineure —
+0 nouvelle dérive : le carousel `TvIdle.vue` est désormais conforme (#259),
+la route unique `/tv/live` est en place (#261) ; il ne reste que le
+périmètre déclaré restant du sprint (#260 carte Annonces admin, #262 retraits
+back legacy).
 
-**Tickets traités session #92 :** 2 — #257 (`stores/live.ts` + `types/index.ts`
-sur le contrat `tv-state` ; fait directement par l'orchestrateur, fichiers
-réservés) et #258 (`TvScoreboard.vue` rebranché + zone d'enjeu ; délégué à un
-agent `vue-screen`). Les deux ✅ Approuvé, `vue-tsc` ne rapporte plus
-d'erreur sur les fichiers concernés. Rupture temporaire assumée : `TvIdle.vue`
-reste sur l'ancien contrat jusqu'à #259 (prochaine session).
+**Tickets traités session #93 :** 2 — #259 (`TvIdle.vue` réécrit sur
+`live.fetchTvIdle()` : 6 slides, rotation par épreuve, bascule de journée,
+slide Annonces ; délégué à un agent `vue-screen`, revu par un agent
+`reviewer` ; **ferme #3 et #21**, absorbées) et #261 (retrait des routes
+`/tv/groups`/`/tv/bracket` + suppression de `TvPoules.vue`/`TvBracket.vue` ;
+fait directement par l'orchestrateur, `router/index.ts` étant un fichier
+partagé). Les deux ✅ Approuvé, `vue-tsc -b --force` ne rapporte plus
+d'erreur sur les fichiers concernés (mêmes erreurs pré-existantes hors
+périmètre qu'avant : `useApi.ts`, `stores/event.ts`, `AdminBracket.vue`).
 
-**Fin de sprint non atteinte :** spec review ⚠️ (pas ✅ Conforme) et 6 issues
-sprint-23 encore ouvertes (#259, #260, #261, #262, #3, #21). Sprint 23 reste
-actif, traité à la prochaine échéance planifiée — ordre suggéré : #259
-(TvIdle carousel 6 slides, ferme #3/#21) ensuite, puis #260, #261, #262.
+**Point d'attention outillage :** `npx vue-tsc --noEmit` (forme courte, sans
+`-p`/`-b`) n'exploite pas les project references du `tsconfig.json` racine et
+ne remonte **aucune** erreur même quand il y en a réellement — utiliser
+`npx vue-tsc -b --force` (ou `-p tsconfig.app.json`) pour toute vérification
+de type-check future, y compris pour le script `type-check` toujours à
+ajouter dans `package.json` (TODO CLAUDE.md §4).
+
+**Fin de sprint non atteinte :** spec review ⚠️ (pas ✅ Conforme) et 2 issues
+sprint-23 encore ouvertes (#260, #262). Sprint 23 reste actif, traité à la
+prochaine échéance planifiée — ordre suggéré : #260 (carte Annonces TV,
+indépendant) puis #262 (retraits back, en dernier).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
