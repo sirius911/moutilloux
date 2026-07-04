@@ -1882,14 +1882,14 @@ def _pack_tv_stake(hero):
         return {
             "kind": "group",
             "groupName": hero.group.name,
-            "eventName": hero.event.name,
+            "eventName": hero.event.category.name,
             "standings": standings,
         }
 
     if hero.stage in (Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3) and hero.event_id:
         return {
             "kind": "bracket",
-            "eventName": hero.event.name,
+            "eventName": hero.event.category.name,
             "bracket": _pack_event_bracket(hero.event),
         }
 
