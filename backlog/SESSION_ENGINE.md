@@ -373,39 +373,37 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #91
-**Sprint traité :** 22 — État TV : contrat back (clôturé cette session)
+**Dernière session :** 2026-07-05 — Session #92
+**Sprint traité :** 23 — TV live : écran & retraits legacy
 
-**Git :** branche `claude/sprint/22-tv-state-back`, parent effectif
-`claude/sprint/21-durcissements-api-specs` (résolu via
-`backlog/sprints/done/` — toujours pas mergée dans `origin/main`, merge sans
-conflit : already up to date). Working tree propre au démarrage.
+**Git :** branche `claude/sprint/23-tv-live-front` (créée cette session),
+parent effectif `claude/sprint/22-tv-state-back` (résolu via
+`backlog/sprints/done/` — toujours pas mergée dans `origin/main`, merge
+fast-forward sans conflit). Working tree propre au démarrage et en fin de
+session.
 
-**Spec review session #91 :** review de `specs/technical/tv-state.md`.
-Verdict ✅ Conforme (sections contrat back) — `get_tv_next` (#252),
-`api_tv_state`/`_pack_tv_stake` (#253, corrigé en session #90),
-`api_tv_idle` + packers associés (#254), modèle `Announcement` + migration
-(#255), CRUD Announcement complet services+endpoints+routes (#256) : tous
-conformes. `manage.py check` et `makemigrations --check --dry-run` OK.
-Legacy (`score_state`, `get_next_match`, `tv/upcoming`) et front
-(`stores/live.ts`/`types/index.ts` sur `fetchScoreState`/`fetchUpcoming`)
-toujours en place — attendu, hors périmètre jusqu'au sprint 23. Aucune
-nouvelle dérive, aucune nouvelle issue.
+**Spec review session #92 :** review de `specs/screens/tv-live.md`,
+`specs/tv-map.md`, `specs/technical/tv-state.md`. Verdict ⚠️ Dérive mineure
+(front encore sur l'ancien contrat / legacy back en place) — mais 0 nouvelle
+dérive : tous les écarts observés sont exactement le périmètre déclaré du
+sprint 23 (déjà couvert par #257-262, #3, #21). Back sprint 22 revérifié en
+passant : conforme sans réserve.
 
-**Tickets traités session #91 :** 0 — les 5 tickets du sprint (#252-256)
-étaient déjà clos avant cette session ; aucune issue ouverte restante sous
-le milestone Sprint 22.
+**Tickets traités session #92 :** 2 — #257 (`stores/live.ts` + `types/index.ts`
+sur le contrat `tv-state` ; fait directement par l'orchestrateur, fichiers
+réservés) et #258 (`TvScoreboard.vue` rebranché + zone d'enjeu ; délégué à un
+agent `vue-screen`). Les deux ✅ Approuvé, `vue-tsc` ne rapporte plus
+d'erreur sur les fichiers concernés. Rupture temporaire assumée : `TvIdle.vue`
+reste sur l'ancien contrat jusqu'à #259 (prochaine session).
 
-**Fin de sprint atteinte :** les deux conditions de clôture sont réunies
-(spec review ✅ Conforme + 0 issue ouverte sous le milestone). Milestone
-GitHub #21 fermé, ligne supprimée de `backlog/sprints/roadmap.md`, dossier
-déplacé vers `backlog/sprints/done/22-tv-state-back/`.
+**Fin de sprint non atteinte :** spec review ⚠️ (pas ✅ Conforme) et 6 issues
+sprint-23 encore ouvertes (#259, #260, #261, #262, #3, #21). Sprint 23 reste
+actif, traité à la prochaine échéance planifiée — ordre suggéré : #259
+(TvIdle carousel 6 slides, ferme #3/#21) ensuite, puis #260, #261, #262.
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 22 clôturé. Sprint 23 — TV live : écran & retraits
-legacy devient actif, sera traité à la prochaine échéance planifiée (pas
-démarré dans cette session). Puis 24 — Affiches de match.
+**Roadmap :** sprint 23 actif (1/2). Puis 24 — Affiches de match.
