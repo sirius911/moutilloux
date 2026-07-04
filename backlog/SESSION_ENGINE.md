@@ -373,48 +373,39 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #90
-**Sprint traité :** 22 — État TV : contrat back (poursuite)
+**Dernière session :** 2026-07-04 — Session #91
+**Sprint traité :** 22 — État TV : contrat back (clôturé cette session)
 
 **Git :** branche `claude/sprint/22-tv-state-back`, parent effectif
 `claude/sprint/21-durcissements-api-specs` (résolu via
 `backlog/sprints/done/` — toujours pas mergée dans `origin/main`, merge sans
 conflit : already up to date). Working tree propre au démarrage.
 
-**Spec review session #90 :** review de `specs/technical/tv-state.md`.
-Verdict ❌ Dérive bloquante (attendu) — au moment de la review (début de
-session, avant traitement des tickets), `tv/state`/`tv/idle` étaient câblés
-mais `_pack_tv_stake` portait encore le bug `hero.event.name` (#253) et le
-CRUD Announcement (#256) n'était pas codé ; côté front, `stores/live.ts`/
-`types/index.ts` restent sur le legacy (`fetchScoreState`/`fetchUpcoming`) —
-attendu, retraits prévus au sprint 23. Aucune nouvelle dérive, aucune
-nouvelle issue.
+**Spec review session #91 :** review de `specs/technical/tv-state.md`.
+Verdict ✅ Conforme (sections contrat back) — `get_tv_next` (#252),
+`api_tv_state`/`_pack_tv_stake` (#253, corrigé en session #90),
+`api_tv_idle` + packers associés (#254), modèle `Announcement` + migration
+(#255), CRUD Announcement complet services+endpoints+routes (#256) : tous
+conformes. `manage.py check` et `makemigrations --check --dry-run` OK.
+Legacy (`score_state`, `get_next_match`, `tv/upcoming`) et front
+(`stores/live.ts`/`types/index.ts` sur `fetchScoreState`/`fetchUpcoming`)
+toujours en place — attendu, hors périmètre jusqu'au sprint 23. Aucune
+nouvelle dérive, aucune nouvelle issue.
 
-**Tickets traités session #90 :** 2 — #253 (✅ Approuvé, reprise : fix
-ciblé de `_pack_tv_stake`, `hero.event.name` → `hero.event.category.name`
-aux deux occurrences ; `select_related` déjà correct côté `get_hero_match`,
-aucun N+1 introduit ; reste du contrat `GET /api/tv/state/` conforme,
-`python manage.py check` OK) et #256 (✅ Approuvé : CRUD Announcement —
-services `create_announcement`/`update_announcement`/`delete_announcement`
-dans `admin_views.py` sur le pattern `PlayDay`/`Break`, 4 endpoints fins
-dans `api_views.py` avec `_pack_announcement` camelCase ; filtre
-`is_active=True` de `tv/idle` non cassé). 4 routes câblées par
-l'orchestrateur dans `live/urls.py` (`api/editions/<id>/announcements/`,
-`.../create/`, `api/announcements/<id>/edit/`, `.../delete/`).
+**Tickets traités session #91 :** 0 — les 5 tickets du sprint (#252-256)
+étaient déjà clos avant cette session ; aucune issue ouverte restante sous
+le milestone Sprint 22.
 
-**Fin de sprint non atteinte :** 0 issue ouverte sous le milestone Sprint
-22, mais la spec review de cette session (menée avant le traitement des
-tickets, par construction du protocole) a rendu ❌ — les deux conditions de
-clôture ne sont donc pas réunies. Le sprint continue à la prochaine échéance
-planifiée ; une review au tout début de la session #91, désormais avec
-#253/#256 déjà corrigés, devrait pouvoir confirmer un contrat back conforme
-(front/retraits restant hors périmètre jusqu'au sprint 23).
+**Fin de sprint atteinte :** les deux conditions de clôture sont réunies
+(spec review ✅ Conforme + 0 issue ouverte sous le milestone). Milestone
+GitHub #21 fermé, ligne supprimée de `backlog/sprints/roadmap.md`, dossier
+déplacé vers `backlog/sprints/done/22-tv-state-back/`.
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 22 actif (0 ticket ouvert restant — clôture possible
-dès que la spec review confirme ✅ sur le périmètre back), puis 23 — TV
-live : écran & retraits legacy, puis 24 — Affiches de match.
+**Roadmap :** sprint 22 clôturé. Sprint 23 — TV live : écran & retraits
+legacy devient actif, sera traité à la prochaine échéance planifiée (pas
+démarré dans cette session). Puis 24 — Affiches de match.

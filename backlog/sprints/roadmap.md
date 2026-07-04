@@ -10,6 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 22 — État TV : contrat back | `backlog/sprints/22-tv-state-back/sprint.md` |
-| 2 | 23 — TV live : écran & retraits legacy | `backlog/sprints/23-tv-live-front/sprint.md` |
-| 3 | 24 — Affiches de match | `backlog/sprints/24-affiches-match/sprint.md` |
+| 1 | 23 — TV live : écran & retraits legacy | `backlog/sprints/23-tv-live-front/sprint.md` |
+| 2 | 24 — Affiches de match | `backlog/sprints/24-affiches-match/sprint.md` |
