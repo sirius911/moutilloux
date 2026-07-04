@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #81
+**Dernière session :** 2026-07-04 — Session #82
 **Sprint actif :** 21 — Durcissements API & specs.
 
 **Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
@@ -382,43 +382,32 @@ dans `main` — point récurrent depuis plusieurs sessions, à traiter côté
 humain). Working tree propre au démarrage, pas de conflit de merge (déjà à
 jour avec le parent).
 
-**Spec review session #81 :** aucun commit entre la review de session #80
-(`e324629`) et le début de cette session sur les fichiers `fichiers:` de
-`planning.md` / `cycle-de-vie-epreuve.md` / `cycle-de-vie-match.md`
-(`git log e324629..HEAD` vide sur ces zones) → verdicts ✅ de la session #80
-reconduits sans re-détail exhaustif. `admin-tournoi.md` re-vérifiée par grep
-+ lecture de `AdminTournoi.vue:192-225` : la dérive #251 (bouton
-« Sélectionner » toujours décrit en spec, absent du code depuis le commit
-`4ed55bc`) était toujours présente en début de session — traitée dans la
-foulée (voir ticket ci-dessous), spec conforme en fin de session. Aucune
-nouvelle dérive détectée, aucune nouvelle issue créée. Détail complet dans
-`backlog/logs/session_2026-07-04_81.md`.
+**Spec review session #82 :** `git log aff032e..HEAD` (dernier commit de
+contenu avant cette session) vide sur les 18 chemins cumulés des `fichiers:`
+des 4 specs du sprint → aucun code concerné n'a bougé depuis la review
+complète de la session #81. Correctif #251 revérifié présent par grep
+(`admin-tournoi.md:77`). Verdicts ✅ Conforme des 4 specs (admin-tournoi.md,
+planning.md, cycle-de-vie-epreuve.md, cycle-de-vie-match.md) reconduits sans
+re-détail exhaustif. Aucune nouvelle dérive, aucune nouvelle issue créée.
+Détail complet dans `backlog/logs/session_2026-07-04_82.md`.
 
-**Tickets traités session #81 :** 1 (#251) —
-- **#251** : `specs/screens/admin-tournoi.md` corrigée — retrait de la puce
-  décrivant le bouton « Sélectionner » (obsolète depuis le commit `4ed55bc`,
-  sprint 20, issue #208), remplacée par une puce documentant l'absence de
-  bouton dédié et la sélection portée par la navigation (raccourcis
-  Inscriptions/Poules/Matchs), cohérent avec le principe déjà énoncé en
-  introduction de la spec (décision 22, `[[routing-context]]`). Correction de
-  contenu de spec directe par l'orchestrateur (même traitement que les
-  réconciliations #218/#248 des sessions précédentes) — pas un agent
-  `vue-screen`/`django-api`, puisqu'aucun code n'était à modifier. ✅ Approuvé
-  par un agent `reviewer` indépendant en lecture seule. Commit `aff032e`.
-
-**Écart au protocole :** un seul ticket actionnable traité (#251), sous la
-limite de 2/session — pas un choix arbitraire mais l'absence d'un second
-ticket éligible : #215, #219, #250 restent tous les trois bloqués sur une
-« décision produit d'abord » explicitement demandée dans leur body, comme
-lors des sessions #79 et #80. Aucun de ces trois n'a été retenté cette
-session (jugement de conception réservé à une session humaine).
+**Tickets traités session #82 :** 0 —
+les 3 issues encore ouvertes sous le milestone Sprint 21 (#215, #219, #250)
+demandent chacune explicitement, dans leur corps, un arbitrage produit avant
+toute implémentation (rétention de données de match terminé, dépréciation
+d'une surface legacy, scope d'un cas limite d'ETA). C'est la 4ᵉ session
+consécutive (#79, #80, #81, #82) où ce blocage se reproduit à l'identique —
+signalé ici comme point à trancher côté humain plutôt que retenté sans
+décision produit.
 
 **Fin de sprint non atteinte :** 3 issues encore ouvertes sous le milestone
-Sprint 21 (#215, #219, #250), toutes en attente de décision produit. La suite
-sera traitée à la prochaine échéance planifiée.
+Sprint 21 (#215, #219, #250), toutes en attente de décision produit depuis
+4 sessions. La suite sera traitée à la prochaine échéance planifiée, ou plus
+tôt si un arbitrage humain est rendu sur l'une des 3 questions ouvertes.
 
 **Sprint 19/20 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
 **Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
-(10/13 tickets clos, 3 restants — tous bloqués sur décision produit).
+(10/13 tickets clos, 3 restants — tous bloqués sur décision produit depuis
+la session #79).
