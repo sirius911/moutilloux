@@ -18,7 +18,7 @@ from django.utils.dateparse import parse_datetime, parse_date, parse_time
 
 from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
-from live.models import Match, Court, PlayDay, Break
+from live.models import Match, Court, PlayDay, Break, Announcement
 from live.views import build_event_group_tables, get_hero_match
 from live.admin_views import (
     superuser_required,
@@ -2062,3 +2062,159 @@ def api_entry_replace(request, entry_id):
         return JsonResponse({"error": str(exc)}, status=400)
 
     return JsonResponse({"entry": _pack_entry(entry)})
+
+
+# ── Sprint 22 — TV : contenu froid du carousel (idle) ────────────────────────
+
+def _pack_tv_programme(edition):
+    """Bascule de journée (today/tomorrow/finished) + prochains matchs planifiés
+    de la même PlayDay que le next TV (définition unique `get_tv_next`)."""
+    next_match = get_tv_next(edition)
+    if next_match is None:
+        return {"day": "finished", "playDay": None, "upcoming": []}
+
+    play_day = PlayDay.objects.get(edition=edition, date=next_match.scheduled_time.date())
+    day = "today" if play_day.date == timezone.localdate() else "tomorrow"
+
+    upcoming = (
+        Match.objects.filter(
+            edition=edition,
+            status=Match.Status.SCHEDULED,
+            scheduled_time__date=play_day.date,
+            order_index__isnull=False,
+            order_index__gte=next_match.order_index,
+        )
+        .select_related(
+            "event",
+            "event__category",
+            "court",
+            "side_a",
+            "side_a__player",
+            "side_b",
+            "side_b__player",
+            "group",
+        )
+        .order_by("order_index")[:6]
+    )
+
+    return {
+        "day": day,
+        "playDay": _pack_play_day(play_day),
+        "upcoming": [_pack_match(m) for m in upcoming],
+    }
+
+
+def _pack_tv_stats(edition):
+    """Agrégats simples pour la slide Tournoi. Ne réutilise pas `_pack_edition`
+    (trop coûteux / hors périmètre) : calcule directement les 4 agrégats."""
+    events_qs = Event.objects.filter(edition=edition)
+    matches_qs = Match.objects.filter(event__in=events_qs)
+    return {
+        "matchesFinished": matches_qs.filter(status=Match.Status.FINISHED).count(),
+        "matchesTotal": matches_qs.count(),
+        "entriesCount": Entry.objects.filter(event__in=events_qs).count(),
+        "eventsCount": events_qs.count(),
+    }
+
+
+def _pack_tv_events(edition):
+    """Poules (standings, sans grille croisée) + tableau final par épreuve,
+    pour la slide Poules / Tableau TV."""
+    events = Event.objects.filter(edition=edition).select_related("category").order_by("category__name")
+
+    result = []
+    for event in events:
+        tables = build_event_group_tables(edition, [event])
+        groups_data = tables.get(event.id, [])
+
+        groups = []
+        for table in groups_data:
+            group = table["group"]
+            entries = table["entries"]
+            standing_by = table["standing_by_entry_id"]
+            qualif = table["qualif"]
+
+            standings = []
+            for i, entry in enumerate(entries):
+                s = standing_by.get(entry.id)
+                if s:
+                    wins = s.wins
+                    losses = s.losses
+                    points = s.points
+                    rank = s.rank or (i + 1)
+                else:
+                    wins = losses = points = 0
+                    rank = i + 1
+
+                standings.append({
+                    "entryId": entry.id,
+                    "rank": rank,
+                    "name": _entry_display_name(entry),
+                    "wins": wins,
+                    "losses": losses,
+                    "points": points,
+                    "qualified": qualif.get(entry.id, "-") != "-",
+                })
+
+            groups.append({
+                "id": group.id,
+                "name": group.name,
+                "standings": standings,
+            })
+
+        has_bracket_matches = Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+        ).exists()
+        bracket = _pack_event_bracket(event) if has_bracket_matches else None
+
+        result.append({
+            "id": event.id,
+            "name": event.category.name,
+            "groups": groups,
+            "bracket": bracket,
+        })
+
+    return result
+
+
+@require_GET
+def api_tv_idle(request):
+    """
+    GET /api/tv/idle/
+    Lecture publique. Contenu froid du carousel TV (pollé ~10 s) : stats
+    tournoi, derniers résultats, poules/tableau par épreuve, programme
+    (bascule de journée) et annonces actives.
+    """
+    edition = get_current_edition()
+    if edition is None:
+        return JsonResponse({
+            "stats": None,
+            "recentResults": [],
+            "events": [],
+            "programme": {"day": "finished", "playDay": None, "upcoming": []},
+            "announcements": [],
+        })
+
+    recent_results = (
+        Match.objects.filter(edition=edition, status=Match.Status.FINISHED)
+        .select_related(
+            "court",
+            "side_a",
+            "side_a__player",
+            "side_b",
+            "side_b__player",
+            "group",
+        )
+        .order_by("-finished_at")[:5]
+    )
+
+    announcements = Announcement.objects.filter(edition=edition, is_active=True).order_by("created_at")
+
+    return JsonResponse({
+        "stats": _pack_tv_stats(edition),
+        "recentResults": [_pack_match(m) for m in recent_results],
+        "events": _pack_tv_events(edition),
+        "programme": _pack_tv_programme(edition),
+        "announcements": [{"id": a.id, "message": a.message} for a in announcements],
+    })

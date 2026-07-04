@@ -100,6 +100,8 @@ urlpatterns = [
     path("api/tv/upcoming/", api_views.api_tv_upcoming, name="api_tv_upcoming"),
     # TV : état chaud unifié (sprint 22)
     path("api/tv/state/", api_views.api_tv_state, name="api_tv_state"),
+    # TV : contenu froid du carousel (sprint 22)
+    path("api/tv/idle/", api_views.api_tv_idle, name="api_tv_idle"),
 
     path("results/poules/", views.results_poules, name="results_poules"),
     path("results/poules/start/", views.results_poules_start, name="results_poules_start"),
