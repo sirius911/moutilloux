@@ -1,10 +1,8 @@
 import random
-import json
 import datetime
 from collections import defaultdict
-from django.contrib import messages
 
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models import Max, Q
 from django.utils import timezone
@@ -12,20 +10,9 @@ from django.utils import timezone
 from core.models import TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupMembership, GroupStanding
 from live.models import Match, Court, PlayDay, Break
-from live.views import build_event_group_tables
 
 from django import forms
 from django.contrib.auth.decorators import user_passes_test
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-
-
-def panel_counts(event):
-    return {
-        "entry_count": Entry.objects.filter(event=event).count(),
-        "group_count": Group.objects.filter(event=event).count(),
-        "match_count": Match.objects.filter(event=event).count(),
-    }
 
 
 def superuser_required(view):
@@ -35,24 +22,6 @@ def superuser_required(view):
 # -----------------------
 # Forms
 # -----------------------
-
-class SelectEventForm(forms.Form):
-    edition = forms.ModelChoiceField(queryset=TournamentEdition.objects.order_by("-year"))
-    event = forms.ModelChoiceField(queryset=Event.objects.none())
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # si edition pré-sélectionnée, filtre les events
-        if "edition" in self.data:
-            try:
-                edition_id = int(self.data.get("edition"))
-                self.fields["event"].queryset = Event.objects.filter(edition_id=edition_id).select_related("category")
-            except Exception:
-                pass
-        elif self.initial.get("edition"):
-            edition = self.initial["edition"]
-            self.fields["event"].queryset = Event.objects.filter(edition=edition).select_related("category")
-
 
 class PlayerForm(forms.ModelForm):
     class Meta:
@@ -67,29 +36,6 @@ class PlayerForm(forms.ModelForm):
             "email": "Email",
             "license_number": "Numéro de licence",
         }
-
-
-class TeamForm(forms.Form):
-    name = forms.CharField(required=False)
-    player1 = forms.ModelChoiceField(queryset=Player.objects.order_by("last_name", "first_name"))
-    player2 = forms.ModelChoiceField(queryset=Player.objects.order_by("last_name", "first_name"))
-
-    def clean(self):
-        cleaned = super().clean()
-        if cleaned.get("player1") == cleaned.get("player2"):
-            raise forms.ValidationError("Les deux joueurs doivent être différents.")
-        return cleaned
-
-
-class GroupCreateForm(forms.Form):
-    name = forms.CharField(max_length=10, help_text="Ex: A, B, C...")
-
-
-class GroupFillForm(forms.Form):
-    shuffle = forms.BooleanField(required=False, initial=True, help_text="Mélanger les participants")
-    group_size = forms.ChoiceField(choices=[(3, "3"), (4, "4")], initial=4)
-    # nb poules optionnel : sinon auto
-    num_groups = forms.IntegerField(required=False, min_value=1, help_text="Optionnel. Sinon auto.")
 
 
 class MatchEditForm(forms.ModelForm):
@@ -229,93 +175,9 @@ class MatchEditForm(forms.ModelForm):
         return cleaned
 
 
-class SelectEditionForm(forms.Form):
-    edition = forms.ModelChoiceField(queryset=TournamentEdition.objects.order_by("-year"))
-
-
-class SelectEventOnlyForm(forms.Form):
-    event = forms.ModelChoiceField(queryset=Event.objects.none())
-
-    def __init__(self, *args, **kwargs):
-        edition = kwargs.pop("edition")
-        super().__init__(*args, **kwargs)
-        self.fields["event"].queryset = (
-            Event.objects.filter(edition=edition)
-            .select_related("category")
-            .order_by("category__name")
-        )
-
-
-class AddPlayerToEventForm(forms.Form):
-    player = forms.ModelChoiceField(queryset=Player.objects.none())
-
-    def __init__(self, *args, **kwargs):
-        available_players = kwargs.pop("available_players")
-        super().__init__(*args, **kwargs)
-        self.fields["player"].queryset = available_players
-
-
-# -----------------------
-# Pages
-# -----------------------
-
-@superuser_required
-def panel_home(request):
-    return redirect("panel_select")
-
-
-@superuser_required
-def panel_select(request):
-    # 1) Edition active par défaut
-    active = TournamentEdition.objects.filter(is_active=True).order_by("-year").first()
-    edition_id = request.GET.get("edition") or (str(active.id) if active else None)
-
-    edition = None
-    if edition_id:
-        try:
-            edition = TournamentEdition.objects.get(id=int(edition_id))
-        except TournamentEdition.DoesNotExist:
-            edition = None
-
-    # Form édition (GET)
-    edition_form = SelectEditionForm(initial={"edition": edition} if edition else None)
-
-    # 2) Form event (POST)
-    event_form = None
-    if edition:
-        event_form = SelectEventOnlyForm(request.POST or None, edition=edition)
-        if request.method == "POST" and event_form.is_valid():
-            event = event_form.cleaned_data["event"]
-            return redirect("panel_event", event_id=event.id)
-
-    return render(request, "live/panel_select.html", {
-        "edition_form": edition_form,
-        "event_form": event_form,
-        "edition": edition,
-    })
-
-
-@superuser_required
-def panel_event(request, event_id: int):
-    return redirect("panel_players", event_id=event_id)
-
-
 # -----------------------
 # Actions : Players / Teams
 # -----------------------
-
-@superuser_required
-def player_create(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
-
-    form = PlayerForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        p = form.save()
-        messages.success(request, f"Joueur créé: {p}")
-        return redirect("panel_event", event_id=event.id)
-
-    return render(request, "live/panel_player_form.html", {"event": event, "form": form, "mode": "create"})
-
 
 def create_team_with_entry(event, player1, player2, name=""):
     """
@@ -337,27 +199,6 @@ def create_team_with_entry(event, player1, player2, name=""):
     return team, entry
 
 
-@superuser_required
-def team_create(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("category"), id=event_id)
-    if event.category.mode != Category.Mode.DOUBLE:
-        messages.error(request, "Cet event n'est pas en double.")
-        return redirect("panel_event", event_id=event.id)
-
-    form = TeamForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        t, _ = create_team_with_entry(
-            event,
-            form.cleaned_data["player1"],
-            form.cleaned_data["player2"],
-            form.cleaned_data["name"],
-        )
-        messages.success(request, f"Équipe créée + inscrite: {t}")
-        return redirect("panel_event", event_id=event.id)
-
-    return render(request, "live/panel_team_form.html", {"event": event, "form": form})
-
-
 # -----------------------
 # Actions : Poules
 # -----------------------
@@ -371,17 +212,6 @@ def create_group(event, name):
     if not clean:
         raise ValueError("Le nom de la poule est obligatoire.")
     return Group.objects.get_or_create(event=event, name=clean)
-
-
-@superuser_required
-def group_create(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    form = GroupCreateForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        create_group(event, form.cleaned_data["name"])
-        messages.success(request, "Poule créée.")
-        return redirect("panel_event", event_id=event.id)
-    return render(request, "live/panel_group_form.html", {"event": event, "form": form})
 
 
 def autofill_groups(event, shuffle, group_size, num_groups=None):
@@ -416,30 +246,6 @@ def autofill_groups(event, shuffle, group_size, num_groups=None):
         GroupMembership.objects.create(group=g, entry=entry)
 
     return groups
-
-
-@superuser_required
-@transaction.atomic
-def group_fill(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    form = GroupFillForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        try:
-            groups = autofill_groups(
-                event,
-                shuffle=form.cleaned_data["shuffle"],
-                group_size=form.cleaned_data["group_size"],
-                num_groups=form.cleaned_data.get("num_groups"),
-            )
-        except ValueError as e:
-            messages.error(request, str(e))
-            return redirect("panel_event", event_id=event.id)
-
-        n_entries = Entry.objects.filter(event=event).count()
-        messages.success(request, f"Poules remplies: {len(groups)} poules, {n_entries} participants.")
-        return redirect("panel_event", event_id=event.id)
-
-    return render(request, "live/panel_group_fill.html", {"event": event, "form": form})
 
 
 # -----------------------
@@ -495,15 +301,6 @@ def generate_group_matches_for_event(event):
                 created += 1
 
     return created, matches
-
-
-@superuser_required
-@transaction.atomic
-def generate_group_matches(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    created, _ = generate_group_matches_for_event(event)
-    messages.success(request, f"Matchs de poule générés: {created} créés.")
-    return redirect("panel_event", event_id=event.id)
 
 
 # -----------------------
@@ -667,24 +464,6 @@ def finalize_match_edit(match, was_live: bool = False, was_finished: bool = Fals
     return match
 
 
-@superuser_required
-def match_edit(request, event_id: int, match_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    match = get_object_or_404(Match, id=match_id, event=event)
-    was_live = match.status == Match.Status.LIVE
-    was_finished = match.status == Match.Status.FINISHED
-
-    form = MatchEditForm(request.POST or None, instance=match)
-
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        finalize_match_edit(form.instance, was_live=was_live, was_finished=was_finished)
-        messages.success(request, "Match mis à jour.")
-        return redirect("panel_matches", event_id=event.id)
-
-    return render(request, "live/panel_match_form.html", {"event": event, "match": match, "form": form})
-
-
 def start_match(match):
     """
     Service : démarre un match (SCHEDULED -> LIVE), le met en avant TV.
@@ -741,16 +520,6 @@ def reopen_match(match):
         recalc_one_group(match.group_id)
 
     return match
-
-
-@superuser_required
-@transaction.atomic
-def match_feature(request, event_id: int, match_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    match = get_object_or_404(Match, id=match_id, event=event)
-    feature_match(match)
-    messages.success(request, f"Match en cours: {match}")
-    return redirect("panel_matches", event_id=event.id)
 
 
 def add_player_entry(event, player):
@@ -973,186 +742,6 @@ def replace_entry_player(entry, player=None, team=None):
     return entry
 
 
-@superuser_required
-def entry_add_player(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("category"), id=event_id)
-
-    # Seulement pour les events "simple"
-    if event.category.mode != Category.Mode.SINGLE:
-        messages.error(request, "Ajout joueur direct : uniquement pour un event en simple.")
-        return redirect("panel_event", event_id=event.id)
-
-    existing_player_ids = Entry.objects.filter(event=event, player__isnull=False).values_list("player_id", flat=True)
-    available_players = Player.objects.exclude(id__in=existing_player_ids).order_by("last_name", "first_name")
-
-    form = AddPlayerToEventForm(request.POST or None, available_players=available_players)
-    if request.method == "POST" and form.is_valid():
-        p = form.cleaned_data["player"]
-        add_player_entry(event, p)
-        messages.success(request, f"Joueur inscrit à l'event : {p}")
-        return redirect("panel_event", event_id=event.id)
-
-    # si aucun joueur dispo
-    if not available_players.exists():
-        messages.info(request, "Tous les joueurs sont déjà inscrits à cet event.")
-        return redirect("panel_event", event_id=event.id)
-
-    return render(request, "live/panel_add_player.html", {"event": event, "form": form})
-
-
-@superuser_required
-@require_POST
-def entry_add_players(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("category"), id=event_id)
-
-    # uniquement pour SIMPLE
-    if event.category.mode != Category.Mode.SINGLE:
-        messages.error(request, "Ajout de joueurs : uniquement pour un event en simple.")
-        return redirect("panel_event", event_id=event.id)
-
-    # players sélectionnés (multiple)
-    ids = request.POST.getlist("player_ids")
-    if not ids:
-        messages.warning(request, "Aucun joueur sélectionné.")
-        return redirect("panel_event", event_id=event.id)
-
-    # sécurité : ne prendre que des IDs valides d'entiers
-    try:
-        ids = [int(x) for x in ids]
-    except ValueError:
-        messages.error(request, "Sélection invalide.")
-        return redirect("panel_event", event_id=event.id)
-
-    created, _ = add_players_entries(event, ids)
-    if not created:
-        messages.info(request, "Tous les joueurs sélectionnés étaient déjà inscrits.")
-        return redirect("panel_event", event_id=event.id)
-
-    messages.success(request, f"{len(created)} joueur(s) ajouté(s) à l'event.")
-    return redirect("panel_event", event_id=event.id)
-
-
-@superuser_required
-@require_POST
-def entry_remove(request, event_id: int, entry_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    entry = get_object_or_404(Entry, id=entry_id, event=event)
-
-    label = str(entry)
-
-    # Sécurité : si déjà utilisé dans des matchs, on empêche (optionnel mais recommandé)
-    try:
-        remove_entry(event, entry)
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("panel_event", event_id=event.id)
-
-    messages.success(request, f"{label} retiré de l’event.")
-    return redirect("panel_event", event_id=event.id)
-
-
-@superuser_required
-def panel_players(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("edition", "category"), id=event_id)
-
-    entries = Entry.objects.filter(event=event).select_related("player", "team")
-    players = Player.objects.order_by("last_name", "first_name")
-
-    existing_player_ids = Entry.objects.filter(event=event, player__isnull=False).values_list("player_id", flat=True)
-    available_players = Player.objects.exclude(id__in=existing_player_ids).order_by("last_name", "first_name")
-
-    return render(request, "live/panel_players.html", {
-        "event": event,
-        "entries": entries,
-        "players": players,
-        "available_players": available_players,
-        "tab": "players",
-        **panel_counts(event),
-    })
-
-
-@superuser_required
-def panel_groups(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("edition", "category"), id=event_id)
-
-    groups = Group.objects.filter(event=event).order_by("name").prefetch_related("memberships__entry")
-    entries = list(Entry.objects.filter(event=event).select_related("player", "team"))
-
-    assigned_ids = set(
-        GroupMembership.objects.filter(group__event=event).values_list("entry_id", flat=True)
-    )
-    unassigned = [e for e in entries if e.id not in assigned_ids]
-
-    return render(request, "live/panel_groups.html", {
-        "event": event,
-        "groups": groups,
-        "unassigned": unassigned,
-        "tab": "groups",
-        **panel_counts(event),
-    })
-
-
-@superuser_required
-def panel_matches(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("edition", "category"), id=event_id)
-
-    current_match = (
-        Match.objects.filter(edition=event.edition, status=Match.Status.LIVE)
-        .select_related("event", "side_a", "side_b", "court", "group")
-        .order_by("-updated_at", "-id")
-        .first()
-    )
-
-    # # 2) Fallback: si aucun LIVE, on prend éventuellement le "featured"
-    # if current_match is None:
-    #     current_match = (
-    #         Match.objects.filter(event=event, is_featured=True)
-    #         .select_related("side_a", "side_b", "court", "group")
-    #         .order_by("-updated_at", "-id")
-    #         .first()
-    #     )
-
-    finished = list(
-        Match.objects.filter(event=event, status=Match.Status.FINISHED)
-        .select_related("side_a", "side_b", "court", "group")
-        .order_by("-updated_at", "-id")
-    )
-
-    # Matchs "planifiés/en cours" ordonnés
-    queue = list(
-        Match.objects.filter(
-            event=event,
-            status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
-            order_index__isnull=False,
-        )
-        .exclude(id=current_match.id if current_match else None)
-        .select_related("side_a", "side_b", "court", "group")
-        .order_by("order_index")
-    )
-
-    # Matchs "planifiés/en cours" non ordonnés
-    backlog = list(
-        Match.objects.filter(
-            event=event,
-            status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
-            order_index__isnull=True,
-        )
-        .exclude(id=current_match.id if current_match else None)
-        .select_related("side_a", "side_b", "court", "group")
-        .order_by("stage", "group__name", "id")
-    )
-
-    return render(request, "live/panel_matches.html", {
-        "event": event,
-        "current_match": current_match,
-        "queue": queue,
-        "backlog": backlog,
-        "finished": finished,
-        "tab": "matches",
-        **panel_counts(event),
-    })
-
-
 def _final_matches_qs(event):
     return Match.objects.filter(
         event=event,
@@ -1224,84 +813,6 @@ def clear_bracket_entry(event, match_id: int, side: str):
         match.save(update_fields=["side_b"])
 
 
-def _create_final_bracket(event, start_stage: str) -> int:
-    """
-    Crée un tableau final manuel à partir d'une étape (QF, SF ou F).
-    Retourne le nombre de matchs créés.
-    """
-    created = 0
-
-    def create_match(stage, slot, fmt, a_label=None, b_label=None):
-        nonlocal created
-        rules = {
-            Match.Format.GROUP_SET5_TB_4_4: dict(games_to_win=5, tb_at=4, best_of=1),
-            Match.Format.QF_SET5_TB_5_5: dict(games_to_win=6, tb_at=5, best_of=1),
-            Match.Format.NORMAL_1SET: dict(games_to_win=6, tb_at=6, best_of=1),
-            Match.Format.BO3: dict(games_to_win=6, tb_at=6, best_of=3),
-        }.get(fmt, dict(games_to_win=5, tb_at=4, best_of=1))
-
-        Match.objects.create(
-            edition=event.edition,
-            event=event,
-            stage=stage,
-            bracket_slot=slot,
-            match_format=fmt,
-            games_to_win=rules["games_to_win"],
-            tb_at=rules["tb_at"],
-            best_of=rules["best_of"],
-            tb_points_to_win=7,
-            tb_win_by_two=True,
-            deciding_set_mode=Match.DecidingSetMode.FULL_SET,
-            deciding_tb_points_to_win=10,
-            status=Match.Status.SCHEDULED,
-            side_a=None,
-            side_b=None,
-            side_a_label=a_label,
-            side_b_label=b_label,
-        )
-        created += 1
-
-    if start_stage == Match.Stage.QF:
-        create_match(Match.Stage.QF, "QF1", Match.Format.QF_SET5_TB_5_5)
-        create_match(Match.Stage.QF, "QF2", Match.Format.QF_SET5_TB_5_5)
-        create_match(Match.Stage.QF, "QF3", Match.Format.QF_SET5_TB_5_5)
-        create_match(Match.Stage.QF, "QF4", Match.Format.QF_SET5_TB_5_5)
-        create_match(Match.Stage.SF, "SF1", Match.Format.NORMAL_1SET, "WQF1", "WQF2")
-        create_match(Match.Stage.SF, "SF2", Match.Format.NORMAL_1SET, "WQF3", "WQF4")
-        create_match(Match.Stage.F, "F1", Match.Format.BO3, "WSF1", "WSF2")
-    elif start_stage == Match.Stage.SF:
-        create_match(Match.Stage.SF, "SF1", Match.Format.NORMAL_1SET)
-        create_match(Match.Stage.SF, "SF2", Match.Format.NORMAL_1SET)
-        create_match(Match.Stage.F, "F1", Match.Format.BO3, "WSF1", "WSF2")
-    elif start_stage == Match.Stage.F:
-        create_match(Match.Stage.F, "F1", Match.Format.BO3)
-
-    return created
-
-
-def create_final_bracket_for_event(event, start_stage, force=False):
-    """
-    Service réutilisable : crée (ou recrée) le tableau final manuel à partir
-    d'une étape de départ (QF/SF/F). Lève ``ValueError`` (message FR) si l'étape
-    est invalide, si un tableau existe déjà sans ``force``, ou si une recréation
-    est demandée alors qu'un match est déjà lancé/terminé.
-    Retourne le nombre de matchs créés.
-    """
-    start_stage = (start_stage or "").upper().strip()
-    if start_stage not in {Match.Stage.QF, Match.Stage.SF, Match.Stage.F}:
-        raise ValueError("Étape de départ invalide.")
-
-    existing = _final_matches_qs(event)
-    if existing.exists():
-        if not force:
-            raise ValueError("Un tableau final existe déjà. Utilise 'Recréer' si besoin.")
-        if existing.exclude(status=Match.Status.SCHEDULED).exists():
-            raise ValueError("Impossible de recréer : un match est déjà en cours ou terminé.")
-        existing.delete()
-
-    return _create_final_bracket(event, start_stage)
-
-
 def set_match_bracket_labels(match, a_label, b_label):
     """
     Service réutilisable : met à jour les labels (A1, D2, WSF1…) d'un match du
@@ -1313,145 +824,6 @@ def set_match_bracket_labels(match, a_label, b_label):
     match.side_b_label = (b_label or "").strip().upper() or None
     match.save(update_fields=["side_a_label", "side_b_label"])
     return match
-
-
-@superuser_required
-def panel_final(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("edition", "category"), id=event_id)
-
-    finals = _final_matches_qs(event).select_related("side_a", "side_b").order_by("stage", "bracket_slot")
-    has_bracket = finals.exists()
-
-    qf = list(finals.filter(stage=Match.Stage.QF).order_by("bracket_slot"))
-    sf = list(finals.filter(stage=Match.Stage.SF).order_by("bracket_slot"))
-    f1 = finals.filter(stage=Match.Stage.F, bracket_slot="F1").first()
-
-    entries = list(Entry.objects.filter(event=event).select_related("player", "team"))
-    assigned_ids = set(finals.values_list("side_a_id", flat=True)) | set(finals.values_list("side_b_id", flat=True))
-
-    event_group_tables = build_event_group_tables(event.edition, [event])
-    group_tables = event_group_tables.get(event.id, [])
-
-    return render(request, "live/panel_final.html", {
-        "event": event,
-        "qf": qf,
-        "sf": sf,
-        "final": f1,
-        "has_bracket": has_bracket,
-        "entries": entries,
-        "assigned_ids": assigned_ids,
-        "group_tables": group_tables,
-        "tab": "final",
-        **panel_counts(event),
-    })
-
-
-@superuser_required
-@require_POST
-def panel_final_create(request, event_id: int):
-    event = get_object_or_404(Event.objects.select_related("edition"), id=event_id)
-    force = request.POST.get("force") == "1"
-
-    try:
-        created = create_final_bracket_for_event(event, request.POST.get("start_stage"), force)
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("panel_final", event_id=event.id)
-
-    messages.success(request, f"Tableau final créé ({created} matchs).")
-    return redirect("panel_final", event_id=event.id)
-
-
-@superuser_required
-@require_POST
-def panel_final_label_update(request, event_id: int, match_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    match = get_object_or_404(
-        Match,
-        id=match_id,
-        event=event,
-        stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
-    )
-
-    try:
-        set_match_bracket_labels(match, request.POST.get("side_a_label"), request.POST.get("side_b_label"))
-    except ValueError as exc:
-        messages.error(request, str(exc))
-        return redirect("panel_final", event_id=event.id)
-
-    messages.success(request, "Labels mis à jour.")
-    return redirect("panel_final", event_id=event.id)
-
-
-@superuser_required
-@require_POST
-def panel_final_clear(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
-
-    if request.content_type and request.content_type.startswith("application/json"):
-        try:
-            payload = json.loads(request.body or b"{}")
-        except (ValueError, json.JSONDecodeError):
-            return JsonResponse({"ok": False, "error": "Corps JSON invalide."}, status=400)
-    else:
-        payload = request.POST
-
-    match_id = payload.get("match_id")
-    side = (payload.get("side") or "").upper()
-
-    if not match_id or side not in {"A", "B"}:
-        return JsonResponse({"ok": False, "error": "Paramètres manquants."}, status=400)
-
-    try:
-        clear_bracket_entry(event, int(match_id), side)
-    except ValueError as exc:
-        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
-
-    return JsonResponse({"ok": True})
-
-
-@superuser_required
-@require_POST
-def panel_final_assign(request, event_id: int):
-    event = get_object_or_404(Event, id=event_id)
-
-    try:
-        payload = json.loads(request.body.decode("utf-8") or "{}")
-    except ValueError:
-        payload = {}
-
-    match_id = payload.get("match_id")
-    entry_id = payload.get("entry_id")
-    side = (payload.get("side") or "").upper()
-
-    if not match_id or not entry_id or side not in {"A", "B"}:
-        return JsonResponse({"ok": False, "error": "Paramètres manquants."}, status=400)
-
-    try:
-        assign_bracket_entry(event, int(match_id), int(entry_id), side)
-    except ValueError as exc:
-        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
-
-    return JsonResponse({"ok": True})
-
-
-@superuser_required
-def player_edit(request, event_id: int, player_id: int):
-    event = get_object_or_404(Event, id=event_id)
-    player = get_object_or_404(Player, id=player_id)
-
-    form = PlayerForm(request.POST or None, instance=player)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Joueur modifié.")
-        return redirect("panel_players", event_id=event.id)
-
-    return render(request, "live/panel_player_form.html", {
-        "event": event,
-        "form": form,
-        "mode": "edit",
-        "player": player,
-    })
 
 
 def _assert_groups_unlocked(event):
@@ -1478,138 +850,6 @@ def unassign_entry(event, entry):
     """
     _assert_groups_unlocked(event)
     GroupMembership.objects.filter(entry=entry, group__event=event).delete()
-
-
-@superuser_required
-@require_POST
-@transaction.atomic
-def group_assign(request, event_id: int):
-    """
-    Assigne (ou déplace) une Entry dans une poule.
-    POST: entry_id, group_id
-    """
-    event = get_object_or_404(Event, id=event_id)
-    entry_id = request.POST.get("entry_id")
-    group_id = request.POST.get("group_id")
-
-    if not entry_id or not group_id:
-        return JsonResponse({"ok": False, "error": "Paramètres manquants"}, status=400)
-
-    entry = get_object_or_404(Entry, id=int(entry_id), event=event)
-    group = get_object_or_404(Group, id=int(group_id), event=event)
-
-    try:
-        assign_entry_to_group(event, entry, group)
-    except ValueError as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=400)
-
-    return JsonResponse({"ok": True})
-
-
-@superuser_required
-@require_POST
-@transaction.atomic
-def group_unassign(request, event_id: int):
-    """
-    Retire une Entry de sa poule (la remet en 'Non affectés').
-    POST: entry_id
-    """
-    event = get_object_or_404(Event, id=event_id)
-    entry_id = request.POST.get("entry_id")
-
-    if not entry_id:
-        return JsonResponse({"ok": False, "error": "Paramètres manquants"}, status=400)
-
-    entry = get_object_or_404(Entry, id=int(entry_id), event=event)
-
-    try:
-        unassign_entry(event, entry)
-    except ValueError as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=400)
-
-    return JsonResponse({"ok": True})
-
-
-def _pick(group, rank):
-    return group.standings.select_related("entry").get(rank=rank).entry
-
-
-# def build_final_bracket_for_event(event):
-#     groups = list(Group.objects.filter(event=event).order_by("name"))
-#     group_names = [g.name.upper() for g in groups]
-
-#     if event.qualified_per_group != 2:
-#         raise ValueError("Cette génération suppose qualified_per_group=2 (A1/A2...).")
-
-#     # Vérifie que toutes les poules sont prêtes
-#     for g in groups:
-#         if not g.ready_for_qualification():
-#             raise ValueError(f"Poule {g.name} pas prête (matchs pas finis ou ranks manquants).")
-
-#     # Map A/B/C/D
-#     by_name = {g.name.upper(): g for g in groups}
-
-#     with transaction.atomic():
-#         # On supprime l'ancien tableau final de l'event (QF/SF/F)
-#         Match.objects.filter(event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F]).delete()
-
-#         if len(groups) == 4:
-#             A, B, C, D = by_name["A"], by_name["B"], by_name["C"], by_name["D"]
-#             A1, A2 = _pick(A, 1), _pick(A, 2)
-#             B1, B2 = _pick(B, 1), _pick(B, 2)
-#             C1, C2 = _pick(C, 1), _pick(C, 2)
-#             D1, D2 = _pick(D, 1), _pick(D, 2)
-
-#             pairings = [
-#                 ("QF1", A1, D2),
-#                 ("QF2", C1, B2),
-#                 ("QF3", B1, C2),
-#                 ("QF4", D1, A2),
-#             ]
-
-#             for slot, ea, eb in pairings:
-#                 Match.objects.create(
-#                     edition=event.edition,
-#                     event=event,
-#                     stage=Match.Stage.QF,
-#                     bracket_slot=slot,
-#                     match_format=Match.Format.QF_SET5_TB_5_5,
-#                     side_a=ea,
-#                     side_b=eb,
-#                     status=Match.Status.SCHEDULED,
-#                 )
-
-#             # on peut créer les SF/F "vides" plus tard quand on sait les gagnants
-
-#         elif len(groups) == 2:
-#             A, B = by_name["A"], by_name["B"]
-#             A1, A2 = _pick(A, 1), _pick(A, 2)
-#             B1, B2 = _pick(B, 1), _pick(B, 2)
-
-#             pairings = [
-#                 ("SF1", A1, B2),
-#                 ("SF2", B1, A2),
-#             ]
-
-#             for slot, ea, eb in pairings:
-#                 Match.objects.create(
-#                     edition=event.edition,
-#                     event=event,
-#                     stage=Match.Stage.SF,
-#                     bracket_slot=slot,
-#                     match_format=Match.Format.NORMAL_1SET,  # adapte si tu veux
-#                     side_a=ea,
-#                     side_b=eb,
-#                     status=Match.Status.SCHEDULED,
-#                 )
-
-#         elif len(groups) == 1:
-#             # pas de bracket (ou finale directe) -> on ne fait rien pour l'instant
-#             return
-
-#         else:
-#             # 3 poules : règle à définir
-#             raise ValueError("3 poules : règle de tableau final non définie pour l’instant.")
 
 
 # =========================================================================

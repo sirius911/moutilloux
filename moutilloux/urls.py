@@ -25,7 +25,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("", include("live.urls")),
-    path("", include("live.admin_urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("arbitre/", include("live.arbitre_urls")),
     path("accounts/login/", CustomLoginView.as_view(), name="login"),

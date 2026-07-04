@@ -180,6 +180,13 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
     peut composer entièrement à la main avant de débuter l'épreuve, sans passer par
     l'auto-fill ([[admin-poules]]). S'appuie sur l'endpoint existant
     `POST /api/events/<id>/groups/create/`.
+25. **Retrait complet des vues `panel_*` legacy.** La SPA Vue est la seule
+    interface d'administration ; les vues template `/panel/…` et leurs
+    templates sont supprimés (`live/admin_urls.py`, `live/admin_views.py`).
+    Les fonctions de service qu'elles enrobaient sont conservées, déjà
+    consommées indépendamment par `live/api_views.py`. `create_final_bracket_for_event`
+    (divergente de `live/bracket.py`) et le code mort commenté associé
+    (`_pick`, `build_final_bracket_for_event`) sont retirés avec elles.
 
 ## API de référence (état : tout est exposé)
 
