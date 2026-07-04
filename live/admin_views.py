@@ -97,7 +97,7 @@ class MatchEditForm(forms.ModelForm):
         model = Match
         fields = [
             # Gestion
-            "status", "scheduled_time", "court", "order_index", "is_featured",
+            "status", "order_index", "is_featured",
 
             # Règles modulables
             "match_format", "games_to_win", "tb_at", "best_of",
@@ -113,8 +113,6 @@ class MatchEditForm(forms.ModelForm):
         labels = {
             # Gestion
             "status": "Statut",
-            "scheduled_time": "Heure prévue",
-            "court": "Court",
             "order_index": "Ordre (file)",
             "is_featured": "Mis en avant (TV)",
 
@@ -176,13 +174,6 @@ class MatchEditForm(forms.ModelForm):
         if "tb_points_to_win" in self.fields:
             self.fields["tb_points_to_win"].min_value = 1
             self.fields["tb_points_to_win"].max_value = 50
-
-        if "scheduled_time" in self.fields:
-            self.fields["scheduled_time"].widget = forms.TimeInput(
-                format="%H:%M",
-                attrs={"type": "time"}
-            )
-            self.fields["scheduled_time"].input_formats = ["%H:%M", "%H:%M:%S"]
 
         if "order_index" in self.fields:
             self.fields["order_index"].disabled = True

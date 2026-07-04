@@ -993,27 +993,6 @@ def api_group_unassign(request, event_id):
 
 # ── Phase 4 — Planning (mutations) ─────────────────────────────────────────────
 
-def _resolve_court_pk(value):
-    """
-    Normalise une valeur de court fournie par le front en pk exploitable par
-    MatchEditForm (ModelChoiceField). Accepte :
-      - None / "" → None (aucun court)
-      - un pk entier (ou chaîne de chiffres) → ce pk
-      - un nom libre de court → get_or_create par nom, renvoie son pk
-    """
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    s = str(value).strip()
-    if not s:
-        return None
-    if s.isdigit():
-        return int(s)
-    court, _ = Court.objects.get_or_create(name=s)
-    return court.pk
-
-
 @require_POST
 @superuser_required
 def api_match_edit(request, match_id):
@@ -1023,7 +1002,6 @@ def api_match_edit(request, match_id):
     Fusion partielle : on part des valeurs actuelles puis on n'écrase que les
     champs fournis. Les champs verrouillés par le form (format quand LIVE,
     order_index) sont ignorés côté form → la règle de verrouillage est conservée.
-    Le court accepte un pk ou un nom libre (get_or_create).
     """
     try:
         data = json.loads(request.body)
@@ -1037,11 +1015,9 @@ def api_match_edit(request, match_id):
     fields = MatchEditForm.Meta.fields
     merged = {}
     for f in fields:
-        merged[f] = match.court_id if f == "court" else getattr(match, f)
+        merged[f] = getattr(match, f)
     for k, v in data.items():
-        if k == "court":
-            merged["court"] = _resolve_court_pk(v)
-        elif k in fields:
+        if k in fields:
             merged[k] = v
 
     form = MatchEditForm(merged, instance=match)
