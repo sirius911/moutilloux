@@ -1813,6 +1813,46 @@ def api_matches_auto_arrange(request, event_id):
 
 # ── Sprint 07 — TV : prochains matchs ────────────────────────────────────────
 
+def get_tv_next(edition):
+    """
+    Définition unique du « next » TV : premier match SCHEDULED (plus petit
+    order_index) de la première PlayDay de date >= aujourd'hui qui a encore
+    des SCHEDULED ordonnés ; à défaut, pas de repli (ni journée passée, ni
+    hors séquence) — retourne None.
+    Ne pack pas le match (voir _pack_match) : à la charge de l'appelant.
+    """
+    play_days = (
+        PlayDay.objects.filter(edition=edition, date__gte=timezone.localdate())
+        .order_by("date")
+    )
+
+    for play_day in play_days:
+        match = (
+            Match.objects.filter(
+                edition=edition,
+                status=Match.Status.SCHEDULED,
+                scheduled_time__date=play_day.date,
+                order_index__isnull=False,
+            )
+            .select_related(
+                "event",
+                "event__category",
+                "court",
+                "side_a",
+                "side_a__player",
+                "side_b",
+                "side_b__player",
+                "group",
+            )
+            .order_by("order_index")
+            .first()
+        )
+        if match is not None:
+            return match
+
+    return None
+
+
 @require_GET
 def api_tv_upcoming(request):
     """
