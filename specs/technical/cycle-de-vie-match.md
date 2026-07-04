@@ -176,7 +176,7 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 | `Match.winner_side` (A/B) | ✓ présent | inchangé |
 | `Match.is_walkover` | ✓ présent | conservé (compat) ou absorbé par `end_reason` |
 | `Match.end_reason` (NORMAL / WALKOVER / RETIREMENT) | ❌ absent | **à créer** — distingue fin normale, forfait, abandon |
-| `formatLabel` dans `_pack_match` | ❌ absent | **à créer** — libellé lisible du format (voir [[arbitre-match]]) |
+| `formatLabel` dans `_pack_match` | ✓ présent | packer `_format_label` (`live/api_views.py:191-196`), inclus dans `_pack_match` (`live/api_views.py:238`, clé `"formatLabel": _format_label(m)`) |
 
 > `CANCELED` n'a pas besoin de `end_reason` : l'absence de vainqueur + le statut
 > suffisent, et le classement l'ignore.
@@ -204,5 +204,3 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 | Forfait / abandon / annulation **scopés au match** | services neufs (le walkover d'entry existe côté épreuve) |
 | `reopen` **conservant `set_scores`** et repassant `LIVE` | correction de bug |
 | `order_index` **persistant** à travers `LIVE`/`FINISHED` | correction (sprint 15) |
-| `formatLabel` dans `_pack_match` | packer |
-| `@referee_required` sur `GET /api/arbitre/matches/` | durcissement auth (voir [[arbitre-home]]) |
