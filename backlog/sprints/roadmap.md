@@ -13,3 +13,4 @@
 | 1 | 21 — Durcissements API & specs | `backlog/sprints/21-durcissements-api-specs/sprint.md` |
 | 2 | 22 — État TV : contrat back | `backlog/sprints/22-tv-state-back/sprint.md` |
 | 3 | 23 — TV live : écran & retraits legacy | `backlog/sprints/23-tv-live-front/sprint.md` |
+| 4 | 24 — Affiches de match | `backlog/sprints/24-affiches-match/sprint.md` |
