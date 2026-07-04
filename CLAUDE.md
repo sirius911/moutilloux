@@ -35,7 +35,7 @@ au fil des phases. La source de vérité des contrats reste `live/admin_views.py
 |--------------------|--------------------------------------------------------------------------|
 | Front              | Vue 3 + Vite + TypeScript + Vue Router + Pinia                           |
 | Inspiration UI     | Le React `frontend/design/` (mock) — CSS réutilisé tel quel, JSX porté en SFC `.vue` |
-| Temps réel         | Polling HTTP, pas de WebSockets — code actuel ~2 s (arbitre/scoreboard) / ~5 s (file, calendrier) ; cible ~4 s poules/bracket TV encore à appliquer |
+| Temps réel         | Polling HTTP, pas de WebSockets — code actuel ~2 s (arbitre/scoreboard/calendrier) / ~5 s (file arbitre, poules TV) ; cible ~4 s bracket (TV + admin) déjà appliquée, poules TV pas encore migrée |
 | Config initiale    | Éditions / catégories / courts via l'admin Django (`/admin/`), pas d'UI dédiée |
 | Séquencement       | Phases dans l'ordre 1 → 8                                                 |
 
@@ -81,7 +81,7 @@ Les subagents `vue-screen` et `django-api` héritent du modèle de session (`mod
   `get/post/patch`) — jamais de `fetch` brut dans une SFC.
   L'état partagé vit dans les stores Pinia (`auth`, `event`, `live`).
 - **Temps réel** : utiliser le composable `usePolling(fetcher, intervalMs)`.
-  État actuel du code : ~2 s (arbitre + scoreboard) / ~5 s (file arbitre, calendrier,
+  État actuel du code : ~2 s (arbitre + scoreboard + calendrier) / ~5 s (file arbitre,
   poules TV). Cible ~4 s bracket (TV + admin) — **appliquée** sur `TvBracket.vue` et
   `AdminBracket.vue` (poules TV reste à ~5 s, migration non encore faite). Pause si
   onglet caché : **implémentée** dans `usePolling` (`visibilitychange` → stop/restart).
