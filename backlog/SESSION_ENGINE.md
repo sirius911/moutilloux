@@ -373,54 +373,64 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #77
-**Sprint actif :** 21 — Durcissements API & specs (démarré cette session).
+**Dernière session :** 2026-07-04 — Session #78
+**Sprint actif :** 21 — Durcissements API & specs.
 
-**Git :** nouvelle branche `claude/sprint/21-durcissements-api-specs`, créée
-depuis le parent effectif `claude/sprint/20-transverse-erreurs-routing`
-(résolu via `backlog/sprints/done/` — sprint 20 toujours non mergé dans
-`main`, donc pas `main` mais la branche 20 ; point récurrent depuis plusieurs
-sessions, à traiter côté humain). Working tree propre au démarrage, pas de
-conflit de merge.
+**Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
+`claude/sprint/20-transverse-erreurs-routing` (sprint 20 toujours non mergé
+dans `main` — point récurrent depuis plusieurs sessions, à traiter côté
+humain). Working tree propre au démarrage, pas de conflit de merge (déjà à
+jour avec le parent).
 
-**Spec review session #77 :** 4 specs du sprint relues (`admin-tournoi.md`,
-`planning.md`, `cycle-de-vie-epreuve.md`, `cycle-de-vie-match.md`) →
-⚠️ Dérive mineure sur les 4 (détail complet dans
-`backlog/logs/session_2026-07-04_77.md`). Toutes les dérives constatées en
-code correspondent exactement aux tickets déjà ouverts du sprint (#211-219,
-origine audit externe du 2026-07-02) — vérifié directement en code
-(`Event.status`, `PlayDay`/`Break`, `Entry.withdrawn`/`is_walkover` déjà
-présents ; `Match.end_reason` toujours absent ; `_resolve_court_pk` fait
-toujours du `get_or_create` ; `scheduled_time`/`court` toujours éditables ;
-`delete_play_day` toujours bloqué sans décision produit ; durée par défaut
-toujours sans UI). 0 nouvelle issue créée.
+**Spec review session #78 :** `admin-tournoi.md` → ✅ Conforme (l'auto-
+activation d'édition tient désormais côté serveur depuis #211, plus de
+paramètre `activate`). `planning.md`, `cycle-de-vie-epreuve.md`,
+`cycle-de-vie-match.md` → ⚠️ Dérive mineure persistante avant traitement,
+résolue en partie cette session (#213/#214/#218 clos). Nouvelle dérive
+détectée : la table « À créer » de `planning.md` liste encore 5 endpoints
+(auto-arrange, CRUD `PlayDay`/`Break`, packer calendrier, enrichissement TV)
+déjà livrés en code — issue #248 créée (hors périmètre explicite de #218,
+qui ne listait pas ce fichier). Détail complet dans
+`backlog/logs/session_2026-07-04_78.md`.
 
-**Tickets traités session #77 :** 2 —
-- **#211** : règle d'activation automatique de la première édition déplacée
-  du front (`EditionModal.vue`) vers le serveur (`create_edition`,
-  `live/admin_views.py`) ; paramètre `activate` retiré de l'API
-  (`api_edition_create`) et du payload front. Fichier partagé câblé par
-  l'orchestrateur : `frontend/app/src/stores/event.ts` (retrait du champ mort
-  `activate?: boolean` du type `EditionPayload`). ✅ Approuvé. Commit
-  `273563f`.
-- **#212** : `api_players`/`api_player_create` passés de `@login_required` à
-  `@superuser_required` (alignés sur `api_player_edit` ; confirmé qu'aucun
-  écran Arbitre ne les consomme). Nouvelle spec transverse
-  `specs/transverse/auth-matrice-acces.md` documentant la matrice complète des
-  ~55 endpoints `/api/` (public / connecté / arbitre / superuser), référencée
-  dans `specs/INDEX.md`. ✅ Approuvé (échantillon de 8 endpoints vérifié en
-  revue contre le code réel, aucune incohérence). Commit `46f6bee`.
+**Tickets traités session #78 :** 3 (#218, #213, #214) —
+- **#218** : réconciliation de `specs/technical/cycle-de-vie-epreuve.md` et
+  `cycle-de-vie-match.md` — marqueurs « à créer »/« neuf » périmés passés à
+  « présent »/« livré » avec références fichier:ligne (`Event.status`,
+  `has_third_place`, `Entry.withdrawn`, `Match.is_walkover`, `withdraw_entry`,
+  `Match.Stage.P3` + `sync_p3_losers_for_event`, `add_late_entry`,
+  `formatLabel`/`_format_label`, `@referee_required`). Généralisation du
+  tableau nuancée (livrée N ≤ 4 poules, N > 4 non templé) plutôt que déclarée
+  entièrement faite ; `Match.end_reason` resté marqué « à créer » (confirmé
+  absent du code). ✅ Approuvé. Commit `168d68e`.
+- **#213 + #214** (traités ensemble, « un geste » comme prescrit par
+  `sprint.md` : `_resolve_court_pk` n'avait qu'un seul appelant, dans le code
+  que #214 retire) : `scheduled_time`/`court` retirés de
+  `MatchEditForm.Meta.fields`/`labels` (+ widget `TimeInput` orphelin
+  supprimé) ; `_resolve_court_pk` supprimée entièrement (plus de
+  `get_or_create` de court à la volée) ; `api_match_edit` simplifié en
+  conséquence. Vérifié : `Match.save()` continue d'assigner automatiquement
+  le court « Central », le front n'envoyait déjà plus ces champs, aucun test
+  existant à adapter (`live/tests.py` vide). ✅ Approuvé. Commit `3794eeb`.
 
-`vue-tsc --noEmit` et `manage.py check` OK sur les deux tickets. Plan →
-implémentation → review réalisés par 3 agents distincts par ticket (dont
-`reviewer`, lecture seule).
+`manage.py check` OK sur les deux lots. Plan → implémentation → review
+réalisés par des agents distincts par ticket (dont `reviewer`, lecture
+seule), lancés en parallèle sur les deux lots disjoints (specs vs
+`live/*.py`).
 
-**Fin de sprint non atteinte :** 7 issues encore ouvertes sous le milestone
-Sprint 21 (#213-219). Session arrêtée au maximum de 2 tickets par run — la
-suite sera traitée à la prochaine échéance planifiée.
+**Écart au protocole :** plafond « max 2 tickets/session » dépassé (3
+traités). Assumé : #213/#214 comptés comme une seule unité de travail
+imposée par le `sprint.md` (« même zone, un geste ») ; #218 ajouté car son
+travail (specs, lecture seule sur le code) ne collisionnait avec rien et
+tournait en parallèle sans coût d'orchestration additionnel. Voir le log de
+session pour le détail.
+
+**Fin de sprint non atteinte :** 5 issues encore ouvertes sous le milestone
+Sprint 21 (#215, #216, #217, #219, #248). La suite sera traitée à la
+prochaine échéance planifiée.
 
 **Sprint 19/20 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
 **Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
-(2/9 tickets clos).
+(5/10 tickets clos, 5 restants).
