@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #83
+**Dernière session :** 2026-07-04 — Session #84
 **Sprint actif :** 21 — Durcissements API & specs.
 
 **Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
@@ -382,29 +382,29 @@ dans `main` — point récurrent depuis plusieurs sessions, à traiter côté
 humain). Working tree propre au démarrage, pas de conflit de merge (déjà à
 jour avec le parent).
 
-**Spec review session #83 :** `git log aff032e..HEAD` toujours vide sur les
+**Spec review session #84 :** `git log aff032e..HEAD` toujours vide sur les
 18 chemins cumulés des `fichiers:` des 4 specs du sprint (seuls des commits
 `infra:` de log de session sont intervenus depuis) → aucun code concerné n'a
 bougé depuis la review complète de la session #81, reconduite aux sessions
-#82 et #83. Correctif #251 revérifié présent par lecture directe
+#82, #83 et #84. Correctif #251 revérifié présent par lecture directe
 (`admin-tournoi.md:77`). Verdicts ✅ Conforme des 4 specs (admin-tournoi.md,
 planning.md, cycle-de-vie-epreuve.md, cycle-de-vie-match.md) reconduits sans
 re-détail exhaustif. Aucune nouvelle dérive, aucune nouvelle issue créée.
-Détail complet dans `backlog/logs/session_2026-07-04_83.md`.
+Détail complet dans `backlog/logs/session_2026-07-04_84.md`.
 
-**Tickets traités session #83 :** 0 —
+**Tickets traités session #84 :** 0 —
 les 3 issues encore ouvertes sous le milestone Sprint 21 (#215, #219, #250)
 demandent chacune explicitement, dans leur corps, un arbitrage produit avant
 toute implémentation (rétention de données de match terminé, dépréciation
 d'une surface legacy, scope d'un cas limite d'ETA). Vérifié qu'aucune des 3
 n'a reçu de commentaire humain depuis sa création (`gh issue view --json
-comments`, vide sur les 3). C'est la 5ᵉ session consécutive (#79, #80, #81,
-#82, #83) où ce blocage se reproduit à l'identique — signalé ici comme point
-à trancher côté humain plutôt que retenté sans décision produit.
+comments`, vide sur les 3). C'est la 6ᵉ session consécutive (#79, #80, #81,
+#82, #83, #84) où ce blocage se reproduit à l'identique — signalé ici comme
+point à trancher côté humain plutôt que retenté sans décision produit.
 
 **Fin de sprint non atteinte :** 3 issues encore ouvertes sous le milestone
 Sprint 21 (#215, #219, #250), toutes en attente de décision produit depuis
-5 sessions. La suite sera traitée à la prochaine échéance planifiée, ou plus
+6 sessions. La suite sera traitée à la prochaine échéance planifiée, ou plus
 tôt si un arbitrage humain est rendu sur l'une des 3 questions ouvertes.
 
 **Sprint 19/20 — PRs non mergées :** toujours d'actualité. Point à traiter
@@ -412,4 +412,4 @@ côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
 **Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
 (10/13 tickets clos, 3 restants — tous bloqués sur décision produit depuis
-la session #79, 5 sessions consécutives).
+la session #79, 6 sessions consécutives).
