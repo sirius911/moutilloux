@@ -70,6 +70,10 @@ from live.admin_views import (
     delete_break,
     reorder_calendar,
     auto_arrange_matches,
+    # Sprint 22 — CRUD Announcement
+    create_announcement,
+    update_announcement,
+    delete_announcement,
 )
 from live.referee_views import referee_required
 
@@ -2218,3 +2222,79 @@ def api_tv_idle(request):
         "programme": _pack_tv_programme(edition),
         "announcements": [{"id": a.id, "message": a.message} for a in announcements],
     })
+
+
+# ── Sprint 22 — CRUD Announcement ────────────────────────────────────────────
+
+def _pack_announcement(a):
+    return {
+        "id": a.id,
+        "editionId": a.edition_id,
+        "message": a.message,
+        "isActive": a.is_active,
+    }
+
+
+@require_GET
+@superuser_required
+def api_announcements_list(request, edition_id):
+    """GET /api/editions/<id>/announcements/ — toutes les annonces de l'édition
+    (actives et inactives — vue admin)."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    announcements = Announcement.objects.filter(edition=edition)
+    return JsonResponse({"announcements": [_pack_announcement(a) for a in announcements]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_announcement_create(request, edition_id):
+    """POST /api/editions/<id>/announcements/create/ — {message, isActive?}."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    message = data.get("message")
+    if not message:
+        return JsonResponse({"error": "message est requis"}, status=400)
+    is_active = data.get("isActive", True)
+
+    try:
+        announcement = create_announcement(edition, message, is_active=is_active)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_announcement(announcement), status=201)
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_announcement_edit(request, announcement_id):
+    """POST /api/announcements/<id>/edit/ — {message?, isActive?}."""
+    announcement = get_object_or_404(Announcement, pk=announcement_id)
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    kwargs = {}
+    if "message" in data:
+        kwargs["message"] = data["message"]
+    if "isActive" in data:
+        kwargs["is_active"] = data["isActive"]
+
+    try:
+        announcement = update_announcement(announcement, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_announcement(announcement))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_announcement_delete(request, announcement_id):
+    """POST /api/announcements/<id>/delete/"""
+    announcement = get_object_or_404(Announcement, pk=announcement_id)
+    delete_announcement(announcement)
+    return JsonResponse({"ok": True})

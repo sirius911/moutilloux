@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from core.models import TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupMembership, GroupStanding
-from live.models import Match, Court, PlayDay, Break
+from live.models import Match, Court, PlayDay, Break, Announcement
 
 from django import forms
 from django.contrib.auth.decorators import user_passes_test
@@ -1353,3 +1353,32 @@ def auto_arrange_matches(edition, default_duration_min=None):
             placed_count += 1
 
     return placed_count
+
+
+# ── Sprint 22 — CRUD Announcement ─────────────────────────────────────────────
+
+def create_announcement(edition, message, is_active=True):
+    message = (message or "").strip()
+    if not message:
+        raise ValueError("Le message de l'annonce ne peut pas être vide.")
+    return Announcement.objects.create(
+        edition=edition,
+        message=message,
+        is_active=bool(is_active),
+    )
+
+
+def update_announcement(announcement, *, message=_NOCHANGE, is_active=_NOCHANGE):
+    if message is not _NOCHANGE:
+        message = (message or "").strip()
+        if not message:
+            raise ValueError("Le message de l'annonce ne peut pas être vide.")
+        announcement.message = message
+    if is_active is not _NOCHANGE:
+        announcement.is_active = bool(is_active)
+    announcement.save()
+    return announcement
+
+
+def delete_announcement(announcement):
+    announcement.delete()
