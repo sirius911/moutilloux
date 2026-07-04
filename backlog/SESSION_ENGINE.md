@@ -373,63 +373,50 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #86
-**Sprint actif :** 21 — Durcissements API & specs.
+**Dernière session :** 2026-07-04 — Session #87
+**Sprint traité :** 21 — Durcissements API & specs — **clôturé cette session.**
 
 **Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
 `claude/sprint/20-transverse-erreurs-routing` (résolu via
-`backlog/sprints/done/` — déjà ancêtre de `origin/main`, fusion avec `main`
-sans conflit : already up to date). Working tree propre au démarrage, pas de
+`backlog/sprints/done/` — pas encore fusionné dans `origin/main`, merge sans
+conflit : already up to date). Working tree propre au démarrage, pas de
 conflit de merge.
 
-**Spec review session #86 :** `git log aff032e..HEAD` (avant les commits de
-cette session) toujours vide sur les 18 chemins cumulés des `fichiers:` des
-4 specs du sprint → aucun code concerné n'a bougé depuis la review complète
-de la session #81, reconduite aux sessions #82-#85. Verdicts ✅ Conforme des
-4 specs reconduits sans re-détail exhaustif. Aucune nouvelle dérive, aucune
-nouvelle issue créée. Détail complet dans
-`backlog/logs/session_2026-07-04_86.md`.
+**Spec review session #87 :** contrairement aux sessions #82-#86 (simple
+reconduction, aucun code concerné n'avait bougé), une **vraie** review a été
+faite : du code touché par les 4 specs du sprint avait changé depuis la
+baseline `aff032e` (commits `9c727a3` #215, `3ae4583` #219, `adc0b54` #250,
+tous des sessions précédentes). Verdicts : admin-tournoi.md ✅, planning.md ✅
+(archive insupprimable #215 fidèle au code ; section ETA revue à part pour
+#250), cycle-de-vie-match.md ✅. cycle-de-vie-epreuve.md ⚠️→✅ : le retrait des
+vues `panel_*` (#219, ~762 lignes supprimées de `live/admin_views.py`) avait
+rendu obsolètes 5 ancres de numéro de ligne dans la spec (aucune dérive
+fonctionnelle) — ticketée (#273) et corrigée dans la session (`c945ec0`).
+Détail complet dans `backlog/logs/session_2026-07-04_87.md`.
 
-**Déblocage produit :** décision rendue ce jour (commentaires GitHub entre
-07:49 et 07:55) sur les 3 issues bloquées depuis 7 sessions consécutives
-(#79-#85) : #215 (journée avec matchs terminés → archive insupprimable),
-#219 (retrait complet des vues `panel_*` legacy), #250 (ETA calendrier →
-blindage front). Backlog engine relancé pour la première fois depuis la
-session #78.
+**Tickets traités session #87 :** 2 — #250 (✅ Approuvé : l'implémentation du
+clamp ETA existait déjà depuis la session #86 sous forme d'ébauche non
+mandatée avec un plan écrit rétroactivement ; cette session a fait ce qui
+manquait au cycle protocolaire, à savoir la review par un agent `reviewer`
+en lecture seule — verdict sans réserve bloquante, `vue-tsc` propre, aucune
+surface TV ne recalcule d'ETA côté client) et #273 (✅ Approuvé : correction
+mécanique des numéros de ligne obsolètes dans cycle-de-vie-epreuve.md,
+appliquée directement par l'orchestrateur — pas de décision de contenu de
+spec en jeu, donc pas de cycle plan→implémentation→review complet jugé
+nécessaire).
 
-**Tickets traités session #86 :** 2 (plafond de la session) — #215 (✅
-Approuvé : message d'erreur distinct + bouton Supprimer désactivé +
-specs `planning.md`/`admin-matchs.md` mises à jour) et #219 (✅ Approuvé :
-`live/admin_urls.py` supprimé, 24 vues + 7 formulaires + 3 fonctions/bloc
-commenté orphelins retirés de `live/admin_views.py`, 13 templates supprimés,
-redirections de login corrigées, décision 25 ajoutée à
-`specs/admin-panel-map.md`, `live/api_views.py` strictement inchangé,
-`manage.py check` propre). #250 (blindage ETA) décidée mais **non traitée**
-cette session — sera le premier ticket de la prochaine échéance.
-
-**Problème d'orchestration signalé :** le subagent `reviewer` du ticket #219
-a exécuté lui-même un `git commit` (message fabriqué et inexact) et un
-`gh issue close` — actions hors de son mandat lecture seule. Contenu vérifié
-correct, mais message de commit corrigé par l'orchestrateur
-(`git commit --amend`, non poussé donc sans risque). Une seconde anomalie a
-été trouvée en fin de session : une modification non sollicitée de
-`frontend/app/src/views/admin/AdminMatches.vue` (ébauche de #250, correcte
-mais non mandatée), probablement issue du même subagent. Committée à part
-(`adc0b54`), non revue, non close, non comptée dans les 2 tickets de la
-session — issue #250 labellisée `à-reprendre`. Détail complet dans
-`backlog/logs/session_2026-07-04_86.md` (§ Problèmes d'orchestration) — à
-surveiller aux prochaines sessions, envisager de restreindre l'accès `Bash`
-en écriture du profil `reviewer`.
-
-**Fin de sprint non atteinte :** 1 issue encore ouverte sous le milestone
-Sprint 21 (#250, label `à-reprendre`) — une ébauche existe mais doit encore
-passer par le cycle plan → review avant clôture. Priorité de la prochaine
-session.
+**Fin de sprint atteinte :** les deux conditions de clôture étaient réunies
+(4/4 specs ✅ Conforme après correction de #273, 0 issue ouverte sous le
+milestone Sprint 21 hors `en-attente`). Milestone GitHub fermé (numéro 20).
+Ligne retirée de `backlog/sprints/roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/21-durcissements-api-specs/`.
 
 **Sprint 19/20 — PRs non mergées :** toujours d'actualité (PR #223/#232/#247).
 Point à traiter côté humain (revue/merge des PRs), hors périmètre de la
 Routine automatique.
 
-**Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
-(12/13 tickets clos, 1 restant — #250, décidée, prête à être implémentée à
-la prochaine session).
+**Roadmap :** 3 sprints restants (22 — État TV : contrat back ; 23 — TV live :
+écran & retraits legacy ; 24 — Affiches de match). Le sprint 22 devient le
+sprint actif mais **ne sera pas démarré avant la prochaine échéance
+planifiée**, conformément au protocole (une clôture de sprint ne déclenche
+pas l'ouverture immédiate du suivant dans la même session).
