@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #79
+**Dernière session :** 2026-07-04 — Session #80
 **Sprint actif :** 21 — Durcissements API & specs.
 
 **Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
@@ -382,56 +382,56 @@ dans `main` — point récurrent depuis plusieurs sessions, à traiter côté
 humain). Working tree propre au démarrage, pas de conflit de merge (déjà à
 jour avec le parent).
 
-**Spec review session #79 :** les 4 specs du sprint relues en parallèle.
-`admin-tournoi.md` → ✅ Conforme, aucune dérive. `cycle-de-vie-epreuve.md` et
-`cycle-de-vie-match.md` → ✅ Conforme, la réconciliation de la session #78
-(#218) tient toujours (juste de petits décalages de numéros de ligne cités,
-sans impact, non ticketés). `planning.md` → ⚠️ Dérive mineure : #248
-confirmée toujours valide (non re-signalée comme nouvelle) + 2 nouvelles
-dérives transverses détectées : polling calendrier réel à 2 s vs `CLAUDE.md`
-qui documente ~5 s (issue #249) ; garantie ETA « jamais d'avance surprise »
-non blindée entre deux polls si un paramètre amont change en cours de
-journée (issue #250). Détail complet dans
-`backlog/logs/session_2026-07-04_79.md`.
+**Spec review session #80 :** review indépendante des 4 specs, refaite après
+la réconciliation #248 (commit `e324629`, postérieur à la review de la
+session #79). `planning.md` → ✅ Conforme : les 5 endpoints réconciliés
+vérifiés aux emplacements cités ; #249 et #250 toujours valides tels que
+décrits (non re-signalés comme nouveaux). `cycle-de-vie-epreuve.md` et
+`cycle-de-vie-match.md` → ✅ Conforme, aucun commit sur les fichiers cités
+depuis la session #79. `admin-tournoi.md` → ⚠️ Dérive mineure (nouvelle,
+non vue en session #79) : la spec décrit encore un bouton « Sélectionner »
+par carte d'épreuve, retiré du code par le commit `4ed55bc` (issue #208,
+sprint 20) — sélection désormais portée par navigation directe via l'URL
+(cohérent avec le principe existant, juste une description d'UI obsolète).
+Nouvelle issue #251 créée. Détail complet dans
+`backlog/logs/session_2026-07-04_80.md`.
 
-**Tickets traités session #79 :** 2 (#217, #248) —
-- **#217** : création de `specs/technical/classement-poule.md` — algorithme
-  de `recalc_one_group` documenté intégralement (périmètre du calcul,
-  victoire/défaite déduite des jeux et non de `winner_side`, points,
-  tie-break sans head-to-head, walkover, édition manuelle admin). Décision
-  assumée : aucun correctif de `competition/standings.py` — les deux chemins
-  de mutation normaux (score live, walkover) garantissent la cohérence
-  `winner_side`/score, seule l'édition manuelle admin peut diverger ; changer
-  le code serait une décision de design nouvelle hors périmètre d'un ticket
-  de documentation. Deux points de vigilance documentés tels quels (égalité
-  totale à 3+ équipes sans head-to-head ; divergence possible via
-  `MatchEditForm`). ✅ Approuvé. Commit `b2789db`.
-- **#248** : réconciliation de `specs/technical/planning.md` — la table
-  « À créer » (5 endpoints déjà livrés : auto-arrange, CRUD `PlayDay`/`Break`,
-  packer calendrier, enrichissement TV) fusionnée dans « Réutilisé
-  (existant) » avec références fichier:ligne vérifiées (correction au
-  passage : `api_tv_upcoming` est à `live/urls.py:100`, pas `:99` comme
-  l'indiquait l'issue GitHub par erreur). Aucun contenu normatif touché.
-  ✅ Approuvé. Commit `e324629`.
+**Tickets traités session #80 :** 2 (#216, #249) —
+- **#216** : ajout d'un champ « Durée de match par défaut (min) » dans
+  `EditionModal.vue` (borné ≥ 1, défaut 27, cohérent avec le back), câblage
+  du payload (`EditionPayload.default_match_duration_min` dans `event.ts`,
+  fichier partagé câblé par l'orchestrateur), spec `admin-tournoi.md`
+  complétée. ✅ Approuvé. Commit `07298fa`.
+- **#249** : `CLAUDE.md` corrigé — le calendrier admin (2 s réels) était classé
+  à tort dans le groupe ~5 s ; reclassé avec arbitre/scoreboard. Corrigé au
+  passage une incohérence adjacente (mention « cible ~4 s bracket ... encore
+  à appliquer » devenue stale face au §4 qui documente déjà la migration
+  comme faite). ✅ Approuvé. Commit `3d7d085`.
 
-Plan → implémentation → review réalisés par des agents distincts par ticket
-(dont `reviewer`, lecture seule), séquentiel comme prescrit (un ticket
-complet avant le suivant). Aucun fichier partagé câblé (les deux tickets
-étaient purement documentaires).
+Reviews réalisées par des agents `reviewer` distincts en lecture seule, un
+par ticket, avant clôture. Écart mineur au séquencement strict : #249 (2
+lignes de doc, vérifiées par grep) planifié/implémenté directement par
+l'orchestrateur en parallèle de l'agent `vue-screen` sur #216, plutôt que
+strictement l'un après l'autre — jugé sans risque vu la triviale
+non-ambiguïté du changement. Erreur de manipulation git corrigée en session
+(un `git add -A` avait groupé les deux tickets dans un seul commit ; scindé
+via `git reset --soft` avant tout push, aucune perte).
 
-**Écart au protocole :** aucun. Sélection volontaire : #217 et #248 retenus
-(prochain de l'ordre suggéré du `sprint.md`, et réconciliation à faible
-risque de même nature que #218) ; #215 et #219 laissés de côté car leur body
-exige explicitement une « décision produit d'abord » — jugé plus prudent de
-réserver ces arbitrages à une session humaine plutôt que de les trancher de
-façon autonome dans une routine planifiée.
+**Écart au protocole :** sélection volontaire de #216 et #249 (actionnables
+sans arbitrage produit préalable) ; #215, #219 laissés de côté (leur body
+exige explicitement une « décision produit d'abord », comme les sessions
+précédentes) ; #250 laissé de côté pour la même raison (« à trancher » entre
+hors-scope assumé ou mémorisation de l'ETA — jugement de conception réservé
+à une session humaine) ; #251 (créé cette session) non traité dans la même
+session, cohérent avec la limite de 2 tickets/session.
 
-**Fin de sprint non atteinte :** 5 issues encore ouvertes sous le milestone
-Sprint 21 (#215, #216, #219, #249, #250). La suite sera traitée à la
-prochaine échéance planifiée.
+**Fin de sprint non atteinte :** spec review avec 1 dérive (⚠️
+admin-tournoi.md) + 4 issues encore ouvertes sous le milestone Sprint 21
+(#215, #219, #250, #251). La suite sera traitée à la prochaine échéance
+planifiée.
 
 **Sprint 19/20 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
 **Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
-(7/12 tickets clos, 5 restants).
+(9/13 tickets clos, 4 restants).
