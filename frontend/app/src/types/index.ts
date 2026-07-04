@@ -169,15 +169,6 @@ export interface Match {
   clock?: string            // "42mn"
 }
 
-// ─── Score state (polling /api/score_state/) ───────────────────────────────
-
-export interface ScoreState {
-  editionYear: number
-  hero: Match | null
-  next: Match | null
-  now: string              // "15h42"
-}
-
 // ─── Bracket ────────────────────────────────────────────────────────────────
 
 export interface BracketSlot {
@@ -230,8 +221,69 @@ export interface CalendarData {
   canceled: Match[]         // CANCELED, GROUP — retirés de leur journée
 }
 
-export interface TvUpcoming {
+// ─── TV — état chaud (polling /api/tv/state/) ──────────────────────────────
+
+export interface TvStakeStanding {
+  entryId: number
+  rank: number
+  name: string
+  wins: number
+  losses: number
+  points: number
+  qualified: boolean
+}
+
+export type TvStake =
+  | { kind: 'group'; groupName: string; eventName: string; standings: TvStakeStanding[] }
+  | { kind: 'bracket'; eventName: string; bracket: Bracket }
+
+export interface TvState {
+  editionYear: number | null
+  now: string               // "15h42"
+  hero: Match | null
   next: Match | null
-  upcoming: Match[]
-  currentPlayDay: PlayDay | null
+  stake: TvStake | null
+}
+
+// ─── TV — contenu froid du carousel (polling /api/tv/idle/) ───────────────
+
+export interface TvStats {
+  matchesFinished: number
+  matchesTotal: number
+  entriesCount: number
+  eventsCount: number
+}
+
+export interface TvEventGroup {
+  id: number
+  name: string
+  standings: TvStakeStanding[]
+}
+
+export interface TvEvent {
+  id: number
+  name: string
+  groups: TvEventGroup[]
+  bracket: Bracket | null
+}
+
+export type TvProgrammeDay = 'today' | 'tomorrow' | 'finished'
+
+export interface TvProgramme {
+  day: TvProgrammeDay
+  playDay: PlayDay | null
+  upcoming: Match[]          // N ≤ 6, à partir du next
+}
+
+export interface TvAnnouncement {
+  id: number
+  message: string
+}
+
+export interface TvIdleData {
+  stats: TvStats | null
+  recentResults: Match[]
+  events: TvEvent[]
+  programme: TvProgramme
+  announcements: TvAnnouncement[]
 }
