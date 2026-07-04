@@ -4,7 +4,7 @@ import { usePolling } from '@/composables/usePolling'
 import TvIdle from './TvIdle.vue'
 
 const live = useLiveStore()
-usePolling(() => live.fetchScoreState(), 2000)
+usePolling(() => live.fetchTvState(), 2000)
 
 function pointLabel(n: number, inTb: boolean): string {
   if (inTb) return String(n)
@@ -23,6 +23,111 @@ function pointLabel(n: number, inTb: boolean): string {
 
     <!-- ── Match en cours ────────────────────────────────────────────────── -->
     <template v-else>
+      <!-- Zone d'enjeu (centre de l'écran) — classement de poule ou mini-tableau -->
+      <div v-if="live.stake" class="stake-panel">
+        <!-- Enjeu : poule -->
+        <div v-if="live.stake.kind === 'group'" class="stake-group">
+          <h2 class="stake-title">
+            POULE {{ live.stake.groupName }}
+            <span class="stake-title-sep">·</span>
+            {{ live.stake.eventName }}
+          </h2>
+          <div class="stake-group-rows">
+            <div class="stake-group-row stake-group-row-head">
+              <span>JOUEUR</span><span>V</span><span>D</span><span>PTS</span>
+            </div>
+            <div
+              v-for="s in live.stake.standings"
+              :key="s.entryId"
+              :class="['stake-group-row', {
+                q: s.qualified,
+                hl: s.entryId === live.hero.sideA?.id || s.entryId === live.hero.sideB?.id,
+              }]"
+            >
+              <span class="stake-group-name">
+                <em class="stake-group-rank">{{ s.rank }}</em>
+                {{ s.name }}
+                <i v-if="s.qualified" class="stake-group-q">Q</i>
+              </span>
+              <span class="tab">{{ s.wins }}</span>
+              <span class="tab">{{ s.losses }}</span>
+              <span class="tab stake-group-pts">{{ s.points }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Enjeu : tableau -->
+        <div v-else-if="live.stake.kind === 'bracket'" class="stake-bracket">
+          <h2 class="stake-title">
+            TABLEAU
+            <span class="stake-title-sep">·</span>
+            {{ live.stake.eventName }}
+          </h2>
+          <div class="stake-mini-bracket">
+            <div class="stake-mini-col">
+              <div class="stake-mini-col-head">QUARTS</div>
+              <div
+                v-for="slot in live.stake.bracket.qf"
+                :key="slot.slot"
+                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
+              >
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="stake-mini-col">
+              <div class="stake-mini-col-head">DEMIES</div>
+              <div
+                v-for="slot in live.stake.bracket.sf"
+                :key="slot.slot"
+                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
+              >
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="stake-mini-col">
+              <div class="stake-mini-col-head">FINALE</div>
+              <div
+                v-for="slot in live.stake.bracket.f"
+                :key="slot.slot"
+                :class="['stake-mini-match', 'final', { current: slot.match?.id === live.hero.id }]"
+              >
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                </div>
+              </div>
+            </div>
+            <div v-if="live.stake.bracket.p3?.length" class="stake-mini-col">
+              <div class="stake-mini-col-head">3E PLACE</div>
+              <div
+                v-for="slot in live.stake.bracket.p3"
+                :key="slot.slot"
+                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
+              >
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Header -->
       <header class="sb-header">
         <!-- Logo balle de tennis SVG -->
@@ -417,6 +522,152 @@ function pointLabel(n: number, inTb: boolean): string {
   background: var(--line-2);
   height: 80px;
   align-self: center;
+}
+
+/* ── Zone d'enjeu (centre de l'écran) ───────────────────────────────── */
+.stake-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  max-width: 1100px;
+  width: 90%;
+  max-height: 620px;
+  overflow: hidden;
+  background: rgba(5, 6, 8, 0.7);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 28px 40px;
+  backdrop-filter: blur(4px);
+}
+
+.stake-title {
+  margin: 0 0 20px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+
+.stake-title-sep { color: var(--line-3); margin: 0 8px; }
+
+/* Enjeu : poule */
+.stake-group-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stake-group-row {
+  display: grid;
+  grid-template-columns: 1fr 48px 48px 60px;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  color: var(--ink-1);
+}
+
+.stake-group-row-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.stake-group-row.q {
+  background: linear-gradient(90deg, rgba(255,200,61,0.08), transparent);
+}
+
+.stake-group-row.hl {
+  background: rgba(255,200,61,0.14);
+  border: 1px solid var(--accent-soft);
+}
+
+.stake-group-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: var(--ink-0);
+}
+
+.stake-group-rank {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-3);
+  min-width: 18px;
+}
+
+.stake-group-q {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent);
+  color: #000;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.stake-group-pts { color: var(--accent); font-weight: 700; }
+
+/* Enjeu : mini-tableau */
+.stake-mini-bracket {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.stake-mini-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stake-mini-col-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.stake-mini-match {
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stake-mini-match.final { border-color: var(--accent-soft); }
+
+.stake-mini-match.current {
+  border-color: var(--accent);
+  background: rgba(255,200,61,0.1);
+}
+
+.stake-mini-slot {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.stake-mini-slot.win { color: var(--ink-0); font-weight: 700; }
+
+.stake-mini-name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Pied ────────────────────────────────────────────────────────────── */
