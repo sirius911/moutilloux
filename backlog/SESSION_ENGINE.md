@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #80
+**Dernière session :** 2026-07-04 — Session #81
 **Sprint actif :** 21 — Durcissements API & specs.
 
 **Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
@@ -382,56 +382,43 @@ dans `main` — point récurrent depuis plusieurs sessions, à traiter côté
 humain). Working tree propre au démarrage, pas de conflit de merge (déjà à
 jour avec le parent).
 
-**Spec review session #80 :** review indépendante des 4 specs, refaite après
-la réconciliation #248 (commit `e324629`, postérieur à la review de la
-session #79). `planning.md` → ✅ Conforme : les 5 endpoints réconciliés
-vérifiés aux emplacements cités ; #249 et #250 toujours valides tels que
-décrits (non re-signalés comme nouveaux). `cycle-de-vie-epreuve.md` et
-`cycle-de-vie-match.md` → ✅ Conforme, aucun commit sur les fichiers cités
-depuis la session #79. `admin-tournoi.md` → ⚠️ Dérive mineure (nouvelle,
-non vue en session #79) : la spec décrit encore un bouton « Sélectionner »
-par carte d'épreuve, retiré du code par le commit `4ed55bc` (issue #208,
-sprint 20) — sélection désormais portée par navigation directe via l'URL
-(cohérent avec le principe existant, juste une description d'UI obsolète).
-Nouvelle issue #251 créée. Détail complet dans
-`backlog/logs/session_2026-07-04_80.md`.
+**Spec review session #81 :** aucun commit entre la review de session #80
+(`e324629`) et le début de cette session sur les fichiers `fichiers:` de
+`planning.md` / `cycle-de-vie-epreuve.md` / `cycle-de-vie-match.md`
+(`git log e324629..HEAD` vide sur ces zones) → verdicts ✅ de la session #80
+reconduits sans re-détail exhaustif. `admin-tournoi.md` re-vérifiée par grep
++ lecture de `AdminTournoi.vue:192-225` : la dérive #251 (bouton
+« Sélectionner » toujours décrit en spec, absent du code depuis le commit
+`4ed55bc`) était toujours présente en début de session — traitée dans la
+foulée (voir ticket ci-dessous), spec conforme en fin de session. Aucune
+nouvelle dérive détectée, aucune nouvelle issue créée. Détail complet dans
+`backlog/logs/session_2026-07-04_81.md`.
 
-**Tickets traités session #80 :** 2 (#216, #249) —
-- **#216** : ajout d'un champ « Durée de match par défaut (min) » dans
-  `EditionModal.vue` (borné ≥ 1, défaut 27, cohérent avec le back), câblage
-  du payload (`EditionPayload.default_match_duration_min` dans `event.ts`,
-  fichier partagé câblé par l'orchestrateur), spec `admin-tournoi.md`
-  complétée. ✅ Approuvé. Commit `07298fa`.
-- **#249** : `CLAUDE.md` corrigé — le calendrier admin (2 s réels) était classé
-  à tort dans le groupe ~5 s ; reclassé avec arbitre/scoreboard. Corrigé au
-  passage une incohérence adjacente (mention « cible ~4 s bracket ... encore
-  à appliquer » devenue stale face au §4 qui documente déjà la migration
-  comme faite). ✅ Approuvé. Commit `3d7d085`.
+**Tickets traités session #81 :** 1 (#251) —
+- **#251** : `specs/screens/admin-tournoi.md` corrigée — retrait de la puce
+  décrivant le bouton « Sélectionner » (obsolète depuis le commit `4ed55bc`,
+  sprint 20, issue #208), remplacée par une puce documentant l'absence de
+  bouton dédié et la sélection portée par la navigation (raccourcis
+  Inscriptions/Poules/Matchs), cohérent avec le principe déjà énoncé en
+  introduction de la spec (décision 22, `[[routing-context]]`). Correction de
+  contenu de spec directe par l'orchestrateur (même traitement que les
+  réconciliations #218/#248 des sessions précédentes) — pas un agent
+  `vue-screen`/`django-api`, puisqu'aucun code n'était à modifier. ✅ Approuvé
+  par un agent `reviewer` indépendant en lecture seule. Commit `aff032e`.
 
-Reviews réalisées par des agents `reviewer` distincts en lecture seule, un
-par ticket, avant clôture. Écart mineur au séquencement strict : #249 (2
-lignes de doc, vérifiées par grep) planifié/implémenté directement par
-l'orchestrateur en parallèle de l'agent `vue-screen` sur #216, plutôt que
-strictement l'un après l'autre — jugé sans risque vu la triviale
-non-ambiguïté du changement. Erreur de manipulation git corrigée en session
-(un `git add -A` avait groupé les deux tickets dans un seul commit ; scindé
-via `git reset --soft` avant tout push, aucune perte).
+**Écart au protocole :** un seul ticket actionnable traité (#251), sous la
+limite de 2/session — pas un choix arbitraire mais l'absence d'un second
+ticket éligible : #215, #219, #250 restent tous les trois bloqués sur une
+« décision produit d'abord » explicitement demandée dans leur body, comme
+lors des sessions #79 et #80. Aucun de ces trois n'a été retenté cette
+session (jugement de conception réservé à une session humaine).
 
-**Écart au protocole :** sélection volontaire de #216 et #249 (actionnables
-sans arbitrage produit préalable) ; #215, #219 laissés de côté (leur body
-exige explicitement une « décision produit d'abord », comme les sessions
-précédentes) ; #250 laissé de côté pour la même raison (« à trancher » entre
-hors-scope assumé ou mémorisation de l'ETA — jugement de conception réservé
-à une session humaine) ; #251 (créé cette session) non traité dans la même
-session, cohérent avec la limite de 2 tickets/session.
-
-**Fin de sprint non atteinte :** spec review avec 1 dérive (⚠️
-admin-tournoi.md) + 4 issues encore ouvertes sous le milestone Sprint 21
-(#215, #219, #250, #251). La suite sera traitée à la prochaine échéance
-planifiée.
+**Fin de sprint non atteinte :** 3 issues encore ouvertes sous le milestone
+Sprint 21 (#215, #219, #250), toutes en attente de décision produit. La suite
+sera traitée à la prochaine échéance planifiée.
 
 **Sprint 19/20 — PRs non mergées :** toujours d'actualité. Point à traiter
 côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
 **Roadmap :** 1 sprint actif (21 — Durcissements API & specs), en cours
-(9/13 tickets clos, 4 restants).
+(10/13 tickets clos, 3 restants — tous bloqués sur décision produit).
