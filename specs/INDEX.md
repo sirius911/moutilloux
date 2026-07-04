@@ -84,6 +84,7 @@ Décrivent les modèles de données, contrats d'API, structures de stores.
 | cycle-de-vie (match) | [technical/cycle-de-vie-match.md](./technical/cycle-de-vie-match.md) | ✅ Actif |
 | planning | [technical/planning.md](./technical/planning.md) | ✅ Actif |
 | routing | [technical/routing-context.md](./technical/routing-context.md) | ✅ Actif |
+| classement-poule | [technical/classement-poule.md](./technical/classement-poule.md) | ✅ Actif |
 
 *Exemples à prévoir : match (structure `_pack_match`), event/edition, entry.*
 
