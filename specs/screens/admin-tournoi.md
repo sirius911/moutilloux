@@ -53,6 +53,21 @@ Deux notions distinctes y cohabitent, avec un vocabulaire strict :
 | Épreuves | Nombre d'épreuves de l'édition |
 | Matchs joués | Nombre de matchs terminés / nombre total de matchs, toutes épreuves de l'édition |
 
+### Carte « Annonces TV »
+
+Visible uniquement si une édition est active. Gère les annonces diffusées sur
+la slide dédiée de l'écran TV idle (voir [[tv-state]], modèle `Announcement`).
+
+- Champ de saisie + bouton **« Ajouter »** (désactivé si le message est vide) :
+  crée une annonce active par défaut, en tête de liste.
+- Liste des annonces de l'édition, chacune avec :
+  - un **interrupteur** actif/inactif (`is_active`) — désactivée, l'annonce
+    reste dans la liste mais n'est plus diffusée sur la TV (texte grisé) ;
+  - le message ;
+  - **Supprimer** → confirmation forte (voir Flux), suppression définitive.
+- État vide : « Aucune annonce. »
+- Pas d'échéance ni de programmation horaire : on active/désactive à la main.
+
 ### Carte « Épreuves de l'édition »
 
 - Action : **« + Nouvelle épreuve »** → ouvre la modale Épreuve en mode création.
@@ -185,6 +200,13 @@ récente à la plus ancienne :
    le message d'erreur est affiché tel quel.
 4. Si l'épreuve supprimée était l'épreuve active, la sélection bascule (voir spec
    [[admin-shell]]).
+
+## Flux : supprimer une annonce
+
+1. L'admin clique « Supprimer » sur une annonce de la carte « Annonces TV ».
+2. Modale de confirmation forte : « Supprimer cette annonce ? », rappelant le
+   message concerné.
+3. À la confirmation : suppression définitive, retrait immédiat de la liste.
 
 ## Flux : débuter / clôturer une épreuve
 
