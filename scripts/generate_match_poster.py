@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""
+CLI de génération d'affiches de match (usage manuel / essais).
+
+Ce script doit désormais être lancé depuis la racine du projet, avec
+l'environnement Django du projet disponible (venv `_env`) : il importe
+`build_prompt` depuis `live.posters`, seule source de vérité du prompt (voir
+specs/technical/affiche-match.md). Un bootstrap Django minimal
+(`django.setup()`) est fait ci-dessous avant cet import.
+"""
 from __future__ import annotations
 
 import argparse
@@ -21,6 +30,27 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
+
+def _bootstrap_django() -> None:
+    """
+    Configure Django au minimum pour pouvoir importer `live.posters`
+    (module partagé du prompt). Le script doit être lancé depuis la racine
+    du projet (là où se trouve `manage.py`).
+    """
+    project_root = Path(__file__).resolve().parent.parent
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "moutilloux.settings")
+
+    import django
+    django.setup()
+
+
+_bootstrap_django()
+
+from live.posters import build_prompt  # noqa: E402  (après bootstrap Django)
 
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -87,114 +117,6 @@ def resolve_image_path(source: str, base_dir: Path | None, tmpdir: Path) -> Path
         raise ValueError(f"L'image {path} fait {size_mb:.1f} Mo. Maximum conseillé : 50 Mo.")
 
     return path
-
-
-def player_label(sex: str) -> str:
-    normalized = sex.strip().lower()
-
-    if normalized in {"f", "femme", "féminin", "feminin", "joueuse", "fille"}:
-        return "joueuse"
-
-    if normalized in {"h", "homme", "masculin", "joueur", "garçon", "garcon"}:
-        return "joueur"
-
-    return "joueur ou joueuse"
-
-
-def build_prompt(names: list[str], sexes: list[str], adjectives: list[str]) -> str:
-    players = []
-
-    for index, (name, sex, adjective) in enumerate(zip(names, sexes, adjectives), start=1):
-        players.append({
-            "index": index,
-            "name": name.strip(),
-            "label": player_label(sex),
-            "adjective": adjective.strip(),
-        })
-
-    if len(players) == 2:
-        confrontation = f"{players[0]['name']} contre {players[1]['name']}"
-        composition = (
-            "Affiche en duel : un joueur à gauche, l'autre à droite, "
-            "séparés par un effet de choc lumineux au centre."
-        )
-        title = f"{players[0]['name']} VS {players[1]['name']}"
-    else:
-        confrontation = (
-            f"{players[0]['name']} et {players[1]['name']} "
-            f"contre {players[2]['name']} et {players[3]['name']}"
-        )
-        composition = (
-            "Affiche de double : l'équipe 1 avec les deux premiers joueurs à gauche, "
-            "l'équipe 2 avec les deux joueurs suivants à droite. "
-            "Créer une vraie opposition visuelle entre les deux équipes."
-        )
-        title = (
-            f"{players[0]['name']} & {players[1]['name']} "
-            f"VS {players[2]['name']} & {players[3]['name']}"
-        )
-
-    descriptions = "\n".join(
-        f"- Rends {p['name']} {p['adjective']}. "
-        f"{p['name']} est la personne de l'image {p['index']}, {p['label']}. "
-        f"Cette personnalité doit se voir dans son regard, son expression du visage, "
-        f"sa posture, sa façon de tenir la raquette, son énergie et sa mise en scène. "
-        f"Le mot « {p['adjective']} » ne doit jamais être écrit sur l'affiche."
-        for p in players
-    )
-
-    adjectifs_interdits = ", ".join(f"« {p['adjective']} »" for p in players)
-
-    prompt = f"""
-Créer une affiche horizontale spectaculaire pour un match de tennis : {confrontation}.
-
-Style visuel :
-- affiche de jeu de combat arcade des années 90 ;
-- ambiance Street Fighter / match de catch / affiche de combat sportif ;
-- très dynamique, contrastée, cinématique ;
-- terrain de tennis ou éléments de tennis visibles ;
-- raquettes, balles, filet, lignes de court, énergie visuelle ;
-- rendu moderne, propre, impression affiche événementielle.
-
-Composition :
-{composition}
-
-Chaque joueur doit avoir une personnalité très marquée, presque caricaturale, comme dans une affiche de jeu de combat.
-Les attitudes doivent être exagérées et immédiatement lisibles.
-
-Direction artistique des joueurs à partir des images fournies :
-{descriptions}
-
-Important :
-- les adjectifs sont des consignes de jeu, d'attitude et de mise en scène ;
-- ils doivent être visibles dans le comportement des joueurs ;
-- ils ne doivent jamais être écrits comme du texte sur l'affiche.
-
-Contraintes très importantes sur le texte :
-- le texte principal autorisé est uniquement : "{title}" ;
-- tu peux ajouter en petit : "TOURNOI DES MOUTILLOUX" ;
-- ne jamais écrire les adjectifs des joueurs sur l'affiche ;
-- ne pas écrire ces mots : {adjectifs_interdits} ;
-- ne pas écrire de score ;
-- ne pas ajouter de date, d'heure, de slogan ou de phrase inventée ;
-- ne pas ajouter de pseudo-texte illisible ;
-- ne pas inventer de faux logos officiels ;
-- ne rien écrire dans la zone basse réservée au score.
-
-Format :
-- affiche horizontale, format paysage ;
-- composition pensée pour un affichage web en direct pendant un match ;
-- les joueurs doivent être principalement dans la moitié haute et au centre gauche / centre droit ;
-- le titre "{title}" doit être placé dans la moitié haute ou au centre, mais pas dans la zone basse réservée au score ;
-- réserver toute la partie basse de l'image, environ 25 à 30 % de la hauteur, comme zone libre pour afficher le score en direct ;
-- dans cette zone basse, ne mettre aucun visage, aucune main, aucune raquette importante, aucun texte important ;
-- la zone basse doit être visuellement propre, sombre ou légèrement dégradée, avec éventuellement le terrain de tennis en arrière-plan ;
-- cette zone basse doit pouvoir recevoir un score affiché par-dessus sans cacher les joueurs ;
-- ne pas écrire le score dans l'image ;
-- image finale propre, spectaculaire, amusante, prête pour un live web.
-""".strip()
-
-    return prompt
 
 
 def generate_posters(

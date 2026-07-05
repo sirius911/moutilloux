@@ -23,6 +23,27 @@ Le script est placé dans le dossier `scripts/` du projet Django.
 
 ---
 
+## Exécution depuis la racine du projet (module partagé `live/posters.py`)
+
+Depuis le ticket #265, la construction du prompt (`build_prompt`) n'est plus
+dupliquée dans ce script : elle vit dans `live/posters.py`, importée ici
+après un bootstrap Django minimal fait automatiquement par le script
+(`DJANGO_SETTINGS_MODULE=moutilloux.settings` + `django.setup()`).
+
+Conséquence pratique : le script doit être lancé **depuis la racine du
+projet** (là où se trouve `manage.py`), avec l'environnement virtuel du
+projet (`_env`, qui a Django installé) :
+
+```bash
+cd /chemin/vers/moutilloux
+./_env/bin/python scripts/generate_match_poster.py --images ... --names ... --sexes ... --adjectives ... --out media/generated_match_posters
+```
+
+Aucun changement des arguments ou de la sortie du script — seule la source
+du prompt a changé.
+
+---
+
 ## Installation des dépendances
 
 Depuis l’environnement virtuel du projet, `openai` et `pillow` sont déjà
@@ -193,17 +214,14 @@ Ces références peuvent ensuite être utilisées dans le site pour afficher l�
 
 ---
 
-## Exemple d’utilisation dans Django
+## Utilisation dans Django
 
-Le script peut d’abord être utilisé en ligne de commande.
+Le script reste utilisable en ligne de commande pour des essais manuels.
 
-Plus tard, il pourra être intégré directement dans Django, par exemple dans :
-
-```text
-live/posters.py
-```
-
-Pour l’instant, l’usage recommandé est de le tester depuis le terminal.
+L'intégration Django est faite : la construction du prompt vit désormais
+dans `live/posters.py` (module partagé, importé par ce script), qui pilote
+aussi le cycle de vie complet d'une génération (`PosterJob`) depuis
+l'application — voir `specs/technical/affiche-match.md`.
 
 ---
 
