@@ -373,43 +373,34 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-05 — Session #94
-**Sprint traité :** 23 — TV live : écran & retraits legacy
+**Dernière session :** 2026-07-05 — Session #95
+**Sprint traité :** 23 — TV live : écran & retraits legacy — **clôturé cette session**
 
 **Git :** branche `claude/sprint/23-tv-live-front`, parent effectif
 `claude/sprint/22-tv-state-back` (résolu via `backlog/sprints/done/` —
 toujours pas mergée dans `origin/main`, `git merge` déjà à jour, aucun
 conflit). Working tree propre au démarrage et en fin de session.
 
-**Spec review session #94 :** review de `specs/screens/tv-live.md`,
-`specs/tv-map.md`, `specs/technical/tv-state.md`, **avant** le backlog
-engine (donc avant #260/#262). Verdict ⚠️ Dérive mineure — 0 nouvelle
-dérive : `TvScoreboard.vue`/`TvIdle.vue`/`stores/live.ts` toujours conformes
-au contrat `tv-state`, il ne restait que le périmètre déclaré du sprint
-(carte Annonces admin #260, retraits back legacy #262).
+**Spec review session #95 (à froid, après #260/#262) :** review de
+`specs/screens/tv-live.md`, `specs/tv-map.md`, `specs/technical/tv-state.md`
+confiée à un agent `reviewer`. Verdict initial ⚠️ Dérive mineure : une seule
+réserve, documentaire — `tv-state.md` demandait explicitement que
+`specs/screens/admin-tournoi.md` soit complétée pour la carte « Annonces TV »
+livrée par #260, jamais fait. Aucune divergence de comportement. Corrigé
+directement par l'orchestrateur (édition de spec, pas de code) : sections
+« Carte « Annonces TV »» et « Flux : supprimer une annonce » ajoutées à
+`admin-tournoi.md`. Ticket #276 créé puis fermé dans la même session.
+Verdict final : ✅ Conforme sur les 3 specs. `npx vue-tsc --noEmit` et
+`manage.py check` vérifiés propres par l'agent reviewer.
 
-**Tickets traités session #94 :** 2 (derniers du sprint) — #260 (carte
-« Annonces TV » sur `AdminTournoi.vue` : liste + toggle actif/inactif, ajout,
-suppression avec confirmation, consommant le CRUD `Announcement` déjà câblé
-au sprint 22 ; délégué à un agent `vue-screen`, revu par un agent
-`reviewer`, ✅ Approuvé) et #262 (retraits back : `score_state`,
-`get_next_match`, `api_tv_upcoming`, pages Django `results*` + templates,
-liens morts corrigés dans `home.html`/`auth_views.py` ; délégué à un agent
-`django-api` — `live/urls.py` câblé par l'orchestrateur ensuite — revu par
-un agent `reviewer`, ✅ Approuvé). `manage.py check` propre, golden path
-vérifié (`/results/…`, `/api/score_state/`, `/api/tv/upcoming/` → 404 ;
-`/api/tv/state/`, `/` → 200).
+**Backlog engine session #95 :** 0 issue ouverte milestone Sprint 23 au
+démarrage (toutes fermées : #3, #21, #257-262) — aucun ticket à traiter.
 
-**Fin de sprint non atteinte (subtilité protocole) :** les 2 conditions de
-l'étape 3 ne sont pas simultanément vraies **au sens strict** — le spec
-review de référence est celui pris à l'étape 1, **avant** le backlog engine
-de la même session, donc systématiquement ⚠️ tant qu'il reste des tickets à
-traiter ce jour-là. Après #260/#262, la condition « 0 issue ouverte
-sprint-23 » est désormais vraie, mais la condition « spec review ✅
-Conforme de cette session » ne l'est pas (elle datait d'avant les tickets).
-**Sprint 23 reste donc actif une dernière échéance** : la prochaine session
-devrait trouver un spec review à froid ✅ Conforme (code désormais complet)
-et 0 ticket à traiter au backlog engine → clôture attendue à ce moment-là.
+**Clôture de sprint effectuée :** les 2 conditions de l'étape 3 sont
+simultanément vraies (spec review ✅ Conforme après correction #276, et 0
+issue ouverte sprint-23). Milestone « Sprint 23 » fermé via l'API GitHub,
+ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé dans
+`backlog/sprints/done/23-tv-live-front/`.
 
 **Point d'attention outillage (rappel) :** utiliser `npx vue-tsc -b --force`
 (pas `--noEmit` seul) pour tout type-check front — toujours pas de script
@@ -420,5 +411,7 @@ et 0 ticket à traiter au backlog engine → clôture attendue à ce moment-là.
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 23 actif (1/2), clôture attendue à la prochaine
-échéance. Puis 24 — Affiches de match.
+**Roadmap :** sprint 23 clôturé. Sprint 24 — Affiches de match devient
+actif ; conformément au protocole il ne démarre **pas** cette session (la
+prochaine échéance planifiée le prendra en charge, avec sa propre branche
+`claude/sprint/24-affiches-match`).
