@@ -373,46 +373,52 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-05 — Session #93
+**Dernière session :** 2026-07-05 — Session #94
 **Sprint traité :** 23 — TV live : écran & retraits legacy
 
 **Git :** branche `claude/sprint/23-tv-live-front`, parent effectif
 `claude/sprint/22-tv-state-back` (résolu via `backlog/sprints/done/` —
-toujours pas mergée dans `origin/main`, merge fast-forward sans conflit).
-Working tree propre au démarrage et en fin de session.
+toujours pas mergée dans `origin/main`, `git merge` déjà à jour, aucun
+conflit). Working tree propre au démarrage et en fin de session.
 
-**Spec review session #93 :** review de `specs/screens/tv-live.md`,
-`specs/tv-map.md`, `specs/technical/tv-state.md`. Verdict ⚠️ Dérive mineure —
-0 nouvelle dérive : le carousel `TvIdle.vue` est désormais conforme (#259),
-la route unique `/tv/live` est en place (#261) ; il ne reste que le
-périmètre déclaré restant du sprint (#260 carte Annonces admin, #262 retraits
-back legacy).
+**Spec review session #94 :** review de `specs/screens/tv-live.md`,
+`specs/tv-map.md`, `specs/technical/tv-state.md`, **avant** le backlog
+engine (donc avant #260/#262). Verdict ⚠️ Dérive mineure — 0 nouvelle
+dérive : `TvScoreboard.vue`/`TvIdle.vue`/`stores/live.ts` toujours conformes
+au contrat `tv-state`, il ne restait que le périmètre déclaré du sprint
+(carte Annonces admin #260, retraits back legacy #262).
 
-**Tickets traités session #93 :** 2 — #259 (`TvIdle.vue` réécrit sur
-`live.fetchTvIdle()` : 6 slides, rotation par épreuve, bascule de journée,
-slide Annonces ; délégué à un agent `vue-screen`, revu par un agent
-`reviewer` ; **ferme #3 et #21**, absorbées) et #261 (retrait des routes
-`/tv/groups`/`/tv/bracket` + suppression de `TvPoules.vue`/`TvBracket.vue` ;
-fait directement par l'orchestrateur, `router/index.ts` étant un fichier
-partagé). Les deux ✅ Approuvé, `vue-tsc -b --force` ne rapporte plus
-d'erreur sur les fichiers concernés (mêmes erreurs pré-existantes hors
-périmètre qu'avant : `useApi.ts`, `stores/event.ts`, `AdminBracket.vue`).
+**Tickets traités session #94 :** 2 (derniers du sprint) — #260 (carte
+« Annonces TV » sur `AdminTournoi.vue` : liste + toggle actif/inactif, ajout,
+suppression avec confirmation, consommant le CRUD `Announcement` déjà câblé
+au sprint 22 ; délégué à un agent `vue-screen`, revu par un agent
+`reviewer`, ✅ Approuvé) et #262 (retraits back : `score_state`,
+`get_next_match`, `api_tv_upcoming`, pages Django `results*` + templates,
+liens morts corrigés dans `home.html`/`auth_views.py` ; délégué à un agent
+`django-api` — `live/urls.py` câblé par l'orchestrateur ensuite — revu par
+un agent `reviewer`, ✅ Approuvé). `manage.py check` propre, golden path
+vérifié (`/results/…`, `/api/score_state/`, `/api/tv/upcoming/` → 404 ;
+`/api/tv/state/`, `/` → 200).
 
-**Point d'attention outillage :** `npx vue-tsc --noEmit` (forme courte, sans
-`-p`/`-b`) n'exploite pas les project references du `tsconfig.json` racine et
-ne remonte **aucune** erreur même quand il y en a réellement — utiliser
-`npx vue-tsc -b --force` (ou `-p tsconfig.app.json`) pour toute vérification
-de type-check future, y compris pour le script `type-check` toujours à
-ajouter dans `package.json` (TODO CLAUDE.md §4).
+**Fin de sprint non atteinte (subtilité protocole) :** les 2 conditions de
+l'étape 3 ne sont pas simultanément vraies **au sens strict** — le spec
+review de référence est celui pris à l'étape 1, **avant** le backlog engine
+de la même session, donc systématiquement ⚠️ tant qu'il reste des tickets à
+traiter ce jour-là. Après #260/#262, la condition « 0 issue ouverte
+sprint-23 » est désormais vraie, mais la condition « spec review ✅
+Conforme de cette session » ne l'est pas (elle datait d'avant les tickets).
+**Sprint 23 reste donc actif une dernière échéance** : la prochaine session
+devrait trouver un spec review à froid ✅ Conforme (code désormais complet)
+et 0 ticket à traiter au backlog engine → clôture attendue à ce moment-là.
 
-**Fin de sprint non atteinte :** spec review ⚠️ (pas ✅ Conforme) et 2 issues
-sprint-23 encore ouvertes (#260, #262). Sprint 23 reste actif, traité à la
-prochaine échéance planifiée — ordre suggéré : #260 (carte Annonces TV,
-indépendant) puis #262 (retraits back, en dernier).
+**Point d'attention outillage (rappel) :** utiliser `npx vue-tsc -b --force`
+(pas `--noEmit` seul) pour tout type-check front — toujours pas de script
+`type-check` dans `package.json` (TODO CLAUDE.md §4).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 23 actif (1/2). Puis 24 — Affiches de match.
+**Roadmap :** sprint 23 actif (1/2), clôture attendue à la prochaine
+échéance. Puis 24 — Affiches de match.
