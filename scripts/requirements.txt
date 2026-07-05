@@ -1,0 +1,4 @@
+# Dépendances CLI-only pour scripts/generate_match_poster.py
+# En complément de requirements.txt (openai, pillow) à la racine du projet.
+requests==2.34.2
+python-dotenv==1.2.2

@@ -25,10 +25,14 @@ Le script est placé dans le dossier `scripts/` du projet Django.
 
 ## Installation des dépendances
 
-Depuis l’environnement virtuel du projet :
+Depuis l’environnement virtuel du projet, `openai` et `pillow` sont déjà
+installés via le `requirements.txt` racine. Le script ajoute deux
+dépendances CLI-only (`requests`, `python-dotenv`), isolées dans
+`scripts/requirements.txt` :
 
 ```bash
-pip install openai requests python-dotenv
+pip install -r requirements.txt
+pip install -r scripts/requirements.txt
 ```
 
 ---
@@ -196,13 +200,7 @@ Le script peut d’abord être utilisé en ligne de commande.
 Plus tard, il pourra être intégré directement dans Django, par exemple dans :
 
 ```text
-tournois/services/match_poster_generator.py
-```
-
-ou sous forme de commande Django :
-
-```text
-tournois/management/commands/generate_match_poster.py
+live/posters.py
 ```
 
 Pour l’instant, l’usage recommandé est de le tester depuis le terminal.
