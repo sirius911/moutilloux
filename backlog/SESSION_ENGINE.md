@@ -373,45 +373,58 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-05 — Session #95
-**Sprint traité :** 23 — TV live : écran & retraits legacy — **clôturé cette session**
+**Dernière session :** 2026-07-05 — Session #96
+**Sprint traité :** 24 — Affiches de match — **premier démarrage, en cours**
 
-**Git :** branche `claude/sprint/23-tv-live-front`, parent effectif
-`claude/sprint/22-tv-state-back` (résolu via `backlog/sprints/done/` —
-toujours pas mergée dans `origin/main`, `git merge` déjà à jour, aucun
-conflit). Working tree propre au démarrage et en fin de session.
+**Git :** branche `claude/sprint/24-affiches-match` créée cette session
+(n'existait pas encore), parent effectif `claude/sprint/23-tv-live-front`
+(résolu via `backlog/sprints/done/` — sprint 23 toujours pas mergé dans
+`origin/main` malgré `branche-parent: main` dans le frontmatter du sprint,
+conforme à la règle « la roadmap prime sur le frontmatter »). Working tree
+propre en fin de session.
 
-**Spec review session #95 (à froid, après #260/#262) :** review de
-`specs/screens/tv-live.md`, `specs/tv-map.md`, `specs/technical/tv-state.md`
-confiée à un agent `reviewer`. Verdict initial ⚠️ Dérive mineure : une seule
-réserve, documentaire — `tv-state.md` demandait explicitement que
-`specs/screens/admin-tournoi.md` soit complétée pour la carte « Annonces TV »
-livrée par #260, jamais fait. Aucune divergence de comportement. Corrigé
-directement par l'orchestrateur (édition de spec, pas de code) : sections
-« Carte « Annonces TV »» et « Flux : supprimer une annonce » ajoutées à
-`admin-tournoi.md`. Ticket #276 créé puis fermé dans la même session.
-Verdict final : ✅ Conforme sur les 3 specs. `npx vue-tsc --noEmit` et
-`manage.py check` vérifiés propres par l'agent reviewer.
+**Geste préalable #263 (avant étape 1, requis par le sprint) :** cherry-pick
+du commit `6db535a` (PR #1, script `generate_match_poster.py`) — conflit
+mineur sur `.gitignore` (deux blocs additifs), résolu par fusion. Dépendances
+isolées : `requirements.txt` racine restauré (n'ajoute que `openai`+`pillow`
+épinglés) ; `requests`/`python-dotenv` déplacés vers `scripts/requirements.txt`
+(documenté dans `scripts/README.md`) ; référence à l'app inexistante
+`tournois/` corrigée vers `live/posters.py`. Issue #263 fermée.
 
-**Backlog engine session #95 :** 0 issue ouverte milestone Sprint 23 au
-démarrage (toutes fermées : #3, #21, #257-262) — aucun ticket à traiter.
+**Spec review session #96 :** confiée à un agent `reviewer`, sur les 4 specs
+du sprint (`affiche-match.md`, `admin-joueurs.md`, `admin-matchs.md`,
+`tv-live.md`). Comme le sprint démarrait tout juste, l'objectif était de
+vérifier que toutes les exigences des specs sont bien couvertes par un
+ticket existant (#264-272) plutôt que de constater du code manquant —
+confirmé, aucun trou. Aucune dérive préexistante sur les parties déjà
+implémentées hors périmètre affiches. Verdict : ✅ Conforme.
 
-**Clôture de sprint effectuée :** les 2 conditions de l'étape 3 sont
-simultanément vraies (spec review ✅ Conforme après correction #276, et 0
-issue ouverte sprint-23). Milestone « Sprint 23 » fermé via l'API GitHub,
-ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé dans
-`backlog/sprints/done/23-tv-live-front/`.
+**Backlog engine session #96 (2 tickets, max protocolaire) :**
+- **#264** ✅ Approuvé — modèles `Player.photo`/`attitude`, `Match.poster`,
+  `PosterJob` (core+live) + migrations. Fichiers partagés câblés par
+  l'orchestrateur : `MEDIA_URL`/`MEDIA_ROOT` (`moutilloux/settings.py`),
+  serving dev (`moutilloux/urls.py`), proxy `/media` (`vite.config.ts`).
+  Golden path vérifié : fichier posé dans `media/players/` servi en 200.
+- **#265** ✅ Approuvé — `live/posters.py` : `build_prompt`/`player_label`
+  extraits du CLI (seule source de vérité désormais, le CLI les importe via
+  un bootstrap Django minimal) ; `resolve_match_players` ; `start_poster_job`
+  (gardes + thread daemon avec `connections.close_all()`) ;
+  `select_poster_candidate`/`clear_poster`/`_purge_job` (cycle de vie complet
+  des candidates, purge stricte).
+
+**Fin de sprint non atteinte :** spec review ✅ mais 7 issues sprint-24
+encore ouvertes (#266-272) — sprint continue à la prochaine échéance, sur
+l'ordre suggéré du sprint (#266 ∥ #267, puis #269 ∥ #270, puis #271 ∥ #272).
 
 **Point d'attention outillage (rappel) :** utiliser `npx vue-tsc -b --force`
 (pas `--noEmit` seul) pour tout type-check front — toujours pas de script
-`type-check` dans `package.json` (TODO CLAUDE.md §4).
+`type-check` dans `package.json` (TODO CLAUDE.md §4). Sans objet cette
+session (aucun fichier front touché).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 23 clôturé. Sprint 24 — Affiches de match devient
-actif ; conformément au protocole il ne démarre **pas** cette session (la
-prochaine échéance planifiée le prendra en charge, avec sa propre branche
-`claude/sprint/24-affiches-match`).
+**PR #1 :** reste ouverte jusqu'à la clôture complète du sprint 24 (sera
+fermée « intégrée par le sprint 24 » à ce moment, conformément au sprint.md).
