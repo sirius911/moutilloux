@@ -10,5 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 23 — TV live : écran & retraits legacy | `backlog/sprints/23-tv-live-front/sprint.md` |
-| 2 | 24 — Affiches de match | `backlog/sprints/24-affiches-match/sprint.md` |
+| 1 | 24 — Affiches de match | `backlog/sprints/24-affiches-match/sprint.md` |

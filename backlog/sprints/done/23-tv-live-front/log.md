@@ -6,3 +6,4 @@
 | #92 | 2026-07-05 | ⚠️ Dérive mineure | 0 nouvelle dérive (front encore sur l'ancien contrat / legacy back en place — attendu, périmètre du sprint) | 0 | 6 |
 | #93 | 2026-07-05 | ⚠️ Dérive mineure | 0 nouvelle dérive (carte Annonces TV admin + retraits back legacy encore attendus — périmètre du sprint) | 0 | 2 |
 | #94 | 2026-07-05 | ⚠️ Dérive mineure | 0 nouvelle dérive (TvScoreboard/TvIdle/live.ts toujours conformes à tv-live.md/tv-state.md ; carte Annonces TV admin + retraits back legacy encore attendus — périmètre du sprint) | 0 | 2 |
+| #95 | 2026-07-05 | ✅ Conforme | 1 dérive documentaire (specs/screens/admin-tournoi.md non complétée pour la carte Annonces TV, demandé par tv-state.md ; corrigée dans la session, #276 fermée) | 1 (#276, close immédiate) | 0 |
