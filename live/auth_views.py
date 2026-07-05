@@ -11,4 +11,4 @@ class CustomLoginView(LoginView):
             return reverse("admin:index")
         if user.groups.filter(name="Arbitre").exists():
             return reverse("referee_home")
-        return reverse("results")  # ou une page d'accueil
+        return reverse("home")
