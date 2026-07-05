@@ -25,6 +25,8 @@ from live.admin_views import (
     PlayerForm,
     MatchEditForm,
     create_team_with_entry,
+    set_player_photo,
+    clear_player_photo,
     add_player_entry,
     add_players_entries,
     remove_entry,
@@ -177,6 +179,7 @@ def _pack_player(p):
         "phone": p.phone,
         "email": p.email,
         "licenseNumber": p.license_number,
+        "photoUrl": p.photo.url if p.photo else None,
     }
 
 
@@ -751,6 +754,37 @@ def api_player_edit(request, player_id):
         return JsonResponse({"error": "Données invalides", "fields": form.errors}, status=400)
 
     form.save()
+    return JsonResponse({"player": _pack_player(player)})
+
+
+@require_POST
+@superuser_required
+def api_player_photo(request, player_id):
+    """
+    POST /api/players/<id>/photo/
+    Upload (ou suppression) de la photo d'un joueur, en multipart. Requiert superuser.
+
+    - Avec un fichier `photo` dans request.FILES : remplace la photo (l'ancienne est
+      purgée du disque). Validation : jpg/jpeg/png/webp, <= 10 Mo.
+    - Sans fichier `photo` (champ absent ou vide) : supprime la photo existante
+      (purge du fichier). Permet à la modale Fiche joueur d'utiliser un seul endpoint
+      pour uploader ou retirer la photo (case "retirer la photo" -> POST sans fichier).
+
+    Réponse : {"player": _pack_player(player)} avec photoUrl mis à jour (ou null).
+    Erreurs : 400 {"error": "..."} si format/taille invalide.
+    """
+    player = get_object_or_404(Player, pk=player_id)
+
+    uploaded_file = request.FILES.get("photo")
+
+    if uploaded_file:
+        try:
+            set_player_photo(player, uploaded_file)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+    else:
+        clear_player_photo(player)
+
     return JsonResponse({"player": _pack_player(player)})
 
 

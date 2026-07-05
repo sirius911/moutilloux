@@ -22,6 +22,7 @@ urlpatterns = [
 
     # ── API JSON — Phase 2 (inscriptions, mutations) ───────────────────
     path("api/players/<int:player_id>/edit/", api_views.api_player_edit, name="api_player_edit"),
+    path("api/players/<int:player_id>/photo/", api_views.api_player_photo, name="api_player_photo"),
     path("api/events/<int:event_id>/teams/create/", api_views.api_team_create, name="api_team_create"),
     path("api/events/<int:event_id>/registrations/add/", api_views.api_registration_add, name="api_registration_add"),
     path("api/events/<int:event_id>/registrations/add-bulk/", api_views.api_registration_add_bulk, name="api_registration_add_bulk"),

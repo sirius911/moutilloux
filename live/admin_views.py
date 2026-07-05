@@ -199,6 +199,52 @@ def create_team_with_entry(event, player1, player2, name=""):
     return team, entry
 
 
+# Validation upload photo joueur (sprint 24, ticket #268)
+ALLOWED_PHOTO_CONTENT_TYPES = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+}
+MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024  # 10 Mo
+
+
+def set_player_photo(player, uploaded_file):
+    """
+    Remplace la photo d'un joueur par le fichier uploadé (multipart).
+    Purge l'ancien fichier physique s'il existe. Valide le format (jpg/jpeg/png/webp,
+    via content_type) et la taille (<= 10 Mo).
+    Lève ValueError si invalide (message utilisateur, à renvoyer tel quel en JSON).
+    """
+    if uploaded_file.size > MAX_PHOTO_SIZE_BYTES:
+        raise ValueError("La photo dépasse la taille maximale autorisée (10 Mo).")
+
+    content_type = getattr(uploaded_file, "content_type", "") or ""
+    if content_type not in ALLOWED_PHOTO_CONTENT_TYPES:
+        raise ValueError("Format non supporté (jpg, jpeg, png ou webp uniquement).")
+
+    old_photo = player.photo
+    player.photo = uploaded_file
+    player.save(update_fields=["photo"])
+
+    if old_photo and old_photo.name:
+        old_photo.storage.delete(old_photo.name)
+
+    return player
+
+
+def clear_player_photo(player):
+    """
+    Supprime la photo d'un joueur (purge du fichier physique + vidage du champ).
+    No-op silencieux si le joueur n'a pas de photo.
+    """
+    old_photo = player.photo
+    if old_photo and old_photo.name:
+        old_photo.storage.delete(old_photo.name)
+    player.photo = None
+    player.save(update_fields=["photo"])
+    return player
+
+
 # -----------------------
 # Actions : Poules
 # -----------------------
