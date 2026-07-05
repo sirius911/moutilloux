@@ -287,3 +287,12 @@ export interface TvIdleData {
   programme: TvProgramme
   announcements: TvAnnouncement[]
 }
+
+// ─── Annonces TV — CRUD admin (sprint 22/23) ────────────────────────────────
+
+export interface Announcement {
+  id: number
+  editionId: number
+  message: string
+  isActive: boolean
+}
