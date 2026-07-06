@@ -373,53 +373,57 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-05 — Session #96
-**Sprint traité :** 24 — Affiches de match — **premier démarrage, en cours**
+**Dernière session :** 2026-07-06 — Session #98
+**Sprint traité :** 24 — Affiches de match — **en cours**
 
-**Git :** branche `claude/sprint/24-affiches-match` créée cette session
-(n'existait pas encore), parent effectif `claude/sprint/23-tv-live-front`
-(résolu via `backlog/sprints/done/` — sprint 23 toujours pas mergé dans
-`origin/main` malgré `branche-parent: main` dans le frontmatter du sprint,
-conforme à la règle « la roadmap prime sur le frontmatter »). Working tree
-propre en fin de session.
+**Git :** branche `claude/sprint/24-affiches-match`, parent effectif
+`claude/sprint/23-tv-live-front` (résolu via `backlog/sprints/done/` — sprint
+23 toujours pas mergé dans `origin/main` malgré `branche-parent: main` dans
+le frontmatter du sprint, conforme à la règle « la roadmap prime sur le
+frontmatter »). Working tree propre en fin de session, poussé.
 
-**Geste préalable #263 (avant étape 1, requis par le sprint) :** cherry-pick
-du commit `6db535a` (PR #1, script `generate_match_poster.py`) — conflit
-mineur sur `.gitignore` (deux blocs additifs), résolu par fusion. Dépendances
-isolées : `requirements.txt` racine restauré (n'ajoute que `openai`+`pillow`
-épinglés) ; `requests`/`python-dotenv` déplacés vers `scripts/requirements.txt`
-(documenté dans `scripts/README.md`) ; référence à l'app inexistante
-`tournois/` corrigée vers `live/posters.py`. Issue #263 fermée.
+**Session #97 (2026-07-05) — interrompue, récupérée en session #98 :** avait
+implémenté et fermé le ticket **#268** ✅ Approuvé (endpoint `api_player_photo`
+multipart + `photoUrl` dans `_pack_player`, `live/admin_views.py` +
+`live/api_views.py`, route câblée par l'orchestrateur dans `live/urls.py`)
+mais s'était arrêtée avant la fin du protocole : pas de log de session écrit,
+commit `513b93c` jamais poussé, section 6 jamais mise à jour. Aucun travail
+perdu — la session #98 a reconstitué `backlog/logs/session_2026-07-05_97.md`
+à partir de l'historique git et du commentaire de clôture GitHub, puis poussé
+le commit en retard, avant de reprendre le protocole normalement.
 
-**Spec review session #96 :** confiée à un agent `reviewer`, sur les 4 specs
-du sprint (`affiche-match.md`, `admin-joueurs.md`, `admin-matchs.md`,
-`tv-live.md`). Comme le sprint démarrait tout juste, l'objectif était de
-vérifier que toutes les exigences des specs sont bien couvertes par un
-ticket existant (#264-272) plutôt que de constater du code manquant —
-confirmé, aucun trou. Aucune dérive préexistante sur les parties déjà
-implémentées hors périmètre affiches. Verdict : ✅ Conforme.
+**Spec review session #98 :** ✅ Conforme sur les 4 specs du sprint
+(`affiche-match.md`, `admin-joueurs.md`, `admin-matchs.md`, `tv-live.md`).
+0 dérive — l'upload photo (#268) est conforme au format/taille attendus et ne
+casse pas le contrat `_pack_player` existant ; le reste attend correctement
+#266/#267/#269-272.
 
-**Backlog engine session #96 (2 tickets, max protocolaire) :**
-- **#264** ✅ Approuvé — modèles `Player.photo`/`attitude`, `Match.poster`,
-  `PosterJob` (core+live) + migrations. Fichiers partagés câblés par
-  l'orchestrateur : `MEDIA_URL`/`MEDIA_ROOT` (`moutilloux/settings.py`),
-  serving dev (`moutilloux/urls.py`), proxy `/media` (`vite.config.ts`).
-  Golden path vérifié : fichier posé dans `media/players/` servi en 200.
-- **#265** ✅ Approuvé — `live/posters.py` : `build_prompt`/`player_label`
-  extraits du CLI (seule source de vérité désormais, le CLI les importe via
-  un bootstrap Django minimal) ; `resolve_match_players` ; `start_poster_job`
-  (gardes + thread daemon avec `connections.close_all()`) ;
-  `select_poster_candidate`/`clear_poster`/`_purge_job` (cycle de vie complet
-  des candidates, purge stricte).
+**Backlog engine session #98 (2 tickets, max protocolaire) :**
+- **#266** ✅ Approuvé — 4 endpoints `/api/matches/<id>/poster/{,generate,select,clear}/`
+  dans `live/api_views.py` (helpers `_pack_poster_job`/`_poster_state`),
+  purement fins par-dessus `live/posters.py` (aucune garde/logique dupliquée).
+  Routes câblées par l'orchestrateur dans `live/urls.py`.
+- **#267** ✅ Approuvé — `posterUrl` dans `_pack_match` (`live/api_views.py`,
+  pattern identique à `photoUrl`/`_pack_player`) + type `Match` front
+  (`frontend/app/src/types/index.ts`). Diff strictement additif.
 
-**Fin de sprint non atteinte :** spec review ✅ mais 7 issues sprint-24
-encore ouvertes (#266-272) — sprint continue à la prochaine échéance, sur
-l'ordre suggéré du sprint (#266 ∥ #267, puis #269 ∥ #270, puis #271 ∥ #272).
+**Nouvelle issue #278 (hors sprint-24, pas de milestone) :** découverte
+incidente en vérifiant #267 — `npx vue-tsc -b --force` remonte 10 erreurs de
+type pré-existantes (`useApi.ts`, `event.ts`, `AdminBracket.vue`), masquées
+par un `--noEmit` seul (utilisé par erreur en session #96). Aucune n'est liée
+au sprint 24. Ticket créé pour traitement ultérieur, hors milestone pour ne
+pas polluer sprint-24.
 
-**Point d'attention outillage (rappel) :** utiliser `npx vue-tsc -b --force`
-(pas `--noEmit` seul) pour tout type-check front — toujours pas de script
-`type-check` dans `package.json` (TODO CLAUDE.md §4). Sans objet cette
-session (aucun fichier front touché).
+**Fin de sprint non atteinte :** spec review ✅ mais 6 issues sprint-24
+encore ouvertes (#269-272 + les 2 tickets front qui en dépendent) — sprint
+continue à la prochaine échéance, sur l'ordre suggéré du sprint (#269 ∥ #270,
+puis #271 ∥ #272).
+
+**Point d'attention outillage :** utiliser `npx vue-tsc -b --force` (pas
+`--noEmit` seul) pour tout type-check front — confirmé cette session que
+`--noEmit` seul peut masquer des erreurs réelles (cf. #278). Toujours pas de
+script `type-check` dans `package.json` (TODO CLAUDE.md §4, repris dans
+#278).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
