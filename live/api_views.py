@@ -162,6 +162,8 @@ def _pack_entry(entry):
             "fullName": str(p),
             "gender": p.gender,
             "licenseNumber": p.license_number,
+            "attitude": p.attitude,
+            "photoUrl": p.photo.url if p.photo else None,
         }
     else:
         result["player"] = None

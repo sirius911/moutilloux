@@ -12,10 +12,21 @@ export interface Player {
   phone: string
 }
 
+export interface EntryPlayer {
+  id: number
+  firstName: string
+  lastName: string
+  fullName: string
+  gender: 'M' | 'F' | 'O'
+  licenseNumber: string
+  attitude: string             // adjectif d'attitude par défaut (affiches)
+  photoUrl: string | null
+}
+
 export interface Entry {
   id: number
   displayName: string         // nom affiché (joueur ou équipe)
-  player: Player | null       // null pour les doubles
+  player: EntryPlayer | null  // null pour les doubles
   teamName?: string           // doubles
   seedHint: number | null
   groupId: number | null
