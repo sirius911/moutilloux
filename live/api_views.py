@@ -282,6 +282,7 @@ def _pack_match(m):
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
         "updatedAt": m.updated_at.isoformat(),
         "clock": clock,
+        "posterUrl": m.poster.url if m.poster else None,
     }
 
 

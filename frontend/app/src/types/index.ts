@@ -167,6 +167,9 @@ export interface Match {
 
   // Clock (durée en cours)
   clock?: string            // "42mn"
+
+  // Affiche (sprint 24)
+  posterUrl: string | null
 }
 
 // ─── Bracket ────────────────────────────────────────────────────────────────
