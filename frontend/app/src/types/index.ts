@@ -310,3 +310,18 @@ export interface Announcement {
   message: string
   isActive: boolean
 }
+
+// ─── Affiche de match — génération IA (sprint 24) ───────────────────────────
+
+export type PosterJobStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR'
+
+export interface PosterJobState {
+  status: PosterJobStatus
+  error: string
+  candidates: string[]   // 0, 1 ou 2 URLs (`/media/match_posters/candidates/…`)
+}
+
+export interface PosterState {
+  posterUrl: string | null
+  job: PosterJobState | null
+}
