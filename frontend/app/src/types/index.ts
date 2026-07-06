@@ -10,6 +10,8 @@ export interface Player {
   licenseNumber: string
   email: string
   phone: string
+  photoUrl: string | null
+  attitude: string
 }
 
 export interface EntryPlayer {

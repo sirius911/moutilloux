@@ -184,6 +184,7 @@ def _pack_player(p):
         "email": p.email,
         "licenseNumber": p.license_number,
         "photoUrl": p.photo.url if p.photo else None,
+        "attitude": p.attitude,
     }
 
 
@@ -709,6 +710,7 @@ def api_player_create(request):
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
     license_number = data.get("license_number", "").strip()
+    attitude = data.get("attitude", "").strip()
 
     if not first_name or not last_name:
         return JsonResponse({"error": "Prénom et nom requis."}, status=400)
@@ -731,6 +733,7 @@ def api_player_create(request):
         email=email,
         phone=phone,
         license_number=license_number,
+        attitude=attitude,
     )
 
     return JsonResponse({"ok": True, "playerId": player.id})
