@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-06 — Session #98
+**Dernière session :** 2026-07-06 — Session #99
 **Sprint traité :** 24 — Affiches de match — **en cours**
 
 **Git :** branche `claude/sprint/24-affiches-match`, parent effectif
@@ -382,48 +382,49 @@ et exécute le protocole complet (étapes 0 à 4).
 le frontmatter du sprint, conforme à la règle « la roadmap prime sur le
 frontmatter »). Working tree propre en fin de session, poussé.
 
-**Session #97 (2026-07-05) — interrompue, récupérée en session #98 :** avait
-implémenté et fermé le ticket **#268** ✅ Approuvé (endpoint `api_player_photo`
-multipart + `photoUrl` dans `_pack_player`, `live/admin_views.py` +
-`live/api_views.py`, route câblée par l'orchestrateur dans `live/urls.py`)
-mais s'était arrêtée avant la fin du protocole : pas de log de session écrit,
-commit `513b93c` jamais poussé, section 6 jamais mise à jour. Aucun travail
-perdu — la session #98 a reconstitué `backlog/logs/session_2026-07-05_97.md`
-à partir de l'historique git et du commentaire de clôture GitHub, puis poussé
-le commit en retard, avant de reprendre le protocole normalement.
+**Spec review session #99 :** ✅ Conforme sur les 4 specs du sprint. 0 dérive
+sur les parties déjà livrées (#263-268) ; le reste attend correctement
+#269-272, sans câblage spéculatif ni régression.
 
-**Spec review session #98 :** ✅ Conforme sur les 4 specs du sprint
-(`affiche-match.md`, `admin-joueurs.md`, `admin-matchs.md`, `tv-live.md`).
-0 dérive — l'upload photo (#268) est conforme au format/taille attendus et ne
-casse pas le contrat `_pack_player` existant ; le reste attend correctement
-#266/#267/#269-272.
+**Backlog engine session #99 (2 tickets, max protocolaire) :**
+- **#270** ❌ Renvoyé (`à-reprendre`) — onglet « Affiche » d'`EditMatchPanel.vue`
+  + raccourci ligne calendrier implémentés, mais `selectCandidate()`/
+  `removePoster()` émettent `saved`, qui déclenche `onMatchSaved()`
+  (`AdminMatches.vue`) et **ferme le panneau** après Choisir/Retirer — la spec
+  ne demande aucune fermeture automatique à cet endroit, ça casse le golden
+  path « choisir → l'affiche apparaît dans l'onglet ». Piste postée sur
+  l'issue + bloc `## ❌ Problème bloquant` ajouté à
+  `backlog/plan/270-onglet-affiche-editmatchpanel.md`. **Reste du travail
+  solide** (contrat back conforme, type-check propre) : correction ciblée à
+  prévoir à la reprise (émettre un événement dédié type `poster-updated` au
+  lieu de `saved` pour ces deux actions, sans fermer le panneau).
+- **#269** ✅ Approuvé — champ Photo (aperçu + validation) et champ Attitude
+  dans `AddPlayerModal.vue`, avatar conditionnel dans `AdminPlayers.vue`,
+  upload multipart via un `fetch` dédié documenté (FormData non supporté par
+  `useApi`), séquence JSON-puis-multipart avec tolérance d'échec partiel.
 
-**Backlog engine session #98 (2 tickets, max protocolaire) :**
-- **#266** ✅ Approuvé — 4 endpoints `/api/matches/<id>/poster/{,generate,select,clear}/`
-  dans `live/api_views.py` (helpers `_pack_poster_job`/`_poster_state`),
-  purement fins par-dessus `live/posters.py` (aucune garde/logique dupliquée).
-  Routes câblées par l'orchestrateur dans `live/urls.py`.
-- **#267** ✅ Approuvé — `posterUrl` dans `_pack_match` (`live/api_views.py`,
-  pattern identique à `photoUrl`/`_pack_player`) + type `Match` front
-  (`frontend/app/src/types/index.ts`). Diff strictement additif.
+**Gaps back détectés et corrigés par l'orchestrateur pendant la planification**
+(dans les deux cas : lecture du code par l'agent de planification, pas
+supposition ; fix appliqué directement par l'orchestrateur car fichiers de
+contention CLAUDE.md §3/§5, avant de lancer l'agent d'implémentation front) :
+- Pour #270 : `_pack_entry` (`live/api_views.py`) n'exposait pas
+  `Player.attitude`/`photo` sur `Entry.player` → ajout `attitude`/`photoUrl`
+  + nouveau type front `EntryPlayer` (`types/index.ts`). Sans ça, le
+  pré-remplissage du formulaire attitude (exigé par la spec) était
+  irréalisable côté front.
+- Pour #269 : `PlayerForm.Meta.fields` (`live/admin_views.py`) et
+  `api_player_create` (`live/api_views.py`) ignoraient silencieusement
+  `attitude` ; `_pack_player` ne le renvoyait pas non plus → ajout du champ
+  aux 3 endroits + extension de `Player`/`PlayerEditPayload` front.
 
-**Nouvelle issue #278 (hors sprint-24, pas de milestone) :** découverte
-incidente en vérifiant #267 — `npx vue-tsc -b --force` remonte 10 erreurs de
-type pré-existantes (`useApi.ts`, `event.ts`, `AdminBracket.vue`), masquées
-par un `--noEmit` seul (utilisé par erreur en session #96). Aucune n'est liée
-au sprint 24. Ticket créé pour traitement ultérieur, hors milestone pour ne
-pas polluer sprint-24.
-
-**Fin de sprint non atteinte :** spec review ✅ mais 6 issues sprint-24
-encore ouvertes (#269-272 + les 2 tickets front qui en dépendent) — sprint
-continue à la prochaine échéance, sur l'ordre suggéré du sprint (#269 ∥ #270,
-puis #271 ∥ #272).
+**Fin de sprint non atteinte :** spec review ✅ mais 3 issues sprint-24
+encore ouvertes (#270 à-reprendre, #271, #272) — sprint continue à la
+prochaine échéance. Prochaine étape suggérée : corriger #270 (petit fix
+ciblé, plan déjà à jour avec le problème et la piste), puis #271 ∥ #272 (TV).
 
 **Point d'attention outillage :** utiliser `npx vue-tsc -b --force` (pas
-`--noEmit` seul) pour tout type-check front — confirmé cette session que
-`--noEmit` seul peut masquer des erreurs réelles (cf. #278). Toujours pas de
-script `type-check` dans `package.json` (TODO CLAUDE.md §4, repris dans
-#278).
+`--noEmit` seul) pour tout type-check front — toujours valable (#278, hors
+sprint-24). Toujours pas de script `type-check` dans `package.json`.
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
