@@ -40,6 +40,12 @@ urlpatterns = [
     path("api/matches/<int:match_id>/feature/", api_views.api_match_feature, name="api_match_feature"),
     path("api/matches/<int:match_id>/start/", api_views.api_match_start, name="api_match_start"),
 
+    # ── API JSON — Sprint 24 (affiches de match) ───────────────────────
+    path("api/matches/<int:match_id>/poster/", api_views.api_match_poster_status, name="api_match_poster_status"),
+    path("api/matches/<int:match_id>/poster/generate/", api_views.api_match_poster_generate, name="api_match_poster_generate"),
+    path("api/matches/<int:match_id>/poster/select/", api_views.api_match_poster_select, name="api_match_poster_select"),
+    path("api/matches/<int:match_id>/poster/clear/", api_views.api_match_poster_clear, name="api_match_poster_clear"),
+
     # ── API JSON — Phase 5 (live, lecture d'un match) ──────────────────
     path("api/matches/<int:match_id>/", api_views.api_match_detail, name="api_match_detail"),
 
