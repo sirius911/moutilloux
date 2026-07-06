@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useApi } from '@/composables/useApi'
@@ -22,9 +22,79 @@ const currentYear = new Date().getFullYear()
 const gender = ref<'M' | 'F' | 'O' | ''>(props.editing?.gender ?? '')
 const email = ref(props.editing?.email ?? '')
 const phone = ref(props.editing?.phone ?? '')
+const attitude = ref(props.editing?.attitude ?? '')
 const saving = ref(false)
 const error = ref('')
 const fieldErrors = ref<Record<string, string[]>>({})
+
+// Photo
+const fileInput = ref<HTMLInputElement | null>(null)
+const photoFile = ref<File | null>(null)
+const photoRemoved = ref(false)
+const photoPreviewUrl = ref<string | null>(props.editing?.photoUrl ?? null)
+const photoError = ref('')
+
+function initials(name: string): string {
+  return name.split(' ').map((p) => p[0]).join('').toUpperCase().slice(0, 2)
+}
+
+const initialsPreview = computed(() => initials(`${firstName.value} ${lastName.value}`.trim()))
+
+function revokePreviewIfBlob() {
+  if (photoPreviewUrl.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(photoPreviewUrl.value)
+  }
+}
+
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_SIZE = 10 * 1024 * 1024
+
+function onPhotoSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  if (!ACCEPTED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
+    photoError.value = 'Format non supporté (jpg, png, webp) ou fichier trop volumineux (max 10 Mo).'
+    return
+  }
+  photoError.value = ''
+  photoFile.value = file
+  photoRemoved.value = false
+  revokePreviewIfBlob()
+  photoPreviewUrl.value = URL.createObjectURL(file)
+}
+
+function clearPhoto() {
+  revokePreviewIfBlob()
+  photoFile.value = null
+  photoRemoved.value = true
+  photoPreviewUrl.value = null
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+// L'upload de photo ne passe pas par useApi() : useApi() force
+// Content-Type: application/json et JSON.stringify(body), il ne supporte
+// pas FormData (aucun autre écran du projet n'a ce besoin aujourd'hui).
+// On duplique ici un mini-fetch avec le même contrat CSRF/session que
+// useApi.ts (cookie csrftoken -> header X-CSRFToken, credentials: include),
+// mais SANS fixer Content-Type : le navigateur doit poser lui-même le
+// boundary multipart quand le body est un FormData.
+async function uploadPhoto(playerId: number): Promise<void> {
+  const form = new FormData()
+  if (photoFile.value) form.append('photo', photoFile.value)
+  // si photoRemoved sans nouveau fichier : FormData vide, l'endpoint
+  // interprète l'absence du champ "photo" comme une demande de suppression.
+  const csrfMatch = document.cookie.match(/csrftoken=([^;]+)/)
+  const res = await fetch(`/api/players/${playerId}/photo/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'X-CSRFToken': csrfMatch ? csrfMatch[1] : '' },
+    body: form,
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`[${res.status}] photo — ${text}`)
+  }
+}
 
 const subtitle = computed(() =>
   props.editing
@@ -38,6 +108,8 @@ const genderOptions = [
   { value: 'F', label: 'Femme' },
   { value: 'O', label: 'Autre' },
 ]
+
+const hasPhotoChange = computed(() => photoFile.value !== null || photoRemoved.value)
 
 async function save() {
   if (!firstName.value || !lastName.value) return
@@ -53,16 +125,39 @@ async function save() {
         birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
+        attitude: attitude.value || undefined,
       })
+      if (hasPhotoChange.value) {
+        try {
+          await uploadPhoto(props.editing.id)
+        } catch (photoErr) {
+          const msg = photoErr instanceof Error ? photoErr.message : 'Erreur inconnue.'
+          error.value = `Joueur enregistré, mais l'envoi de la photo a échoué : ${msg}. Réessayez depuis la fiche.`
+          emit('saved')
+          return
+        }
+      }
     } else {
-      await post('/api/players/create/', {
+      const res = await post<{ ok: boolean; playerId: number }>('/api/players/create/', {
         first_name: firstName.value,
         last_name: lastName.value,
         birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
         gender: gender.value || undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
+        attitude: attitude.value || undefined,
       })
+      if (photoFile.value) {
+        try {
+          await uploadPhoto(res.playerId)
+        } catch (photoErr) {
+          const msg = photoErr instanceof Error ? photoErr.message : 'Erreur inconnue.'
+          error.value = `Joueur enregistré, mais l'envoi de la photo a échoué : ${msg}. Réessayez depuis la fiche.`
+          await eventStore.fetchAllPlayers()
+          emit('saved')
+          return
+        }
+      }
       await eventStore.fetchAllPlayers()
     }
     emit('saved')
@@ -85,6 +180,10 @@ async function save() {
     saving.value = false
   }
 }
+
+onUnmounted(() => {
+  revokePreviewIfBlob()
+})
 </script>
 
 <template>
@@ -124,6 +223,41 @@ async function save() {
           <span class="fld-lbl">Genre</span>
           <Segmented v-model="gender" :options="genderOptions" />
           <span v-if="fieldErrors.gender?.length" class="fld-error">{{ fieldErrors.gender[0] }}</span>
+        </label>
+        <label class="fld fld-photo">
+          <span class="fld-lbl">Photo</span>
+          <div class="photo-picker">
+            <div class="photo-preview" :class="{ empty: !photoPreviewUrl }">
+              <img v-if="photoPreviewUrl" :src="photoPreviewUrl" alt="" />
+              <span v-else>{{ initialsPreview }}</span>
+            </div>
+            <div class="photo-actions">
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="photo-input-hidden"
+                @change="onPhotoSelected"
+              />
+              <button class="adm-btn" type="button" @click="fileInput?.click()">
+                {{ photoPreviewUrl ? 'Changer la photo' : 'Choisir une photo' }}
+              </button>
+              <button
+                v-if="photoPreviewUrl"
+                class="adm-btn"
+                type="button"
+                @click="clearPhoto"
+              >
+                Retirer la photo
+              </button>
+            </div>
+          </div>
+          <span v-if="photoError" class="fld-error">{{ photoError }}</span>
+        </label>
+        <label class="fld">
+          <span class="fld-lbl">Attitude (pour les affiches)</span>
+          <input v-model="attitude" class="inp" placeholder="ex. charmeuse, furieux…" />
+          <span v-if="fieldErrors.attitude?.length" class="fld-error">{{ fieldErrors.attitude[0] }}</span>
         </label>
       </div>
     </div>
@@ -241,4 +375,42 @@ async function save() {
   color: var(--danger);
   margin-top: 2px;
 }
+
+.fld-photo { grid-column: 1 / -1; }
+
+.photo-picker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.photo-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-2);
+  flex-shrink: 0;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.photo-input-hidden { display: none; }
 </style>

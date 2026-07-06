@@ -104,8 +104,13 @@ function genderLabel(g: string | undefined | null) {
             <tbody>
               <tr v-for="p in filtered" :key="p.id">
                 <td class="col-player">
-                  <div class="avatar" :style="{ background: avatarColor(p.fullName) }">
-                    {{ initials(p.fullName) }}
+                  <div
+                    class="avatar"
+                    :class="{ 'has-photo': p.photoUrl }"
+                    :style="!p.photoUrl ? { background: avatarColor(p.fullName) } : undefined"
+                  >
+                    <img v-if="p.photoUrl" :src="p.photoUrl" :alt="p.fullName" />
+                    <template v-else>{{ initials(p.fullName) }}</template>
                   </div>
                   <span class="player-name">{{ p.fullName }}</span>
                 </td>
@@ -265,6 +270,9 @@ function genderLabel(g: string | undefined | null) {
   color: #000;
   flex-shrink: 0;
 }
+
+.avatar.has-photo { background: var(--bg-3); }
+.avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
 .player-name { font-weight: 500; color: var(--ink-0); }
 .player-meta { font-size: 13px; color: var(--ink-3); }
