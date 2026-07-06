@@ -5,3 +5,4 @@
 | — | 2026-07-04 | — | Sprint planifié (specs affiche-match du brainstorm 2026-07-04 ; intègre la PR #1) | #263-272 | 10 |
 | #96 | 2026-07-05 | ✅ Conforme | 0 dérive (toutes les exigences des 4 specs couvertes par #264-272 ; #263 fait au setup) | 0 nouvelle issue | 9 |
 | #97 | 2026-07-05 | ✅ Conforme | 0 dérive (fondations #263-265 fidèles aux 4 specs ; reste correctement en attente de #266-272) | 0 nouvelle issue | 7 |
+| #98 | 2026-07-06 | ✅ Conforme | 0 dérive (upload photo #268 conforme à `admin-joueurs.md`/`affiche-match.md` — format, taille, contrat `_pack_player` non cassé ; reste correctement en attente de #266/#267/#269-272) | 0 nouvelle issue | 6 |
