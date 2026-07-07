@@ -93,7 +93,11 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
 
 Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayDay`) :
 - En-tête : nom + date, nombre de matchs ; sous-ligne « Court central · début HH:MM
-  · fin estimée ~HH:MM ».
+  · fin estimée ~HH:MM ». L'**heure de début est éditable en place** : cliquer
+  « début HH:MM » ouvre un sélecteur d'heure inline (même mutation que
+  « Modifier » dans la modale Gérer les journées) — c'est le moyen rapide de
+  décaler le premier match de la journée, les heures restant dérivées
+  (décision 18, [[planning]]).
 - **Pastille de capacité** : « Cible HH:MM » (dans les temps) ou « Dépasse HH:MM »
   (surlignée) — alerte souple, jamais bloquante (voir [[planning]]).
 - Action discrète **« + pause »** : insère une bande de pause dans la journée.
@@ -108,6 +112,10 @@ Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayD
 - **Heure estimée** : `~HH:MM` (heure réelle, sans tilde, si terminé), en chiffres
   tabulaires.
 - **Puce d'état** : Terminé / En cours / Next / Planifié (couleurs — voir légende).
+- **Teinte de ponctualité** sur la ligne (dérivée, tolérance 5 min — règles dans
+  [[planning]]) : **rouge** = en retard et pas démarré, **orange** = démarré en
+  retard ou qui s'éternise, **vert** = en cours et à l'heure. Les lignes dans
+  les temps, terminées ou annulées ne portent aucune teinte.
 - **Affiche** : pastille de poule, « {A} vs {B} ».
 - **⚠ repos** si le match est adjacent, dans la séquence, à un autre match du même
   joueur (voir [[planning]]).
@@ -123,8 +131,8 @@ Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayD
 
 ### Légende
 
-- Rappel des puces d'état (Terminé, En cours, Next, Planifié) et du marqueur
-  ⚠ repos insuffisant.
+- Rappel des puces d'état (Terminé, En cours, Next, Planifié), des **teintes de
+  ponctualité** (rouge / orange / vert) et du marqueur ⚠ repos insuffisant.
 
 ---
 
@@ -190,6 +198,14 @@ l'**édition** courante — le calendrier étant édition-scoped (voir [[plannin
 - **Liste** des journées existantes, triées par date : pour chacune, **date**,
   **heure de début**, **heure de fin cible**, nombre de matchs/pauses rattachés,
   et actions **Modifier** / **Supprimer**.
+- **« Générer depuis l'édition »** : propose une journée par jour entre les
+  **dates de début et de fin de l'édition** (bornes incluses), en sautant les
+  dates ayant déjà une journée. Un mini-formulaire fixe la plage horaire commune
+  avant validation — défaut **9:00 → 20:00** — et affiche l'aperçu des journées
+  qui seront créées (pas de création silencieuse). Chaque journée reste ensuite
+  modifiable individuellement. Action désactivée (avec explication) si
+  l'édition n'a pas ses dates, ou si tous les jours sont déjà couverts.
+  Contrat : [[planning]] (`play-days/generate/`).
 - **« + Nouvelle journée »** : formulaire — **date** (requise), **heure de début**
   (requise), **heure de fin cible** (requise). À l'enregistrement, la journée
   apparaît immédiatement dans le calendrier (section vide prête à recevoir des
@@ -276,7 +292,8 @@ Génération et choix de l'**affiche IA** du match (mécanique complète :
 - **Affiche retenue** : aperçu de `Match.poster` si elle existe, avec action
   **Retirer** (confirmation simple).
 - **Formulaire de génération** : un champ « attitude » par joueur, pré-rempli
-  depuis la fiche (`Player.attitude`), modifiable à la volée. Bouton
+  par **tirage au sort** parmi les attitudes de la fiche (`Player.attitudes`),
+  remplaçable par un choix explicite avant de lancer (voir [[affiche-match]]). Bouton
   **« Générer 2 propositions »** — désactivé (avec explication) si un joueur
   n'a pas de photo, si les deux sides ne sont pas résolus, ou si une
   génération est déjà en cours.
@@ -305,7 +322,7 @@ Génération et choix de l'**affiche IA** du match (mécanique complète :
 |---|---|
 | Aucune épreuve active | État vide avec lien vers Tournoi. |
 | Épreuve pas encore débutée (`INSCRIPTION`) | Le calendrier n'est pas disponible : invite à **débuter l'épreuve** depuis l'écran Tournoi (voir [[cycle-de-vie-epreuve]]). |
-| Aucune journée configurée | État vide invitant à **créer une première journée** via **« Gérer les journées »** (date, début, fin cible — voir Modale ci-dessous et [[planning]]). Sans journée, on ne peut que générer / garder les matchs « à planifier ». Ne renvoie **pas** vers l'admin Django. |
+| Aucune journée configurée | État vide invitant à **créer les journées** via **« Gérer les journées »** — en un geste avec « Générer depuis l'édition » si l'édition a ses dates, sinon journée par journée (voir Modale ci-dessous et [[planning]]). Sans journée, on ne peut que générer / garder les matchs « à planifier ». Ne renvoie **pas** vers l'admin Django. |
 | Pile non vide en fin de planification | Ce n'est pas une erreur : les matchs restants demeurent « à planifier ». |
 
 ## Données

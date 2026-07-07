@@ -99,6 +99,15 @@ Contrat de données, définition du *next*, annonces et cadences :
     LIVE (enjeu par-dessus, semi-transparent) + slide « Affiche » du carousel
     (prochain match). Le carousel passe à **7 slides**. Contrat complet :
     [[affiche-match]].
+12. **Rotation stable et lisible** (revue produit du 2026-07-07) : la cadence
+    reste **8 s par slide** ; la pastille de pagination de la slide courante se
+    **remplit progressivement** (temps restant visible) ; un rafraîchissement
+    des données `tv/idle` ne change **jamais** la slide affichée en cours de
+    lecture — les changements de composition prennent effet au tick suivant
+    (la slide courante est identifiée par sa nature, pas par sa position).
+    Corrige l'inconsistance observée (l'index de rotation pointait dans une
+    liste recalculée à chaque poll). Le badge Q des standings TV suit la règle
+    « poule terminée » (décision 30 d'[[admin-panel-map]]). [[tv-live]].
 
 ## API de référence (cible)
 

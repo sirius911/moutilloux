@@ -82,6 +82,9 @@ Lecture publique. Tout match est packé par `_pack_match`.
 - `stake` est **dérivé du hero** (sa poule ou le tableau de son épreuve) ;
   `null` si non résolvable. Les deux entries du hero sont identifiables dans
   les standings via `entryId`.
+- `qualified` n'est vrai que si la **poule est terminée** (plus aucun match
+  `SCHEDULED`/`LIVE` dans la poule) — jamais sur classement partiel (voir
+  [[cycle-de-vie-epreuve]]). Même règle pour les standings de `tv/idle`.
 
 ## `GET /api/tv/idle/` — le contenu froid (pollé ~10 s)
 

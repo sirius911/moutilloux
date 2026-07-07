@@ -173,11 +173,32 @@ La planification ([[planning]]) est un **calque d'organisation, pas une barrièr
 
 ## Le tableau final
 
+### Poule terminée : la frontière de la qualification
+
+> Une poule est **terminée** quand plus aucun de ses matchs n'est `SCHEDULED`
+> ou `LIVE` — tous sont `FINISHED` (walkovers compris) ou `CANCELED`. Les
+> **qualifiés d'une poule ne sont définis qu'à ce moment-là** : tant qu'elle
+> joue, son classement intermédiaire (rang, V/D, points) reste visible partout,
+> mais **sans statut de qualification** — aucun badge Q ([[admin-poules]],
+> [[tv-live]]), aucune apparition dans « Qualifiés disponibles » et aucun
+> placement dans le tableau ([[admin-tableau-final]]).
+
+La granularité reste **la poule**, pas l'épreuve : on n'attend pas que toutes
+les poules soient finies — chaque poule libère ses qualifiés dès qu'elle est
+terminée, au fil de l'eau.
+
+> **Écart connu.** Aujourd'hui `sync_final_bracket_for_event` (`bracket.py:242`)
+> résout une étiquette `A1`/`C2` dès qu'un `GroupStanding` porte ce rang — or le
+> classement est recalculé à **chaque** match terminé : le tableau se peuple de
+> qualifiés **provisoires** pendant que la poule joue encore. La cible est de ne
+> résoudre une étiquette que si sa poule est **terminée** (même garde pour le
+> champ `qualified` des standings exposés).
+
 ### Au fil de l'eau
 
 Le tableau se **remplit progressivement** : un slot reçoit ses joueurs dès que la
-ou les poules dont il dépend sont classées (`sync_final_bracket_for_event`,
-`bracket.py:155`). Un quart peut donc **se jouer dès que ses deux qualifiés sont
+ou les poules dont il dépend sont **terminées** (`sync_final_bracket_for_event`,
+`bracket.py:242`). Un quart peut donc **se jouer dès que ses deux qualifiés sont
 connus**, même si d'autres poules de l'épreuve jouent encore.
 
 > **Conséquence sur le seeding.** « Au fil de l'eau » impose un seeding **par

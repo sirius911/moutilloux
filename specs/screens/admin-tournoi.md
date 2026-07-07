@@ -64,6 +64,10 @@ la slide dédiée de l'écran TV idle (voir [[tv-state]], modèle `Announcement`
   - un **interrupteur** actif/inactif (`is_active`) — désactivée, l'annonce
     reste dans la liste mais n'est plus diffusée sur la TV (texte grisé) ;
   - le message ;
+  - **Modifier** → **édition inline** du message : le texte devient un champ de
+    saisie (Entrée ou « Enregistrer » valide, Échap annule) ; un message vide
+    est refusé. Réutilise l'endpoint d'édition existant
+    (`POST /api/announcements/<id>/edit/`, déjà utilisé pour l'interrupteur) ;
   - **Supprimer** → confirmation forte (voir Flux), suppression définitive.
 - État vide : « Aucune annonce. »
 - Pas d'échéance ni de programmation horaire : on active/désactive à la main.

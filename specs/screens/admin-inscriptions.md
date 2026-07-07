@@ -34,10 +34,10 @@ adapte son interface au mode de la catégorie (Simple / Double).
   rechargement (voir [[routing-context]]).
 - Titre « Inscriptions », sous-titre « N inscrit(s) ».
 - Action principale selon le mode :
-  - **Simple** : « Inscrire les N affichés » — inscrit en masse tous les joueurs
-    actuellement visibles dans la liste « Joueurs disponibles » (donc en
-    respectant la recherche en cours, et le libellé du bouton l'affiche).
-    Désactivée si la liste affichée est vide ou pendant un traitement.
+  - **Simple** : « **Inscrire la sélection (N)** » — inscrit en masse les joueurs
+    **cochés** dans la liste « Joueurs disponibles » (N = nombre de cochés,
+    affiché dans le libellé). Désactivée si aucun joueur n'est coché ou pendant
+    un traitement.
   - **Double** : « Créer une équipe » → modale Équipe.
 
 ### Carte « Inscrits »
@@ -56,7 +56,12 @@ Liste des participants de l'épreuve active :
 
 - Joueurs du registre **non encore inscrits** à l'épreuve active, avec champ de
   recherche (nom complet).
-- Chaque ligne propose **Inscrire**.
+- Chaque ligne porte une **case à cocher** (sélection pour l'inscription en
+  masse) et propose **Inscrire** (action unitaire immédiate).
+- Case « **Tout cocher** » en tête de liste : coche/décoche tous les joueurs
+  **actuellement affichés** (donc en respectant la recherche en cours).
+- La recherche ne décoche pas : un joueur coché puis masqué par le filtre reste
+  sélectionné (le compteur du bouton fait foi).
 - État vide : « Tous les joueurs du registre sont inscrits ».
 
 En mode **Double**, cette carte n'existe pas : l'ajout passe exclusivement par la
@@ -98,12 +103,13 @@ Titre « Créer une équipe », sous-titre rappelant l'épreuve.
 
 ## Flux : inscription en masse (Simple)
 
-1. L'admin (éventuellement après avoir filtré par recherche) clique
-   « Inscrire les N affichés ».
-2. Tous les joueurs **affichés** sont inscrits en une opération. Les joueurs
+1. L'admin coche des joueurs dans « Joueurs disponibles » (unitairement, ou via
+   « Tout cocher » après avoir filtré par recherche), puis clique
+   « Inscrire la sélection (N) ».
+2. Tous les joueurs **cochés** sont inscrits en une opération. Les joueurs
    déjà inscrits entre-temps sont ignorés sans erreur.
-3. La liste des inscrits se met à jour ; le bandeau d'erreur ne s'affiche que si
-   l'opération entière échoue.
+3. La liste des inscrits se met à jour, la sélection se vide ; le bandeau
+   d'erreur ne s'affiche que si l'opération entière échoue.
 
 ## Flux : retirer une inscription
 

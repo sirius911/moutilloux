@@ -103,10 +103,19 @@ manuellement (voir [[admin-matchs]], « mettre en avant »).
 ## Algorithme d'estimation des heures (ETA) et re-flow
 
 Par journée, on parcourt sa séquence (matchs + pauses, ordonnés par
-`order_index`) avec un curseur `t` initialisé à `start_time` :
+`order_index`) avec un curseur `t` initialisé à `start_time`. Le curseur est
+**monotone : il ne recule jamais** — c'est lui qui garantit « jamais d'avance
+surprise » :
 
-- **match terminé** → heure affichée = son heure réelle ; `t = finished_at`.
-- **match en cours** → `t = max(maintenant, started_at + durée)`.
+- **match terminé** → heure affichée = son heure réelle de début ;
+  `t = max(t + durée, finished_at)`. Un match fini **en avance** ne tire donc
+  pas l'aval vers l'avant (la marge devient du temps de pause naturel) ; un
+  match fini **en retard** pousse tout l'aval.
+- **match en cours** → heure affichée = son heure réelle de début ;
+  `t = max(t + durée, started_at + durée, maintenant)`. C'est le **démarrage
+  réel** d'un match qui recale l'aval : démarré à l'heure ou en avance, rien ne
+  bouge ; démarré en retard (ou s'éternisant au-delà de sa durée), tout l'aval
+  se décale.
 - **match planifié** → ETA = `t` ; puis `t += durée`.
 - **pause** → `t += duration_min` (aucune heure de match ; bande « Pause »).
 
@@ -114,16 +123,36 @@ Par journée, on parcourt sa séquence (matchs + pauses, ordonnés par
 seule valeur au MVP — durées par format en Phase 2).
 
 Propriétés garanties :
-- **Re-flow automatique** : le curseur des matchs à venir est ancré sur
-  `max(maintenant, dernière fin réelle)` → un match qui déborde **repousse tout
-  l'aval** de sa journée.
-- **Jamais d'avance surprise** : une ETA ne recule pas sous l'heure déjà annoncée
-  (un match annoncé ~15:00 ne saute pas à 14:40 si on a de l'avance).
+- **Re-flow automatique** : un match qui déborde (démarrage tardif ou durée
+  dépassée) **repousse tout l'aval** de sa journée.
+- **Jamais d'avance surprise** : le curseur étant monotone, une ETA ne recule
+  jamais sous l'heure dérivée des durées par défaut (un match annoncé ~15:00 ne
+  saute pas à 14:40 si on a de l'avance). Le match suivant **peut** être démarré
+  en avance par l'arbitre — rien ne l'y oblige, et son ETA affichée n'aura pas
+  bougé.
 - **Journées indépendantes** : chaque journée part de son propre `start_time` ; un
   débordement de la veille ne décale pas le lendemain.
 
 Les heures publiques sont affichées **approximatives** (préfixe `~`), voir
 [[tv-live]].
+
+---
+
+## Indicateur de ponctualité (rouge / orange / vert)
+
+État **dérivé, jamais stocké**, calculé par rapport à l'ETA et à une
+**tolérance de 5 min**. Surface : teinte de la ligne du calendrier admin
+([[admin-matchs]]) ; repris dans la légende.
+
+| Couleur | Règle |
+|---|---|
+| **Rouge** — en retard, pas démarré | `SCHEDULED` planifié et `maintenant > ETA + 5 min` |
+| **Orange** — démarré mais en retard | `LIVE` et (`started_at > ETA + 5 min` **ou** `maintenant > started_at + durée + 5 min` — le match s'éternise) |
+| **Vert** — démarré et à l'heure | `LIVE`, démarré dans la tolérance et dans sa durée |
+
+Les matchs `SCHEDULED` encore dans les temps, `FINISHED` et `CANCELED` ne
+portent **aucune** teinte de ponctualité (leurs états existants suffisent).
+L'indicateur se recalcule en continu (au rythme du polling de l'écran).
 
 ---
 
@@ -179,6 +208,7 @@ toucher à ce qui est déjà placé :
 | `POST /api/matches/<id>/edit/` | édition fine (score correctif, format, statut, journée, mise en avant). |
 | `POST /api/matches/<id>/feature/` | passe le match à l'antenne (→ `LIVE`, `is_featured`) **sans effacer son `order_index`** : le match reste à sa place. |
 | `POST /api/events/<id>/matches/auto-arrange/` | applique l'heuristique de pré-pose côté serveur (`live/urls.py:98`, `api_matches_auto_arrange` — `api_views.py:1799`). |
+| `POST /api/editions/<id>/play-days/generate/` | **génération des journées depuis les dates de l'édition** : crée une `PlayDay` par jour entre `start_date` et `end_date` de l'édition (bornes incluses), en **sautant** les dates portant déjà une journée. Plage horaire commune passée dans le body (défaut proposé par l'UI : **9:00 → 20:00**), modifiable journée par journée ensuite (CRUD). Refusée si l'édition n'a pas ses deux dates. Surface UI : modale « Gérer les journées » de [[admin-matchs]]. *(Endpoint à créer — service d'abord, convention CLAUDE.md §5.)* |
 | CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des pauses, ou des matchs `SCHEDULED`/`LIVE` (ces derniers sont **actionnables** : renvoyer d'abord les matchs vers la pile « à planifier » puis réessayer). Si la journée porte au moins un match `FINISHED`, le refus est **définitif** : la journée est conservée comme **archive** et ne redevient jamais supprimable (`live/urls.py:86-89` ; `api_play_days_list:1541`, `api_play_day_create:1551`, `api_play_day_edit:1576`, `api_play_day_delete:1611`). |
 | CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier) (`live/urls.py:91-94` ; `api_breaks_list:1623`, `api_break_create:1633`, `api_break_edit:1659`, `api_break_delete:1691`). |
 | Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA peuvent être calculées côté front. |
