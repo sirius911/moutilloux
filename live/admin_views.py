@@ -727,6 +727,57 @@ def withdraw_entry(entry, remove_from_group=False):
 
 
 @transaction.atomic
+def finish_match_manual(match, winner_side, retirement=False):
+    """
+    Service : déclare la fin manuelle d'un match (arbitre/admin), hors balle de
+    match automatique. Distingue fin normale (end_reason=NORMAL) et abandon
+    (end_reason=RETIREMENT, retirement=True) — score NON complété dans les deux
+    cas (le score courant est conservé tel quel, "figé" pour l'abandon).
+    - Garde : ValueError si winner_side pas dans (Match.WinnerSide.A, .B) —
+      redondant avec la validation payload de l'appelant mais defensive.
+    - Effets : winner_side posé (repère modèle direct, pas de swap), FINISHED,
+      end_reason = RETIREMENT si retirement sinon NORMAL, is_featured=False.
+      games_a/games_b non touchés (score figé en l'état dans les deux cas).
+    - Recalcul : mêmes effets qu'une fin normale — recalc_one_group si match de
+      poule, sync_final_bracket_for_event si poule affectée, sync_final_winners_for_event
+      + sync_p3_losers_for_event si QF/SF, close_event (best effort) si F.
+    Retourne le match.
+    """
+    from competition.standings import recalc_one_group
+
+    if winner_side not in (Match.WinnerSide.A, Match.WinnerSide.B):
+        raise ValueError(f"winner_side invalide : {winner_side!r}")
+
+    match.winner_side = winner_side          # repère modèle direct, pas de swap
+    match.is_featured = False
+    match.mark_finished()
+    match.end_reason = Match.EndReason.RETIREMENT if retirement else Match.EndReason.NORMAL
+    match.save()
+
+    if match.stage == Match.Stage.GROUP and match.group_id:
+        gid = match.group_id
+        _ev_winner = match.event
+        transaction.on_commit(lambda: recalc_one_group(gid))
+        from live.bracket import sync_final_bracket_for_event
+        transaction.on_commit(lambda ev=_ev_winner: sync_final_bracket_for_event(ev))
+    if match.stage in (Match.Stage.QF, Match.Stage.SF):
+        from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
+        transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
+        transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
+    if match.stage == Match.Stage.F:
+        _event = match.event
+        def _try_close_winner(ev=_event):
+            from live.admin_views import close_event
+            try:
+                close_event(ev)
+            except ValueError:
+                pass
+        transaction.on_commit(_try_close_winner)
+
+    return match
+
+
+@transaction.atomic
 def forfait_match(match, winner_side):
     """
     Service : déclare le forfait d'un match unique (SCHEDULED requis), scopé au
