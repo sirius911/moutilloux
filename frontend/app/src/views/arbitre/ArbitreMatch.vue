@@ -34,6 +34,14 @@ interface FinishCandidate {
 }
 const finishModal = ref(false)
 
+// Modal de forfait — désigner le joueur présent (SCHEDULED uniquement)
+const forfaitModal = ref(false)
+
+async function confirmForfait(winner: 'A' | 'B') {
+  const ok = await sendAction('forfait', { winner })
+  if (ok) forfaitModal.value = false
+}
+
 // Tiroir « Corrections » — jeux±, sets±, serveur, inversion d'affichage
 const correctionsOpen = ref(false)
 
@@ -164,6 +172,7 @@ function pointDisplay(n: number, inTb: boolean): string {
 const statusLabel = computed(() => {
   if (!match.value) return ''
   if (match.value.status === 'SCHEDULED') return 'PRÉVU'
+  if (match.value.status === 'CANCELED') return 'ANNULÉ'
   if (match.value.tbActive) return 'JEU DÉCISIF'
   if (match.value.status === 'FINISHED') return 'TERMINÉ'
   return 'EN COURS'
@@ -172,6 +181,8 @@ const statusLabel = computed(() => {
 const isFinished = computed(() => match.value?.status === 'FINISHED')
 const isScheduled = computed(() => match.value?.status === 'SCHEDULED')
 const isLive = computed(() => match.value?.status === 'LIVE')
+const isCanceled = computed(() => match.value?.status === 'CANCELED')
+const isReadOnly = computed(() => isFinished.value || isCanceled.value)
 
 async function handleStart() {
   try {
@@ -207,7 +218,7 @@ async function handleStart() {
         <div class="arb-header-center">
           <span class="arb-category">{{ match?.stageLabel ?? '—' }}</span>
           <span v-if="match?.formatLabel" class="arb-format">{{ match.formatLabel }}</span>
-          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled }">
+          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled, canceled: isCanceled }">
             {{ statusLabel }}
           </span>
         </div>
@@ -277,18 +288,30 @@ async function handleStart() {
             <span class="action-icon">▶</span>
             <span class="action-label">Démarrer le match</span>
           </button>
+          <button class="action-btn" title="Déclarer forfait" @click="forfaitModal = true">
+            <span class="action-icon">⚑</span>
+            <span class="action-label">Forfait</span>
+          </button>
+          <button
+            class="action-btn action-btn--danger-ghost"
+            title="Annuler le match"
+            @click="askConfirm('annuler', 'Annuler le match ?')"
+          >
+            <span class="action-icon">✕</span>
+            <span class="action-label">Annuler</span>
+          </button>
         </template>
         <template v-else>
-          <button class="action-btn" title="Remettre les points à 0-0" :disabled="isFinished" @click="handleUndo">
+          <button class="action-btn" title="Remettre les points à 0-0" :disabled="isReadOnly" @click="handleUndo">
             <span class="action-icon">↩</span>
             <span class="action-label">0 pts</span>
           </button>
-          <button class="action-btn" title="Corrections" :disabled="isFinished" @click="correctionsOpen = true">
+          <button class="action-btn" title="Corrections" :disabled="isReadOnly" @click="correctionsOpen = true">
             <span class="action-icon">✎</span>
             <span class="action-label">Corrections</span>
           </button>
           <button
-            v-if="!isFinished"
+            v-if="!isReadOnly"
             class="action-btn action-btn--danger"
             title="Terminer le match"
             @click="openFinishModal"
@@ -299,7 +322,7 @@ async function handleStart() {
           <button
             class="action-btn action-btn--danger-ghost"
             title="Réinitialiser"
-            :disabled="isFinished"
+            :disabled="isReadOnly"
             @click="askConfirm('reset_all', 'Réinitialiser le match ?')"
           >
             <span class="action-icon">↺</span>
@@ -361,6 +384,27 @@ async function handleStart() {
             </button>
 
             <button class="btn-secondary" @click="finishModal = false">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Modal de forfait — désigner le joueur présent -->
+    <Teleport to="body">
+      <div v-if="forfaitModal" class="modal-backdrop" @click.self="forfaitModal = false">
+        <div class="modal-card">
+          <div class="modal-icon">⚑</div>
+          <h3 class="modal-title">Déclarer forfait</h3>
+          <p class="modal-body">Qui est présent ? Le joueur choisi est déclaré vainqueur.</p>
+
+          <div class="modal-actions modal-actions--vertical">
+            <button class="btn-finish" @click="confirmForfait('A')">
+              <span>{{ playerName('A') }}</span>
+            </button>
+            <button class="btn-finish" @click="confirmForfait('B')">
+              <span>{{ playerName('B') }}</span>
+            </button>
+            <button class="btn-secondary" @click="forfaitModal = false">Annuler</button>
           </div>
         </div>
       </div>
@@ -508,6 +552,11 @@ async function handleStart() {
 }
 
 .arb-status-badge.scheduled {
+  background: var(--bg-4);
+  color: var(--ink-3);
+}
+
+.arb-status-badge.canceled {
   background: var(--bg-4);
   color: var(--ink-3);
 }
