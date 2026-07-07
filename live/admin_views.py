@@ -727,6 +727,105 @@ def withdraw_entry(entry, remove_from_group=False):
 
 
 @transaction.atomic
+def forfait_match(match, winner_side):
+    """
+    Service : déclare le forfait d'un match unique (SCHEDULED requis), scopé au
+    match — distinct de withdraw_entry (cascade épreuve). L'arbitre/l'admin
+    désigne le côté PRÉSENT comme vainqueur.
+    - Garde : ValueError si match.status != SCHEDULED.
+    - Effets : FINISHED, is_walkover=True, end_reason=WALKOVER, winner_side posé,
+      score de convention (vainqueur à games_to_win, perdant à 0 — même convention
+      que withdraw_entry, live/admin_views.py:673-679), is_featured=False.
+      order_index/scheduled_time NON touchés (le match reste à sa place).
+    - Recalcul : mêmes effets qu'une fin normale — recalc_one_group si match de
+      poule, sync_final_bracket_for_event si poule affectée, sync_final_winners_for_event
+      + sync_p3_losers_for_event si QF/SF, close_event (best effort) si F.
+    Retourne le match.
+    """
+    from competition.standings import recalc_one_group
+
+    if match.status != Match.Status.SCHEDULED:
+        raise ValueError(f"Impossible de déclarer un forfait : statut actuel = {match.status}.")
+
+    if winner_side == Match.WinnerSide.A:
+        match.games_a = match.games_to_win
+        match.games_b = 0
+    else:
+        match.games_a = 0
+        match.games_b = match.games_to_win
+
+    match.winner_side = winner_side
+    match.status = Match.Status.FINISHED
+    match.is_walkover = True
+    match.end_reason = Match.EndReason.WALKOVER
+    match.is_featured = False
+    if not match.finished_at:
+        match.finished_at = timezone.now()
+
+    match.save(update_fields=[
+        "winner_side", "games_a", "games_b",
+        "status", "is_walkover", "end_reason", "is_featured", "finished_at",
+    ])
+
+    if match.stage == Match.Stage.GROUP and match.group_id:
+        recalc_one_group(match.group_id)
+        from live.bracket import sync_final_bracket_for_event
+        sync_final_bracket_for_event(match.event)
+
+    if match.stage in (Match.Stage.QF, Match.Stage.SF):
+        from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
+        sync_final_winners_for_event(match.event)
+        sync_p3_losers_for_event(match.event)
+
+    if match.stage == Match.Stage.F:
+        try:
+            close_event(match.event)
+        except ValueError:
+            pass
+
+    return match
+
+
+@transaction.atomic
+def cancel_match(match):
+    """
+    Service : annule un match unique (double absence / décision d'organisation).
+    - Garde : ValueError si match.status == FINISHED (un match terminé ne
+      s'annule pas — cohérent avec la garde déjà en place côté referee_action,
+      live/referee_views.py:138).
+    - Effets : status=CANCELED, winner_side=None, order_index=None,
+      scheduled_time=None, is_featured=False (mêmes champs que le cas CANCELED
+      déjà géré par finalize_match_edit, live/admin_views.py:486-490).
+    - Recalcul : recalc_one_group si match de poule (le filtre standings exclut
+      déjà CANCELED — competition/standings.py:33 — donc ce recalcul suffit à
+      faire sortir le match du classement), sync bracket si la poule est
+      affectée (même garde que finalize_match_edit).
+    Retourne le match.
+    """
+    from competition.standings import recalc_one_group
+
+    if match.status == Match.Status.FINISHED:
+        raise ValueError("Impossible d'annuler : le match est déjà terminé.")
+
+    match.status = Match.Status.CANCELED
+    match.winner_side = None
+    match.order_index = None
+    match.scheduled_time = None
+    match.is_featured = False
+
+    match.save(update_fields=[
+        "status", "winner_side", "order_index", "scheduled_time", "is_featured",
+    ])
+
+    if match.stage == Match.Stage.GROUP and match.group_id:
+        recalc_one_group(match.group_id)
+        from live.bracket import sync_final_bracket_for_event
+        sync_final_bracket_for_event(match.event)
+
+    return match
+
+
+@transaction.atomic
 def add_late_entry(event, group, player=None, team=None):
     """
     Service : ajout tardif d'un inscrit dans une poule, en EN_COURS.

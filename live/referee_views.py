@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
-from live.admin_views import start_match, reopen_match
+from live.admin_views import start_match, reopen_match, forfait_match, cancel_match
 
 
 def is_referee(user):
@@ -700,6 +700,23 @@ def referee_action(request, match_id: int):
                     pass
             transaction.on_commit(_try_close_winner)
 
+        return JsonResponse({"ok": True})
+
+    if action == "forfait":
+        winner = data.get("winner")
+        if winner not in ("A", "B"):
+            return JsonResponse({"ok": False, "error": "winner doit être 'A' ou 'B'"}, status=400)
+        try:
+            forfait_match(match, winner)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+        return JsonResponse({"ok": True})
+
+    if action == "annuler":
+        try:
+            cancel_match(match)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
         return JsonResponse({"ok": True})
 
     if action == "reopen":
