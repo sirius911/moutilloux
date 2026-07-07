@@ -33,6 +33,7 @@ interface FinishCandidate {
   isLeading: boolean
 }
 const finishModal = ref(false)
+const retirement = ref(false)
 
 // Modal de forfait — désigner le joueur présent (SCHEDULED uniquement)
 const forfaitModal = ref(false)
@@ -138,12 +139,18 @@ function cancel() {
 
 // Fin de match — vainqueur explicite
 function openFinishModal() {
+  retirement.value = false
   finishModal.value = true
 }
 
 async function confirmFinish(winner: 'A' | 'B') {
-  const ok = await sendAction('finish_winner', { winner })
+  const ok = await sendAction('finish_winner', { winner, retirement: retirement.value })
   if (ok) finishModal.value = false
+}
+
+function closeFinishModal() {
+  retirement.value = false
+  finishModal.value = false
 }
 
 const finishCandidates = computed((): { a: FinishCandidate; b: FinishCandidate } | null => {
@@ -358,11 +365,16 @@ async function handleStart() {
 
     <!-- Modal de fin de match — sélection du vainqueur -->
     <Teleport to="body">
-      <div v-if="finishModal" class="modal-backdrop" @click.self="finishModal = false">
+      <div v-if="finishModal" class="modal-backdrop" @click.self="closeFinishModal">
         <div class="modal-card">
           <div class="modal-icon modal-icon--trophy">🏆</div>
           <h3 class="modal-title">Déclarer vainqueur</h3>
           <p class="modal-body">Choisissez le vainqueur du match. Cette action est irréversible.</p>
+
+          <label class="finish-retirement-toggle">
+            <input v-model="retirement" type="checkbox" />
+            <span>Abandon adverse</span>
+          </label>
 
           <div class="modal-actions modal-actions--vertical">
             <button
@@ -383,7 +395,7 @@ async function handleStart() {
               <span v-if="finishCandidates?.b.isLeading" class="leading-badge">Mène</span>
             </button>
 
-            <button class="btn-secondary" @click="finishModal = false">Annuler</button>
+            <button class="btn-secondary" @click="closeFinishModal">Annuler</button>
           </div>
         </div>
       </div>
@@ -920,6 +932,23 @@ async function handleStart() {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+.finish-retirement-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-1);
+  cursor: pointer;
+}
+
+.finish-retirement-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
 }
 
 /* ── Tiroir Corrections ──────────────────────────────────────────────── */
