@@ -9,17 +9,17 @@ import { useApi } from '@/composables/useApi'
 import { usePolling } from '@/composables/usePolling'
 import type { Entry, Match, PosterState } from '@/types'
 
-interface PosterSlot { key: string; label: string; defaultAttitude: string }
+interface PosterSlot { key: string; label: string; defaultAttitude: string; photoUrl: string | null }
 
 function buildPosterSlots(match: Match): PosterSlot[] {
   const slots: PosterSlot[] = []
   const addSide = (side: Entry | null, prefix: string) => {
     if (!side) return
     if (side.player) {
-      slots.push({ key: prefix, label: side.player.fullName, defaultAttitude: side.player.attitude ?? '' })
+      slots.push({ key: prefix, label: side.player.fullName, defaultAttitude: side.player.attitude ?? '', photoUrl: side.player.photoUrl })
     } else if (side.team) {
-      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitude ?? '' })
-      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitude ?? '' })
+      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitude ?? '', photoUrl: side.team.player1.photoUrl })
+      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitude ?? '', photoUrl: side.team.player2.photoUrl })
     }
   }
   addSide(match.sideA, 'A')
@@ -198,9 +198,12 @@ usePolling(fetchPosterState, 2000)
 
 const sidesResolved = computed(() => !!props.match.sideA && !!props.match.sideB)
 
+const missingPhotoNames = computed(() => posterSlots.filter(s => !s.photoUrl).map(s => s.label))
+
 const generateDisabledReason = computed<string | null>(() => {
   if (posterActionBusy.value) return null // pas de message, juste désactivé pendant l'appel
   if (!sidesResolved.value) return 'Les deux camps du match doivent être déterminés avant de générer une affiche.'
+  if (missingPhotoNames.value.length > 0) return `Photo manquante : ${missingPhotoNames.value.join(', ')}.`
   if (posterState.value?.job?.status === 'RUNNING' || posterState.value?.job?.status === 'PENDING') {
     return 'Une génération est déjà en cours pour ce match.'
   }
