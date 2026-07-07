@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #100
+**Dernière session :** 2026-07-07 — Session #101
 **Sprint traité :** 24 — Affiches de match — **en cours**
 
 **Git :** branche `claude/sprint/24-affiches-match`, parent effectif
@@ -382,43 +382,54 @@ et exécute le protocole complet (étapes 0 à 4).
 le frontmatter du sprint, conforme à la règle « la roadmap prime sur le
 frontmatter »). Working tree propre en fin de session, poussé.
 
-**Spec review session #100 :** ⚠️ Dérive mineure sur `admin-matchs.md` —
-l'onglet Affiche d'`EditMatchPanel.vue` n'a que 2 champs attitude fixes (A/B)
-et ne gère pas le mode Double (le backend `resolve_match_players` résout
-pourtant 4 joueurs pour un Double) → nouvelle issue **#286** (🟡 mineure).
-Les 3 autres specs restent ✅ Conforme. Le bug connu #270 (`saved` fermant le
-panneau) a été revérifié par l'agent de review avant correction (voir
-ci-dessous), non re-signalé comme nouvelle dérive.
+**Spec review session #101 :** ⚠️ Dérive mineure sur `affiche-match.md` —
+le bouton « Générer 2 propositions » d'`EditMatchPanel.vue`
+(`generateDisabledReason`) ne teste que la résolution des sides et l'état du
+job, jamais la présence de `photoUrl` sur les joueurs concernés (le serveur
+bloque déjà correctement l'action après coup, seul le retour visuel anticipé
+côté front manque) → nouvelle issue **#287** (🟡 mineure). `admin-joueurs.md`
+et `tv-live.md` ✅ Conforme. `admin-matchs.md` gardait la dérive déjà connue
+#286 (non re-signalée), traitée cette même session (voir ci-dessous).
 
-**Backlog engine session #100 (2 tickets, max protocolaire) :**
-- **#270** ✅ Approuvé (repris depuis le renvoi de la session #99) —
-  `selectCandidate()`/`removePoster()` (`EditMatchPanel.vue`) émettent
-  désormais `poster-updated` au lieu de `saved` ; `AdminMatches.vue` écoute
-  ce nouvel événement (`onPosterUpdated()` → `eventStore.fetchCalendar()`
-  sans fermer le panneau). Le flux normal de sauvegarde (Score/Format/
-  Planning) est resté inchangé. Golden path « choisir → l'affiche apparaît
-  dans l'onglet, panneau ouvert » rétabli.
-- **#271** ✅ Approuvé — `TvScoreboard.vue` : fond conditionnel
-  (`v-if="live.hero?.posterUrl"` → nouvelle classe `.hero-poster-bg` plein
-  écran ; `v-else` conserve `.court-bg` inchangé). `.stake-panel`/`.sb-band`/
-  `.sb-next-band` non touchés — layering et lisibilité du score/enjeu
-  préservés. Fichier unique modifié, aucun câblage partagé nécessaire.
+**Backlog engine session #101 (2 tickets, max protocolaire) :**
+- **#272** ✅ Approuvé — `TvIdle.vue` : nouvelle slide `poster` ajoutée à
+  `SLIDES` (computed) uniquement si `live.next?.posterUrl` existe — même
+  mécanique de saut que les autres slides conditionnelles. Rendu plein
+  cadre cohérent avec `.hero-poster-bg` de `TvScoreboard.vue`, bandeau
+  ~heure + joueurs via `nextPlayerName()` déjà existant. Fichier unique
+  modifié, aucun câblage partagé nécessaire.
+- **#286** ✅ Approuvé — plus large que son périmètre déclaré initial
+  (EditMatchPanel.vue seul) : l'investigation a montré que `_pack_entry`
+  n'exposait aucune information sur l'équipe d'un side en Double, rendant
+  le fix front seul impossible. Traité en deux temps : backend
+  (`live/api_views.py`, `_pack_entry` expose désormais `team` via
+  `_pack_team` réutilisé, additif) puis front (`types/index.ts` : interface
+  `Team` + champ `Entry.team` ; `EditMatchPanel.vue` :
+  `buildPosterSlots(match)` résout dynamiquement 2 ou 4 créneaux d'attitude
+  dans l'ordre exact de `resolve_match_players` — point vérifié
+  spécifiquement en review car une erreur d'ordre romprait silencieusement
+  l'association attitude↔joueur). Non-régression du mode Simple confirmée.
 
-**Nouveau ticket créé :** #286 (🟡 mineure, sprint-24) — onglet Affiche ne
-gère pas le Double, à traiter avant de considérer `admin-matchs.md` à nouveau
-✅ Conforme.
+**Nouveau ticket créé :** #287 (🟡 mineure, sprint-24) — garde photo
+manquante pas anticipée côté front sur le bouton Générer.
 
-**Fin de sprint non atteinte :** 2 issues sprint-24 encore ouvertes (#272 TV
-slide carousel, #286 gestion Double) — sprint continue à la prochaine
-échéance. Prochaine étape suggérée : #272 (dernier ticket TV, même pattern
-que #271 — fond/slide conditionnels sur `posterUrl`), puis #286 (nécessite de
-redessiner le formulaire attitude en fonction du mode Simple/Double).
+**Fin de sprint non atteinte :** 1 issue sprint-24 encore ouverte (#287) —
+sprint continue à la prochaine échéance. Prochaine étape suggérée : #287
+(petit — étendre `generateDisabledReason` pour tester `photoUrl` sur les
+joueurs résolus via `posterSlots`, réutilisable depuis le travail de #286).
+Après #287, si la spec review confirme `affiche-match.md` ✅ Conforme et
+qu'aucune issue sprint-24 n'est ouverte, le sprint 24 pourra être clôturé.
 
-**Point d'attention outillage :** `npx vue-tsc --noEmit` a suffi cette
-session (aucune erreur, aucun besoin de `-b --force`) pour les 2 tickets
-traités — le point soulevé en session #99 (préférer `-b --force`) reste à
-garder en tête si `--noEmit` seul se montre insuffisant sur un prochain
-ticket plus large. Toujours pas de script `type-check` dans `package.json`.
+**Point d'attention outillage :** `npx vue-tsc --noEmit` + `python manage.py
+check` ont suffi cette session pour les 2 tickets traités (aucune erreur).
+Toujours pas de script `type-check` dans `package.json`.
+
+**Point d'attention protocole :** cette session, l'étape 2a (planification)
+des deux tickets a été rédigée directement par l'orchestrateur plutôt que
+déléguée à un agent dédié, l'investigation préalable ayant déjà eu lieu en
+contexte de session. Les plans écrits ont ensuite été suivis à la lettre par
+les agents d'implémentation et validés en review — aucun impact constaté,
+mais à garder à l'œil si ce raccourci devient systématique.
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
