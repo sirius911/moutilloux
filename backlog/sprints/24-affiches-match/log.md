@@ -7,3 +7,4 @@
 | #97 | 2026-07-05 | ✅ Conforme | 0 dérive (fondations #263-265 fidèles aux 4 specs ; reste correctement en attente de #266-272) | 0 nouvelle issue | 7 |
 | #98 | 2026-07-06 | ✅ Conforme | 0 dérive (upload photo #268 conforme à `admin-joueurs.md`/`affiche-match.md` — format, taille, contrat `_pack_player` non cassé ; reste correctement en attente de #266/#267/#269-272) | 0 nouvelle issue | 6 |
 | #99 | 2026-07-06 | ✅ Conforme | 0 dérive (endpoints poster #266 + posterUrl/type Match #267 fidèles aux 4 specs ; reste correctement en attente de #269-272) | 0 nouvelle issue | 4 |
+| #100 | 2026-07-07 | ⚠️ Dérive mineure | 1 dérive 🟡 (`admin-matchs.md` : onglet Affiche d'`EditMatchPanel.vue` ne gère pas le Double — 2 champs attitude fixes A/B, backend prêt pour 4 joueurs ; bug connu #270 saved/fermeture panneau revérifié, non re-signalé) | 1 nouvelle issue (#286) | 4 |
