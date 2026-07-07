@@ -69,6 +69,13 @@ function scoreDisplay(m: Match): string {
   const current = m.status === 'LIVE' ? ` (${m.gamesA}-${m.gamesB})` : ''
   return (sets + current).trim()
 }
+
+function endReasonLabel(m: Match): string {
+  if (m.status !== 'FINISHED') return ''
+  if (m.endReason === 'WALKOVER') return 'Forfait'
+  if (m.endReason === 'RETIREMENT') return 'Abandon'
+  return ''
+}
 </script>
 
 <template>
@@ -140,6 +147,9 @@ function scoreDisplay(m: Match): string {
             <span class="arh-match-event">{{ m.stageLabel }}</span>
             <span v-if="m.status === 'LIVE' && scoreDisplay(m)" class="arh-match-score tab">
               {{ scoreDisplay(m) }}
+            </span>
+            <span v-else-if="endReasonLabel(m)" class="arh-match-score">
+              {{ endReasonLabel(m) }}
             </span>
             <span class="arh-match-go">
               {{ goLabel(m.status) }}

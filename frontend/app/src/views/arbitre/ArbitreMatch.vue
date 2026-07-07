@@ -181,7 +181,11 @@ const statusLabel = computed(() => {
   if (match.value.status === 'SCHEDULED') return 'PRÉVU'
   if (match.value.status === 'CANCELED') return 'ANNULÉ'
   if (match.value.tbActive) return 'JEU DÉCISIF'
-  if (match.value.status === 'FINISHED') return 'TERMINÉ'
+  if (match.value.status === 'FINISHED') {
+    if (match.value.endReason === 'WALKOVER') return 'TERMINÉ · FORFAIT'
+    if (match.value.endReason === 'RETIREMENT') return 'TERMINÉ · ABANDON'
+    return 'TERMINÉ'
+  }
   return 'EN COURS'
 })
 
