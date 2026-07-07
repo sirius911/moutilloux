@@ -373,65 +373,56 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #107
-**Sprint traité :** 25 — Arbitre : fins spéciales & résilience (**clos cette
-session**)
+**Dernière session :** 2026-07-07 — Session #108
+**Sprint traité :** 26 — Qualification à la poule terminée (premier sprint
+traité depuis la planification du 2026-07-07, décision 30 de la revue
+produit)
 
-**Git :** branche `claude/sprint/25-arbitre-fins-speciales`, parent effectif
-toujours `claude/sprint/24-affiches-match` (sprint 24 pas mergé dans
-`origin/main`). Working tree propre en début de session, branche déjà à
-jour avec origin et avec le parent effectif (rien à merger). Aucun ticket
-implémenté cette session (0 issue ouverte sur le milestone en début de
-session) → seul le commit de clôture de sprint a été produit.
+**Git :** branche `claude/sprint/26-qualification-poule-terminee`, créée
+cette session à partir du parent effectif `claude/sprint/25-arbitre-fins-speciales`
+(sprint 25 toujours non mergé dans `origin/main`, donc parent ≠ `main` selon
+la règle de résolution de l'étape 0). Working tree propre, branche
+synchronisée avec le parent (rien à merger, branche neuve).
 
-**Spec review session #107 :** `cycle-de-vie-match.md` ✅ Conforme (back
-inchangé depuis #105/#106). `arbitre-match.md` ✅ Conforme — comme prévu par
-le log de la session #106, relire la spec après la livraison complète des 8
-tickets (#279-285, #8) a fait passer le verdict de « ❌ Dérive bloquante
-(attendu) » à « ✅ Conforme » ; les 5 dérives historiques ont été vérifiées
-une à une dans le code réel (pas supposées) : forfait/annuler sur SCHEDULED
-(#282), tiroir Corrections (#283, `toggle_service` et `swap` bien séparés
-désormais), bascule Abandon adverse → `end_reason=RETIREMENT` (#285),
-libellés Forfait/Abandon en FINISHED (#284), résilience réseau — modale
-Terminer reste ouverte si l'action échoue (#8). 0 nouvelle issue créée.
+**Spec review session #108 :** verdict `❌ Dérive bloquante (attendue)` sur
+3 des 4 specs du sprint — `cycle-de-vie-epreuve.md` (§ « Poule terminée »),
+`admin-tableau-final.md` (panneau Qualifiés disponibles), `tv-state.md`
+(flag `qualified`) ; `classement-poule.md` (spec « as-is » de l'algorithme
+de classement, ne couvre pas la qualification) `✅ Conforme`. Les 3 dérives
+observées correspondaient exactement aux 3 issues déjà ouvertes sur le
+milestone (#289, #290, #291, créées au planning du sprint) — confirmées une
+à une dans le code réel (`live/bracket.py:_resolve_label_to_entry` résolvait
+un rang dès le premier match terminé ; `qualified` calculé `rank <=
+qualified_per_group` sans garde en 4 points de `live/views.py` et
+`live/api_views.py`). 0 nouvelle issue créée.
 
-Deux observations mineures relevées par le reviewer, non ticketées (non
-bloquantes, hors périmètre strict de la spec) : (1) `specs/screens/arbitre-match.md`
-lignes 101-103 garde un avertissement obsolète disant que `swap` n'est
-jamais branché — c'est faux depuis #283, texte de spec à nettoyer à
-l'occasion ; (2) le flag `swapped` du tiroir Corrections est un `ref(false)`
-front réinitialisé à chaque montage alors que le back le garde en session
-(`live/referee_views.py:81`) — un F5 en cours de match désynchronise
-l'affichage de la session serveur ; la spec ne traite pas de la persistance
-au rechargement donc ce n'est pas une dérive au sens du protocole.
+**Backlog engine session #108 :** 2 tickets traités (limite de la session),
+dans l'ordre suggéré par le sprint (#289 débloque #290) :
+- **#289** (majeure) — ajout du helper `group_is_finished(group)` dans
+  `live/bracket.py` + garde dans `_resolve_label_to_entry` (retourne `None`
+  tant que la poule n'est pas terminée). ✅ Approuvé, fermé.
+- **#290** (majeure) — réutilisation de `group_is_finished` pour garder le
+  flag `qualified` dans `build_event_group_tables` (`live/views.py`) et
+  `_pack_tv_stake` (`live/api_views.py`) ; `api_event_groups` et
+  `_pack_tv_events` corrigés par ricochet (même dict `qualif` partagé). ✅
+  Approuvé, fermé.
+- **#291** (mineure, front `AdminBracket.vue`) — **non traité**, limite de 2
+  tickets/session atteinte ; reste ouvert pour la prochaine échéance.
 
-**Backlog engine session #107 :** aucun ticket — 0 issue ouverte sur le
-milestone `sprint-25` en début de session (les 8 tickets étaient déjà clos
-depuis la session #106).
+Aucun fichier partagé câblé (`live/urls.py` non touché sur les deux
+tickets — pas de nouvelle route, changement interne à `live/bracket.py`,
+`live/views.py`, `live/api_views.py`). Aucune migration.
 
-**Sprint 25 — clôturé cette session :** les deux conditions de l'étape 3
-étaient réunies dès l'étape 1 (spec review ✅ Conforme sur les deux specs +
-0 issue ouverte hors `en-attente`). Actions effectuées :
-- Milestone GitHub « Sprint 25 — Arbitre : fins spéciales & résilience »
-  (numéro 24) fermé (`state: closed`).
-- Ligne retirée de `backlog/sprints/roadmap.md`.
-- Dossier déplacé : `backlog/sprints/25-arbitre-fins-speciales/` →
-  `backlog/sprints/done/25-arbitre-fins-speciales/`.
-
-**Roadmap vide après ce retrait — aucun sprint suivant planifié.**
-**Désactiver la Routine manuellement sur claude.ai/code/routines.** Un
-nouveau sprint devra être planifié (skill `plan-sprint` ou action humaine)
-avant de réactiver la Routine.
-
-**Point d'attention protocole :** aucun écart cette session. Confirme
-l'analyse structurelle notée en session #106 : une session qui livre les
-derniers tickets d'un sprint ne peut pas le clôturer le jour même (l'étape 1
-voit encore la dérive avant que l'étape 2 ne la résorbe) ; c'est la session
-suivante, sans nouveau ticket à traiter, qui referme la boucle. Comportement
-attendu du protocole, pas un bug.
+**Sprint 26 — non clôturé cette session :** la spec review a rendu
+`❌ Dérive bloquante` à l'étape 1 (avant résorption par l'étape 2), et il
+reste #291 ouvert sur le milestone après les 2 tickets traités. Les deux
+conditions de l'étape 3 ne sont donc pas réunies. Comportement attendu du
+protocole (cf. le même schéma observé aux sessions #106/#107 sur le sprint
+25) : la clôture interviendra à une session ultérieure, sans nouveau ticket
+à traiter (spec review ✅ Conforme + 0 issue ouverte).
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — non pertinent cette session (aucune modification de code).
+`package.json` — non pertinent cette session (aucune modification frontend).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
