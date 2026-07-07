@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-06 — Session #99
+**Dernière session :** 2026-07-07 — Session #100
 **Sprint traité :** 24 — Affiches de match — **en cours**
 
 **Git :** branche `claude/sprint/24-affiches-match`, parent effectif
@@ -382,49 +382,43 @@ et exécute le protocole complet (étapes 0 à 4).
 le frontmatter du sprint, conforme à la règle « la roadmap prime sur le
 frontmatter »). Working tree propre en fin de session, poussé.
 
-**Spec review session #99 :** ✅ Conforme sur les 4 specs du sprint. 0 dérive
-sur les parties déjà livrées (#263-268) ; le reste attend correctement
-#269-272, sans câblage spéculatif ni régression.
+**Spec review session #100 :** ⚠️ Dérive mineure sur `admin-matchs.md` —
+l'onglet Affiche d'`EditMatchPanel.vue` n'a que 2 champs attitude fixes (A/B)
+et ne gère pas le mode Double (le backend `resolve_match_players` résout
+pourtant 4 joueurs pour un Double) → nouvelle issue **#286** (🟡 mineure).
+Les 3 autres specs restent ✅ Conforme. Le bug connu #270 (`saved` fermant le
+panneau) a été revérifié par l'agent de review avant correction (voir
+ci-dessous), non re-signalé comme nouvelle dérive.
 
-**Backlog engine session #99 (2 tickets, max protocolaire) :**
-- **#270** ❌ Renvoyé (`à-reprendre`) — onglet « Affiche » d'`EditMatchPanel.vue`
-  + raccourci ligne calendrier implémentés, mais `selectCandidate()`/
-  `removePoster()` émettent `saved`, qui déclenche `onMatchSaved()`
-  (`AdminMatches.vue`) et **ferme le panneau** après Choisir/Retirer — la spec
-  ne demande aucune fermeture automatique à cet endroit, ça casse le golden
-  path « choisir → l'affiche apparaît dans l'onglet ». Piste postée sur
-  l'issue + bloc `## ❌ Problème bloquant` ajouté à
-  `backlog/plan/270-onglet-affiche-editmatchpanel.md`. **Reste du travail
-  solide** (contrat back conforme, type-check propre) : correction ciblée à
-  prévoir à la reprise (émettre un événement dédié type `poster-updated` au
-  lieu de `saved` pour ces deux actions, sans fermer le panneau).
-- **#269** ✅ Approuvé — champ Photo (aperçu + validation) et champ Attitude
-  dans `AddPlayerModal.vue`, avatar conditionnel dans `AdminPlayers.vue`,
-  upload multipart via un `fetch` dédié documenté (FormData non supporté par
-  `useApi`), séquence JSON-puis-multipart avec tolérance d'échec partiel.
+**Backlog engine session #100 (2 tickets, max protocolaire) :**
+- **#270** ✅ Approuvé (repris depuis le renvoi de la session #99) —
+  `selectCandidate()`/`removePoster()` (`EditMatchPanel.vue`) émettent
+  désormais `poster-updated` au lieu de `saved` ; `AdminMatches.vue` écoute
+  ce nouvel événement (`onPosterUpdated()` → `eventStore.fetchCalendar()`
+  sans fermer le panneau). Le flux normal de sauvegarde (Score/Format/
+  Planning) est resté inchangé. Golden path « choisir → l'affiche apparaît
+  dans l'onglet, panneau ouvert » rétabli.
+- **#271** ✅ Approuvé — `TvScoreboard.vue` : fond conditionnel
+  (`v-if="live.hero?.posterUrl"` → nouvelle classe `.hero-poster-bg` plein
+  écran ; `v-else` conserve `.court-bg` inchangé). `.stake-panel`/`.sb-band`/
+  `.sb-next-band` non touchés — layering et lisibilité du score/enjeu
+  préservés. Fichier unique modifié, aucun câblage partagé nécessaire.
 
-**Gaps back détectés et corrigés par l'orchestrateur pendant la planification**
-(dans les deux cas : lecture du code par l'agent de planification, pas
-supposition ; fix appliqué directement par l'orchestrateur car fichiers de
-contention CLAUDE.md §3/§5, avant de lancer l'agent d'implémentation front) :
-- Pour #270 : `_pack_entry` (`live/api_views.py`) n'exposait pas
-  `Player.attitude`/`photo` sur `Entry.player` → ajout `attitude`/`photoUrl`
-  + nouveau type front `EntryPlayer` (`types/index.ts`). Sans ça, le
-  pré-remplissage du formulaire attitude (exigé par la spec) était
-  irréalisable côté front.
-- Pour #269 : `PlayerForm.Meta.fields` (`live/admin_views.py`) et
-  `api_player_create` (`live/api_views.py`) ignoraient silencieusement
-  `attitude` ; `_pack_player` ne le renvoyait pas non plus → ajout du champ
-  aux 3 endroits + extension de `Player`/`PlayerEditPayload` front.
+**Nouveau ticket créé :** #286 (🟡 mineure, sprint-24) — onglet Affiche ne
+gère pas le Double, à traiter avant de considérer `admin-matchs.md` à nouveau
+✅ Conforme.
 
-**Fin de sprint non atteinte :** spec review ✅ mais 3 issues sprint-24
-encore ouvertes (#270 à-reprendre, #271, #272) — sprint continue à la
-prochaine échéance. Prochaine étape suggérée : corriger #270 (petit fix
-ciblé, plan déjà à jour avec le problème et la piste), puis #271 ∥ #272 (TV).
+**Fin de sprint non atteinte :** 2 issues sprint-24 encore ouvertes (#272 TV
+slide carousel, #286 gestion Double) — sprint continue à la prochaine
+échéance. Prochaine étape suggérée : #272 (dernier ticket TV, même pattern
+que #271 — fond/slide conditionnels sur `posterUrl`), puis #286 (nécessite de
+redessiner le formulaire attitude en fonction du mode Simple/Double).
 
-**Point d'attention outillage :** utiliser `npx vue-tsc -b --force` (pas
-`--noEmit` seul) pour tout type-check front — toujours valable (#278, hors
-sprint-24). Toujours pas de script `type-check` dans `package.json`.
+**Point d'attention outillage :** `npx vue-tsc --noEmit` a suffi cette
+session (aucune erreur, aucun besoin de `-b --force`) pour les 2 tickets
+traités — le point soulevé en session #99 (préférer `-b --force`) reste à
+garder en tête si `--noEmit` seul se montre insuffisant sur un prochain
+ticket plus large. Toujours pas de script `type-check` dans `package.json`.
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
