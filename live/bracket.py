@@ -2,6 +2,15 @@ from competition.models import Group, GroupStanding
 from live.models import Match
 
 
+def group_is_finished(group) -> bool:
+    group_matches = Match.objects.filter(group=group, stage=Match.Stage.GROUP)
+    if not group_matches.exists():
+        return False
+    return not group_matches.filter(
+        status__in=[Match.Status.SCHEDULED, Match.Status.LIVE]
+    ).exists()
+
+
 def _resolve_label_to_entry(event, label: str):
     if not label or len(label) < 2:
         return None
@@ -13,6 +22,9 @@ def _resolve_label_to_entry(event, label: str):
 
     g = Group.objects.filter(event=event, name__iexact=group_name).first()
     if not g:
+        return None
+
+    if not group_is_finished(g):
         return None
 
     s = GroupStanding.objects.filter(group=g, rank=rank).select_related("entry").first()
