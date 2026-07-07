@@ -445,6 +445,10 @@ function onMatchSaved() {
   eventStore.fetchCalendar()
 }
 
+function onPosterUpdated() {
+  eventStore.fetchCalendar()
+}
+
 function setActiveEvent(id: string) {
   const numId = parseInt(id, 10)
   if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
@@ -549,6 +553,7 @@ async function onDragEnd() {
       :initial-tab="editingMatchInitialTab"
       @close="editingMatch = null"
       @saved="onMatchSaved"
+      @poster-updated="onPosterUpdated"
     />
     <ConfirmModal
       v-if="pendingStartMatchId !== null"

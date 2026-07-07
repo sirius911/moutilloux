@@ -10,7 +10,7 @@ import { usePolling } from '@/composables/usePolling'
 import type { Match, PosterState } from '@/types'
 
 const props = defineProps<{ match: Match; initialTab?: 'score' | 'format' | 'planning' | 'poster' }>()
-const emit = defineEmits<{ close: []; saved: [] }>()
+const emit = defineEmits<{ close: []; saved: []; 'poster-updated': [] }>()
 
 const eventStore = useEventStore()
 const { get, post } = useApi()
@@ -207,7 +207,7 @@ async function selectCandidate(index: number) {
     posterState.value = await post<PosterState>(`/api/matches/${props.match.id}/poster/select/`, {
       candidate: index,
     })
-    emit('saved') // pour rafraîchir le calendrier (posterUrl du match a changé)
+    emit('poster-updated') // pour rafraîchir le calendrier (posterUrl du match a changé)
   } catch (e) {
     posterActionError.value = extractApiError(e, 'Erreur lors du choix de l\'affiche.')
   } finally {
@@ -230,7 +230,7 @@ async function removePoster() {
   posterActionBusy.value = true
   try {
     posterState.value = await post<PosterState>(`/api/matches/${props.match.id}/poster/clear/`)
-    emit('saved')
+    emit('poster-updated')
   } catch (e) {
     posterActionError.value = extractApiError(e, 'Erreur lors du retrait de l\'affiche.')
   } finally {
