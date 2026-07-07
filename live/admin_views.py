@@ -680,13 +680,14 @@ def withdraw_entry(entry, remove_from_group=False):
 
         m.status = Match.Status.FINISHED
         m.is_walkover = True
+        m.end_reason = Match.EndReason.WALKOVER
         m.is_featured = False
         if not m.finished_at:
             m.finished_at = timezone.now()
 
         m.save(update_fields=[
             "winner_side", "games_a", "games_b",
-            "status", "is_walkover", "is_featured", "finished_at",
+            "status", "is_walkover", "end_reason", "is_featured", "finished_at",
         ])
 
         if m.group_id:

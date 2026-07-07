@@ -174,8 +174,8 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 |---|---|---|
 | `Match.status` (SCHEDULED/LIVE/FINISHED/CANCELED) | ✓ présent | inchangé |
 | `Match.winner_side` (A/B) | ✓ présent | inchangé |
-| `Match.is_walkover` | ✓ présent | conservé (compat) ou absorbé par `end_reason` |
-| `Match.end_reason` (NORMAL / WALKOVER / RETIREMENT) | ❌ absent | **à créer** — distingue fin normale, forfait, abandon |
+| `Match.is_walkover` | ✓ présent | conservé (compat), câblé en parallèle de `end_reason=WALKOVER` |
+| `Match.end_reason` (NORMAL / WALKOVER / RETIREMENT) | ✓ présent (migration `0022_match_end_reason`) | NORMAL câblé (`mark_finished()` + balle de match auto tie-break/set classique) et WALKOVER câblé (`withdraw_entry`) ; RETIREMENT **défini mais pas encore câblé** — aucune action d'abandon n'existe à ce jour, viendra avec le ticket sprint 25 qui l'introduira. Exposé dans `_pack_match` sous `endReason` |
 | `formatLabel` dans `_pack_match` | ✓ présent | packer `_format_label` (`live/api_views.py:191-196`), inclus dans `_pack_match` (`live/api_views.py:238`, clé `"formatLabel": _format_label(m)`) |
 
 > `CANCELED` n'a pas besoin de `end_reason` : l'absence de vainqueur + le statut
@@ -200,7 +200,7 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 | Élément | Nature |
 |---|---|
 | Action `démarrer` exposée aussi côté **admin** | service partagé (existe côté arbitre) |
-| `end_reason` (NORMAL/WALKOVER/RETIREMENT) | migration + câblage terminer/forfait/abandon |
+| `end_reason` (NORMAL/WALKOVER/RETIREMENT) | migration + câblage terminer/forfait faits (#279) ; câblage abandon (RETIREMENT) restant, dépend de l'action d'abandon elle-même (ticket ultérieur du sprint 25) |
 | Forfait / abandon / annulation **scopés au match** | services neufs (le walkover d'entry existe côté épreuve) |
 | `reopen` **conservant `set_scores`** et repassant `LIVE` | correction de bug |
 | `order_index` **persistant** à travers `LIVE`/`FINISHED` | correction (sprint 15) |

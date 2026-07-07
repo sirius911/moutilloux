@@ -281,6 +281,7 @@ def _pack_match(m):
         "displayPointB": display_point_b,
         "winnerSide": m.winner_side,
         "isWalkover": m.is_walkover,
+        "endReason": m.end_reason,
         "scheduledTime": scheduled_str,
         "startedAt": m.started_at.isoformat() if m.started_at else None,
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,

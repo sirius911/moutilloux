@@ -279,6 +279,7 @@ def referee_action(request, match_id: int):
             # Match terminé ?
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
+                match.end_reason = Match.EndReason.NORMAL
                 match.is_featured = False
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
@@ -325,6 +326,7 @@ def referee_action(request, match_id: int):
 
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
+                match.end_reason = Match.EndReason.NORMAL
                 match.is_featured = False
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
@@ -460,7 +462,7 @@ def referee_action(request, match_id: int):
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
             "status", "is_featured",
-            "winner_side",
+            "winner_side", "end_reason",
         ])
         return JsonResponse({"ok": True})
 
@@ -474,7 +476,7 @@ def referee_action(request, match_id: int):
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
             "status", "is_featured",
-            "winner_side",
+            "winner_side", "end_reason",
         ])
         return JsonResponse({"ok": True})
 
