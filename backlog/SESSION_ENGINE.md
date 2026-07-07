@@ -373,51 +373,48 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #109
-**Sprint traité :** 26 — Qualification à la poule terminée
+**Dernière session :** 2026-07-08 — Session #110
+**Sprint traité :** 26 — Qualification à la poule terminée (**clôturé cette session**)
 
 **Git :** branche `claude/sprint/26-qualification-poule-terminee`, parent
 effectif toujours `claude/sprint/25-arbitre-fins-speciales` (sprint 25
 toujours non mergé dans `origin/main`). Working tree propre au démarrage,
 rien à merger.
 
-**Spec review session #109 :** verdict `⚠️ Dérive mineure` — `classement-poule.md`
-et `tv-state.md` `✅ Conforme` ; `cycle-de-vie-epreuve.md` et
-`admin-tableau-final.md` portaient chacun un reliquat mineur : (1) le
-paragraphe « Écart connu » de `cycle-de-vie-epreuve.md` (§ « Poule
-terminée ») décrivait encore, au présent, le bug résolu par #289/#290 ;
-(2) le panneau Qualifiés disponibles d'`admin-tableau-final.md`
-correspondait à l'issue #291 déjà ouverte — vérification du code a montré
-que la logique de qualification y était déjà 100% serveur (`row.qualified`
-non recalculé côté front), seul le libellé d'état vide restait à corriger.
-1 nouvelle issue créée : **#315** (mineure, dérive documentaire).
+**Spec review session #110 :** verdict `✅ Conforme` sur les 4 specs
+(`cycle-de-vie-epreuve.md`, `classement-poule.md`, `admin-tableau-final.md`,
+`tv-state.md`). Vérification de code : `group_is_finished`
+(`live/bracket.py:5-11`) garde bien `_resolve_label_to_entry` et les quatre
+calculs du flag `qualified` (`build_event_group_tables` réutilisé par
+`api_event_groups` et `tv/idle`, `_pack_tv_stake` pour `tv/state`) ; côté
+front, `AdminBracket.vue` lit `row.qualified` tel quel (aucun recalcul
+client) et affiche « Aucune poule terminée » en état vide. 0 nouvelle
+dérive, 0 nouvelle issue.
 
-**Backlog engine session #109 :** 2 tickets traités (limite de la session) :
-- **#291** (mineure, front `AdminBracket.vue`) — libellé d'état vide du
-  panneau Qualifiés disponibles changé de « Aucun qualifié encore » vers
-  « Aucune poule terminée » (`frontend/app/src/views/admin/AdminBracket.vue:541`).
-  ✅ Approuvé, fermé.
-- **#315** (mineure, spec) — paragraphe « Écart connu » de
-  `cycle-de-vie-epreuve.md` (lignes 190-195) reformulé au passé, référençant
-  #289/#290, pour refléter que la garde `group_is_finished` est bien
-  implémentée. Créé, planifié, implémenté et fermé dans la même session
-  (correctif trivial, sous la limite de 2 tickets). ✅ Approuvé, fermé.
+**Backlog engine session #110 :** 0 ticket — aucune issue ouverte sur le
+milestone Sprint 26 à l'entrée en session (les 4 tickets #289/#290/#291/#315
+avaient déjà été fermés lors des sessions #108/#109).
 
 Aucun fichier partagé câblé. Aucune migration.
 
-**Sprint 26 — non clôturé cette session :** le verdict de l'étape 1 de
-**cette** session était `⚠️ Dérive mineure` (pas `✅ Conforme`), même si les
-deux dérives concernées ont été résorbées en étape 2 et qu'il ne reste
-**aucune** issue ouverte sur le milestone à l'instant présent. Comportement
-attendu du protocole (même schéma que sprint 25, sessions #106/#107) : la
-clôture interviendra à la **prochaine** session, quand l'étape 1 rendra
-directement `✅ Conforme` sur les 4 specs avec 0 issue ouverte.
+**Sprint 26 — clôturé cette session :** les deux conditions de l'étape 3
+étaient réunies (`✅ Conforme` sur les 4 specs + 0 issue ouverte). Milestone
+GitHub #25 fermé via l'API. Ligne supprimée de `roadmap.md`, dossier déplacé
+dans `backlog/sprints/done/26-qualification-poule-terminee/`.
+
+**Sprint suivant :** 27 — Poules : suivi & suppression, devient le premier
+sprint de la roadmap (6 sprints restants : 27 à 32). Non démarré cette
+session (règle : un seul sprint par session) — sera traité à la **prochaine
+échéance planifiée**.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — non pertinent cette session (changement front d'une seule
-ligne de texte).
+`package.json` — non pertinent cette session (0 changement de code).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
-hors périmètre de la Routine automatique.
+hors périmètre de la Routine automatique. Tant que cette chaîne n'est pas
+mergée dans `main`, le sprint 27 gardera probablement
+`claude/sprint/25-arbitre-fins-speciales` comme parent effectif à sa
+prochaine session (même mécanique de résolution de parent que pour le
+sprint 26).

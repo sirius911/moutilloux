@@ -5,3 +5,4 @@
 | — | 2026-07-07 | — | Sprint planifié (revue produit 2026-07-07, décision 30) | #289-291 | 3 |
 | #108 | 2026-07-07 | ❌ Dérive bloquante (attendue) | 0 nouvelle dérive (les 3 dérives ticketées #289-291 confirmées telles quelles dans le code) | 0 | 3 |
 | #109 | 2026-07-07 | ⚠️ Dérive mineure | 1 nouvelle dérive (§ « Écart connu » de cycle-de-vie-epreuve.md obsolète depuis #289/#290) | 1 (#315) | 2 |
+| #110 | 2026-07-08 | ✅ Conforme | 0 nouvelle dérive (4 specs relues, code aligné : `group_is_finished` garde bien les 4 calculs de qualification + `_resolve_label_to_entry`, front `AdminBracket.vue` 100% serveur) | 0 | 0 |
