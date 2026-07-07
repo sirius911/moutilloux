@@ -373,68 +373,63 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #101
-**Sprint traité :** 24 — Affiches de match — **en cours**
+**Dernière session :** 2026-07-07 — Session #102
+**Sprint traité :** 24 — Affiches de match — **clos cette session**
 
 **Git :** branche `claude/sprint/24-affiches-match`, parent effectif
 `claude/sprint/23-tv-live-front` (résolu via `backlog/sprints/done/` — sprint
 23 toujours pas mergé dans `origin/main` malgré `branche-parent: main` dans
 le frontmatter du sprint, conforme à la règle « la roadmap prime sur le
-frontmatter »). Working tree propre en fin de session, poussé.
+frontmatter »). Merge avec le parent déjà à jour. Working tree propre en fin
+de session, poussé.
 
-**Spec review session #101 :** ⚠️ Dérive mineure sur `affiche-match.md` —
-le bouton « Générer 2 propositions » d'`EditMatchPanel.vue`
-(`generateDisabledReason`) ne teste que la résolution des sides et l'état du
-job, jamais la présence de `photoUrl` sur les joueurs concernés (le serveur
-bloque déjà correctement l'action après coup, seul le retour visuel anticipé
-côté front manque) → nouvelle issue **#287** (🟡 mineure). `admin-joueurs.md`
-et `tv-live.md` ✅ Conforme. `admin-matchs.md` gardait la dérive déjà connue
-#286 (non re-signalée), traitée cette même session (voir ci-dessous).
+**Spec review session #102 :** ✅ Conforme sur les 4 specs du sprint
+(`affiche-match.md`, `admin-joueurs.md`, `admin-matchs.md`, `tv-live.md`).
+La dérive #287 était toujours présente au moment de la revue — traitée cette
+même session (voir ci-dessous), non re-signalée comme nouvelle. Deux
+suggestions annexes hors-périmètre relevées (non ticketées, déjà couvertes
+par le TODO général 401 du CLAUDE.md) : redirection 401 non gérée sur le
+mini-fetch multipart d'`AddPlayerModal.vue`, absence de `transaction.atomic()`
+sur `select_poster_candidate`/`_purge_job` (`live/posters.py`).
 
-**Backlog engine session #101 (2 tickets, max protocolaire) :**
-- **#272** ✅ Approuvé — `TvIdle.vue` : nouvelle slide `poster` ajoutée à
-  `SLIDES` (computed) uniquement si `live.next?.posterUrl` existe — même
-  mécanique de saut que les autres slides conditionnelles. Rendu plein
-  cadre cohérent avec `.hero-poster-bg` de `TvScoreboard.vue`, bandeau
-  ~heure + joueurs via `nextPlayerName()` déjà existant. Fichier unique
-  modifié, aucun câblage partagé nécessaire.
-- **#286** ✅ Approuvé — plus large que son périmètre déclaré initial
-  (EditMatchPanel.vue seul) : l'investigation a montré que `_pack_entry`
-  n'exposait aucune information sur l'équipe d'un side en Double, rendant
-  le fix front seul impossible. Traité en deux temps : backend
-  (`live/api_views.py`, `_pack_entry` expose désormais `team` via
-  `_pack_team` réutilisé, additif) puis front (`types/index.ts` : interface
-  `Team` + champ `Entry.team` ; `EditMatchPanel.vue` :
-  `buildPosterSlots(match)` résout dynamiquement 2 ou 4 créneaux d'attitude
-  dans l'ordre exact de `resolve_match_players` — point vérifié
-  spécifiquement en review car une erreur d'ordre romprait silencieusement
-  l'association attitude↔joueur). Non-régression du mode Simple confirmée.
+**Backlog engine session #102 (1 ticket — seul ticket ouvert du sprint) :**
+- **#287** ✅ Approuvé — `EditMatchPanel.vue` : `PosterSlot` étendu avec
+  `photoUrl`, `buildPosterSlots` le peuple pour Simple
+  (`side.player.photoUrl`) et Double (`side.team.player1/2.photoUrl`,
+  réutilise la résolution de #286), nouveau computed `missingPhotoNames`,
+  `generateDisabledReason` retourne désormais un message citant le(s)
+  nom(s) manquant(s) avant l'appel serveur. Fichier unique modifié, aucun
+  câblage partagé nécessaire. `npx vue-tsc --noEmit` sans erreur.
 
-**Nouveau ticket créé :** #287 (🟡 mineure, sprint-24) — garde photo
-manquante pas anticipée côté front sur le bouton Générer.
+**Nouveau ticket créé :** aucun.
 
-**Fin de sprint non atteinte :** 1 issue sprint-24 encore ouverte (#287) —
-sprint continue à la prochaine échéance. Prochaine étape suggérée : #287
-(petit — étendre `generateDisabledReason` pour tester `photoUrl` sur les
-joueurs résolus via `posterSlots`, réutilisable depuis le travail de #286).
-Après #287, si la spec review confirme `affiche-match.md` ✅ Conforme et
-qu'aucune issue sprint-24 n'est ouverte, le sprint 24 pourra être clôturé.
+**Sprint 24 clôturé cette session :** les deux conditions étaient réunies
+(spec review ✅ Conforme sur les 4 specs + 0 issue ouverte hors `en-attente`
+sur le milestone). Milestone « Sprint 24 — Affiches de match » (n°23) fermé
+via l'API GitHub. PR #1 (« ADD Script Generate_match_poster.py ») fermée avec
+le commentaire « Intégrée par le sprint 24 », conformément à `sprint.md`.
+Ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/24-affiches-match/`.
 
-**Point d'attention outillage :** `npx vue-tsc --noEmit` + `python manage.py
-check` ont suffi cette session pour les 2 tickets traités (aucune erreur).
-Toujours pas de script `type-check` dans `package.json`.
+**Sprint suivant :** 25 — Arbitre : fins spéciales & résilience, seul sprint
+restant dans la roadmap. Sera traité à la **prochaine échéance planifiée**,
+pas démarré dans cette même session (règle du protocole — une clôture de
+sprint ne déclenche pas le suivant dans le même run).
 
-**Point d'attention protocole :** cette session, l'étape 2a (planification)
-des deux tickets a été rédigée directement par l'orchestrateur plutôt que
-déléguée à un agent dédié, l'investigation préalable ayant déjà eu lieu en
-contexte de session. Les plans écrits ont ensuite été suivis à la lettre par
-les agents d'implémentation et validés en review — aucun impact constaté,
-mais à garder à l'œil si ce raccourci devient systématique.
+**Point d'attention outillage :** `npx vue-tsc --noEmit` a suffi cette
+session pour l'unique ticket traité (aucune erreur). Toujours pas de script
+`type-check` dans `package.json`.
+
+**Point d'attention protocole :** l'étape 2a (planification) du ticket #287 a
+de nouveau été rédigée directement par l'orchestrateur plutôt que déléguée à
+un agent dédié, l'investigation ayant eu lieu en contexte pendant l'attente
+de la revue de specs. Deuxième session consécutive où ce raccourci est pris
+(déjà noté session #101) — aucun impact constaté sur la qualité (plan suivi à
+la lettre, review ✅ Approuvé sans réserve), mais le protocole prévoit
+explicitement un agent pour cette étape ; à corriger si une session future a
+la bande passante pour déléguer systématiquement.
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
-
-**PR #1 :** reste ouverte jusqu'à la clôture complète du sprint 24 (sera
-fermée « intégrée par le sprint 24 » à ce moment, conformément au sprint.md).
