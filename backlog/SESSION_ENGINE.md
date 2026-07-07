@@ -373,73 +373,65 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #106
-**Sprint traité :** 25 — Arbitre : fins spéciales & résilience
+**Dernière session :** 2026-07-07 — Session #107
+**Sprint traité :** 25 — Arbitre : fins spéciales & résilience (**clos cette
+session**)
 
 **Git :** branche `claude/sprint/25-arbitre-fins-speciales`, parent effectif
 toujours `claude/sprint/24-affiches-match` (sprint 24 pas mergé dans
 `origin/main`). Working tree propre en début de session, branche déjà à
-jour avec origin et avec le parent effectif (rien à merger). Working tree
-propre en fin de session, poussé.
+jour avec origin et avec le parent effectif (rien à merger). Aucun ticket
+implémenté cette session (0 issue ouverte sur le milestone en début de
+session) → seul le commit de clôture de sprint a été produit.
 
-**Spec review session #106 :** `cycle-de-vie-match.md` ✅ Conforme (back
-inchangé depuis la session #105, rien de nouveau à vérifier).
-`arbitre-match.md` ❌ Dérive bloquante — **attendu**, 2 tickets front
-restaient à livrer en début de session (bascule Abandon adverse absente du
-modal Terminer, libellés Forfait/Abandon absents en FINISHED), toutes deux
-déjà couvertes par les tickets ouverts #285/#284 — 0 nouvelle issue créée.
+**Spec review session #107 :** `cycle-de-vie-match.md` ✅ Conforme (back
+inchangé depuis #105/#106). `arbitre-match.md` ✅ Conforme — comme prévu par
+le log de la session #106, relire la spec après la livraison complète des 8
+tickets (#279-285, #8) a fait passer le verdict de « ❌ Dérive bloquante
+(attendu) » à « ✅ Conforme » ; les 5 dérives historiques ont été vérifiées
+une à une dans le code réel (pas supposées) : forfait/annuler sur SCHEDULED
+(#282), tiroir Corrections (#283, `toggle_service` et `swap` bien séparés
+désormais), bascule Abandon adverse → `end_reason=RETIREMENT` (#285),
+libellés Forfait/Abandon en FINISHED (#284), résilience réseau — modale
+Terminer reste ouverte si l'action échoue (#8). 0 nouvelle issue créée.
 
-**Backlog engine session #106 (2 tickets, ordre suggéré du sprint.md) :**
-- **#285** ✅ Approuvé — Modal « Déclarer vainqueur » de `ArbitreMatch.vue`
-  enrichi d'une bascule « Abandon adverse » (`retirement: ref(false)`,
-  réinitialisée à chaque ouverture/fermeture via la nouvelle
-  `closeFinishModal()`) ; `confirmFinish` envoie désormais
-  `sendAction('finish_winner', { winner, retirement: retirement.value })`,
-  conforme au contrat back livré par #281
-  (`live/referee_views.py:673-680` → `finish_match_manual(..., retirement=)`
-  → `end_reason=RETIREMENT`, score figé). L'indice « Mène »
-  (`finishCandidates`/`isLeading`) était déjà conforme, non retouché.
-  `npx vue-tsc --noEmit` propre.
-- **#284** ✅ Approuvé — Libellés Forfait/Abandon en `FINISHED` basés sur
-  `match.endReason` (`'WALKOVER' | 'RETIREMENT' | 'NORMAL' | null`, déjà
-  exposé par `_pack_match`/`types/index.ts` depuis #279). Dans
-  `ArbitreMatch.vue`, le badge de statut `statusLabel` affiche
-  `TERMINÉ · FORFAIT` / `TERMINÉ · ABANDON` (sinon `TERMINÉ` seul, aucune
-  régression sur une fin normale). Dans `ArbitreHome.vue`, nouvelle
-  fonction `endReasonLabel(m)` affichée sur la carte de la file via un
-  `v-else-if` juste après le score `LIVE` existant (réutilise la classe
-  `.arh-match-score`, exclusivité mutuelle garantie par le domaine de
-  `status` — un match ne peut être à la fois `LIVE` et `FINISHED`). Aucun
-  nouveau style CSS. `npx vue-tsc --noEmit` propre.
+Deux observations mineures relevées par le reviewer, non ticketées (non
+bloquantes, hors périmètre strict de la spec) : (1) `specs/screens/arbitre-match.md`
+lignes 101-103 garde un avertissement obsolète disant que `swap` n'est
+jamais branché — c'est faux depuis #283, texte de spec à nettoyer à
+l'occasion ; (2) le flag `swapped` du tiroir Corrections est un `ref(false)`
+front réinitialisé à chaque montage alors que le back le garde en session
+(`live/referee_views.py:81`) — un F5 en cours de match désynchronise
+l'affichage de la session serveur ; la spec ne traite pas de la persistance
+au rechargement donc ce n'est pas une dérive au sens du protocole.
 
-**Nouveau ticket créé :** aucun.
+**Backlog engine session #107 :** aucun ticket — 0 issue ouverte sur le
+milestone `sprint-25` en début de session (les 8 tickets étaient déjà clos
+depuis la session #106).
 
-**Sprint 25 — état après cette session :** 0 issue ouverte avec le
-label/milestone `sprint-25` — les 8 tickets du sprint sont clos. **Sprint
-pas encore clos** malgré ça : la condition « spec review de cette session
-✅ Conforme sur toutes les specs du sprint » n'est pas remplie, car l'étape
-1 (spec review) s'exécute *avant* l'étape 2 (backlog engine) dans le
-protocole — elle a donc vu `arbitre-match.md` encore en dérive, avant que
-#285/#284 ne la résorbent dans la même session. C'est structurel, pas un
-bug : toute session qui livre les derniers tickets d'un sprint ne peut par
-construction pas remplir cette condition le jour même. **Prochaine
-session :** l'étape 1 doit relire `arbitre-match.md` contre le code
-maintenant à jour (aucun changement prévu par ailleurs) — verdict attendu
-✅ Conforme — et avec 0 issue ouverte, l'étape 3 devrait alors clore le
-sprint 25 (fermeture du milestone, sprint retiré de `roadmap.md`, dossier
-déplacé vers `backlog/sprints/done/25-arbitre-fins-speciales/`). Si la
-roadmap est vide après ce retrait, désactiver la Routine manuellement sur
-claude.ai/code/routines.
+**Sprint 25 — clôturé cette session :** les deux conditions de l'étape 3
+étaient réunies dès l'étape 1 (spec review ✅ Conforme sur les deux specs +
+0 issue ouverte hors `en-attente`). Actions effectuées :
+- Milestone GitHub « Sprint 25 — Arbitre : fins spéciales & résilience »
+  (numéro 24) fermé (`state: closed`).
+- Ligne retirée de `backlog/sprints/roadmap.md`.
+- Dossier déplacé : `backlog/sprints/25-arbitre-fins-speciales/` →
+  `backlog/sprints/done/25-arbitre-fins-speciales/`.
 
-**Point d'attention protocole :** aucun écart cette session — les deux
-tickets front (#285, #284) n'ont touché que `ArbitreMatch.vue` et
-`ArbitreHome.vue` (fichiers listés dans leur périmètre respectif), aucune
-modification de spec nécessaire (les deux plans concluaient à « Specs
-impactées : aucune »). Rien à trancher côté « agent de maintenance de
-specs » cette fois non plus.
+**Roadmap vide après ce retrait — aucun sprint suivant planifié.**
+**Désactiver la Routine manuellement sur claude.ai/code/routines.** Un
+nouveau sprint devra être planifié (skill `plan-sprint` ou action humaine)
+avant de réactiver la Routine.
+
+**Point d'attention protocole :** aucun écart cette session. Confirme
+l'analyse structurelle notée en session #106 : une session qui livre les
+derniers tickets d'un sprint ne peut pas le clôturer le jour même (l'étape 1
+voit encore la dérive avant que l'étape 2 ne la résorbe) ; c'est la session
+suivante, sans nouveau ticket à traiter, qui referme la boucle. Comportement
+attendu du protocole, pas un bug.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — `npx vue-tsc --noEmit` direct a suffi cette session.
+`package.json` — non pertinent cette session (aucune modification de code).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non

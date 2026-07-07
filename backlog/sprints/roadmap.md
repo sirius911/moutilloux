@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 25 — Arbitre : fins spéciales & résilience | `backlog/sprints/25-arbitre-fins-speciales/sprint.md` |
