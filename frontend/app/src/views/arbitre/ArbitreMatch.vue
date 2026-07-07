@@ -54,14 +54,16 @@ function extractError(e: unknown): string {
   return 'Action impossible.'
 }
 
-async function sendAction(action: string, extra: Record<string, unknown> = {}) {
+async function sendAction(action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
     await post(`/arbitre/match/${props.matchId}/action/`, { action, ...extra })
     // Le moteur renvoie {ok:true} sans l'état → on rafraîchit tout de suite
     // (sans attendre le tick de polling) pour un retour immédiat.
     await live.fetchMatch(props.matchId)
+    return true
   } catch (e) {
     showError(extractError(e))
+    return false
   }
 }
 
@@ -84,8 +86,8 @@ function askConfirm(action: string, label: string) {
 
 async function confirm() {
   if (!confirmModal.value) return
-  await sendAction(confirmModal.value.action)
-  confirmModal.value = null
+  const ok = await sendAction(confirmModal.value.action)
+  if (ok) confirmModal.value = null
 }
 
 function cancel() {
@@ -98,8 +100,8 @@ function openFinishModal() {
 }
 
 async function confirmFinish(winner: 'A' | 'B') {
-  await sendAction('finish_winner', { winner })
-  finishModal.value = false
+  const ok = await sendAction('finish_winner', { winner })
+  if (ok) finishModal.value = false
 }
 
 const finishCandidates = computed((): { a: FinishCandidate; b: FinishCandidate } | null => {
