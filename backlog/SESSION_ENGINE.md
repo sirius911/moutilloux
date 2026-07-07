@@ -373,56 +373,49 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #108
-**Sprint traité :** 26 — Qualification à la poule terminée (premier sprint
-traité depuis la planification du 2026-07-07, décision 30 de la revue
-produit)
+**Dernière session :** 2026-07-07 — Session #109
+**Sprint traité :** 26 — Qualification à la poule terminée
 
-**Git :** branche `claude/sprint/26-qualification-poule-terminee`, créée
-cette session à partir du parent effectif `claude/sprint/25-arbitre-fins-speciales`
-(sprint 25 toujours non mergé dans `origin/main`, donc parent ≠ `main` selon
-la règle de résolution de l'étape 0). Working tree propre, branche
-synchronisée avec le parent (rien à merger, branche neuve).
+**Git :** branche `claude/sprint/26-qualification-poule-terminee`, parent
+effectif toujours `claude/sprint/25-arbitre-fins-speciales` (sprint 25
+toujours non mergé dans `origin/main`). Working tree propre au démarrage,
+rien à merger.
 
-**Spec review session #108 :** verdict `❌ Dérive bloquante (attendue)` sur
-3 des 4 specs du sprint — `cycle-de-vie-epreuve.md` (§ « Poule terminée »),
-`admin-tableau-final.md` (panneau Qualifiés disponibles), `tv-state.md`
-(flag `qualified`) ; `classement-poule.md` (spec « as-is » de l'algorithme
-de classement, ne couvre pas la qualification) `✅ Conforme`. Les 3 dérives
-observées correspondaient exactement aux 3 issues déjà ouvertes sur le
-milestone (#289, #290, #291, créées au planning du sprint) — confirmées une
-à une dans le code réel (`live/bracket.py:_resolve_label_to_entry` résolvait
-un rang dès le premier match terminé ; `qualified` calculé `rank <=
-qualified_per_group` sans garde en 4 points de `live/views.py` et
-`live/api_views.py`). 0 nouvelle issue créée.
+**Spec review session #109 :** verdict `⚠️ Dérive mineure` — `classement-poule.md`
+et `tv-state.md` `✅ Conforme` ; `cycle-de-vie-epreuve.md` et
+`admin-tableau-final.md` portaient chacun un reliquat mineur : (1) le
+paragraphe « Écart connu » de `cycle-de-vie-epreuve.md` (§ « Poule
+terminée ») décrivait encore, au présent, le bug résolu par #289/#290 ;
+(2) le panneau Qualifiés disponibles d'`admin-tableau-final.md`
+correspondait à l'issue #291 déjà ouverte — vérification du code a montré
+que la logique de qualification y était déjà 100% serveur (`row.qualified`
+non recalculé côté front), seul le libellé d'état vide restait à corriger.
+1 nouvelle issue créée : **#315** (mineure, dérive documentaire).
 
-**Backlog engine session #108 :** 2 tickets traités (limite de la session),
-dans l'ordre suggéré par le sprint (#289 débloque #290) :
-- **#289** (majeure) — ajout du helper `group_is_finished(group)` dans
-  `live/bracket.py` + garde dans `_resolve_label_to_entry` (retourne `None`
-  tant que la poule n'est pas terminée). ✅ Approuvé, fermé.
-- **#290** (majeure) — réutilisation de `group_is_finished` pour garder le
-  flag `qualified` dans `build_event_group_tables` (`live/views.py`) et
-  `_pack_tv_stake` (`live/api_views.py`) ; `api_event_groups` et
-  `_pack_tv_events` corrigés par ricochet (même dict `qualif` partagé). ✅
-  Approuvé, fermé.
-- **#291** (mineure, front `AdminBracket.vue`) — **non traité**, limite de 2
-  tickets/session atteinte ; reste ouvert pour la prochaine échéance.
+**Backlog engine session #109 :** 2 tickets traités (limite de la session) :
+- **#291** (mineure, front `AdminBracket.vue`) — libellé d'état vide du
+  panneau Qualifiés disponibles changé de « Aucun qualifié encore » vers
+  « Aucune poule terminée » (`frontend/app/src/views/admin/AdminBracket.vue:541`).
+  ✅ Approuvé, fermé.
+- **#315** (mineure, spec) — paragraphe « Écart connu » de
+  `cycle-de-vie-epreuve.md` (lignes 190-195) reformulé au passé, référençant
+  #289/#290, pour refléter que la garde `group_is_finished` est bien
+  implémentée. Créé, planifié, implémenté et fermé dans la même session
+  (correctif trivial, sous la limite de 2 tickets). ✅ Approuvé, fermé.
 
-Aucun fichier partagé câblé (`live/urls.py` non touché sur les deux
-tickets — pas de nouvelle route, changement interne à `live/bracket.py`,
-`live/views.py`, `live/api_views.py`). Aucune migration.
+Aucun fichier partagé câblé. Aucune migration.
 
-**Sprint 26 — non clôturé cette session :** la spec review a rendu
-`❌ Dérive bloquante` à l'étape 1 (avant résorption par l'étape 2), et il
-reste #291 ouvert sur le milestone après les 2 tickets traités. Les deux
-conditions de l'étape 3 ne sont donc pas réunies. Comportement attendu du
-protocole (cf. le même schéma observé aux sessions #106/#107 sur le sprint
-25) : la clôture interviendra à une session ultérieure, sans nouveau ticket
-à traiter (spec review ✅ Conforme + 0 issue ouverte).
+**Sprint 26 — non clôturé cette session :** le verdict de l'étape 1 de
+**cette** session était `⚠️ Dérive mineure` (pas `✅ Conforme`), même si les
+deux dérives concernées ont été résorbées en étape 2 et qu'il ne reste
+**aucune** issue ouverte sur le milestone à l'instant présent. Comportement
+attendu du protocole (même schéma que sprint 25, sessions #106/#107) : la
+clôture interviendra à la **prochaine** session, quand l'étape 1 rendra
+directement `✅ Conforme` sur les 4 specs avec 0 issue ouverte.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — non pertinent cette session (aucune modification frontend).
+`package.json` — non pertinent cette session (changement front d'une seule
+ligne de texte).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
