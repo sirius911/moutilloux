@@ -187,12 +187,11 @@ La granularité reste **la poule**, pas l'épreuve : on n'attend pas que toutes
 les poules soient finies — chaque poule libère ses qualifiés dès qu'elle est
 terminée, au fil de l'eau.
 
-> **Écart connu.** Aujourd'hui `sync_final_bracket_for_event` (`bracket.py:242`)
-> résout une étiquette `A1`/`C2` dès qu'un `GroupStanding` porte ce rang — or le
-> classement est recalculé à **chaque** match terminé : le tableau se peuple de
-> qualifiés **provisoires** pendant que la poule joue encore. La cible est de ne
-> résoudre une étiquette que si sa poule est **terminée** (même garde pour le
-> champ `qualified` des standings exposés).
+> **Écart résolu** (#289, #290). `_resolve_label_to_entry` ne résout plus une
+> étiquette `A1`/`C2` sur un classement intermédiaire : le helper partagé
+> `group_is_finished` (`live/bracket.py:5-11`) garde à la fois la résolution
+> d'étiquette bracket et le flag `qualified` exposé par `live/views.py` et
+> `live/api_views.py` — les deux ne se déclenchent que poule terminée.
 
 ### Au fil de l'eau
 
