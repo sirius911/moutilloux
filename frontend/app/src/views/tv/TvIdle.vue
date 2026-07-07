@@ -16,7 +16,7 @@ const bracketEventIndex = ref(0)
 // être sautée aux rotations suivantes tant qu'elle reste `finished`.
 const programmeFinishedShown = ref(false)
 
-type SlideKind = 'tournoi' | 'results' | 'groups' | 'bracket' | 'programme' | 'announces'
+type SlideKind = 'tournoi' | 'results' | 'groups' | 'bracket' | 'programme' | 'announces' | 'poster'
 
 interface SlideDef {
   kind: SlideKind
@@ -68,6 +68,7 @@ const SLIDES = computed<SlideDef[]>(() => {
   if (currentBracketEvent.value) list.push({ kind: 'bracket' })
   if (programmeVisible.value) list.push({ kind: 'programme' })
   if (live.announcements.length > 0) list.push({ kind: 'announces' })
+  if (live.next?.posterUrl) list.push({ kind: 'poster' })
   return list
 })
 
@@ -367,6 +368,21 @@ function nextPlayerName(side: 'A' | 'B'): string {
             </div>
             <div v-if="live.announcements.length === 0" class="tv-empty">Aucune annonce</div>
           </div>
+        </div>
+      </section>
+
+      <!-- Slide : Affiche du prochain match -->
+      <section :class="['tv-slide', 'tv-slide-poster', { on: currentSlide === 'poster' }]">
+        <div
+          v-if="live.next?.posterUrl"
+          class="tv-slide-poster-bg"
+          :style="{ backgroundImage: `url(${live.next.posterUrl})` }"
+        />
+        <div v-if="live.next" class="tv-slide-poster-band">
+          <span v-if="live.next.scheduledTime" class="tv-slide-poster-time tab">~{{ live.next.scheduledTime }}</span>
+          <span class="tv-slide-poster-side">{{ nextPlayerName('A') }}</span>
+          <em class="tv-slide-poster-vs">vs</em>
+          <span class="tv-slide-poster-side">{{ nextPlayerName('B') }}</span>
         </div>
       </section>
     </main>
@@ -1004,5 +1020,50 @@ function nextPlayerName(side: 'A' | 'B'): string {
   color: var(--ink-0);
   text-align: center;
   line-height: 1.4;
+}
+
+/* Slide Affiche */
+.tv-slide-poster {
+  justify-content: flex-start;
+  align-items: flex-end;
+}
+
+.tv-slide-poster-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-color: var(--bg-0);
+}
+
+.tv-slide-poster-band {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 56px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+}
+
+.tv-slide-poster-time {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tv-slide-poster-side {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink-0);
+}
+
+.tv-slide-poster-vs {
+  font-style: normal;
+  font-size: 14px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
 }
 </style>
