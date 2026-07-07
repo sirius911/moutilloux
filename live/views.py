@@ -2,6 +2,7 @@ from collections import defaultdict
 from django.shortcuts import render
 from competition.models import GroupStanding, GroupMembership
 from live.models import Match
+from live.bracket import group_is_finished
 
 
 def home(request):
@@ -71,7 +72,7 @@ def build_event_group_tables(edition, events):
             qualif = {}
             if standings:
                 for s in standings:
-                    if s.rank and s.rank <= ev.qualified_per_group:
+                    if s.rank and s.rank <= ev.qualified_per_group and group_is_finished(g):
                         qualif[s.entry_id] = f"{g.name}{s.rank}"
                     else:
                         qualif[s.entry_id] = "-"

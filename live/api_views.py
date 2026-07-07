@@ -21,6 +21,7 @@ from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
 from live.models import Match, Court, PlayDay, Break, Announcement, PosterJob
 from live.views import build_event_group_tables, get_hero_match
+from live.bracket import group_is_finished
 from live import posters
 from live.admin_views import (
     superuser_required,
@@ -2021,7 +2022,7 @@ def _pack_tv_stake(hero):
                 "wins": s.wins,
                 "losses": s.losses,
                 "points": s.points,
-                "qualified": bool(s.rank) and s.rank <= qualified_per_group,
+                "qualified": bool(s.rank) and s.rank <= qualified_per_group and group_is_finished(hero.group),
             }
             for s in standings_qs
         ]
