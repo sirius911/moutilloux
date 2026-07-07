@@ -25,10 +25,19 @@ export interface EntryPlayer {
   photoUrl: string | null
 }
 
+export interface Team {
+  id: number
+  name: string | null
+  displayName: string
+  player1: Player
+  player2: Player
+}
+
 export interface Entry {
   id: number
   displayName: string         // nom affiché (joueur ou équipe)
   player: EntryPlayer | null  // null pour les doubles
+  team: Team | null           // null pour les simples
   teamName?: string           // doubles
   seedHint: number | null
   groupId: number | null

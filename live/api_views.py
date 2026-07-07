@@ -167,6 +167,7 @@ def _pack_entry(entry):
         }
     else:
         result["player"] = None
+    result["team"] = _pack_team(entry.team) if entry.team else None
     return result
 
 

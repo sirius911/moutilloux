@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
@@ -7,7 +7,25 @@ import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { extractApiError } from '@/lib/apiError'
 import { useApi } from '@/composables/useApi'
 import { usePolling } from '@/composables/usePolling'
-import type { Match, PosterState } from '@/types'
+import type { Entry, Match, PosterState } from '@/types'
+
+interface PosterSlot { key: string; label: string; defaultAttitude: string }
+
+function buildPosterSlots(match: Match): PosterSlot[] {
+  const slots: PosterSlot[] = []
+  const addSide = (side: Entry | null, prefix: string) => {
+    if (!side) return
+    if (side.player) {
+      slots.push({ key: prefix, label: side.player.fullName, defaultAttitude: side.player.attitude ?? '' })
+    } else if (side.team) {
+      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitude ?? '' })
+      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitude ?? '' })
+    }
+  }
+  addSide(match.sideA, 'A')
+  addSide(match.sideB, 'B')
+  return slots
+}
 
 const props = defineProps<{ match: Match; initialTab?: 'score' | 'format' | 'planning' | 'poster' }>()
 const emit = defineEmits<{ close: []; saved: []; 'poster-updated': [] }>()
@@ -162,9 +180,12 @@ const posterActionError = ref('')   // erreur d'action (generate/select/clear), 
 const posterActionBusy = ref(false) // désactive les boutons pendant generate/select/clear/retirer
 const showRemovePosterConfirm = ref(false)
 
-// Attitude par side, pré-remplie depuis Player.attitude (exposé par _pack_entry)
-const attitudeA = ref(props.match.sideA?.player?.attitude ?? '')
-const attitudeB = ref(props.match.sideB?.player?.attitude ?? '')
+// Attitude par joueur (2 slots en Simple, 4 en Double), pré-remplie depuis
+// Player.attitude (exposé par _pack_entry / _pack_team)
+const posterSlots = buildPosterSlots(props.match)
+const posterAttitudes = reactive<Record<string, string>>(
+  Object.fromEntries(posterSlots.map(s => [s.key, s.defaultAttitude]))
+)
 
 async function fetchPosterState() {
   posterState.value = await get<PosterState>(`/api/matches/${props.match.id}/poster/`)
@@ -191,7 +212,7 @@ async function generatePosters() {
   posterActionBusy.value = true
   try {
     posterState.value = await post<PosterState>(`/api/matches/${props.match.id}/poster/generate/`, {
-      attitudes: { A: attitudeA.value, B: attitudeB.value },
+      attitudes: Object.fromEntries(posterSlots.map(s => [s.key, posterAttitudes[s.key]])),
     })
   } catch (e) {
     posterActionError.value = extractApiError(e, 'Erreur lors du lancement de la génération.')
@@ -611,13 +632,9 @@ async function save() {
             <div class="slide-section">
               <h4>Générer une affiche</h4>
               <div class="fld-col">
-                <label class="fld">
-                  <span class="fld-lbl">Attitude — {{ nameA }}</span>
-                  <input v-model="attitudeA" class="inp" type="text" placeholder="ex. charmeuse, furieux…" />
-                </label>
-                <label class="fld">
-                  <span class="fld-lbl">Attitude — {{ nameB }}</span>
-                  <input v-model="attitudeB" class="inp" type="text" placeholder="ex. charmeuse, furieux…" />
+                <label v-for="slot in posterSlots" :key="slot.key" class="fld">
+                  <span class="fld-lbl">Attitude — {{ slot.label }}</span>
+                  <input v-model="posterAttitudes[slot.key]" class="inp" type="text" placeholder="ex. charmeuse, furieux…" />
                 </label>
               </div>
               <p v-if="generateDisabledReason" class="slide-hint">{{ generateDisabledReason }}</p>
