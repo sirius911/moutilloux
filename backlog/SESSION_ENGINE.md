@@ -373,7 +373,7 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #104
+**Dernière session :** 2026-07-07 — Session #105
 **Sprint traité :** 25 — Arbitre : fins spéciales & résilience
 
 **Git :** branche `claude/sprint/25-arbitre-fins-speciales`, parent effectif
@@ -382,62 +382,64 @@ toujours `claude/sprint/24-affiches-match` (sprint 24 pas mergé dans
 jour avec origin et avec le parent effectif (rien à merger). Working tree
 propre en fin de session, poussé.
 
-**Spec review session #104 :** ❌ Dérive bloquante sur les 2 specs du sprint
-— **attendu**, 6 tickets restaient à livrer en début de session. 5 dérives
-constatées (2 dérives de la session #103 déjà résorbées entre-temps par
-#279/#280), toutes déjà couvertes par les tickets ouverts
-#281/#282/#283/#284/#285/#8 — 0 nouvelle issue créée.
+**Spec review session #105 :** `cycle-de-vie-match.md` ✅ Conforme (back
+entièrement livré : `end_reason`, `formatLabel`, services
+`forfait_match`/`cancel_match`/`finish_match_manual`/`reopen_match`,
+invariant mono-`LIVE`, `order_index` persistant, `set_scores` conservés en
+reopen, `CANCELED` exclu de `standings.py` — tout vérifié en code).
+`arbitre-match.md` ❌ Dérive bloquante — **attendu**, 4 tickets front
+restaient à livrer en début de session. 4 dérives constatées (forfait/annuler
+absents sur SCHEDULED, tiroir Corrections absent, bascule Abandon adverse
+absente du modal Terminer, libellés Forfait/Abandon absents en FINISHED),
+toutes déjà couvertes par les tickets ouverts #282/#283/#284/#285 — 0
+nouvelle issue créée.
 
-**Backlog engine session #104 (2 tickets, ordre suggéré du sprint.md) :**
-- **#281** ✅ Approuvé — Service `finish_match_manual(match, winner_side,
-  retirement=False)` extrait dans `live/admin_views.py` depuis le corps
-  auparavant inline de l'action `finish_winner` (même mécanique de recalcul
-  poule/QF-SF/finale, inchangée). Pose `end_reason = RETIREMENT` si
-  `retirement=True` sinon `NORMAL`, après `mark_finished()`. `finish_winner`
-  (`live/referee_views.py`) délègue au service et lit le nouveau champ
-  optionnel `retirement: bool` du payload JSON (rétro-compatible, défaut
-  `False`). `games_a`/`games_b` non touchés (score déjà figé de fait sur ce
-  chemin — rien à retirer). `finish_left`/`finish_right` (fin automatique)
-  inchangés. `manage.py check` propre, aucune migration nécessaire
-  (`end_reason` déjà livré par #279).
-- **#8** ✅ Approuvé — `sendAction` (`ArbitreMatch.vue`) retourne désormais
-  `Promise<boolean>` (`true` après succès, `false` après `showError` dans le
-  `catch`). `confirm()` et `confirmFinish()` ne ferment plus leur modale
-  (`confirmModal`/`finishModal`) qu'en cas de succès — sur échec réseau/400,
-  le toast reste visible et la modale reste ouverte pour un nouvel essai.
-  Les autres appelants (`handleTap`, `handleUndo`, `handleToggleServer`,
-  `handleStart`) ne ferment rien après l'appel, donc non impactés.
-  `npx vue-tsc --noEmit` propre.
+**Backlog engine session #105 (2 tickets, ordre suggéré du sprint.md) :**
+- **#283** ✅ Approuvé — Tiroir « Corrections » (modal Teleport) dans
+  `ArbitreMatch.vue` : Jeux ± / Sets ± gauche-droite câblés sur
+  `game_left/right_plus/minus`, `set_left/right_plus/minus` ; « Changer le
+  serveur » (`toggle_service`) déplacé du footer vers le tiroir ; « Inverser
+  les côtés » nouvellement câblé sur l'action back `swap` (état local
+  `swapped` en lock-step avec le flag de session back — pas de contrepartie
+  dans `_pack_match`, limite connue et acceptée, cf. plan). Nouveaux helpers
+  `sideAt`/`playerName`/`sideSets`/`sideGames`/`sidePoints`/`sideTbPoints`
+  appliqués partout où l'affichage doit refléter le swap (bloc score, score
+  central, zones de tap). Aucune garde client sur jeux±/serveur — refus
+  moteur + toast existant, conforme au golden path résilience.
+  `handleToggleServer` supprimé (un seul appelant). `npx vue-tsc --noEmit`
+  propre.
+- **#282** ✅ Approuvé — Boutons « Forfait »/« Annuler » sur match
+  `SCHEDULED` dans `ArbitreMatch.vue`, à côté de « Démarrer le match »
+  (inchangé). Forfait : modal dédiée, joueurs en repère modèle A/B fixe
+  (indépendant du swap, même convention que la modal de fin),
+  `sendAction('forfait', {winner})`. Annuler : réutilise l'infra
+  `askConfirm`/`confirmModal` générique existante. Effet de bord traité :
+  statut `CANCELED` (atteignable aussi depuis un match `LIVE` via l'admin)
+  n'était géré nulle part sur cet écran — ajout `isCanceled`/`isReadOnly`,
+  libellé « ANNULÉ », badge neutre, 4 gardes du footer lecture seule
+  basculées de `isFinished` à `isReadOnly`. `npx vue-tsc --noEmit` propre.
 
 **Nouveau ticket créé :** aucun.
 
-**Sprint 25 — état après cette session :** 4 issues restent ouvertes
-(#282, #283, #284, #285) sur les 8 du milestone. Sprint pas clos — conditions
-de clôture non réunies. Prochaine session : suivre l'ordre d'exécution
-suggéré du `sprint.md` — **#283** (tiroir Corrections, indépendant
-d'end_reason, actions back déjà existantes, pur câblage), puis **#282** →
-**#285** → **#284** côté front, strictement séquentiel sur `ArbitreMatch.vue`
-(contention front massive signalée dans `sprint.md`, un seul agent à la
-fois). Rappel pour #285 (déjà noté par le reviewer de la session #103) :
-l'indice « Mène » du modal Terminer est **déjà implémenté** — seule la
-bascule « Abandon adverse » (`retirement: bool`, maintenant supporté côté
-back depuis #281) manque réellement côté UI.
+**Sprint 25 — état après cette session :** 2 issues restent ouvertes (#284,
+#285) sur les 8 du milestone. Sprint pas clos — conditions de clôture non
+réunies (spec review pas entièrement ✅ Conforme + issues ouvertes).
+Prochaine session : suivre l'ordre d'exécution suggéré du `sprint.md` —
+**#285** (modal Terminer enrichi — l'indice « Mène » est déjà implémenté,
+seule la bascule « Abandon adverse » `retirement: bool` manque côté UI,
+back prêt depuis #281) puis **#284** (libellés Forfait/Abandon en FINISHED,
+basés sur `endReason`, touche `ArbitreMatch.vue` et `ArbitreHome.vue`) —
+strictement séquentiel sur `ArbitreMatch.vue` (contention front, un seul
+agent à la fois). Ces 2 derniers tickets devraient suffire à clore le
+sprint à la prochaine session (spec review devrait repasser ✅ Conforme sur
+`arbitre-match.md`).
 
-**Point d'attention protocole (pattern qui se répète) :** comme lors de
-l'implémentation de #279 (session #103), l'agent `django-api` chargé de
-#281 a de nouveau modifié directement le **contenu** prose de
-`specs/technical/cycle-de-vie-match.md` (deux passages ciblés sur
-`end_reason`/RETIREMENT), plutôt que de laisser cette modification à un
-agent de maintenance dédié limité au YAML `fichiers:` (protocole §4). Cette
-fois le plan (`backlog/plan/281-abandon-retirement.md`) prévoyait
-explicitement cette mise à jour dans sa section « Specs impactées », et le
-reviewer a vérifié que le contenu modifié est fidèle au code, limité aux
-deux passages prévus, sans dérive ailleurs. Toujours pas de rollback — le
-contenu est correct — mais le pattern se confirme sur 2 sessions
-consécutives : à trancher explicitement (soit acter que l'agent
-d'implémentation peut mettre à jour le contenu prose quand son propre plan
-le prévoit noir sur blanc, soit introduire réellement l'agent de
-maintenance de specs distinct mentionné par le protocole).
+**Point d'attention protocole :** aucun écart cette session — les deux
+tickets front (#283, #282) n'ont touché que `ArbitreMatch.vue` (seul fichier
+listé dans leur périmètre), aucune modification de spec nécessaire (les deux
+plans concluaient à « Specs impactées : aucune », contrairement au pattern
+back #279/#281 des sessions précédentes). Rien à trancher côté « agent de
+maintenance de specs » cette fois.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
 `package.json` — `npx vue-tsc --noEmit` direct a suffi cette session.
