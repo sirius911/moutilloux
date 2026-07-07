@@ -15,8 +15,13 @@ function pointLabel(n: number, inTb: boolean): string {
 
 <template>
   <div class="scoreboard">
-    <!-- Backdrop court CSS (défini dans tokens.css) -->
-    <div class="court-bg" />
+    <!-- Fond de scène : affiche du match si disponible, sinon fond de court CSS -->
+    <div
+      v-if="live.hero?.posterUrl"
+      class="hero-poster-bg"
+      :style="{ backgroundImage: `url(${live.hero.posterUrl})` }"
+    />
+    <div v-else class="court-bg" />
 
     <!-- ── État vide → carrousel TvIdle ─────────────────────────────────── -->
     <TvIdle v-if="!live.hero" />
@@ -250,6 +255,16 @@ function pointLabel(n: number, inTb: boolean): string {
   height: 1080px;
   overflow: hidden;
   background: var(--bg-0);
+}
+
+/* ── Fond de scène : affiche du match (sprint 24) ─────────────────────── */
+.hero-poster-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-color: var(--bg-0);
 }
 
 /* ── Header ─────────────────────────────────────────────────────────── */
