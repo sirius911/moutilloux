@@ -373,44 +373,43 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #114
-**Sprint traité :** 27 — Poules : suivi & suppression (4ᵉ et dernière session du sprint — **clôturé**)
+**Dernière session :** 2026-07-08 — Session #116
+**Sprint traité :** 28 — Admin : annonces & inscription par sélection (2ᵉ et dernière session du sprint — clôture)
 
-**Git :** branche `claude/sprint/27-poules-suivi-suppression`, déjà sur la
-bonne branche au démarrage. Parent effectif `claude/sprint/26-qualification-poule-terminee`
-(toujours non mergé dans `origin/main`). Working tree propre au démarrage,
-`git merge origin/<parent>` déjà à jour (rien à intégrer).
+**Git :** branche `claude/sprint/28-annonces-inscriptions-selection`,
+parent effectif `claude/sprint/27-poules-suivi-suppression` (sprint 27
+toujours non mergé dans `origin/main`, résolu via `backlog/sprints/done/`).
+Working tree propre au démarrage, `git merge origin/<parent>` déjà à jour
+(rien à intégrer).
 
-**Spec review session #114 :** verdict `✅ Conforme` sur `admin-poules.md`.
-0 dérive bloquante. Réserve mineure déjà connue (session #113) confirmée
-non bloquante : la pastille de légende « Forfait » utilise `--danger`
-(rouge) alors que la ligne de match walkover reste visuellement
-`gc-match--finished` (vert) dans la grille — seul le libellé texte change ;
-la spec ne précise que le libellé texte, donc conforme au texte strict,
-laissé en l'état. Tous les autres points (suppression de poule, refus
-serveur si `EN_COURS`, endpoint de suppression sans duplication de logique,
-mode suivi, légende + tooltip Q, `_pack_match` par poule, types, garde de
-rôle, composables/polling, CSS/tokens) vérifiés `✅`. `npx vue-tsc --noEmit` :
-0 erreur.
+**Spec review session #116 :** verdict `✅ Conforme` sur `admin-tournoi.md`
+(carte Annonces TV) et `admin-inscriptions.md` (sélection par cases à
+cocher) — cette fois vérifiée contre le code effectivement implémenté en
+session #115 (les deux tickets #297/#298 étaient déjà clos avant le début
+de cette session). Comportement conforme point par point : édition inline
+Entrée/Échap/vide refusé côté annonces ; case par ligne + « Tout cocher »
+respectant le filtre de recherche + sélection non perdue au filtrage +
+vidée seulement après succès côté inscriptions. `npx vue-tsc --noEmit` :
+0 erreur. 0 nouvelle dérive, 0 nouvelle issue.
 
-**Backlog engine session #114 :** 0 ticket — les 5 tickets du sprint
-(#292-296) étaient déjà tous clos en entrée de session (traités lors des
-sessions #111/#112/#113).
+**Backlog engine session #116 :** 0 ticket traité — les 2 tickets du sprint
+(#297, #298) étaient déjà clos en session #115 ; aucune issue `sprint-28`
+ouverte à traiter.
 
-**Fichier partagé câblé :** aucun cette session.
+**Sprint 28 — clôturé cette session :** les deux conditions de fin de
+sprint sont remplies (spec review `✅ Conforme` + 0 issue `sprint-28`
+ouverte). Milestone GitHub n°27 fermé via l'API, ligne supprimée de
+`backlog/sprints/roadmap.md`, dossier déplacé dans
+`backlog/sprints/done/28-annonces-inscriptions-selection/`. Commit
+`7ae19ac`.
 
-**Sprint 27 — clôturé cette session :** les deux critères de l'étape 3
-étaient réunis (spec `✅ Conforme` + 0 issue `sprint-27` ouverte). Milestone
-GitHub n°26 fermé, ligne supprimée de `roadmap.md`, dossier déplacé vers
-`backlog/sprints/done/27-poules-suivi-suppression/`. PR #316 déjà ouverte
-pour la branche (rien à créer). Roadmap relue : 5 sprints restants
-(28 à 32) ; le sprint 28 — Admin : annonces & inscription par sélection —
-devient actif mais sera traité à la **prochaine échéance planifiée**, pas
-dans cette session.
+**Sprint suivant dans la roadmap :** 29 — Joueurs : attitudes prédéfinies.
+Ne sera traité qu'à la **prochaine échéance planifiée** (règle : un seul
+sprint démarré par session).
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — `npx vue-tsc --noEmit` utilisé directement (aucune erreur).
-Toujours pas de `.claude/launch.json` pour prévisualiser l'app dans ce repo —
+`package.json` — `npx vue-tsc --noEmit` utilisé directement. Toujours pas
+de `.claude/launch.json` pour prévisualiser l'app dans ce repo —
 vérification par type-check + revue de code uniquement (pas de QA
 navigateur en session automatisée).
 
