@@ -226,6 +226,32 @@ async function removeFromGroup(entryId: number) {
     await resyncAfterError()
   }
 }
+
+// ── Suppression de poule (épreuve INSCRIPTION) ────────────────────────────
+
+const deleteGroupBusy = ref(false)
+const deleteGroupState = ref<{ show: boolean; groupId: number; groupName: string; memberCount: number }>({
+  show: false, groupId: 0, groupName: '', memberCount: 0,
+})
+
+function openDeleteGroup(groupId: number, groupName: string, memberCount: number) {
+  dropError.value = ''
+  deleteGroupState.value = { show: true, groupId, groupName, memberCount }
+}
+
+async function executeDeleteGroup() {
+  if (!eventStore.activeEventId || deleteGroupBusy.value) return
+  deleteGroupBusy.value = true
+  dropError.value = ''
+  try {
+    await eventStore.deleteGroup(deleteGroupState.value.groupId, eventStore.activeEventId)
+    deleteGroupState.value.show = false
+  } catch (e) {
+    dropError.value = extractApiError(e, 'Erreur lors de la suppression de la poule.')
+  } finally {
+    deleteGroupBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -327,6 +353,22 @@ async function removeFromGroup(entryId: number) {
               <span class="gc-letter">{{ group.name }}</span>
               <span class="gc-title">Poule {{ group.name }}</span>
               <span class="gc-count">{{ group.standings.length }}</span>
+              <button
+                v-if="!eventStore.groupsLocked"
+                class="gc-delete"
+                type="button"
+                title="Supprimer la poule"
+                aria-label="Supprimer la poule"
+                :disabled="deleteGroupBusy"
+                @click="openDeleteGroup(group.id, group.name, group.standings.length)"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
             </div>
 
             <div class="gc-list">
@@ -373,6 +415,18 @@ async function removeFromGroup(entryId: number) {
         </div>
       </div>
     </div>
+
+    <!-- ── Modale suppression de poule (épreuve INSCRIPTION) ───────────────── -->
+    <ConfirmModal
+      v-if="deleteGroupState.show"
+      :title="`Supprimer la poule ${deleteGroupState.groupName} ?`"
+      :body="deleteGroupState.memberCount === 0
+        ? 'Cette poule vide sera supprimée.'
+        : `Les ${deleteGroupState.memberCount} joueur(s) seront renvoyés vers «Non assignés». Aucune inscription n'est supprimée.`"
+      confirm-label="Supprimer"
+      @confirm="executeDeleteGroup"
+      @close="deleteGroupState.show = false"
+    />
 
     <!-- ── Modales ajustements ─────────────────────────────────────────────── -->
     <ConfirmModal
@@ -575,6 +629,24 @@ async function removeFromGroup(entryId: number) {
   padding: 2px 8px;
   border-radius: 99px;
 }
+
+.gc-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--ink-4);
+  padding: 4px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--r-xs);
+  transition: background 100ms, color 100ms;
+  flex-shrink: 0;
+}
+
+.gc-delete:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.gc-delete:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .gc-list {
   padding: 10px 12px;
