@@ -36,6 +36,7 @@ from live.admin_views import (
     unassign_entry,
     finalize_match_edit,
     feature_match,
+    start_match,
     set_match_bracket_labels,
     assign_bracket_entry,
     clear_bracket_entry,
@@ -71,6 +72,7 @@ from live.admin_views import (
     reorder_calendar,
     auto_arrange_matches,
 )
+from live.referee_views import referee_required
 
 
 # ── CSRF ─────────────────────────────────────────────────────────────────────
@@ -187,6 +189,14 @@ def _pack_team(t):
     }
 
 
+def _format_label(m):
+    if m.match_format == Match.Format.MANUAL:
+        return "Manuel"
+    if m.best_of == 3:
+        return f"BO3 · TB à {m.tb_at}"
+    return f"1 set à {m.games_to_win} · TB à {m.tb_at}"
+
+
 def _pack_match(m):
     if m is None:
         return None
@@ -225,6 +235,7 @@ def _pack_match(m):
         "eventId": m.event_id,
         "stage": m.stage,
         "stageLabel": stage_label(m),
+        "formatLabel": _format_label(m),
         "status": m.status,
         "court": m.court.name if m.court else None,
         "orderIndex": m.order_index,
@@ -592,12 +603,12 @@ def api_event_bracket(request, event_id):
 
 
 @require_GET
-@login_required
+@referee_required
 def api_arbitre_matches(request):
     """
     GET /api/arbitre/matches/
     Matchs LIVE et SCHEDULED pour l'arbitre (sélection de match).
-    Requiert d'être connecté.
+    Requiert le rôle Arbitre (ou superuser).
     """
     edition = get_current_edition()
     if not edition:
@@ -609,10 +620,8 @@ def api_arbitre_matches(request):
             edition=edition,
             status__in=[Match.Status.LIVE, Match.Status.SCHEDULED],
         )
-        .exclude(side_a__isnull=True)
-        .exclude(side_b__isnull=True)
         .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
-        .order_by("-status", "order_index", "scheduled_time", "id")
+        .order_by("order_index", "scheduled_time", "id")
     )
 
     # 20 derniers FINISHED
@@ -621,8 +630,6 @@ def api_arbitre_matches(request):
             edition=edition,
             status=Match.Status.FINISHED,
         )
-        .exclude(side_a__isnull=True)
-        .exclude(side_b__isnull=True)
         .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
         .order_by("-id")[:20]
     )
@@ -1047,11 +1054,30 @@ def api_match_feature(request, match_id):
     """
     POST /api/matches/<id>/feature/
     Met le match en avant (source : admin_views.feature_match). Aucun payload.
-    Effet : is_featured=True, order_index=None, mark_live() → statut LIVE ;
+    Effet : is_featured=True, mark_live() → statut LIVE ; order_index inchangé ;
     devient le hero de /api/score_state/.
     """
     match = get_object_or_404(Match, pk=match_id)
     feature_match(match)
+    return JsonResponse({"match": _pack_match(match)})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_match_start(request, match_id):
+    """
+    POST /api/matches/<id>/start/
+    Démarre le match (SCHEDULED -> LIVE), le met en avant TV (source :
+    admin_views.start_match — service partagé avec referee_action('start')).
+    Idempotent : si déjà LIVE, no-op ; répond quand même 200 avec le match packé.
+    Aucun payload attendu.
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    try:
+        start_match(match)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"match": _pack_match(match)})
 
 

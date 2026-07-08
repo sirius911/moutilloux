@@ -10,6 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
+from live.admin_views import start_match
 
 
 def is_referee(user):
@@ -136,6 +137,22 @@ def referee_action(request, match_id: int):
     # Sécurité : si match terminé, refuser certaines actions sauf "reopen" et "edit"
     if match.status == Match.Status.FINISHED and action not in ("reopen", "edit"):
         return JsonResponse({"ok": False, "error": "Match terminé. Réouvre-le si besoin."}, status=400)
+
+    # Sécurité : le scoring et ses corrections supposent un match en cours (LIVE).
+    # Pas de scoring implicite sur un match SCHEDULED (ou CANCELED) — il doit
+    # d'abord être démarré ("start" est justement l'action qui l'y fait passer).
+    SCORING_ACTIONS = {
+        "point_left", "point_right", "server_left", "server_right", "toggle_service",
+        "reset_points", "game_left", "game_right", "set_left", "set_right",
+        "game_left_plus", "game_left_minus", "game_right_plus", "game_right_minus",
+        "set_left_plus", "set_left_minus", "set_right_plus", "set_right_minus",
+        "tb_on", "tb_off", "finish_left", "finish_right", "finish_winner",
+    }
+    if action in SCORING_ACTIONS and match.status != Match.Status.LIVE:
+        return JsonResponse(
+            {"ok": False, "error": "Le match doit être en cours (LIVE) pour cette action."},
+            status=400,
+        )
 
     def rules():
         # Si tu veux que MANUAL désactive toute logique auto
@@ -589,13 +606,10 @@ def referee_action(request, match_id: int):
 
     # --- Démarrer / finir / réouvrir ---
     if action == "start":
-        # enlever le featured ailleurs
-        Match.objects.filter(event=match.event, is_featured=True).exclude(id=match.id).update(is_featured=False)
-
-        match.is_featured = True
-        match.mark_live()   # ✅ met status=LIVE + started_at si vide
-        match.save()
-
+        try:
+            start_match(match)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
         return JsonResponse({"ok": True})
 
     if action == "finish_left":
@@ -687,11 +701,16 @@ def referee_action(request, match_id: int):
         return JsonResponse({"ok": True})
 
     if action == "reopen":
-        match.status = Match.Status.SCHEDULED
-        match.is_featured = False
+        if not request.user.is_superuser:
+            return JsonResponse(
+                {"ok": False, "error": "Réouverture réservée à l'administrateur."},
+                status=403,
+            )
+        Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
+        match.is_featured = True
         match.winner_side = None
-        match.set_scores = []
-        match.save(update_fields=["status", "is_featured", "winner_side", "set_scores"])
+        match.mark_live()  # repasse LIVE (+ started_at si besoin), conserve set_scores
+        match.save(update_fields=["is_featured", "winner_side"])
 
         if match.stage == Match.Stage.GROUP and match.group_id:
             recalc_one_group(match.group_id)

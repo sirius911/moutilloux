@@ -5,10 +5,11 @@ import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
 import { useApi } from '@/composables/useApi'
+import type { Match } from '@/types'
 
 const props = defineProps<{ matchId: number }>()
 const router = useRouter()
-const { post } = useApi()
+const { get, post } = useApi()
 const live = useLiveStore()
 
 // Polling du match arbitré (et non plus le hero global) — 2s
@@ -126,12 +127,31 @@ function pointDisplay(n: number, inTb: boolean): string {
 
 const statusLabel = computed(() => {
   if (!match.value) return ''
+  if (match.value.status === 'SCHEDULED') return 'PRÉVU'
   if (match.value.tbActive) return 'JEU DÉCISIF'
   if (match.value.status === 'FINISHED') return 'TERMINÉ'
   return 'EN COURS'
 })
 
 const isFinished = computed(() => match.value?.status === 'FINISHED')
+const isScheduled = computed(() => match.value?.status === 'SCHEDULED')
+const isLive = computed(() => match.value?.status === 'LIVE')
+
+async function handleStart() {
+  try {
+    const others = await get<Match[]>('/api/arbitre/matches/')
+    const anotherLive = others.some((m) => m.id !== props.matchId && m.status === 'LIVE')
+    if (anotherLive) {
+      askConfirm('start', 'Démarrer le match ?')
+    } else {
+      await sendAction('start')
+    }
+  } catch {
+    // Si la vérification échoue (réseau), on retombe sur l'action directe :
+    // le back est idempotent et gère l'invariant mono-LIVE de toute façon.
+    await sendAction('start')
+  }
+}
 </script>
 
 <template>
@@ -150,7 +170,8 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
         <button class="btn-back" @click="router.push('/arbitre')">←</button>
         <div class="arb-header-center">
           <span class="arb-category">{{ match?.stageLabel ?? '—' }}</span>
-          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished }">
+          <span v-if="match?.formatLabel" class="arb-format">{{ match.formatLabel }}</span>
+          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled }">
             {{ statusLabel }}
           </span>
         </div>
@@ -195,13 +216,13 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
       </div>
 
       <!-- Zones de tap -->
-      <div class="arb-tap-area" :class="{ disabled: isFinished }">
-        <button class="tap-zone tap-zone--a" :disabled="isFinished" @click="handleTap('left')">
+      <div class="arb-tap-area" :class="{ disabled: !isLive }">
+        <button class="tap-zone tap-zone--a" :disabled="!isLive" @click="handleTap('left')">
           <span class="tap-player-name">{{ match?.sideA?.player?.fullName ?? 'A' }}</span>
           <span class="tap-cta">+ POINT</span>
           <span class="tap-hint">TAP ICI</span>
         </button>
-        <button class="tap-zone tap-zone--b" :disabled="isFinished" @click="handleTap('right')">
+        <button class="tap-zone tap-zone--b" :disabled="!isLive" @click="handleTap('right')">
           <span class="tap-player-name">{{ match?.sideB?.player?.fullName ?? 'B' }}</span>
           <span class="tap-cta">+ POINT</span>
           <span class="tap-hint">TAP ICI</span>
@@ -210,31 +231,45 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
 
       <!-- Footer actions -->
       <footer class="arb-footer">
-        <button class="action-btn" title="Remettre les points à 0-0" :disabled="isFinished" @click="handleUndo">
-          <span class="action-icon">↩</span>
-          <span class="action-label">0 pts</span>
-        </button>
-        <button class="action-btn" title="Changer serveur" :disabled="isFinished" @click="handleToggleServer">
-          <span class="action-icon">⇄</span>
-          <span class="action-label">Serveur</span>
-        </button>
-        <button
-          v-if="!isFinished"
-          class="action-btn action-btn--danger"
-          title="Terminer le match"
-          @click="openFinishModal"
-        >
-          <span class="action-icon">■</span>
-          <span class="action-label">Terminer</span>
-        </button>
-        <button
-          class="action-btn action-btn--danger-ghost"
-          title="Réinitialiser"
-          @click="askConfirm('reset_all', 'Réinitialiser le match ?')"
-        >
-          <span class="action-icon">↺</span>
-          <span class="action-label">Reset</span>
-        </button>
+        <template v-if="isScheduled">
+          <button
+            class="action-btn action-btn--primary"
+            title="Démarrer le match"
+            :disabled="!match?.sideA || !match?.sideB"
+            @click="handleStart"
+          >
+            <span class="action-icon">▶</span>
+            <span class="action-label">Démarrer le match</span>
+          </button>
+        </template>
+        <template v-else>
+          <button class="action-btn" title="Remettre les points à 0-0" :disabled="isFinished" @click="handleUndo">
+            <span class="action-icon">↩</span>
+            <span class="action-label">0 pts</span>
+          </button>
+          <button class="action-btn" title="Changer serveur" :disabled="isFinished" @click="handleToggleServer">
+            <span class="action-icon">⇄</span>
+            <span class="action-label">Serveur</span>
+          </button>
+          <button
+            v-if="!isFinished"
+            class="action-btn action-btn--danger"
+            title="Terminer le match"
+            @click="openFinishModal"
+          >
+            <span class="action-icon">■</span>
+            <span class="action-label">Terminer</span>
+          </button>
+          <button
+            class="action-btn action-btn--danger-ghost"
+            title="Réinitialiser"
+            :disabled="isFinished"
+            @click="askConfirm('reset_all', 'Réinitialiser le match ?')"
+          >
+            <span class="action-icon">↺</span>
+            <span class="action-label">Reset</span>
+          </button>
+        </template>
       </footer>
     </div>
 
@@ -249,7 +284,11 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
         <div class="modal-card">
           <div class="modal-icon">⚠</div>
           <h3 class="modal-title">{{ confirmModal.label }}</h3>
-          <p class="modal-body">Cette action est irréversible.</p>
+          <p class="modal-body">
+            {{ confirmModal.action === 'start'
+              ? 'Un autre match est en cours — le démarrer le mettra en pause.'
+              : 'Cette action est irréversible.' }}
+          </p>
           <div class="modal-actions">
             <button class="btn-secondary" @click="cancel">Annuler</button>
             <button class="btn-danger" @click="confirm">Confirmer</button>
@@ -348,6 +387,13 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
   letter-spacing: 0.04em;
 }
 
+.arb-format {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+
 .arb-status-badge {
   font-size: 11px;
   font-weight: 700;
@@ -367,6 +413,11 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
 .arb-status-badge.finished {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.arb-status-badge.scheduled {
+  background: var(--bg-4);
+  color: var(--ink-3);
 }
 
 /* ── Score block ─────────────────────────────────────────────────────── */
@@ -564,6 +615,12 @@ const isFinished = computed(() => match.value?.status === 'FINISHED')
   background: transparent;
   border-color: var(--line-2);
   color: var(--danger);
+}
+
+.action-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
 }
 
 .action-icon {

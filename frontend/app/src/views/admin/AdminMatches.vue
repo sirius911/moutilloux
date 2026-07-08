@@ -53,19 +53,19 @@ function syncFromStore() {
     return
   }
 
-  // Pile
+  // Pile : toute l'édition, groupée par épreuve + poule. Ne PAS filtrer par
+  // épreuve : le payload de reorder doit couvrir la séquence complète de
+  // l'édition, sinon le serveur dé-planifie les matchs absents (specs planning).
   const newGroups: Record<string, DayItem[]> = {}
-  for (const m of cal.unscheduled.filter((m) => m.eventId === eventStore.activeEventId)) {
-    const g = groupName(m) || '?'
-    ;(newGroups[g] ??= []).push({ kind: 'match', data: m })
+  for (const m of cal.unscheduled) {
+    ;(newGroups[pileGroupKey(m)] ??= []).push({ kind: 'match', data: m })
   }
   unscheduledByGroupDnd.value = newGroups
 
-  // Journées : merge + tri par orderIndex
+  // Journées : merge + tri par orderIndex (toute l'édition, même contrainte)
   const days: Record<number, DayItem[]> = {}
   for (const day of cal.playDays) {
     const matchItems: DayItem[] = day.matches
-      .filter((m) => m.eventId === eventStore.activeEventId)
       .map((m) => ({ kind: 'match', data: m }))
     const breakItems: DayItem[] = day.breaks.map((b) => ({ kind: 'break', data: b }))
     days[day.id] = [...matchItems, ...breakItems].sort((a, b) => {
@@ -95,20 +95,63 @@ const unscheduledTotal = computed(() =>
   Object.values(unscheduledByGroupDnd.value).reduce((s, arr) => s + arr.length, 0),
 )
 
-// ── Colonne « Annulés » (lecture seule) ────────────────────────────────────
-const canceledByGroup = computed<Record<string, Match[]>>(() => {
-  const groups: Record<string, Match[]> = {}
+// ── Groupage épreuve + poule (pile et annulés) ─────────────────────────────
+
+function pileGroupKey(m: Match): string {
+  return `${groupName(m) || '?'}|${m.eventId}`
+}
+
+function eventName(eventId: number): string {
+  return eventStore.events.find((e) => e.id === eventId)?.name ?? `Épreuve ${eventId}`
+}
+
+function isForeign(m: Match): boolean {
+  return m.eventId !== eventStore.activeEventId
+}
+
+// Plusieurs épreuves représentées au calendrier ? → afficher le nom d'épreuve
+// sur les groupes de pile et les lignes de journée (mise en évidence).
+const multiEvent = computed(() => {
   const cal = eventStore.calendar
-  if (!cal) return groups
-  for (const m of cal.canceled.filter((m) => m.eventId === eventStore.activeEventId)) {
-    const g = groupName(m) || '?'
-    ;(groups[g] ??= []).push(m)
-  }
-  return groups
+  if (!cal) return false
+  const ids = new Set<number>()
+  for (const m of cal.unscheduled) ids.add(m.eventId)
+  for (const d of cal.playDays) for (const m of d.matches) ids.add(m.eventId)
+  for (const m of cal.canceled) ids.add(m.eventId)
+  return ids.size > 1
 })
 
-const canceledMatches = computed<Match[]>(() =>
-  Object.values(canceledByGroup.value).flat(),
+interface PileGroup { key: string; letter: string; eventId: number; eventName: string }
+
+function parsePileKey(key: string): PileGroup {
+  const sep = key.lastIndexOf('|')
+  const eventId = Number(key.slice(sep + 1))
+  return { key, letter: key.slice(0, sep), eventId, eventName: eventName(eventId) }
+}
+
+const pileGroups = computed<PileGroup[]>(() =>
+  Object.keys(unscheduledByGroupDnd.value)
+    .map(parsePileKey)
+    .sort((a, b) => a.eventName.localeCompare(b.eventName) || a.letter.localeCompare(b.letter)),
+)
+
+// ── Colonne « Annulés » (lecture seule) ────────────────────────────────────
+interface CanceledGroup extends PileGroup { matches: Match[] }
+
+const canceledGroups = computed<CanceledGroup[]>(() => {
+  const cal = eventStore.calendar
+  if (!cal) return []
+  const byKey: Record<string, Match[]> = {}
+  for (const m of cal.canceled) {
+    ;(byKey[pileGroupKey(m)] ??= []).push(m)
+  }
+  return Object.entries(byKey)
+    .map(([key, matches]) => ({ ...parsePileKey(key), matches }))
+    .sort((a, b) => a.eventName.localeCompare(b.eventName) || a.letter.localeCompare(b.letter))
+})
+
+const canceledCount = computed(() =>
+  canceledGroups.value.reduce((s, g) => s + g.matches.length, 0),
 )
 
 const totalScheduledMatches = computed(() =>
@@ -120,6 +163,7 @@ const totalScheduledMatches = computed(() =>
 // ── Pauses ─────────────────────────────────────────────────────────────────
 const addingPause = ref<Record<number, boolean>>({})
 const deletingBreak = ref<Record<number, boolean>>({})
+const starting = ref<Record<number, boolean>>({})
 
 async function addPause(dayId: number) {
   addingPause.value[dayId] = true
@@ -142,6 +186,18 @@ async function deletePause(breakId: number) {
     bannerError.value = e instanceof Error ? e.message : 'Erreur lors de la suppression de la pause.'
   } finally {
     deletingBreak.value[breakId] = false
+  }
+}
+
+async function startMatch(matchId: number) {
+  starting.value[matchId] = true
+  bannerError.value = ''
+  try {
+    await eventStore.startMatch(matchId)
+  } catch (e) {
+    bannerError.value = e instanceof Error ? e.message : 'Erreur lors du démarrage du match.'
+  } finally {
+    starting.value[matchId] = false
   }
 }
 
@@ -469,10 +525,12 @@ async function onDragEnd() {
           Tout est planifié
         </div>
         <template v-else>
-          <template v-for="g in Object.keys(unscheduledByGroupDnd).sort()" :key="g">
-            <div class="pile-group-hd">Poule {{ g }}</div>
+          <template v-for="g in pileGroups" :key="g.key">
+            <div class="pile-group-hd">
+              Poule {{ g.letter }}<span v-if="multiEvent" class="pile-group-ev"> · {{ g.eventName }}</span>
+            </div>
             <draggable
-              v-model="unscheduledByGroupDnd[g]"
+              v-model="unscheduledByGroupDnd[g.key]"
               class="pile-draggable"
               :item-key="(item: DayItem) => item.kind + '-' + item.data.id"
               :group="{ name: 'matches', pull: true, put: true }"
@@ -481,8 +539,12 @@ async function onDragEnd() {
               @end="onDragEnd"
             >
               <template #item="{ element }">
-                <div class="pile-card" @click="editingMatch = element.data as Match">
-                  <span class="poule-pill">{{ g }}</span>
+                <div
+                  class="pile-card"
+                  :class="{ 'is-foreign': isForeign(element.data as Match) }"
+                  @click="editingMatch = element.data as Match"
+                >
+                  <span class="poule-pill">{{ g.letter }}</span>
                   <span class="pile-card-players">
                     {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
                   </span>
@@ -495,21 +557,24 @@ async function onDragEnd() {
       </aside>
 
       <!-- Colonne Annulés (lecture seule) -->
-      <aside v-if="canceledMatches.length > 0" class="cal-pile cal-canceled">
+      <aside v-if="canceledCount > 0" class="cal-pile cal-canceled">
         <div class="pile-head">
           <span class="pile-title">Annulés</span>
-          <span class="pile-count">{{ canceledMatches.length }}</span>
+          <span class="pile-count">{{ canceledCount }}</span>
         </div>
 
-        <template v-for="g in Object.keys(canceledByGroup).sort()" :key="g">
-          <div class="pile-group-hd">Poule {{ g }}</div>
+        <template v-for="g in canceledGroups" :key="g.key">
+          <div class="pile-group-hd">
+            Poule {{ g.letter }}<span v-if="multiEvent" class="pile-group-ev"> · {{ g.eventName }}</span>
+          </div>
           <div
-            v-for="m in canceledByGroup[g]"
+            v-for="m in g.matches"
             :key="m.id"
             class="pile-card pile-card--readonly"
+            :class="{ 'is-foreign': isForeign(m) }"
             @click="editingMatch = m"
           >
-            <span class="poule-pill">{{ g }}</span>
+            <span class="poule-pill">{{ g.letter }}</span>
             <span class="pile-card-players">
               {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
             </span>
@@ -572,7 +637,13 @@ async function onDragEnd() {
                 <div
                   v-if="element.kind === 'match'"
                   class="cal-row"
-                  :class="[`state--${displayState(element.data as Match)}`, { 'no-drag': (element.data as Match).status !== 'SCHEDULED' }]"
+                  :class="[
+                    `state--${displayState(element.data as Match)}`,
+                    {
+                      'no-drag': (element.data as Match).status !== 'SCHEDULED',
+                      'is-foreign': isForeign(element.data as Match),
+                    },
+                  ]"
                   role="button"
                   tabindex="0"
                   @click="editingMatch = element.data as Match"
@@ -587,10 +658,20 @@ async function onDragEnd() {
                     :title="stateLabel(displayState(element.data as Match))"
                   />
                   <span class="poule-pill">{{ groupName(element.data as Match) || (element.data as Match).stageLabel }}</span>
+                  <span v-if="multiEvent" class="cal-event-tag">{{ eventName((element.data as Match).eventId) }}</span>
                   <span class="cal-players">
                     {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
                   </span>
                   <span class="cal-badges">
+                    <button
+                      v-if="(element.data as Match).status === 'SCHEDULED'"
+                      class="row-start-btn"
+                      type="button"
+                      :disabled="starting[element.data.id]"
+                      @click.stop="startMatch(element.data.id)"
+                    >
+                      {{ starting[element.data.id] ? 'Démarrage…' : 'Démarrer' }}
+                    </button>
                     <span
                       v-if="restWarnings.has(element.data.id)"
                       class="rest-warning"
@@ -1065,6 +1146,25 @@ async function onDragEnd() {
   flex-shrink: 0;
 }
 
+.row-start-btn {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #000;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  padding: 3px 10px;
+  border-radius: var(--r-xs);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 150ms;
+}
+
+.row-start-btn:hover { opacity: 0.9; }
+.row-start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
 .drag-handle {
   font-size: 14px;
   color: var(--ink-4);
@@ -1151,4 +1251,31 @@ async function onDragEnd() {
 }
 
 .legend-item { display: flex; align-items: center; gap: 6px; }
+
+/* ── Mise en évidence de l'épreuve active ────────────────────────────────── */
+/* Les matchs des autres épreuves restent visibles et déplaçables (le
+   calendrier couvre toute l'édition), mais sont atténués. */
+.cal-row.is-foreign,
+.pile-card.is-foreign { opacity: 0.55; }
+.cal-row.is-foreign:hover,
+.pile-card.is-foreign:hover { opacity: 1; }
+
+.pile-group-ev {
+  font-weight: 600;
+  color: var(--ink-4);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.cal-event-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  padding: 1px 6px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 </style>

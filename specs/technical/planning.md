@@ -175,7 +175,7 @@ toucher à ce qui est déjà placé :
 | Endpoint | Usage calendrier |
 |---|---|
 | `POST /api/events/<id>/matches/generate/` | génère le round-robin → matchs en **à planifier** (`SCHEDULED`, sans `order_index`). Désormais appelé par **« Débuter l'épreuve »** (qui verrouille les poules et passe l'épreuve `EN_COURS`, voir [[cycle-de-vie-epreuve]]) ; réutilisé tel quel pour l'ajout tardif (additif). |
-| `POST /api/editions/<id>/calendar/reorder/` | applique l'ordre complet du calendrier (drag) ; (ré)attribue `order_index` par journée. Les matchs `LIVE`/`FINISHED` sont **fixes** : leur rang est préservé, jamais recalculé. |
+| `POST /api/editions/<id>/calendar/reorder/` | applique l'ordre complet du calendrier (drag) ; (ré)attribue `order_index` par journée. Les matchs `LIVE`/`FINISHED` sont **fixes** : leur rang est préservé, jamais recalculé. **Contrat** : le payload couvre toutes les journées avec la **séquence complète de l'édition** — tout match `SCHEDULED` absent du payload est **renvoyé à la pile** (`order_index` et `scheduled_time` effacés) ; c'est ainsi qu'un drag vers la pile dé-planifie. Un client ne doit donc **jamais filtrer** la séquence (par épreuve ou autre) avant de la renvoyer. |
 | `POST /api/matches/<id>/edit/` | édition fine (score correctif, format, statut, journée, mise en avant). |
 | `POST /api/matches/<id>/feature/` | passe le match à l'antenne (→ `LIVE`, `is_featured`) **sans effacer son `order_index`** : le match reste à sa place. |
 

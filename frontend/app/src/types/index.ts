@@ -119,6 +119,7 @@ export interface Match {
   eventId: number
   stage: MatchStage
   stageLabel: string         // "Quart de finale"
+  formatLabel: string        // "1 set à 5 · TB à 4", "BO3 · TB à 4", "Manuel"
   status: MatchStatus
   court: string | null
   orderIndex: number | null

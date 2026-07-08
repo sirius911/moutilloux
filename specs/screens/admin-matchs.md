@@ -68,8 +68,10 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
 
 ### Pile « À planifier »
 
-- Colonne latérale listant les matchs `SCHEDULED` sans position, **groupés par
-  poule**.
+- Colonne latérale listant les matchs `SCHEDULED` sans position de **toute
+  l'édition** (le calendrier est édition-scoped, voir Données), **groupés par
+  épreuve puis par poule**. Les matchs des autres épreuves sont **atténués**
+  (mise en évidence de l'épreuve active) mais restent déplaçables.
 - Chaque carte : pastille de poule, « {A} vs {B} », poignée de déplacement (⋮⋮).
 - Compteur. C'est aussi une zone de dépôt : y déposer un match planifié l'y renvoie
   (= dé-planifie, perte de la journée et de la position).
@@ -79,7 +81,8 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
 
 - Colonne latérale distincte, **affichée seulement s'il existe au moins un match
   annulé** (sinon masquée). Liste les matchs `CANCELED` (annulation sèche, sans
-  vainqueur), retirés de leur journée.
+  vainqueur), retirés de leur journée. Couvre **toute l'édition**, groupée par
+  épreuve puis poule, matchs des autres épreuves atténués.
 - Chaque carte : pastille de poule, « {A} vs {B} », badge **ANNULÉ**.
 - **Lecture seule** : un match annulé ne se glisse pas. Pour le réactiver, passer
   par le panneau d'édition (onglet Planning → Statut).
@@ -95,6 +98,10 @@ Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayD
   (surlignée) — alerte souple, jamais bloquante (voir [[planning]]).
 - Action discrète **« + pause »** : insère une bande de pause dans la journée.
 - Liste ordonnée des lignes (matchs + pauses) ; zone de dépôt.
+- Les journées affichent **tous les matchs de l'édition** (mono-court : une seule
+  séquence, toutes épreuves confondues). Les lignes des autres épreuves sont
+  **atténuées** ; quand plusieurs épreuves cohabitent, chaque ligne porte le nom
+  de son épreuve.
 
 ### Ligne de match
 
@@ -283,7 +290,10 @@ pied sans fermer le panneau).
   `:eventId` absent ou périmé est rattrapé par la garde de route (voir
   [[routing-context]]). Recharger conserve l'épreuve. Le calendrier lui-même couvre
   toute l'**édition** (dérivée de l'épreuve) ; le `:eventId` cible les actions par
-  épreuve (générer, pré-poser) et la mise en évidence.
+  épreuve (générer, pré-poser) et la **mise en évidence** (les matchs des autres
+  épreuves sont affichés atténués, jamais masqués : filtrer la séquence avant de
+  la renvoyer au serveur dé-planifierait les matchs absents — contrat de
+  réordonnancement dans [[planning]]).
 - Le calendrier est chargé au montage et au changement d'épreuve, rechargé après
   chaque mutation. L'écran se rafraîchit **périodiquement** (de l'ordre de quelques
   secondes ; cible ~2 s, voir [[planning]]) pour refléter les passages En cours /
