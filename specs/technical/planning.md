@@ -31,10 +31,10 @@ heure n'est saisie à la main.
 
 | Champ | Rôle dans le calendrier |
 |---|---|
-| `order_index` | rang dans la séquence (déjà **unique par édition**). `NULL` = à planifier. |
+| `order_index` | rang dans la séquence (déjà **unique par édition**). **Persiste à travers `LIVE`/`FINISHED`** — un match joué garde sa place. `NULL` = **hors séquence** : jamais placé (pile « À planifier ») ou annulé. |
 | `scheduled_time` | **porte la journée** : sa *date* = le jour d'affectation. Sa valeur = l'ETA calculée, écrite par le serveur (dérivée, jamais saisie). |
 | `court` | mono-court : « Central » seedé, attribué trivialement à l'entrée en séquence. Non discriminant. |
-| `status` | `SCHEDULED` / `LIVE` / `FINISHED` / `CANCELED`. |
+| `status` | `SCHEDULED` / `LIVE` / `FINISHED` / `CANCELED`. Décide si la ligne est **déplaçable** (`SCHEDULED`) ou **verrouillée** (`LIVE`/`FINISHED`) — **pas** sa présence dans la séquence (portée par `order_index`). |
 | `is_featured` | match « à l'antenne » TV (hero), pilotable manuellement. |
 | `started_at` / `finished_at` | horodatage réel, base du re-flow. |
 
@@ -77,14 +77,26 @@ Les cinq états affichés ne sont **pas stockés** : ils se déduisent de
 | **À planifier** | `SCHEDULED` et `order_index` `NULL` (pas de journée) |
 | **Planifié** | `SCHEDULED` avec `order_index` et une journée |
 | **Next** | premier `SCHEDULED` de la séquence après le match en cours (plus petit `order_index` non joué de la journée courante) — **calculé**, jamais stocké |
-| **En cours** | `LIVE` (un seul par édition — garanti par `mark_live()`, existant) |
-| **Terminé** | `FINISHED` |
+| **En cours** | `LIVE` (un seul par édition — garanti par `mark_live()`). **Conserve son `order_index`** : reste à sa place dans la journée, verrouillé (non déplaçable). |
+| **Terminé** | `FINISHED`. **Conserve son `order_index`** : reste à sa place, verrouillé, avec son heure réelle. |
 
-`CANCELED` est l'**annulation sèche** (sans vainqueur), affichée comme telle, hors
-séquence. Le **forfait** en est distinct : c'est un **walkover** (`FINISHED` +
-`is_walkover`, **avec** vainqueur — voir [[cycle-de-vie-epreuve]]). `is_featured`
-désigne le match à l'antenne TV : en règle générale le *next* ou le *live*, mais
-forçable manuellement (voir [[admin-matchs]], « mettre en avant »).
+> **Invariant `order_index`.** La place physique dans la séquence est portée par
+> `order_index` **de bout en bout** : un match la conserve en passant `LIVE` puis
+> `FINISHED`. `order_index = NULL` a **une seule** signification — le match est
+> **hors séquence** : soit jamais placé (pile « À planifier »), soit **annulé**.
+> Ce n'est donc **pas** le statut qui décide la présence dans une journée, mais la
+> seule valeur d'`order_index` ; le **statut** décide seulement si la ligne est
+> **déplaçable** (`SCHEDULED`) ou **verrouillée** (`LIVE`/`FINISHED`).
+
+`CANCELED` est l'**annulation sèche** (sans vainqueur) : le match **quitte la
+séquence** (`order_index` → `NULL`, `scheduled_time` effacé) et bascule dans une
+**colonne « Annulés »** distincte, affichée seulement s'il existe au moins un match
+annulé (voir [[admin-matchs]]). Le créneau qu'il libère est récupéré par le
+re-flow. Le **forfait** en est distinct : c'est un **walkover** (`FINISHED` +
+`is_walkover`, **avec** vainqueur — voir [[cycle-de-vie-epreuve]]) qui **reste à sa
+place** dans la journée, verrouillé, libellé « Forfait ». `is_featured` désigne le
+match à l'antenne TV : en règle générale le *next* ou le *live*, mais forçable
+manuellement (voir [[admin-matchs]], « mettre en avant »).
 
 ---
 
@@ -163,9 +175,17 @@ toucher à ce qui est déjà placé :
 | Endpoint | Usage calendrier |
 |---|---|
 | `POST /api/events/<id>/matches/generate/` | génère le round-robin → matchs en **à planifier** (`SCHEDULED`, sans `order_index`). Désormais appelé par **« Débuter l'épreuve »** (qui verrouille les poules et passe l'épreuve `EN_COURS`, voir [[cycle-de-vie-epreuve]]) ; réutilisé tel quel pour l'ajout tardif (additif). |
-| `POST /api/events/<id>/matches/reorder/` | applique l'ordre complet de la séquence (drag) ; (ré)attribue `order_index`. |
+| `POST /api/editions/<id>/calendar/reorder/` | applique l'ordre complet du calendrier (drag) ; (ré)attribue `order_index` par journée. Les matchs `LIVE`/`FINISHED` sont **fixes** : leur rang est préservé, jamais recalculé. |
 | `POST /api/matches/<id>/edit/` | édition fine (score correctif, format, statut, journée, mise en avant). |
-| `POST /api/matches/<id>/feature/` | passe le match à l'antenne (→ `LIVE`, `is_featured`). |
+| `POST /api/matches/<id>/feature/` | passe le match à l'antenne (→ `LIVE`, `is_featured`) **sans effacer son `order_index`** : le match reste à sa place. |
+
+> **Retrait.** L'ancien endpoint kanban `POST /api/events/<id>/matches/reorder/`
+> (`reorder_event_matches`) est **supprimé** : il remettait à `NULL` l'`order_index`
+> de tout l'event et n'est plus branché (le calendrier réordonne via
+> `calendar/reorder/`). Corollaire : **aucune** transition de statut (`mark_live`,
+> fin de match arbitre, forfait, édition → `FINISHED`, mise en avant) n'efface plus
+> `order_index` ; seules la **génération** (pile) et l'**annulation** le laissent /
+> le remettent à `NULL`.
 
 ### À créer
 

@@ -41,8 +41,9 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
 1. **Pré-pose** (optionnelle) : range automatiquement la pile à planifier.
 2. **Ajustement manuel** : glisser-déposer pour planifier / réordonner / insérer
    des pauses.
-3. **Déroulé** : l'arbitre fait vivre les matchs (En cours → Terminé) ; les heures
-   à venir se recalent.
+3. **Déroulé** : l'arbitre fait vivre les matchs (En cours → Terminé). Un match
+   joué **reste à sa place** dans la journée, verrouillé (voir « Ligne de match ») ;
+   les heures à venir se recalent sur son heure réelle.
 4. **Ajustements ponctuels** : un **ajout tardif** (voir [[cycle-de-vie-epreuve]])
    fait réapparaître de nouveaux matchs dans la pile « à planifier ».
 
@@ -74,6 +75,17 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
   (= dé-planifie, perte de la journée et de la position).
 - État « tout placé » : « Tout est planifié ».
 
+### Colonne « Annulés »
+
+- Colonne latérale distincte, **affichée seulement s'il existe au moins un match
+  annulé** (sinon masquée). Liste les matchs `CANCELED` (annulation sèche, sans
+  vainqueur), retirés de leur journée.
+- Chaque carte : pastille de poule, « {A} vs {B} », badge **ANNULÉ**.
+- **Lecture seule** : un match annulé ne se glisse pas. Pour le réactiver, passer
+  par le panneau d'édition (onglet Planning → Statut).
+- L'annulation **retire le match de la séquence** : le créneau libéré est récupéré
+  et les heures de la journée se recalent (voir [[planning]]).
+
 ### Journées
 
 Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayDay`) :
@@ -92,7 +104,9 @@ Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayD
 - **Affiche** : pastille de poule, « {A} vs {B} ».
 - **⚠ repos** si le match est adjacent, dans la séquence, à un autre match du même
   joueur (voir [[planning]]).
-- Poignée de déplacement (⋮⋮) sur les lignes déplaçables (hors match en cours).
+- Poignée de déplacement (⋮⋮) sur les seules lignes **déplaçables** (`SCHEDULED`).
+  Les matchs **en cours et terminés** sont **verrouillés à leur place** (visibles,
+  non déplaçables).
 - Cliquer la ligne ouvre le **panneau d'édition** du match.
 
 ### Bande de pause
@@ -132,7 +146,8 @@ venu. Les matchs créés arrivent dans la **pile « À planifier »**.
    sa position et sa journée.
 3. Un match entrant en journée reçoit le **court unique** s'il n'en a pas
    (mono-court).
-4. Le match **en cours** garde sa place dans la séquence (non déplaçable).
+4. Les matchs **en cours et terminés** gardent leur place dans la séquence
+   (verrouillés, non déplaçables) ; seuls les matchs `SCHEDULED` se glissent.
 5. Les heures estimées et le « Next » sont recalculés après chaque changement.
 
 ## Flux : pré-poser
@@ -226,14 +241,16 @@ pied sans fermer le panneau).
 - **Court** : mono-court — information seulement (« Central »), non éditable
   (décision 12 / 19).
 - **Statut** : Prévu / En direct / Terminé / Annulé.
-  - Passer en « Terminé » sort le match de la séquence et retire sa mise en avant ;
-    si c'est un quart ou une demi, le vainqueur est **promu automatiquement** dans
-    le tableau final (voir [[admin-tableau-final]]).
-  - « Annulé » (`CANCELED`) = annulation sèche, **sans vainqueur**, conservée dans
-    l'historique (badge ANNULÉ, hors séquence).
+  - Passer en « Terminé » **verrouille le match à sa place** (il reste visible dans
+    sa journée, avec son heure réelle) et retire sa mise en avant ; si c'est un
+    quart ou une demi, le vainqueur est **promu automatiquement** dans le tableau
+    final (voir [[admin-tableau-final]]). Le match **ne quitte pas** la séquence.
+  - « Annulé » (`CANCELED`) = annulation sèche, **sans vainqueur** : le match
+    **quitte sa journée** (perd sa place) et bascule dans la **colonne « Annulés »**
+    (voir ci-dessus). Conservé dans l'historique, badge ANNULÉ.
   - Un **forfait / walkover** est distinct de l'annulation : match « Terminé »
-    **avec vainqueur** par défaut, issu de l'abandon d'un inscrit (mécanique dans
-    [[cycle-de-vie-epreuve]]).
+    **avec vainqueur** par défaut, issu de l'abandon d'un inscrit — il **reste à sa
+    place** (verrouillé, libellé « Forfait »). Mécanique dans [[cycle-de-vie-epreuve]].
 - **Mise en avant** : interrupteur « Afficher ce match sur le scoreboard TV »
   (un seul match à la fois ; l'activer retire l'actuel).
 - La **position** dans la séquence se règle par glisser-déposer, pas dans ce

@@ -6,6 +6,7 @@ import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
+import PlayDayModal from '@/components/modals/PlayDayModal.vue'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ const route = useRoute()
 const router = useRouter()
 
 const editingMatch = ref<Match | null>(null)
+const showPlayDayModal = ref(false)
 const bannerError = ref('')
 const arranging = ref(false)
 
@@ -387,6 +389,9 @@ async function onDragEnd() {
         </div>
       </div>
       <div class="header-actions">
+        <button class="adm-btn" type="button" @click="showPlayDayModal = true">
+          Gérer les journées
+        </button>
         <button
           class="adm-btn primary"
           type="button"
@@ -402,6 +407,7 @@ async function onDragEnd() {
     <div v-if="bannerError" class="error-banner">{{ bannerError }}</div>
 
     <!-- Modales -->
+    <PlayDayModal v-if="showPlayDayModal" @close="showPlayDayModal = false" />
     <EditMatchPanel
       v-if="editingMatch"
       :match="editingMatch"
@@ -465,7 +471,10 @@ async function onDragEnd() {
       <main class="cal-days">
         <div v-if="calendarDays.length === 0" class="cal-empty">
           <p>Aucune journée configurée.</p>
-          <p class="cal-empty-sub">Créez les journées de jeu via l'administration Django.</p>
+          <p class="cal-empty-sub">
+            Créez une première journée via
+            <button class="cal-empty-link" type="button" @click="showPlayDayModal = true">« Gérer les journées »</button>.
+          </p>
         </div>
 
         <section
@@ -497,13 +506,9 @@ async function onDragEnd() {
 
           <!-- Lignes matchs + pauses (liste unifiée DnD ↔ pile) -->
           <div class="pd-rows">
-            <div
-              v-if="(dayItemsDnd[day.id] ?? []).length === 0"
-              class="pd-empty"
-            >Aucun match pour cette journée.</div>
             <draggable
-              v-else
               v-model="dayItemsDnd[day.id]"
+              class="pd-droparea"
               :item-key="(item: DayItem) => item.kind + '-' + item.data.id"
               :group="{ name: 'matches', pull: true, put: true }"
               :move="checkMove"
@@ -513,7 +518,6 @@ async function onDragEnd() {
               @end="onDragEnd"
             >
               <template #item="{ element }">
-                <!-- Ligne match -->
                 <div
                   v-if="element.kind === 'match'"
                   class="cal-row"
@@ -557,7 +561,6 @@ async function onDragEnd() {
                     :class="{ 'drag-handle--locked': (element.data as Match).status === 'LIVE' }"
                   >⋮⋮</span>
                 </div>
-                <!-- Ligne pause -->
                 <div v-else class="cal-row cal-row--break">
                   <span class="cal-time">{{ computedETAs.get(`b-${element.data.id}`) ?? '—' }}</span>
                   <span class="break-icon">⏸</span>
@@ -575,6 +578,10 @@ async function onDragEnd() {
                 </div>
               </template>
             </draggable>
+            <div
+              v-if="(dayItemsDnd[day.id] ?? []).length === 0"
+              class="pd-empty"
+            >Glissez un match ici</div>
           </div>
 
           <!-- Action pause -->
@@ -780,6 +787,18 @@ async function onDragEnd() {
 .cal-empty p { margin: 0 0 6px; }
 .cal-empty-sub { font-size: 12px; }
 
+.cal-empty-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  text-decoration: underline;
+}
+
 /* ── Journée (PlayDay) ───────────────────────────────────────────────────── */
 .play-day {
   border: 1px solid var(--line-1);
@@ -841,12 +860,21 @@ async function onDragEnd() {
   color: var(--danger);
 }
 
-.pd-rows { display: flex; flex-direction: column; }
+.pd-rows { display: flex; flex-direction: column; position: relative; }
+
+/* Zone de dépôt toujours présente, même journée vide (cible DnD pile → journée) */
+.pd-droparea { min-height: 44px; }
 
 .pd-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 20px 18px;
   font-size: 13px;
   color: var(--ink-4);
+  pointer-events: none; /* laisse passer le drop vers le draggable en dessous */
 }
 
 /* ── Ligne calendrier ────────────────────────────────────────────────────── */

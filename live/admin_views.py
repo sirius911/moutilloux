@@ -1926,6 +1926,32 @@ def update_play_day(play_day, *, date=_NOCHANGE, start_time=_NOCHANGE, target_en
 
 
 def delete_play_day(play_day):
+    if Break.objects.filter(play_day=play_day).exists():
+        raise ValueError(
+            "Impossible de supprimer cette journée : elle contient des pauses. "
+            "Supprimez d'abord les pauses."
+        )
+    active_matches = Match.objects.filter(
+        edition=play_day.edition,
+        order_index__isnull=False,
+        scheduled_time__date=play_day.date,
+        status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
+    )
+    if active_matches.exists():
+        raise ValueError(
+            "Impossible de supprimer cette journée : elle contient des matchs planifiés. "
+            "Renvoyez d'abord les matchs vers la pile « à planifier »."
+        )
+    finished_matches = Match.objects.filter(
+        edition=play_day.edition,
+        order_index__isnull=False,
+        scheduled_time__date=play_day.date,
+        status=Match.Status.FINISHED,
+    )
+    if finished_matches.exists():
+        raise ValueError(
+            "Impossible de supprimer cette journée : elle contient des matchs terminés."
+        )
     play_day.delete()
 
 

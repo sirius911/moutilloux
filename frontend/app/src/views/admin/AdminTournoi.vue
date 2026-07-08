@@ -190,13 +190,13 @@ async function handleConfirm() {
               <span>{{ ev.entriesCount }} inscrit{{ ev.entriesCount !== 1 ? 's' : '' }}</span>
             </div>
             <div class="adm-event-acts">
-              <button class="adm-btn" type="button" @click="eventStore.activeEventId = ev.id; router.push('/admin/inscriptions')">
+              <button class="adm-btn" type="button" @click="router.push(`/admin/events/${ev.id}/inscriptions`)">
                 Inscriptions
               </button>
-              <button class="adm-btn" type="button" @click="eventStore.activeEventId = ev.id; router.push('/admin/groups')">
+              <button class="adm-btn" type="button" @click="router.push(`/admin/events/${ev.id}/groups`)">
                 Poules
               </button>
-              <button class="adm-btn" type="button" @click="eventStore.activeEventId = ev.id; router.push('/admin/matches')">
+              <button class="adm-btn" type="button" @click="router.push(`/admin/events/${ev.id}/matches`)">
                 Matchs
               </button>
               <span class="adm-event-spacer" />

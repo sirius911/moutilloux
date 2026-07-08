@@ -10,4 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 14 — Correctifs : navigation, registre, poules & journées | `backlog/sprints/14-correctifs/sprint.md` |
+| 1 | 15 — Cycle de vie d'un match : order_index persistant & Annulés | `backlog/sprints/15-cycle-vie-match/sprint.md` |

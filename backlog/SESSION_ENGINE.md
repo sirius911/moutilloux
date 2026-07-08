@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #40
-**Sprint actif :** — (roadmap vide)
-**Roadmap :** 0 sprint restant.
-**Tickets clôturés cette session :** 0
-**Branche :** `claude/sprint/13-tableau-seeding`
-**Issues Sprint 13 restantes :** 0
-**Contexte :** Session 40 — Roadmap vide confirmée (2e fois). Aucun sprint actif. Désactiver la Routine manuellement sur claude.ai/code/routines.
+**Dernière session :** 2026-06-30 — Session #34
+**Sprint actif :** aucun — Sprint 14 terminé.
+**Roadmap :** vide — tous les sprints terminés.
+**Tickets clôturés cette session :** 2 (#152 ✅ #153 ✅)
+**Branche :** `claude/sprint/14-correctifs`
+**Issues Sprint 14 restantes :** 0
+**Contexte :** Session 34 — Sprint 14 clôturé. #152 (colonnes Téléphone & Email dans AdminPlayers) et #153 (Âge calculé remplace Né(e) en) implémentés. Spec review ✅ sur 5 specs. Milestone à fermer manuellement sur GitHub. Roadmap vide → désactiver la Routine.
