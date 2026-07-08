@@ -73,9 +73,6 @@ function sideSets(side: 'A' | 'B'): number {
 function sideGames(side: 'A' | 'B'): number {
   return side === 'A' ? (match.value?.gamesA ?? 0) : (match.value?.gamesB ?? 0)
 }
-function sidePoints(side: 'A' | 'B'): number {
-  return side === 'A' ? (match.value?.pointsA ?? 0) : (match.value?.pointsB ?? 0)
-}
 function sideTbPoints(side: 'A' | 'B'): number {
   return side === 'A' ? (match.value?.tbPointsA ?? 0) : (match.value?.tbPointsB ?? 0)
 }
@@ -174,10 +171,8 @@ const finishCandidates = computed((): { a: FinishCandidate; b: FinishCandidate }
   }
 })
 
-function pointDisplay(n: number, inTb: boolean): string {
-  if (inTb) return String(n)
-  const map: Record<number, string> = { 0: '0', 1: '15', 2: '30', 3: '40' }
-  return map[n] ?? '40'
+function sideDisplayPoint(side: 'A' | 'B'): string {
+  return side === 'A' ? (match.value?.displayPointA ?? '0') : (match.value?.displayPointB ?? '0')
 }
 
 const statusLabel = computed(() => {
@@ -266,11 +261,11 @@ async function confirmStart() {
           <span class="score-label">{{ match?.tbActive ? 'JEU DÉCISIF' : 'POINT' }}</span>
           <div class="score-nums tab">
             <span class="score-a">
-              {{ match ? (match.tbActive ? sideTbPoints(leftModelSide) : pointDisplay(sidePoints(leftModelSide), false)) : '0' }}
+              {{ match ? (match.tbActive ? sideTbPoints(leftModelSide) : sideDisplayPoint(leftModelSide)) : '0' }}
             </span>
             <span class="score-sep">·</span>
             <span class="score-b">
-              {{ match ? (match.tbActive ? sideTbPoints(rightModelSide) : pointDisplay(sidePoints(rightModelSide), false)) : '0' }}
+              {{ match ? (match.tbActive ? sideTbPoints(rightModelSide) : sideDisplayPoint(rightModelSide)) : '0' }}
             </span>
           </div>
         </div>
