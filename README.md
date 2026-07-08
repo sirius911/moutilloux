@@ -21,6 +21,7 @@ Le projet permet de gérer un tournoi avec :
 Avant d’installer le projet, il faut avoir :
 
 - Python 3.10 ou supérieur ;
+- Node.js 20 ou supérieur (avec npm) — pour le front-end de développement ;
 - Git ;
 - pip ;
 - un terminal Linux, macOS ou Windows PowerShell.
@@ -150,6 +151,76 @@ http://127.0.0.1:8000/admin/
 
 ---
 
+## Lancer le front-end en développement (SPA Vue 3)
+
+L’interface utilisateur (admin, arbitre, TV) est une SPA **Vue 3 + Vite +
+TypeScript** qui vit dans `frontend/app/` et consomme l’API JSON de Django.
+En développement, il faut **deux serveurs** qui tournent en même temps.
+
+### 1. Installer les dépendances front (première fois seulement)
+
+```bash
+cd frontend/app
+npm install
+```
+
+### 2. Lancer les deux serveurs
+
+Dans un premier terminal, le back Django (port 8000) :
+
+```bash
+source _env/bin/activate
+python manage.py runserver
+```
+
+Dans un second terminal, le front Vite :
+
+```bash
+cd frontend/app
+npm run dev
+```
+
+L’application est alors accessible sur :
+
+```text
+http://localhost:5173/
+```
+
+### 3. Comment ça marche
+
+Le serveur Vite **proxifie** `/api`, `/arbitre`, `/panel`, `/accounts` et
+`/media` vers `http://localhost:8000` (voir `frontend/app/vite.config.ts`).
+Tout passe donc par la même origine : le cookie de session Django et le CSRF
+fonctionnent sans configuration supplémentaire.
+
+Routes principales de la SPA :
+
+```text
+/login        connexion (session Django)
+/tv/live      affichage public TV (scoreboard ⇄ carousel)
+/arbitre/…    espace arbitre (tablette) — rôle Arbitre requis
+/admin/…      panneau d’administration — superuser requis
+```
+
+> Ne pas confondre `/admin/` **de la SPA** (port 5173) avec l’administration
+> Django native (`http://127.0.0.1:8000/admin/`), utilisée pour la
+> configuration initiale (éditions, catégories, courts).
+
+### 4. Vérification des types
+
+```bash
+cd frontend/app
+npx vue-tsc -b --force
+```
+
+> Utiliser le mode build (`-b --force`) : sur ce projet, `vue-tsc --noEmit`
+> seul ne type-check aucun fichier `.vue` (project references non
+> déclenchées) et sort en succès silencieux.
+
+Le build de production se fait avec `npm run build` (type-check inclus).
+
+---
+
 ## Utilisation sur le réseau local
 
 Pour rendre le site accessible depuis un autre ordinateur, une tablette ou une télévision du même réseau local, lancer le serveur avec :
@@ -274,8 +345,13 @@ python manage.py runserver
 moutilloux/
 ├── competition/        # logique de compétition et classements
 ├── core/               # éléments communs du projet
-├── live/               # affichage live, arbitrage, résultats
+├── live/               # affichage live, arbitrage, résultats (API JSON)
 ├── moutilloux/         # configuration principale Django
+├── frontend/
+│   ├── app/            # SPA Vue 3 + Vite + TypeScript (admin, arbitre, TV)
+│   └── design/         # maquettes de référence (mock React + CSS)
+├── specs/              # specs fonctionnelles et techniques (source de vérité)
+├── backlog/            # sprints, roadmap, logs de session
 ├── manage.py
 ├── README.md
 └── .gitignore
