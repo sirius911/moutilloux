@@ -348,8 +348,9 @@ function isToday(dateStr: string): boolean {
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
 // Les pauses obtiennent leur ETA à leur position réelle dans la séquence unifiée.
-const computedETAs = computed<Map<string, string>>(() => {
+const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<number, number> }>(() => {
   const result = new Map<string, string>()
+  const plannedMin = new Map<number, number>()
   const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
   const now = new Date()
   const nowMin = now.getHours() * 60 + now.getMinutes()
@@ -362,6 +363,7 @@ const computedETAs = computed<Map<string, string>>(() => {
     for (const item of items) {
       if (item.kind === 'match') {
         const m = item.data
+        plannedMin.set(m.id, cursor)
         if (m.status === 'FINISHED' && m.finishedAt) {
           const displayMin = m.startedAt ? isoToMin(m.startedAt) : isoToMin(m.finishedAt)
           result.set(`m-${m.id}`, minToTime(displayMin))
@@ -385,8 +387,46 @@ const computedETAs = computed<Map<string, string>>(() => {
     result.set(`day-end-${day.id}`, minToTime(cursor))
   }
 
+  return { display: result, plannedMin }
+})
+
+const computedETAs = computed(() => etaEngine.value.display)
+const plannedEtaMin = computed(() => etaEngine.value.plannedMin)
+
+type Punctuality = 'red' | 'orange' | 'green'
+
+const punctualityByMatchId = computed<Map<number, Punctuality>>(() => {
+  const result = new Map<number, Punctuality>()
+  const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
+  const now = new Date()
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+
+  for (const day of calendarDays.value) {
+    if (!isToday(day.date)) continue
+    for (const item of dayItemsDnd.value[day.id] ?? []) {
+      if (item.kind !== 'match') continue
+      const m = item.data
+      const planned = plannedEtaMin.value.get(m.id)
+      if (planned === undefined) continue
+
+      if (m.status === 'SCHEDULED') {
+        if (nowMin > planned + 5) result.set(m.id, 'red')
+      } else if (m.status === 'LIVE') {
+        const startedMin = m.startedAt ? isoToMin(m.startedAt) : null
+        const lateStart = startedMin !== null && startedMin > planned + 5
+        const overrun = startedMin !== null && nowMin > startedMin + dur + 5
+        result.set(m.id, lateStart || overrun ? 'orange' : 'green')
+      }
+      // FINISHED / CANCELED : aucune entrée → aucune teinte.
+    }
+  }
   return result
 })
+
+function punctualityClass(matchId: number): string {
+  const p = punctualityByMatchId.value.get(matchId)
+  return p ? `punct--${p}` : ''
+}
 
 function dayEndEstimate(day: CalendarDay): string | null {
   return computedETAs.value.get(`day-end-${day.id}`) ?? null
@@ -688,6 +728,7 @@ async function onDragEnd() {
                       'no-drag': (element.data as Match).status !== 'SCHEDULED',
                       'is-foreign': isForeign(element.data as Match),
                     },
+                    punctualityClass((element.data as Match).id),
                   ]"
                   role="button"
                   tabindex="0"
@@ -792,6 +833,9 @@ async function onDragEnd() {
         <div class="legend-item"><span class="cal-dot dot--canceled" /> Annulé</div>
         <div class="legend-item"><span class="walkover-badge" style="font-size:9px;padding:1px 5px">FORFAIT</span> Walkover</div>
         <div class="legend-item"><span class="rest-warning">⚠</span> Repos insuffisant</div>
+        <div class="legend-item"><span class="legend-swatch legend-swatch--red" /> En retard</div>
+        <div class="legend-item"><span class="legend-swatch legend-swatch--orange" /> Démarré en retard</div>
+        <div class="legend-item"><span class="legend-swatch legend-swatch--green" /> À l'heure</div>
       </footer>
     </template>
   </div>
@@ -1099,6 +1143,10 @@ async function onDragEnd() {
 .cal-row.state--live { background: var(--danger-soft, rgba(255,50,50,0.06)); }
 .cal-row.state--next { background: var(--accent-soft, rgba(255,200,61,0.07)); }
 
+.cal-row.punct--red    { background: var(--danger-soft, rgba(255,48,82,0.14)); }
+.cal-row.punct--orange { background: rgba(229,124,0,0.12); }
+.cal-row.punct--green  { background: rgba(34,226,127,0.10); }
+
 .cal-row--break {
   grid-template-columns: 64px 16px 1fr 28px 20px;
   cursor: default;
@@ -1322,6 +1370,17 @@ async function onDragEnd() {
 }
 
 .legend-item { display: flex; align-items: center; gap: 6px; }
+
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend-swatch--red    { background: var(--danger); }
+.legend-swatch--orange { background: #e57c00; }
+.legend-swatch--green  { background: var(--success); }
 
 /* ── Mise en évidence de l'épreuve active ────────────────────────────────── */
 /* Les matchs des autres épreuves restent visibles et déplaçables (le
