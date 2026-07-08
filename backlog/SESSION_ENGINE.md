@@ -373,9 +373,64 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #132
+**Dernière session :** 2026-07-08 — Session #133
+**Sprint traité :** 34 — Tableau final au calendrier (2ᵉ session du sprint,
+4/6 tickets clos — `#327` et `#328` restants).
+
+**Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
+`claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #133 :** `planning.md` et `admin-matchs.md` —
+⚠️ Dérive mineure (4 dérives, toutes correspondant exactement aux issues déjà
+ouvertes `#325`/`#326`/`#327`/`#328`) → 0 nouvelle issue créée. `cycle-de-vie-match.md`
+et `cycle-de-vie-epreuve.md` — ✅ Conforme (les deux tickets back du sprint,
+`#323`/`#324`, confirmés conformes).
+
+**Backlog engine session #133 :** 2 tickets traités séquentiellement (chaîne
+`vue-screen` puis `reviewer` par ticket), tous deux dans `AdminMatches.vue`,
+conformément à l'ordre suggéré par `sprint.md` :
+- **#325** (majeure) — front : `AdminMatches.vue` — pile groupée par épreuve
+  puis poule/groupe « Tableau » (nouvelle fonction `pileGroupLetter()`, tri
+  `groupSortKey` qui place « Tableau » après toutes les poules), pastille
+  d'étape via `stagePillLabel()` (lettre de poule ou `bracketSlot`, fallback
+  sur `stage` si `bracketSlot` est `null`). Le fallback de nom
+  `sideALabel`/`sideBLabel` (`playerLabel()`) était déjà conforme, aucun
+  changement nécessaire. Verdict reviewer : ✅ Approuvé.
+- **#326** (mineure) — front : `AdminMatches.vue` — moteur ETA à durée par
+  étape : nouvelle fonction `durFor(match)` (constantes locales
+  `ETA_DUR_QF_SF_MIN = 35`, `ETA_DUR_FINAL_MIN = 45`, calibrées sur
+  `live/bracket.py::_fmt_for_stage` — QF/SF en un set, F/P3 en BO3),
+  appliquée dans `etaEngine` **et** dans `punctualityByMatchId` (correction
+  de cohérence non demandée explicitement par le ticket mais nécessaire :
+  sans elle une finale BO3 aurait été taguée « en retard » avec un seuil de
+  30 min). Golden path vérifié : journée 2 poules + finale → ETA finale
+  repoussée de 10:30 à 10:45. Verdict reviewer : ✅ Approuvé.
+
+**Sprint 34 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#327` — règle de repos best-effort, `#328` — résidu `.play-day`
+`overflow:hidden`), toutes deux dans `AdminMatches.vue`, séquentielles par
+construction. Sprint 34 reste actif, sera repris à la **prochaine échéance
+planifiée**.
+
+**Roadmap non vide** — 3 autres sprints en attente après le 34 (35 — TV :
+scène live & fin de match, 36 — Échauffement, 37 — Mobile : arbitre &
+régie).
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (10 erreurs préexistantes ailleurs dans
+le projet, identiques avant/après les deux tickets, aucune nouvelle
+imputable à cette session). Toujours pas de script `type-check` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée).
+
+---
+
+**Historique — session #132 :**
 **Sprint traité :** 34 — Tableau final au calendrier (1ère session du sprint,
-2/6 tickets clos — `#325` à `#328` restants).
+2/6 tickets clos — `#325` à `#328` restants à l'époque).
 
 **Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
 `claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
@@ -412,15 +467,6 @@ planification (session précédente) — 0 nouvelle issue créée cette session.
   câblage de fichier partagé nécessaire** malgré le label `infra` posé lors
   de la planification (signalé par le reviewer, sans impact protocole).
   Verdict reviewer : ✅ Approuvé.
-
-**Sprint 34 non clos cette session :** 4 issues encore ouvertes sur le
-milestone (`#325`, `#326`, `#327`, `#328`, tous front `AdminMatches.vue`,
-séquentiels par construction — un seul agent `vue-screen` les enchaînera).
-Sprint 34 reste actif, sera repris à la **prochaine échéance planifiée**.
-
-**Roadmap non vide** — 3 autres sprints en attente après le 34 (35 — TV :
-scène live & fin de match, 36 — Échauffement, 37 — Mobile : arbitre &
-régie).
 
 **Point d'attention outillage :** `.venv/bin/python manage.py check` utilisé
 pour la vérification back cette session (pas de suite de tests dédiée
