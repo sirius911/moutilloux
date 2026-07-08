@@ -127,7 +127,7 @@ usePolling(() => live.fetchTvState(), 2000)
         </div>
       </div>
 
-      <!-- Header -->
+      <!-- Bandeau haut (fin) -->
       <header class="sb-header">
         <!-- Logo balle de tennis SVG -->
         <div class="sb-logo">
@@ -143,9 +143,15 @@ usePolling(() => live.fetchTvState(), 2000)
           </div>
         </div>
 
+        <div class="sb-header-status">
+          <span v-if="live.hero.stageLabel" class="sb-header-stage">{{ live.hero.stageLabel }}</span>
+          <span class="live-dot" />
+          <span class="sb-header-live">EN DIRECT</span>
+          <span v-if="live.hero.tbActive" class="tb-badge">JEU DÉCISIF</span>
+        </div>
       </header>
 
-      <!-- Bandeau « À suivre » — positionné juste au-dessus du sb-band -->
+      <!-- Bandeau « À suivre » — inchangé dans ce ticket (repositionnement #330) -->
       <div v-if="live.next" class="sb-next-band">
         <span class="sb-next-lbl">À SUIVRE</span>
         <span class="sb-next-dash">—</span>
@@ -161,88 +167,67 @@ usePolling(() => live.fetchTvState(), 2000)
         </span>
       </div>
 
-      <!-- Bandeau score bas -->
-      <div class="sb-band">
-        <!-- Ligne titre -->
-        <div class="sb-band-title">
-          <span class="live-dot" />
-          EN DIRECT
-          <span class="band-sep">·</span>
-          {{ live.hero.stageLabel }}
-          <span v-if="live.hero.tbActive" class="tb-badge">JEU DÉCISIF</span>
+      <!-- Centre editorial : jeux du set en cours en très grand -->
+      <div class="sb-ed-numbers">
+        <div class="sb-ed-num tab accent-text">{{ live.hero.gamesA }}</div>
+        <div class="sb-ed-num-sep">—</div>
+        <div class="sb-ed-num tab">{{ live.hero.gamesB }}</div>
+      </div>
+      <div class="sb-ed-label">JEUX · SET {{ live.hero.setScores.length + 1 }}</div>
+
+      <div class="sb-ed-bottom">
+        <!-- Côté A -->
+        <div class="sb-ed-line">
+          <span v-if="live.hero.server === 'A'" class="serve-ball">
+            <svg viewBox="0 0 24 24" width="26" height="26" style="filter: drop-shadow(0 0 6px #E8F35A)">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+            </svg>
+          </span>
+          <span v-else class="serve-ball-spacer" style="width: 26px; height: 26px" />
+          <span class="sb-ed-name">
+            {{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}
+          </span>
+          <span v-if="live.hero.sideA?.seedHint" class="sb-ed-seed">[{{ live.hero.sideA.seedHint }}]</span>
+          <span class="sb-ed-rule" />
+          <span
+            class="sb-ed-pts tab"
+            :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointA === 'AV' }"
+          >
+            {{ live.hero.tbActive ? live.hero.tbPointsA : live.hero.displayPointA }}
+          </span>
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
         </div>
 
-        <!-- Score principal -->
-        <div class="sb-score-grid">
-          <!-- Côté A -->
-          <div class="sb-player" :class="{ serving: live.hero.server === 'A' }">
-            <div class="player-bar accent" />
-            <div class="player-info">
-              <!-- Balle de service SVG -->
-              <span v-if="live.hero.server === 'A'" class="serve-ball">
-                <svg viewBox="0 0 24 24" width="20" height="20" style="filter: drop-shadow(0 0 6px #E8F35A)">
-                  <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
-                  <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
-                </svg>
-              </span>
-              <span class="player-name">
-                {{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}
-              </span>
-              <span v-if="live.hero.sideA?.seedHint" class="seed-badge">{{ live.hero.sideA.seedHint }}</span>
-            </div>
-            <div class="player-scores">
-              <div class="score-sets">
-                <span v-for="set in live.hero.setScores" :key="set.a + '-' + set.b" class="set-box">{{ set.a }}</span>
-              </div>
-              <span class="score-games tab">{{ live.hero.gamesA }}</span>
-              <span
-                class="score-points tab"
-                :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointA === 'AV' }"
-              >
-                {{ live.hero.tbActive ? live.hero.tbPointsA : live.hero.displayPointA }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Séparateur -->
-          <div class="sb-divider" />
-
-          <!-- Côté B -->
-          <div class="sb-player sb-player--right" :class="{ serving: live.hero.server === 'B' }">
-            <div class="player-scores player-scores--right">
-              <span
-                class="score-points tab"
-                :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointB === 'AV' }"
-              >
-                {{ live.hero.tbActive ? live.hero.tbPointsB : live.hero.displayPointB }}
-              </span>
-              <span class="score-games tab">{{ live.hero.gamesB }}</span>
-              <div class="score-sets">
-                <span v-for="set in live.hero.setScores" :key="set.a + '-' + set.b" class="set-box">{{ set.b }}</span>
-              </div>
-            </div>
-            <div class="player-info player-info--right">
-              <span class="player-name">
-                {{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}
-              </span>
-              <span v-if="live.hero.sideB?.seedHint" class="seed-badge">{{ live.hero.sideB.seedHint }}</span>
-              <span v-if="live.hero.server === 'B'" class="serve-ball">
-                <svg viewBox="0 0 24 24" width="20" height="20" style="filter: drop-shadow(0 0 6px #E8F35A)">
-                  <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
-                  <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
-                </svg>
-              </span>
-            </div>
-            <div class="player-bar white" />
-          </div>
+        <!-- Côté B -->
+        <div class="sb-ed-line">
+          <span v-if="live.hero.server === 'B'" class="serve-ball">
+            <svg viewBox="0 0 24 24" width="26" height="26" style="filter: drop-shadow(0 0 6px #E8F35A)">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+            </svg>
+          </span>
+          <span v-else class="serve-ball-spacer" style="width: 26px; height: 26px" />
+          <span class="sb-ed-name">
+            {{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}
+          </span>
+          <span v-if="live.hero.sideB?.seedHint" class="sb-ed-seed">[{{ live.hero.sideB.seedHint }}]</span>
+          <span class="sb-ed-rule" />
+          <span
+            class="sb-ed-pts tab"
+            :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointB === 'AV' }"
+          >
+            {{ live.hero.tbActive ? live.hero.tbPointsB : live.hero.displayPointB }}
+          </span>
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
         </div>
+      </div>
 
-        <!-- Pied de bande -->
-        <div class="sb-band-footer">
-          <span v-if="live.hero.court">COURT · {{ live.hero.court }}</span>
-          <span v-if="live.hero.clock">DURÉE · {{ live.hero.clock }}</span>
-          <span>{{ live.now }}</span>
-        </div>
+      <!-- Pied discret -->
+      <div class="sb-foot-discreet">
+        <span v-if="live.hero.court">COURT · {{ live.hero.court }}</span>
+        <span v-if="live.hero.clock">DURÉE · {{ live.hero.clock }}</span>
+        <span>{{ live.now }}</span>
       </div>
     </template>
   </div>
@@ -306,6 +291,26 @@ usePolling(() => live.fetchTvState(), 2000)
   letter-spacing: 0.18em;
   color: var(--ink-2);
   text-transform: uppercase;
+}
+
+.sb-header-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+  text-transform: uppercase;
+}
+
+.sb-header-stage {
+  color: var(--ink-2);
+}
+
+.sb-header-live {
+  color: var(--danger);
+  font-weight: 700;
 }
 
 /* ── Bandeau « À suivre » ────────────────────────────────────── */
@@ -383,33 +388,6 @@ usePolling(() => live.fetchTvState(), 2000)
   flex-shrink: 0;
 }
 
-/* ── Bandeau bas ─────────────────────────────────────────────────────── */
-.sb-band {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 240px;
-  background: rgba(5, 6, 8, 0.96);
-  border-top: 1px solid var(--line-2);
-  display: flex;
-  flex-direction: column;
-  z-index: 10;
-}
-
-.sb-band-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 48px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: var(--ink-2);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--line-1);
-}
-
 .live-dot {
   width: 8px;
   height: 8px;
@@ -417,8 +395,6 @@ usePolling(() => live.fetchTvState(), 2000)
   background: var(--danger);
   animation: pulse 1.5s ease-in-out infinite;
 }
-
-.band-sep { color: var(--line-3); }
 
 .tb-badge {
   background: var(--accent-soft);
@@ -428,42 +404,111 @@ usePolling(() => live.fetchTvState(), 2000)
   font-size: 10px;
 }
 
-/* ── Score grid ──────────────────────────────────────────────────────── */
-.sb-score-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 2px 1fr;
-  align-items: center;
-  padding: 0 48px;
-  gap: 32px;
-}
-
-.sb-player {
+/* ── Centre editorial (porté depuis scoreboard.css .sb-ed-*) ─────────── */
+.sb-ed-numbers {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
+  gap: 80px;
+  font-feature-settings: "tnum";
+  z-index: 4;
+}
+
+.sb-ed-num {
+  font-size: 320px;
+  line-height: 0.85;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink-0);
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+}
+
+.sb-ed-num-sep {
+  font-size: 200px;
+  color: var(--ink-3);
+  font-weight: 200;
+  line-height: 0.85;
+}
+
+.sb-ed-label {
+  position: absolute;
+  left: 50%;
+  top: calc(42% + 170px);
+  transform: translateX(-50%);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--ink-3);
+  z-index: 4;
+}
+
+.sb-ed-bottom {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  bottom: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 4;
+}
+
+.sb-ed-line {
+  display: flex;
+  align-items: baseline;
   gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.sb-player--right { flex-direction: row-reverse; }
+.sb-ed-line:last-child { border-bottom: 0; }
 
-.player-bar {
-  width: 4px;
-  height: 64px;
-  border-radius: 2px;
-  flex-shrink: 0;
+.sb-ed-name {
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink-0);
 }
 
-.player-bar.accent { background: var(--accent); }
-.player-bar.white  { background: rgba(255,255,255,0.4); }
+.sb-ed-seed {
+  font-size: 22px;
+  color: var(--ink-3);
+}
 
-.player-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.sb-ed-rule {
   flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.18);
+  margin: 0 12px;
+  align-self: center;
 }
 
-.player-info--right { flex-direction: row-reverse; }
+.sb-ed-pts {
+  font-size: 80px;
+  font-weight: 800;
+  color: var(--ink-1);
+  text-shadow: 0 0 30px var(--accent-glow);
+  letter-spacing: -0.02em;
+  min-width: 130px;
+  text-align: right;
+}
+
+.sb-ed-mini {
+  font-size: 14px;
+  color: var(--ink-3);
+  letter-spacing: 0.18em;
+}
+
+.sb-ed-mini b {
+  color: var(--ink-0);
+  font-weight: 700;
+  font-size: 20px;
+  margin-left: 4px;
+}
+
+.accent-text { color: var(--accent); }
 
 .serve-ball {
   display: flex;
@@ -471,72 +516,9 @@ usePolling(() => live.fetchTvState(), 2000)
   animation: serveFloat 1.8s ease-in-out infinite;
 }
 
-.player-name {
-  font-size: 36px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: var(--ink-0);
-}
-
-.seed-badge {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  background: var(--accent-soft);
-  color: var(--accent);
-  padding: 3px 8px;
-  border-radius: var(--r-xs);
-}
-
-.player-scores {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.player-scores--right { flex-direction: row-reverse; }
-
-.score-sets {
-  display: flex;
-  gap: 6px;
-}
-
-.set-box {
-  font-size: 22px;
-  font-weight: 700;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-xs);
-  background: var(--bg-3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ink-1);
-}
-
-.score-games {
-  font-size: 60px;
-  font-weight: 700;
-  color: var(--ink-0);
-  min-width: 72px;
-  text-align: center;
-}
-
-.score-points {
-  font-size: 64px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--ink-1);
-  min-width: 80px;
-  text-align: center;
-}
-
-.accent-text { color: var(--accent); }
-
-.sb-divider {
-  background: var(--line-2);
-  height: 80px;
-  align-self: center;
+.serve-ball-spacer {
+  display: inline-block;
+  visibility: hidden;
 }
 
 /* ── Zone d'enjeu (centre de l'écran) ───────────────────────────────── */
@@ -685,17 +667,22 @@ usePolling(() => live.fetchTvState(), 2000)
   text-overflow: ellipsis;
 }
 
-/* ── Pied ────────────────────────────────────────────────────────────── */
-.sb-band-footer {
+/* ── Pied discret ────────────────────────────────────────────────────── */
+.sb-foot-discreet {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 32px;
-  padding: 10px 48px;
+  padding: 0 48px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.16em;
   color: var(--ink-3);
   text-transform: uppercase;
-  border-top: 1px solid var(--line-1);
+  z-index: 4;
 }
 </style>
