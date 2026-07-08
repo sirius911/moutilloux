@@ -373,53 +373,52 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #118
-**Sprint traité :** 29 — Joueurs : attitudes prédéfinies (2ᵉ et dernière session du sprint — **clos**)
+**Dernière session :** 2026-07-08 — Session #119
+**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (1ʳᵉ session du sprint)
 
-**Git :** branche `claude/sprint/29-joueurs-attitudes-predefinies`,
-parent effectif `claude/sprint/28-annonces-inscriptions-selection` (déjà à
-jour, rien à fusionner).
+**Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`
+créée depuis le parent effectif `claude/sprint/29-joueurs-attitudes-predefinies`
+(sprint 29 toujours non mergé dans `main`, déjà à jour, rien à fusionner).
+**Piège upstream rencontré** (voir mémoire `project_git_upstream_piege`) :
+`git checkout -b <branche30> origin/<branche29>` fait tracker la nouvelle
+branche sur le nom distant `claude/sprint/29-...` — push final fait
+explicitement avec `git push origin HEAD:claude/sprint/30-planning-journees-eta-ponctualite`.
 
-**Spec review session #118 :** `admin-joueurs.md` ✅ Conforme (multi-sélection
-livrée par #300). `affiche-match.md` ⚠️ au moment de la revue initiale
-(`EditMatchPanel.vue:19-22` lisait encore `player.attitude` mono-valeur au
-lieu du tirage au sort + choix explicite — dérive déjà ticketée #301), puis
-re-vérifié **✅ Conforme** après traitement de #301 dans cette même session.
-0 nouvelle dérive, 0 nouvelle issue créée.
+**Spec review session #119 :** `planning.md` et `admin-matchs.md` ❌ Dérive
+bloquante attendue (sprint pas démarré) — 6 dérives, toutes déjà ticketées
+#302-307, 0 nouvelle issue.
 
-**Backlog engine session #118 :** 1 ticket traité — #301 (front : onglet
-Affiche — pré-remplissage par tirage au sort parmi `Player.attitudes` de
-chaque joueur au montage du panneau, remplaçable par un `<select>` explicite
-avec `attitudes du joueur` puis liste complète de `constants/attitudes.json`,
-payload de génération `{attitudes: {A,B}}` inchangé ; corrige au passage le
-stopgap posé en session #117 sur les doubles, `attitudes?.[0]`). `✅ Approuvé`
-en review, fermé sur GitHub.
+**Backlog engine session #119 :** 2 tickets traités (limite de la session,
+en parallèle car fichiers disjoints) — **#302** (back : service
+`generate_play_days` + endpoint `play-days/generate/`, idempotent, crée une
+`PlayDay` par jour manquant entre les dates de l'édition) et **#307** (front,
+bug : le calendrier ne scrollait pas dans les journées — cause réelle
+identifiée dans `AdminLayout.vue` (`.admin-main` manquait `min-height: 0`,
+piège flexbox classique empêchant le layout admin partagé de se contracter
+sous la hauteur de son contenu), pas dans `AdminMatches.vue` comme le
+suggérait le titre du ticket. Les deux `✅ Approuvé` en review, fermés sur
+GitHub. `npx vue-tsc -b --force` : 0 nouvelle erreur.
 
-**Fichiers partagés câblés par l'orchestrateur :** `types/index.ts`
-(`EntryPlayer.attitude: string` → `attitudes: string[]`, pour aligner sur le
-contrat réel de `_pack_entry` déjà migré côté back depuis #299 ; seul usage du
-champ dans le front, renommage sûr confirmé en review).
+**Fichiers partagés câblés par l'orchestrateur :** `live/urls.py` (route
+`api/editions/<id>/play-days/generate/` → `api_play_days_generate`, #302).
+`AdminLayout.vue` (layout admin partagé, pas dans la liste officielle des
+fichiers réservés du sprint mais signalé par transparence) a été livré
+directement par l'agent d'implémentation de #307, sans câblage orchestrateur
+nécessaire.
 
-**Sprint 29 — clos cette session :** aucune issue `sprint-29` restante,
-milestone GitHub #28 fermé, dossier déplacé vers
-`backlog/sprints/done/29-joueurs-attitudes-predefinies/`, ligne supprimée de
-`backlog/sprints/roadmap.md`.
+**Sprint 30 — non clôturé cette session :** 4 issues `sprint-30` restantes
+(#303 modale « Générer depuis l'édition », #304 moteur ETA monotone, #305
+teinte de ponctualité, #306 heure de début éditable). Ordre suggéré pour la
+suite : #303 (dépend de #302, désormais prêt) puis #304 → #305 → #306
+(séquentiel, même SFC `AdminMatches.vue`). Sera repris à la **prochaine
+échéance planifiée**.
 
-**Roadmap :** 3 sprints restants (30, 31, 32) — le **sprint 30 — Planning :
-journées, ETA monotone & ponctualité** devient actif. Conformément au
-protocole, il n'a **pas** démarré dans cette session ; il sera traité à la
-**prochaine échéance planifiée**.
-
-**Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json`. Constaté cette session : `npx vue-tsc --noEmit` seul ne
-type-checkait **aucun** fichier `.vue` dans cet environnement (project
-references non déclenchées) — `npx vue-tsc -b --force` (qui correspond au
-script `build` réel du projet) a été utilisé à la place pour toutes les
-vérifications de cette session, et donne des résultats fiables. À utiliser
-en priorité dans les prochaines sessions. Toujours pas de
-`.claude/launch.json` pour prévisualiser l'app — vérification par
-type-check + revue de code uniquement (pas de QA navigateur en session
-automatisée).
+**Point d'attention outillage :** confirmation supplémentaire (2ᵉ session de
+suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit` seul
+ne type-check aucun fichier `.vue` dans cet environnement. Toujours pas de
+script `type-check` dans `package.json`, toujours pas de `.claude/launch.json`
+— vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
