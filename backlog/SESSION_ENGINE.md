@@ -373,61 +373,58 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #123
-**Sprint traité :** 31 — TV : rotation stable & pastille de progression (1ʳᵉ et dernière session du sprint — **clos**)
+**Dernière session :** 2026-07-08 — Session #124
+**Sprint traité :** 32 — Arbitre : programme du jour & premier serveur (1ʳᵉ session du sprint — **en cours**, 2/4 tickets clos)
 
-**Git :** branche `claude/sprint/31-tv-rotation-stable-pastille`, parent
-effectif `claude/sprint/30-planning-journees-eta-ponctualite` (sprint 30
-toujours non mergé dans `main` au moment du checkout, déduit depuis
+**Git :** branche `claude/sprint/32-arbitre-programme-premier-serveur`, parent
+effectif `claude/sprint/31-tv-rotation-stable-pastille` (sprint 31 toujours
+non mergé dans `main` au moment du checkout, déduit depuis
 `backlog/sprints/done/` — pas depuis `branche-parent:` du frontmatter qui
 indiquait `main`). 2 commits de code cette session.
 
-**Spec review session #123 :** `tv-live.md` (§ Cadre du carousel) — verdict
-initial **⚠️ Dérive mineure** (avant implémentation des tickets du sprint,
-2 dérives : rotation par index positionnel sur `SLIDES` recalculé à chaque
-poll `tv/idle`, pastille de pagination sans remplissage progressif — les
-deux déjà couvertes par #308/#309 posés à la planification du sprint,
-0 nouvelle issue créée), puis relecture **✅ Conforme** après implémentation
-des deux tickets, en fin de session, avant la vérification de clôture.
+**Spec review session #124 :** `arbitre-home.md` et `arbitre-match.md` —
+verdict **⚠️ Dérive mineure** sur les deux (avant implémentation des tickets
+du sprint : UI à onglets sur `ArbitreHome.vue` et démarrage sans choix de
+serveur sur `ArbitreMatch.vue`, déjà couvertes par #310/#311 et #312/#313
+posés à la planification du sprint, 0 nouvelle issue créée). Point secondaire
+soulevé par le reviewer (invariant mono-LIVE au niveau `status`, pas
+seulement `is_featured`) vérifié directement par l'orchestrateur dans
+`live/models.py` (`mark_live()`) : bien appliqué, non-problème.
 
-**Backlog engine session #123 :** 2 tickets traités séquentiellement
-(agents `vue-screen` puis `reviewer` par ticket) :
-- **#308** (majeure) — rotation stable : `SLIDES` reste un computed
-  recalculé à chaque poll, mais la slide affichée dérive maintenant d'un
-  état figé par nature (`displayedKind`, ref), mis à jour uniquement au tick
-  de rotation (`advance()`, toutes les 8 s) ou au clic (`goTo`) — jamais par
-  le recalcul de `SLIDES` seul. Verdict reviewer : ✅ Approuvé.
-- **#309** (mineure) — pastille de progression : animation CSS de
-  remplissage (8 s linear) relancée via changement de `:key` sur l'élément
-  de remplissage. Verdict reviewer : ⚠️ Approuvé avec réserves — cas limite
-  repéré (composition à une seule slide affichable : `displayedKind` ne
-  change jamais de valeur d'un cycle à l'autre, donc la clé ne changeait pas
-  et la pastille restait figée à 100 % après son premier remplissage).
-  **Corrigé par l'orchestrateur avant clôture** : ajout d'un compteur
-  technique `pagerTick`, incrémenté à chaque `advance()`/`goTo()`
-  indépendamment de la valeur de `displayedKind`, utilisé comme clé à la
-  place — le remplissage repart bien de zéro à chaque cycle même à slide
-  unique.
+**Backlog engine session #124 :** 2 tickets traités séquentiellement
+(chaîne « Programme », agents `django-api`/`vue-screen` puis `reviewer` par
+ticket) :
+- **#310** (majeure) — back : `api_arbitre_matches` renvoie désormais
+  `{playDays, next}` au lieu d'un tableau plat, via une fonction partagée
+  `_pack_calendar_play_days(edition)` extraite d'`api_edition_calendar` (non
+  duplication du regroupement matchs+pauses par journée) + `get_tv_next`
+  (définition unique du next, partagée avec la TV). Non-régression
+  `api_edition_calendar` confirmée par comparaison JSON bit-à-bit. Verdict
+  reviewer : ✅ Approuvé.
+- **#311** (majeure) — front : `ArbitreHome.vue` entièrement réécrit —
+  suppression des onglets, bloc « À l'instant » (LIVE sinon next, absent du
+  DOM si aucun des deux), journées empilées repliables (état d'expansion
+  initialisé une fois puis piloté par l'utilisateur, jamais réinitialisé par
+  le polling), fusion matchs+pauses triée par `orderIndex`. ETA simplifiée V1
+  documentée comme point d'attention (pas de recalcul dynamique en cas de
+  retard, contrairement au moteur `etaEngine` d'`AdminMatches.vue`, non
+  extrait en composable — hors périmètre de ce ticket). Verdict reviewer :
+  ✅ Approuvé.
 
-**Sprint 31 — clos cette session :** les deux conditions de clôture réunies
-(spec review ✅ après implémentation + 0 issue `sprint-31` ouverte).
-Milestone GitHub (#30) fermé, dossier déplacé dans
-`backlog/sprints/done/31-tv-rotation-stable-pastille/`, ligne retirée de
-`roadmap.md`.
+**Sprint 32 — pas clos cette session :** 2 issues encore ouvertes
+(#312, #313 — chaîne « Serveur : premier serveur au démarrage »), max 2
+tickets/session déjà atteint. Sera repris à la **prochaine échéance
+planifiée**.
 
-**Roadmap :** 1 sprint restant (32) — le **sprint 32 — Arbitre : programme
-du jour & premier serveur** devient actif. Conformément au protocole, il
-n'a **pas** démarré dans cette session ; il sera traité à la **prochaine
-échéance planifiée**.
-
-**Point d'attention outillage :** confirmation supplémentaire (6ᵉ session
+**Point d'attention outillage :** confirmation supplémentaire (7ᵉ session
 de suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit`
 seul ne type-check aucun fichier `.vue` dans cet environnement. Toujours
 pas de script `type-check` dans `package.json`, toujours pas de
 `.claude/launch.json` — vérification par type-check + revue de code
 uniquement (pas de QA navigateur en session automatisée).
 
-**Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
-(PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
-fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
-hors périmètre de la Routine automatique.
+**Sprint 19/20/21 — PRs non mergées :** toujours d'actualité, chaîne
+désormais bien plus longue (`gh pr list` : 25 PRs ouvertes, empilées depuis
+le sprint 06 jusqu'au sprint 30, aucune fusionnée dans `main`). Point à
+traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
+automatique.
