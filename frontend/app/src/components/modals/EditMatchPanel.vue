@@ -1,22 +1,43 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { extractApiError } from '@/lib/apiError'
-import type { Match } from '@/types'
+import { useApi } from '@/composables/useApi'
+import { usePolling } from '@/composables/usePolling'
+import type { Entry, Match, PosterState } from '@/types'
 
-const props = defineProps<{ match: Match }>()
-const emit = defineEmits<{ close: []; saved: [] }>()
+interface PosterSlot { key: string; label: string; defaultAttitude: string; photoUrl: string | null }
+
+function buildPosterSlots(match: Match): PosterSlot[] {
+  const slots: PosterSlot[] = []
+  const addSide = (side: Entry | null, prefix: string) => {
+    if (!side) return
+    if (side.player) {
+      slots.push({ key: prefix, label: side.player.fullName, defaultAttitude: side.player.attitude ?? '', photoUrl: side.player.photoUrl })
+    } else if (side.team) {
+      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitude ?? '', photoUrl: side.team.player1.photoUrl })
+      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitude ?? '', photoUrl: side.team.player2.photoUrl })
+    }
+  }
+  addSide(match.sideA, 'A')
+  addSide(match.sideB, 'B')
+  return slots
+}
+
+const props = defineProps<{ match: Match; initialTab?: 'score' | 'format' | 'planning' | 'poster' }>()
+const emit = defineEmits<{ close: []; saved: []; 'poster-updated': [] }>()
 
 const eventStore = useEventStore()
+const { get, post } = useApi()
 
 // Mapping formatSets (index UI 1/2/3) ↔ best_of (nombre de sets back 1/3/5)
 const FORMAT_SETS_TO_BEST_OF: Record<number, number> = { 1: 1, 2: 3, 3: 5 }
 const BEST_OF_TO_FORMAT_SETS: Record<number, number> = { 1: 1, 3: 2, 5: 3 }
 
-const tab = ref<'score' | 'format' | 'planning'>('score')
+const tab = ref<'score' | 'format' | 'planning' | 'poster'>(props.initialTab ?? 'score')
 const saving = ref(false)
 const error = ref('')
 
@@ -153,6 +174,95 @@ const nameB = computed(() =>
   props.match.sideB?.player?.fullName ?? props.match.sideBLabel ?? 'Joueur B'
 )
 
+// Onglet Affiche — état + actions
+const posterState = ref<PosterState | null>(null)
+const posterActionError = ref('')   // erreur d'action (generate/select/clear), distincte de error (footer Score/Format/Planning)
+const posterActionBusy = ref(false) // désactive les boutons pendant generate/select/clear/retirer
+const showRemovePosterConfirm = ref(false)
+
+// Attitude par joueur (2 slots en Simple, 4 en Double), pré-remplie depuis
+// Player.attitude (exposé par _pack_entry / _pack_team)
+const posterSlots = buildPosterSlots(props.match)
+const posterAttitudes = reactive<Record<string, string>>(
+  Object.fromEntries(posterSlots.map(s => [s.key, s.defaultAttitude]))
+)
+
+async function fetchPosterState() {
+  posterState.value = await get<PosterState>(`/api/matches/${props.match.id}/poster/`)
+}
+
+// Polling ~2s conforme à specs/technical/affiche-match.md, tant que le
+// panneau est ouvert (le composant est monté/démonté par v-if dans
+// AdminMatches.vue, usePolling gère lui-même le cleanup à onUnmounted).
+usePolling(fetchPosterState, 2000)
+
+const sidesResolved = computed(() => !!props.match.sideA && !!props.match.sideB)
+
+const missingPhotoNames = computed(() => posterSlots.filter(s => !s.photoUrl).map(s => s.label))
+
+const generateDisabledReason = computed<string | null>(() => {
+  if (posterActionBusy.value) return null // pas de message, juste désactivé pendant l'appel
+  if (!sidesResolved.value) return 'Les deux camps du match doivent être déterminés avant de générer une affiche.'
+  if (missingPhotoNames.value.length > 0) return `Photo manquante : ${missingPhotoNames.value.join(', ')}.`
+  if (posterState.value?.job?.status === 'RUNNING' || posterState.value?.job?.status === 'PENDING') {
+    return 'Une génération est déjà en cours pour ce match.'
+  }
+  return null
+})
+
+async function generatePosters() {
+  posterActionError.value = ''
+  posterActionBusy.value = true
+  try {
+    posterState.value = await post<PosterState>(`/api/matches/${props.match.id}/poster/generate/`, {
+      attitudes: Object.fromEntries(posterSlots.map(s => [s.key, posterAttitudes[s.key]])),
+    })
+  } catch (e) {
+    posterActionError.value = extractApiError(e, 'Erreur lors du lancement de la génération.')
+  } finally {
+    posterActionBusy.value = false
+  }
+}
+
+async function selectCandidate(index: number) {
+  posterActionError.value = ''
+  posterActionBusy.value = true
+  try {
+    posterState.value = await post<PosterState>(`/api/matches/${props.match.id}/poster/select/`, {
+      candidate: index,
+    })
+    emit('poster-updated') // pour rafraîchir le calendrier (posterUrl du match a changé)
+  } catch (e) {
+    posterActionError.value = extractApiError(e, 'Erreur lors du choix de l\'affiche.')
+  } finally {
+    posterActionBusy.value = false
+  }
+}
+
+async function relaunchPosters() {
+  // "Relancer" = même appel que Générer (le serveur purge le job précédent
+  // et recrée un nouveau lot de 2 candidats).
+  await generatePosters()
+}
+
+function confirmRemovePoster() {
+  showRemovePosterConfirm.value = true
+}
+
+async function removePoster() {
+  posterActionError.value = ''
+  posterActionBusy.value = true
+  try {
+    posterState.value = await post<PosterState>(`/api/matches/${props.match.id}/poster/clear/`)
+    emit('poster-updated')
+  } catch (e) {
+    posterActionError.value = extractApiError(e, 'Erreur lors du retrait de l\'affiche.')
+  } finally {
+    posterActionBusy.value = false
+    showRemovePosterConfirm.value = false
+  }
+}
+
 const isLive = computed(() => props.match.status === 'LIVE')
 
 const statusLabel = computed(() => {
@@ -166,6 +276,7 @@ const tabItems = [
   { id: 'score' as const, label: 'Score' },
   { id: 'format' as const, label: 'Format' },
   { id: 'planning' as const, label: 'Planning' },
+  { id: 'poster' as const, label: 'Affiche' },
 ]
 
 const winnerOptions = computed(() => [
@@ -504,6 +615,73 @@ async function save() {
               </p>
             </div>
           </template>
+
+          <!-- Affiche -->
+          <template v-if="tab === 'poster'">
+            <div class="slide-section">
+              <h4>Affiche retenue</h4>
+              <div v-if="posterState?.posterUrl" class="poster-current">
+                <img :src="posterState.posterUrl" alt="Affiche du match" class="poster-preview" />
+                <button
+                  class="adm-btn"
+                  type="button"
+                  :disabled="posterActionBusy"
+                  @click="confirmRemovePoster"
+                >Retirer</button>
+              </div>
+              <p v-else class="slide-hint">Aucune affiche retenue pour ce match.</p>
+            </div>
+
+            <div class="slide-section">
+              <h4>Générer une affiche</h4>
+              <div class="fld-col">
+                <label v-for="slot in posterSlots" :key="slot.key" class="fld">
+                  <span class="fld-lbl">Attitude — {{ slot.label }}</span>
+                  <input v-model="posterAttitudes[slot.key]" class="inp" type="text" placeholder="ex. charmeuse, furieux…" />
+                </label>
+              </div>
+              <p v-if="generateDisabledReason" class="slide-hint">{{ generateDisabledReason }}</p>
+              <button
+                class="adm-btn primary"
+                type="button"
+                style="margin-top: 12px"
+                :disabled="!!generateDisabledReason || posterActionBusy"
+                @click="generatePosters"
+              >
+                {{ posterActionBusy ? 'Génération…' : 'Générer 2 propositions' }}
+              </button>
+            </div>
+
+            <div v-if="posterState?.job" class="slide-section">
+              <h4>Suivi de génération</h4>
+              <p v-if="posterState.job.status === 'PENDING' || posterState.job.status === 'RUNNING'" class="slide-hint">
+                Génération en cours… vous pouvez fermer ce panneau et revenir plus tard.
+              </p>
+              <p v-if="posterState.job.status === 'ERROR'" class="slide-err">{{ posterState.job.error }}</p>
+
+              <div v-if="posterState.job.status === 'DONE' && posterState.job.candidates.length > 0" class="poster-gallery">
+                <div v-for="(url, i) in posterState.job.candidates" :key="i" class="poster-candidate">
+                  <img :src="url" alt="Proposition d'affiche" class="poster-preview" />
+                  <button
+                    class="adm-btn primary"
+                    type="button"
+                    :disabled="posterActionBusy"
+                    @click="selectCandidate(i)"
+                  >Choisir</button>
+                </div>
+              </div>
+              <button
+                v-if="posterState.job.status === 'DONE' || posterState.job.status === 'ERROR'"
+                class="adm-btn"
+                type="button"
+                style="margin-top: 12px"
+                :disabled="posterActionBusy"
+                @click="relaunchPosters"
+              >Relancer</button>
+            </div>
+
+            <p v-if="posterActionError" class="slide-err">{{ posterActionError }}</p>
+          </template>
         </div>
 
         <!-- Footer -->
@@ -552,6 +730,15 @@ async function save() {
       :danger="false"
       @confirm="save"
       @close="showFeatureConfirm = false"
+    />
+    <ConfirmModal
+      v-if="showRemovePosterConfirm"
+      title="Retirer l'affiche ?"
+      body="L'affiche retenue sera définitivement supprimée. Vous pourrez en générer une nouvelle ensuite."
+      confirm-label="Retirer"
+      :danger="true"
+      @confirm="removePoster"
+      @close="showRemovePosterConfirm = false"
     />
   </Teleport>
 </template>
@@ -964,4 +1151,21 @@ async function save() {
 
 .adm-btn.primary:hover { opacity: 0.9; }
 .adm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Affiche ──────────────────────────────────────────────────────── */
+.poster-current { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.poster-preview {
+  width: 100%;
+  max-width: 320px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-2);
+  display: block;
+}
+.poster-gallery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 8px;
+}
+.poster-candidate { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
 </style>

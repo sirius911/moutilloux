@@ -20,9 +20,15 @@ const route = useRoute()
 const router = useRouter()
 
 const editingMatch = ref<Match | null>(null)
+const editingMatchInitialTab = ref<'score' | 'format' | 'planning' | 'poster'>('score')
 const showPlayDayModal = ref(false)
 const bannerError = ref('')
 const arranging = ref(false)
+
+function openMatchPanel(match: Match, initialTab: 'score' | 'format' | 'planning' | 'poster' = 'score') {
+  editingMatch.value = match
+  editingMatchInitialTab.value = initialTab
+}
 
 const activeEvent = computed(() =>
   eventStore.events.find((e) => e.id === eventStore.activeEventId),
@@ -439,6 +445,10 @@ function onMatchSaved() {
   eventStore.fetchCalendar()
 }
 
+function onPosterUpdated() {
+  eventStore.fetchCalendar()
+}
+
 function setActiveEvent(id: string) {
   const numId = parseInt(id, 10)
   if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
@@ -540,8 +550,10 @@ async function onDragEnd() {
     <EditMatchPanel
       v-if="editingMatch"
       :match="editingMatch"
+      :initial-tab="editingMatchInitialTab"
       @close="editingMatch = null"
       @saved="onMatchSaved"
+      @poster-updated="onPosterUpdated"
     />
     <ConfirmModal
       v-if="pendingStartMatchId !== null"
@@ -597,7 +609,7 @@ async function onDragEnd() {
                 <div
                   class="pile-card"
                   :class="{ 'is-foreign': isForeign(element.data as Match) }"
-                  @click="editingMatch = element.data as Match"
+                  @click="openMatchPanel(element.data as Match)"
                 >
                   <span class="poule-pill">{{ g.letter }}</span>
                   <span class="pile-card-players">
@@ -627,7 +639,7 @@ async function onDragEnd() {
             :key="m.id"
             class="pile-card pile-card--readonly"
             :class="{ 'is-foreign': isForeign(m) }"
-            @click="editingMatch = m"
+            @click="openMatchPanel(m)"
           >
             <span class="poule-pill">{{ g.letter }}</span>
             <span class="pile-card-players">
@@ -701,8 +713,8 @@ async function onDragEnd() {
                   ]"
                   role="button"
                   tabindex="0"
-                  @click="editingMatch = element.data as Match"
-                  @keydown.enter="editingMatch = element.data as Match"
+                  @click="openMatchPanel(element.data as Match)"
+                  @keydown.enter="openMatchPanel(element.data as Match)"
                 >
                   <span class="cal-time">
                     {{ computedETAs.get(`m-${element.data.id}`) ?? '—' }}
@@ -742,6 +754,15 @@ async function onDragEnd() {
                       class="featured-badge"
                       title="Match mis en avant sur la TV"
                     >★ EN AVANT</span>
+                    <button
+                      class="row-poster-btn"
+                      type="button"
+                      title="Voir / générer l'affiche de ce match"
+                      @click.stop="openMatchPanel(element.data as Match, 'poster')"
+                    >
+                      <span v-if="(element.data as Match).posterUrl">Affiche</span>
+                      <span v-else>+ Affiche</span>
+                    </button>
                   </span>
                   <span
                     v-if="(element.data as Match).status === 'SCHEDULED'"
@@ -1219,6 +1240,23 @@ async function onDragEnd() {
 
 .row-start-btn:hover { opacity: 0.9; }
 .row-start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.row-poster-btn {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+  background: var(--bg-4);
+  border: 1px solid var(--line-2);
+  padding: 3px 10px;
+  border-radius: var(--r-xs);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 150ms, background 150ms;
+}
+.row-poster-btn:hover { background: var(--bg-3); }
 
 .drag-handle {
   font-size: 14px;

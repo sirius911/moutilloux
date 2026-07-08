@@ -99,6 +99,8 @@ class Match(models.Model):
 
     bracket_slot = models.CharField(max_length=10, null=True, blank=True, db_index=True)
 
+    poster = models.ImageField(upload_to="match_posters/", null=True, blank=True)
+
     class Meta:
         ordering = ["event_id", "scheduled_time", "order_index", "id"]
         constraints = [
@@ -283,3 +285,40 @@ class Announcement(models.Model):
 
     def __str__(self):
         return f"{self.edition} — {self.message[:40]}"
+
+
+class PosterJob(models.Model):
+    """
+    Une génération d'affiche (IA) en cours ou finie pour un match.
+    Les 2 candidates produites sont des fichiers sur disque, sous
+    media/match_posters/candidates/ — retrouvées via `candidate_paths`
+    (chemins relatifs à MEDIA_ROOT), pas de modèle séparé pour elles.
+
+    Un seul job actif par match : pas de contrainte DB stricte ici, la
+    logique de remplacement (relancer purge le job précédent + ses
+    candidates) vit dans live/posters.py (hors scope de ce ticket).
+    """
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "En attente"
+        RUNNING = "RUNNING", "En cours"
+        DONE = "DONE", "Terminé"
+        ERROR = "ERROR", "Erreur"
+
+    match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="poster_jobs")
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING, db_index=True)
+    error = models.TextField(blank=True, default="")
+
+    # attitudes utilisées pour la génération, ex: {"A": "charmeuse", "B": "furieux"}
+    attitudes = models.JSONField(default=dict, blank=True)
+
+    # chemins relatifs (sous MEDIA_ROOT) des candidates générées, ex:
+    # ["match_posters/candidates/<job_id>_1.png", "match_posters/candidates/<job_id>_2.png"]
+    candidate_paths = models.JSONField(default=list, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"PosterJob#{self.pk} match={self.match_id} status={self.status}"

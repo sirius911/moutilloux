@@ -6,6 +6,7 @@ extraites de admin_views (aucune logique métier dupliquée ici).
 import json
 from datetime import datetime, time
 
+from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.db import transaction, IntegrityError
 from django.db.models import Count
@@ -18,13 +19,16 @@ from django.utils.dateparse import parse_datetime, parse_date, parse_time
 
 from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
-from live.models import Match, Court, PlayDay, Break, Announcement
+from live.models import Match, Court, PlayDay, Break, Announcement, PosterJob
 from live.views import build_event_group_tables, get_hero_match
+from live import posters
 from live.admin_views import (
     superuser_required,
     PlayerForm,
     MatchEditForm,
     create_team_with_entry,
+    set_player_photo,
+    clear_player_photo,
     add_player_entry,
     add_players_entries,
     remove_entry,
@@ -158,9 +162,12 @@ def _pack_entry(entry):
             "fullName": str(p),
             "gender": p.gender,
             "licenseNumber": p.license_number,
+            "attitude": p.attitude,
+            "photoUrl": p.photo.url if p.photo else None,
         }
     else:
         result["player"] = None
+    result["team"] = _pack_team(entry.team) if entry.team else None
     return result
 
 
@@ -177,6 +184,8 @@ def _pack_player(p):
         "phone": p.phone,
         "email": p.email,
         "licenseNumber": p.license_number,
+        "photoUrl": p.photo.url if p.photo else None,
+        "attitude": p.attitude,
     }
 
 
@@ -277,6 +286,29 @@ def _pack_match(m):
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
         "updatedAt": m.updated_at.isoformat(),
         "clock": clock,
+        "posterUrl": m.poster.url if m.poster else None,
+    }
+
+
+# ── Packers Affiches de match (poster) ──────────────────────────────────────
+
+def _pack_poster_job(job):
+    if job is None:
+        return None
+    return {
+        "status": job.status,
+        "error": job.error,
+        "candidates": [
+            default_storage.url(path) for path in (job.candidate_paths or [])
+        ],
+    }
+
+
+def _poster_state(match):
+    job = PosterJob.objects.filter(match=match).order_by("-created_at").first()
+    return {
+        "posterUrl": match.poster.url if match.poster else None,
+        "job": _pack_poster_job(job),
     }
 
 
@@ -679,6 +711,7 @@ def api_player_create(request):
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
     license_number = data.get("license_number", "").strip()
+    attitude = data.get("attitude", "").strip()
 
     if not first_name or not last_name:
         return JsonResponse({"error": "Prénom et nom requis."}, status=400)
@@ -701,6 +734,7 @@ def api_player_create(request):
         email=email,
         phone=phone,
         license_number=license_number,
+        attitude=attitude,
     )
 
     return JsonResponse({"ok": True, "playerId": player.id})
@@ -752,6 +786,113 @@ def api_player_edit(request, player_id):
 
     form.save()
     return JsonResponse({"player": _pack_player(player)})
+
+
+@require_POST
+@superuser_required
+def api_player_photo(request, player_id):
+    """
+    POST /api/players/<id>/photo/
+    Upload (ou suppression) de la photo d'un joueur, en multipart. Requiert superuser.
+
+    - Avec un fichier `photo` dans request.FILES : remplace la photo (l'ancienne est
+      purgée du disque). Validation : jpg/jpeg/png/webp, <= 10 Mo.
+    - Sans fichier `photo` (champ absent ou vide) : supprime la photo existante
+      (purge du fichier). Permet à la modale Fiche joueur d'utiliser un seul endpoint
+      pour uploader ou retirer la photo (case "retirer la photo" -> POST sans fichier).
+
+    Réponse : {"player": _pack_player(player)} avec photoUrl mis à jour (ou null).
+    Erreurs : 400 {"error": "..."} si format/taille invalide.
+    """
+    player = get_object_or_404(Player, pk=player_id)
+
+    uploaded_file = request.FILES.get("photo")
+
+    if uploaded_file:
+        try:
+            set_player_photo(player, uploaded_file)
+        except ValueError as exc:
+            return JsonResponse({"error": str(exc)}, status=400)
+    else:
+        clear_player_photo(player)
+
+    return JsonResponse({"player": _pack_player(player)})
+
+
+# ── Affiches de match (poster IA) — sprint 24 ───────────────────────────────
+
+@require_POST
+@superuser_required
+def api_match_poster_generate(request, match_id):
+    """
+    POST /api/matches/<id>/poster/generate/
+    Body JSON : {"attitudes": {...}} (valeurs dans l'ordre des joueurs résolus).
+    Démarre une génération d'affiche (thread daemon, cf. live/posters.py).
+    Erreurs 400 : photo manquante, sides non résolus, OPENAI_API_KEY absente,
+    génération déjà en cours pour ce match.
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Corps JSON invalide."}, status=400)
+
+    try:
+        posters.start_poster_job(match, data.get("attitudes") or {})
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse(_poster_state(match))
+
+
+@require_GET
+@superuser_required
+def api_match_poster_status(request, match_id):
+    """
+    GET /api/matches/<id>/poster/
+    État courant de l'affiche/du job en cours pour ce match (à poller ~2 s
+    pendant une génération).
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    return JsonResponse(_poster_state(match))
+
+
+@require_POST
+@superuser_required
+def api_match_poster_select(request, match_id):
+    """
+    POST /api/matches/<id>/poster/select/
+    Body JSON : {"candidate": 0|1}. Retient la candidate choisie comme affiche
+    du match, purge le job et les autres candidates.
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    job = PosterJob.objects.filter(match=match).order_by("-created_at").first()
+    if job is None:
+        return JsonResponse({"error": "Aucune génération en cours pour ce match."}, status=400)
+
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Corps JSON invalide."}, status=400)
+
+    try:
+        posters.select_poster_candidate(job, data.get("candidate"))
+    except (ValueError, TypeError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse(_poster_state(match))
+
+
+@require_POST
+@superuser_required
+def api_match_poster_clear(request, match_id):
+    """
+    POST /api/matches/<id>/poster/clear/
+    Retire l'affiche retenue du match (supprime le fichier, vide le champ).
+    """
+    match = get_object_or_404(Match, pk=match_id)
+    posters.clear_poster(match)
+    return JsonResponse(_poster_state(match))
 
 
 @require_POST

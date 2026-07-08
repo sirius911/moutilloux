@@ -10,12 +10,34 @@ export interface Player {
   licenseNumber: string
   email: string
   phone: string
+  photoUrl: string | null
+  attitude: string
+}
+
+export interface EntryPlayer {
+  id: number
+  firstName: string
+  lastName: string
+  fullName: string
+  gender: 'M' | 'F' | 'O'
+  licenseNumber: string
+  attitude: string             // adjectif d'attitude par défaut (affiches)
+  photoUrl: string | null
+}
+
+export interface Team {
+  id: number
+  name: string | null
+  displayName: string
+  player1: Player
+  player2: Player
 }
 
 export interface Entry {
   id: number
   displayName: string         // nom affiché (joueur ou équipe)
-  player: Player | null       // null pour les doubles
+  player: EntryPlayer | null  // null pour les doubles
+  team: Team | null           // null pour les simples
   teamName?: string           // doubles
   seedHint: number | null
   groupId: number | null
@@ -167,6 +189,9 @@ export interface Match {
 
   // Clock (durée en cours)
   clock?: string            // "42mn"
+
+  // Affiche (sprint 24)
+  posterUrl: string | null
 }
 
 // ─── Bracket ────────────────────────────────────────────────────────────────
@@ -295,4 +320,19 @@ export interface Announcement {
   editionId: number
   message: string
   isActive: boolean
+}
+
+// ─── Affiche de match — génération IA (sprint 24) ───────────────────────────
+
+export type PosterJobStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'ERROR'
+
+export interface PosterJobState {
+  status: PosterJobStatus
+  error: string
+  candidates: string[]   // 0, 1 ou 2 URLs (`/media/match_posters/candidates/…`)
+}
+
+export interface PosterState {
+  posterUrl: string | null
+  job: PosterJobState | null
 }

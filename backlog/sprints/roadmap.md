@@ -10,4 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 24 — Affiches de match | `backlog/sprints/24-affiches-match/sprint.md` |
+| 1 | 25 — Arbitre : fins spéciales & résilience | `backlog/sprints/25-arbitre-fins-speciales/sprint.md` |

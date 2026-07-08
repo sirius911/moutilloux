@@ -46,3 +46,6 @@ roadmap/
 
 # Claude
 .claude/settings.local.json
+
+# Affiches générées
+media/generated_match_posters/
