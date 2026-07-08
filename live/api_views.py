@@ -38,6 +38,7 @@ from live.admin_views import (
     generate_group_matches_for_event,
     assign_entry_to_group,
     unassign_entry,
+    delete_group,
     finalize_match_edit,
     feature_match,
     start_match,
@@ -1132,6 +1133,25 @@ def api_group_unassign(request, event_id):
 
     try:
         unassign_entry(event, entry)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_group_delete(request, group_id):
+    """
+    POST /api/groups/<id>/delete/
+    Supprime une poule (source : admin_views.delete_group). Verrouillé si
+    l'épreuve est EN_COURS.
+    """
+    group = get_object_or_404(Group, pk=group_id)
+
+    try:
+        delete_group(group)
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
