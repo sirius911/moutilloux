@@ -335,6 +335,10 @@ const nextMatchId = computed<number | null>(() => {
 // ── Détection repos insuffisant ────────────────────────────────────────────
 // Deux matchs adjacents dans la séquence partageant un joueur → ⚠ (spec planning §repos).
 // Les pauses sont ignorées pour ce calcul.
+// Best-effort sur matchs de tableau non résolus (sideA/sideB null) : un slot
+// non résolu n'ajoute aucun id à currIds, donc ne peut jamais déclencher de
+// faux ⚠ ni faire planter le calcul (chaînage optionnel). Le ⚠ apparaît
+// naturellement au recalcul du computed une fois le slot résolu par le polling.
 const restWarnings = computed<Set<number>>(() => {
   const warnings = new Set<number>()
 
