@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { apiErrorMessage } from '@/composables/useApi'
 import CreateTeamModal from '@/components/modals/CreateTeamModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 
@@ -48,7 +49,7 @@ async function inscrire(playerId: number) {
   try {
     await eventStore.addRegistration(eventStore.activeEventId, playerId)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     busy.value = false
   }
@@ -63,7 +64,7 @@ async function inscrireTout() {
   try {
     await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     busy.value = false
   }
@@ -86,12 +87,12 @@ async function executeRetrait() {
   error.value = ''
   try {
     if (isEnCours.value) {
-      await eventStore.withdrawEntry(confirmState.value.entryId)
+      await eventStore.withdrawEntry(confirmState.value.entryId, true)
     } else {
       await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
     }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     busy.value = false
   }
@@ -252,7 +253,13 @@ function initials(name: string): string {
                   </button>
                 </td>
               </tr>
-              <tr v-if="availablePlayers.length === 0">
+              <tr v-if="availablePlayers.length === 0 && eventStore.allPlayers.length === 0">
+                <td colspan="2" class="empty-row">
+                  Aucune fiche joueur dans le registre.
+                  <RouterLink to="/admin/players">Créer une fiche joueur →</RouterLink>
+                </td>
+              </tr>
+              <tr v-else-if="availablePlayers.length === 0">
                 <td colspan="2" class="empty-row">Tous les joueurs du registre sont inscrits</td>
               </tr>
             </tbody>

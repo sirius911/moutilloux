@@ -1900,10 +1900,15 @@ def api_tv_upcoming(request):
 @transaction.atomic
 def api_entry_withdraw(request, entry_id):
     """POST /api/entries/<id>/withdraw/ — forfait / retrait d'un inscrit (EN_COURS requis).
+    Body JSON optionnel : {remove_from_group: bool}. Si True, l'entry est en
+    plus retirée de l'affichage poule (« retrait sans remplaçant » de la spec).
     Réponse : {entry, matchesWalkover}."""
+    data, err = _json_body(request)
+    if err:
+        return err
     entry = get_object_or_404(Entry.objects.select_related("event", "player", "team"), pk=entry_id)
     try:
-        result = withdraw_entry(entry)
+        result = withdraw_entry(entry, remove_from_group=bool(data.get("remove_from_group", False)))
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=409)
     return JsonResponse({"entry": _pack_entry(entry), "matchesWalkover": result["matches_walkover"]})

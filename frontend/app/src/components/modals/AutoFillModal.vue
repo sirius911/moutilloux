@@ -3,12 +3,17 @@ import { ref, computed } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useEventStore } from '@/stores/event'
+import { apiErrorMessage } from '@/composables/useApi'
 
 const emit = defineEmits<{ close: []; saved: [] }>()
 
 const eventStore = useEventStore()
 
-const groupSize = ref<3 | 4>(4)
+const activeEvent = computed(() =>
+  eventStore.events.find((e) => e.id === eventStore.activeEventId) ?? null
+)
+
+const groupSize = ref<3 | 4>(activeEvent.value?.groupSizeDefault === 3 ? 3 : 4)
 const method = ref<'order' | 'random'>('order')
 const saving = ref(false)
 const error = ref('')
@@ -51,7 +56,7 @@ async function fill() {
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = apiErrorMessage(e, 'Erreur inconnue.')
   } finally {
     saving.value = false
   }

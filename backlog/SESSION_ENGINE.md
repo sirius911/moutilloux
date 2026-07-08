@@ -373,48 +373,46 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #65
-**Sprint actif :** 19 — Poules & inscriptions : ajustements (devient actif
-cette session, pas encore démarré).
+**Dernière session :** 2026-07-03 — Session #73
+**Sprint actif :** 20 — Transverse : erreurs API & routing (pas encore démarré,
+prochaine échéance).
 
-**Sprint 18 — Tableau final conforme : CLÔTURÉ cette session (8ᵉ et dernière
-session du sprint).** Spec review de la session #65, relecture complète ligne
-par ligne de `specs/screens/admin-tableau-final.md` contre `AdminBracket.vue`,
-`ConfirmModal.vue`, `stores/event.ts`, `live/api_views.py`,
-`live/admin_views.py`, `live/bracket.py` → **✅ Conforme**, 0 dérive. Milestone
-GitHub #17 à 0 issue ouverte. Les deux conditions de clôture réunies :
-milestone fermé, ligne retirée de `backlog/sprints/roadmap.md`, dossier
-déplacé vers `backlog/sprints/done/18-tableau-final-conformite/`.
-**Tickets traités session #65 :** 0 (rien à traiter, milestone déjà à 0 en
-entrant en session).
+**Parent effectif inchangé :** `claude/sprint/18-tableau-final-conformite` (sprint 18
+toujours non mergé dans `main` — point récurrent, à traiter côté humain,
+hors périmètre de la Routine). Working tree propre au démarrage, merge avec
+le parent effectif : déjà à jour, rien à fusionner.
 
-**Anomalie d'orchestration (session #65) :** en entrant en session, un
-fichier `backlog/logs/session_2026-07-03_64.md` était présent mais non
-committé — la session #64 (qui avait traité #236, commit `e68cc07`) s'était
-arrêtée avant de finaliser son étape 4 (commit du log, mise à jour section 6,
-push). Contenu du log #64 vérifié cohérent avec le commit `e68cc07` et
-conservé tel quel ; committé au tout début de la session #65 (étape 0,
-« working tree sale »), avant la review fraîche qui a mené à la clôture du
-sprint. Aucune perte de travail. Fait suite à l'anomalie de la session #63
-(issues apparues hors flux) — à surveiller sur les prochaines sessions,
-notamment si une session s'interrompt de nouveau avant son push final.
+**Spec review session #73 (relance complète, milestone Sprint 19 à 1 issue
+ouverte au démarrage — #245) :** `admin-poules.md` → ⚠️→✅ (seule dérive
+restante : #245, duplication locale de `apiErrorMessage` dans
+`AdminGroups.vue` — corrigée en session) ; `admin-inscriptions.md` → ✅
+Conforme ; `cycle-de-vie-epreuve.md` → ✅ Conforme. Vérification indépendante
+par `grep` exhaustif sur `frontend/app/src` après correctif : plus aucune
+redéfinition locale de `apiErrorMessage`, les 4 fichiers du périmètre
+(`AutoFillModal.vue`, `AdminGroups.vue`, `CreateTeamModal.vue`,
+`AdminInscriptions.vue`) importent tous depuis `useApi.ts`. 0 nouvelle issue
+créée.
 
-**Sessions #63-#64 (pour mémoire, résumé) :** #63 a ticketé et corrigé #234 ;
-a aussi vu apparaître hors flux normal #235/#236 (anomalie documentée dans
-`backlog/logs/session_2026-07-03_63.md`), #235 corrigée la même session. #64 a
-corrigé #236 (`ConfirmModal.vue` : prop `isError` → `role="alert"` ciblé) et
-revérifié #234/#235 sans régression (commit `e68cc07`), mais n'a pas finalisé
-sa clôture de session (voir anomalie ci-dessus, résolue en #65).
+**Tickets traités session #73 :** 1 — #245 (AdminGroups : import de
+`apiErrorMessage` depuis `@/composables/useApi`, suppression de la
+définition locale dupliquée aux lignes 182-189, signature identique, aucun
+changement de comportement, `vue-tsc --noEmit` OK, ✅ Approuvé). Commit
+`1956eb4`. Aucun fichier partagé modifié.
 
-**Sprint 17 :** clôturé en session #57 côté planification/milestone — sa PR
-#223 reste non mergée dans `main`, donc reste le parent effectif de la
-branche du sprint 18 (`claude/sprint/18-tableau-final-conformite`, ahead de
-`claude/sprint/17-panneau-edition-match`). Point à surveiller pour le sprint
-19 : sa branche devra être créée depuis `main` (le sprint 17, terminé, n'est
-plus dans `backlog/sprints/done/` avec un numéro < 19 qui changerait ce
-calcul — à revérifier avec l'algorithme de résolution du parent à l'étape 0
-de la prochaine session).
+**Sprint 19 clôturé cette session :** les deux conditions de l'étape 3 sont
+remplies — spec review ✅ Conforme sur les 3 specs du sprint et 0 issue
+ouverte sous le milestone (hors `en-attente`). Milestone GitHub
+« Sprint 19 — Poules & inscriptions : ajustements » (n°18) fermé (15 issues
+closes). Ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé
+vers `backlog/sprints/done/19-poules-inscriptions-ajustements/`.
 
-**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête. Le sprint 19 n'a pas
-été démarré dans cette session (protocole : un sprint ne démarre qu'à la
-prochaine échéance planifiée).
+**Sprint suivant :** 20 — « Transverse : erreurs API & routing » devient le
+sprint actif en tête de roadmap, mais **ne démarre pas cette session** — sera
+traité à la prochaine échéance planifiée de la Routine.
+
+**Sprint 17/18 — PRs non mergées :** toujours d'actualité, ni la PR #223
+(sprint 17) ni celle du sprint 18 ne semblent mergées dans `main`. Point à
+traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
+automatique.
+
+**Roadmap :** 2 sprints planifiés (20 → 21), 20 en tête, pas encore démarré.

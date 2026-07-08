@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { apiErrorMessage } from '@/composables/useApi'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
@@ -44,7 +45,7 @@ async function unassign(entryId: number) {
 }
 
 function entryDisplayName(entry: Entry): string {
-  return entry.player?.fullName ?? `Équipe ${entry.id}`
+  return entry.displayName
 }
 
 function setActiveEvent(id: string) {
@@ -56,10 +57,12 @@ const dropError = ref('')
 const createGroupBusy = ref(false)
 
 const nextGroupLetter = computed(() => {
-  if (eventStore.groups.length === 0) return 'A'
-  const letters = eventStore.groups.map((g) => g.name.toUpperCase()).sort()
-  const last = letters[letters.length - 1]
-  return String.fromCharCode(last.charCodeAt(0) + 1)
+  const used = new Set(eventStore.groups.map((g) => g.name.toUpperCase()))
+  for (let code = 'A'.charCodeAt(0); code <= 'Z'.charCodeAt(0); code++) {
+    const letter = String.fromCharCode(code)
+    if (!used.has(letter)) return letter
+  }
+  return 'A'
 })
 
 async function createGroup() {
@@ -95,6 +98,7 @@ watch(() => eventStore.groupsLocked, (locked) => {
 
 const adjustBusy = ref(false)
 const adjustError = ref('')
+const overCapacityNotice = ref('')
 
 const confirmState = ref<{ show: boolean; entryId: number; name: string; action: 'forfait' | 'retrait' }>({
   show: false, entryId: 0, name: '', action: 'forfait',
@@ -121,7 +125,7 @@ async function executeWithdraw() {
   adjustBusy.value = true
   adjustError.value = ''
   try {
-    await eventStore.withdrawEntry(confirmState.value.entryId)
+    await eventStore.withdrawEntry(confirmState.value.entryId, confirmState.value.action === 'retrait')
   } catch (e) {
     adjustError.value = apiErrorMessage(e, 'Erreur lors du forfait.')
   } finally {
@@ -159,26 +163,21 @@ async function executeAddLate() {
   if (!selectedAddPlayerId.value || !eventStore.activeEventId) return
   adjustBusy.value = true
   adjustError.value = ''
+  const groupName = addLateState.value.groupName
   try {
-    await eventStore.addLateEntry(eventStore.activeEventId, {
+    const result = await eventStore.addLateEntry(eventStore.activeEventId, {
       group_id: addLateState.value.groupId,
       player: selectedAddPlayerId.value,
     })
     addLateState.value.show = false
+    overCapacityNotice.value = result?.overCapacity
+      ? `Poule ${groupName} au-delà de l'effectif prévu — vérifiez la composition.`
+      : ''
   } catch (e) {
     adjustError.value = apiErrorMessage(e, "Erreur lors de l'ajout.")
   } finally {
     adjustBusy.value = false
   }
-}
-
-function apiErrorMessage(e: unknown, fallback: string): string {
-  if (!(e instanceof Error)) return fallback
-  const match = e.message.match(/— (.+)$/)
-  if (match) {
-    try { const p = JSON.parse(match[1]); if (p.error) return p.error } catch {}
-  }
-  return e.message
 }
 
 // Drag state
@@ -187,6 +186,15 @@ let draggingEntryId: number | null = null
 function onDragStart(entryId: number) {
   if (eventStore.groupsLocked) return
   draggingEntryId = entryId
+}
+
+// Resynchronise l'affichage avec l'état serveur après un échec de drag & drop,
+// pour éviter un état visuel mensonger (ex. poules verrouillées entre-temps).
+async function resyncAfterError() {
+  const id = eventStore.activeEventId
+  if (!id) return
+  await eventStore.fetchGroups(id)
+  await eventStore.fetchPlayers(id)
 }
 
 async function onDropToGroup(groupId: number) {
@@ -198,6 +206,7 @@ async function onDropToGroup(groupId: number) {
     dropError.value = ''
   } catch (e) {
     dropError.value = apiErrorMessage(e, 'Erreur lors de l\'assignation.')
+    await resyncAfterError()
   }
 }
 
@@ -205,11 +214,16 @@ async function onDropToUnassigned() {
   if (draggingEntryId === null || eventStore.groupsLocked) return
   const id = draggingEntryId
   draggingEntryId = null
+  await removeFromGroup(id)
+}
+
+async function removeFromGroup(entryId: number) {
   try {
-    await unassign(id)
+    await unassign(entryId)
     dropError.value = ''
   } catch (e) {
     dropError.value = apiErrorMessage(e, 'Erreur lors du retrait.')
+    await resyncAfterError()
   }
 }
 </script>
@@ -237,7 +251,7 @@ async function onDropToUnassigned() {
           :disabled="eventStore.groupsLocked || createGroupBusy"
           @click="createGroup"
         >+ Nouvelle poule</button>
-        <button class="adm-btn" type="button" :disabled="eventStore.groupsLocked" @click="showAutoFill = true">Remplir automatiquement</button>
+        <button class="adm-btn" type="button" :disabled="eventStore.groupsLocked || eventStore.players.length === 0" @click="showAutoFill = true">Remplir automatiquement</button>
       </div>
     </header>
 
@@ -258,6 +272,10 @@ async function onDropToUnassigned() {
       </div>
       <p v-if="dropError" class="adm-error">{{ dropError }}</p>
       <p v-if="adjustError" class="adm-error">{{ adjustError }}</p>
+      <p v-if="overCapacityNotice" class="adm-warning">
+        {{ overCapacityNotice }}
+        <button type="button" class="adm-warning-dismiss" @click="overCapacityNotice = ''">✕</button>
+      </p>
       <div class="groups-layout">
         <!-- Non assignés -->
         <div
@@ -270,7 +288,14 @@ async function onDropToUnassigned() {
             <span class="gc-count">{{ unassigned.length }}</span>
           </div>
 
-          <div v-if="unassigned.length === 0" class="gc-empty">
+          <div v-if="unassigned.length === 0 && eventStore.players.length === 0" class="gc-empty">
+            <p>
+              Aucun joueur inscrit.
+              <RouterLink :to="`/admin/events/${eventStore.activeEventId}/inscriptions`">Inscrire des joueurs →</RouterLink>
+            </p>
+          </div>
+
+          <div v-else-if="unassigned.length === 0" class="gc-empty">
             <span>✓</span>
             <p>Tous les joueurs sont placés</p>
           </div>
@@ -321,7 +346,7 @@ async function onDropToUnassigned() {
                 <span v-if="row.qualified" class="q-badge">Q</span>
                 <span v-if="row.withdrawn" class="w-badge">WO</span>
                 <!-- Actions déverrouillées : retrait libre -->
-                <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="unassign(row.entryId)" @mousedown.stop>✕</button>
+                <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="removeFromGroup(row.entryId)" @mousedown.stop>✕</button>
                 <!-- Ajustements en cours de jeu (épreuve EN_COURS) -->
                 <template v-if="eventStore.groupsLocked && !row.withdrawn">
                   <button class="pill-action" type="button" :disabled="adjustBusy" @click.stop="openForfait(row.entryId, row.name)">Forfait</button>
@@ -335,9 +360,9 @@ async function onDropToUnassigned() {
               Glissez un joueur ici
             </div>
 
-            <!-- Ajouter tardif : visible si poule sous l'effectif et épreuve EN_COURS -->
+            <!-- Ajouter tardif : visible dès que l'épreuve est EN_COURS (dépassement d'effectif autorisé, avec avertissement) -->
             <div
-              v-if="eventStore.groupsLocked && activeEvent && group.standings.filter(s => !s.withdrawn).length < activeEvent.groupSizeDefault"
+              v-if="eventStore.groupsLocked && activeEvent"
               class="gc-add-late"
             >
               <button class="gc-add-late-btn" type="button" :disabled="adjustBusy" @click="openAddLate(group.id, group.name)">
@@ -773,4 +798,31 @@ async function onDropToUnassigned() {
   color: var(--danger);
   font-size: 13px;
 }
+
+.adm-warning {
+  margin: 0 0 8px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--gold) 12%, transparent);
+  border: 1px solid var(--gold);
+  color: var(--ink-1);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.adm-warning-dismiss {
+  background: none;
+  border: none;
+  color: var(--ink-3);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.adm-warning-dismiss:hover { color: var(--ink-0); }
 </style>

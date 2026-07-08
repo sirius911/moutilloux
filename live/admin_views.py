@@ -808,8 +808,14 @@ def add_players_entries(event, player_ids):
 def remove_entry(event, entry):
     """
     Service : retire une Entry de l'event.
-    Refuse (ValueError) si l'Entry est déjà engagée dans un match.
+    Refuse (ValueError) si l'épreuve est débutée (retrait sec réservé à
+    la phase INSCRIPTION) ou si l'Entry est déjà engagée dans un match.
     """
+    if event.status != Event.Status.INSCRIPTION:
+        raise ValueError(
+            f"Impossible de retirer {entry} : l'épreuve est débutée "
+            "(utiliser le forfait/retrait en cours de jeu)."
+        )
     used_in_matches = Match.objects.filter(event=event, side_a=entry).exists() or \
         Match.objects.filter(event=event, side_b=entry).exists()
     if used_in_matches:
@@ -820,12 +826,15 @@ def remove_entry(event, entry):
 
 
 @transaction.atomic
-def withdraw_entry(entry):
+def withdraw_entry(entry, remove_from_group=False):
     """
     Service : déclare le forfait d'une Entry (EN_COURS requis).
     - Pose entry.withdrawn = True.
     - Tous les matchs non terminés (SCHEDULED/LIVE) → FINISHED, is_walkover=True,
       winner_side = adversaire, score de convention (games_to_win / 0).
+    - Si remove_from_group : supprime en plus le GroupMembership de l'entry
+      (retrait de l'affichage poule, standings recalculés sans elle) — c'est
+      le « retrait sans remplaçant » de la spec, distinct du simple forfait.
     - Recalcule les standings de chaque poule affectée.
     - Propage les vainqueurs du tableau (QF/SF/F) et les perdants des demies (P3).
     Lève ValueError si l'event n'est pas EN_COURS.
@@ -880,6 +889,13 @@ def withdraw_entry(entry):
         if m.stage == Match.Stage.F:
             has_finale = True
         count += 1
+
+    if remove_from_group:
+        membership_group_ids = list(
+            GroupMembership.objects.filter(entry=entry).values_list("group_id", flat=True)
+        )
+        affected_groups.update(membership_group_ids)
+        GroupMembership.objects.filter(entry=entry).delete()
 
     for gid in affected_groups:
         recalc_one_group(gid)
