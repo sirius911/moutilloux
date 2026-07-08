@@ -373,46 +373,54 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #122
-**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (4ᵉ et dernière session du sprint — **clos**)
+**Dernière session :** 2026-07-08 — Session #123
+**Sprint traité :** 31 — TV : rotation stable & pastille de progression (1ʳᵉ et dernière session du sprint — **clos**)
 
-**Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`,
-parent effectif `claude/sprint/29-joueurs-attitudes-predefinies`. Aucun
-commit de code cette session (revue à froid uniquement).
+**Git :** branche `claude/sprint/31-tv-rotation-stable-pastille`, parent
+effectif `claude/sprint/30-planning-journees-eta-ponctualite` (sprint 30
+toujours non mergé dans `main` au moment du checkout, déduit depuis
+`backlog/sprints/done/` — pas depuis `branche-parent:` du frontmatter qui
+indiquait `main`). 2 commits de code cette session.
 
-**Continuité avec la session #121 :** au lancement de cette session, le
-travail de la session #121 (spec review, #305/#306 implémentés/revus/
-fermés sur GitHub, log de session, `SESSION_ENGINE.md` §6) était déjà
-effectué mais son commit final n'était pas encore visible dans les tout
-premiers instants de cette lecture — chevauchement transitoire entre la fin
-d'exécution de #121 et le déclenchement de #122, résolu seul en quelques
-secondes (rien à corriger). La session #121 avait explicitement annoncé
-dans son propre log que « la prochaine session devra mener une spec review
-propre » pour fermer le sprint (son verdict à elle datait d'avant #305/#306
-— schéma habituel des clôtures de fin de sprint) : cette session #122 est
-exactement cette suite.
+**Spec review session #123 :** `tv-live.md` (§ Cadre du carousel) — verdict
+initial **⚠️ Dérive mineure** (avant implémentation des tickets du sprint,
+2 dérives : rotation par index positionnel sur `SLIDES` recalculé à chaque
+poll `tv/idle`, pastille de pagination sans remplissage progressif — les
+deux déjà couvertes par #308/#309 posés à la planification du sprint,
+0 nouvelle issue créée), puis relecture **✅ Conforme** après implémentation
+des deux tickets, en fin de session, avant la vérification de clôture.
 
-**Spec review session #122 :** `planning.md`/`admin-matchs.md` **✅
-Conforme** — revue à froid des 6 tickets du sprint ensemble (#302-307, tous
-déjà clos), aucune régression croisée constatée (notamment entre le moteur
-ETA `#304` et la teinte de ponctualité `#305`, qui consomme `plannedEtaMin`
-exposé par `etaEngine`). 0 nouvelle dérive.
+**Backlog engine session #123 :** 2 tickets traités séquentiellement
+(agents `vue-screen` puis `reviewer` par ticket) :
+- **#308** (majeure) — rotation stable : `SLIDES` reste un computed
+  recalculé à chaque poll, mais la slide affichée dérive maintenant d'un
+  état figé par nature (`displayedKind`, ref), mis à jour uniquement au tick
+  de rotation (`advance()`, toutes les 8 s) ou au clic (`goTo`) — jamais par
+  le recalcul de `SLIDES` seul. Verdict reviewer : ✅ Approuvé.
+- **#309** (mineure) — pastille de progression : animation CSS de
+  remplissage (8 s linear) relancée via changement de `:key` sur l'élément
+  de remplissage. Verdict reviewer : ⚠️ Approuvé avec réserves — cas limite
+  repéré (composition à une seule slide affichable : `displayedKind` ne
+  change jamais de valeur d'un cycle à l'autre, donc la clé ne changeait pas
+  et la pastille restait figée à 100 % après son premier remplissage).
+  **Corrigé par l'orchestrateur avant clôture** : ajout d'un compteur
+  technique `pagerTick`, incrémenté à chaque `advance()`/`goTo()`
+  indépendamment de la valeur de `displayedKind`, utilisé comme clé à la
+  place — le remplissage repart bien de zéro à chaque cycle même à slide
+  unique.
 
-**Backlog engine session #122 :** 0 ticket traité — le milestone n'avait
-plus d'issue ouverte en entrant dans la session.
+**Sprint 31 — clos cette session :** les deux conditions de clôture réunies
+(spec review ✅ après implémentation + 0 issue `sprint-31` ouverte).
+Milestone GitHub (#30) fermé, dossier déplacé dans
+`backlog/sprints/done/31-tv-rotation-stable-pastille/`, ligne retirée de
+`roadmap.md`.
 
-**Sprint 30 — clos cette session :** les deux conditions de clôture
-réunies (spec review ✅ + 0 issue `sprint-30` ouverte). Milestone GitHub
-(#29) fermé, dossier déplacé dans
-`backlog/sprints/done/30-planning-journees-eta-ponctualite/`, ligne
-retirée de `roadmap.md`.
+**Roadmap :** 1 sprint restant (32) — le **sprint 32 — Arbitre : programme
+du jour & premier serveur** devient actif. Conformément au protocole, il
+n'a **pas** démarré dans cette session ; il sera traité à la **prochaine
+échéance planifiée**.
 
-**Roadmap :** 2 sprints restants (31, 32) — le **sprint 31 — TV : rotation
-stable & pastille de progression** devient actif. Conformément au
-protocole, il n'a **pas** démarré dans cette session ; il sera traité à la
-**prochaine échéance planifiée**.
-
-**Point d'attention outillage :** confirmation supplémentaire (5ᵉ session
+**Point d'attention outillage :** confirmation supplémentaire (6ᵉ session
 de suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit`
 seul ne type-check aucun fichier `.vue` dans cet environnement. Toujours
 pas de script `type-check` dans `package.json`, toujours pas de
