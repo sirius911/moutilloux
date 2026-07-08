@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { useAuthStore } from '@/stores/auth'
@@ -27,6 +27,18 @@ onMounted(async () => {
   }
 })
 
+// L'URL est la source de vérité pour l'épreuve active.
+watch(
+  () => route.params.eventId,
+  (id) => {
+    const numId = id ? Number(id) : null
+    if (numId && !isNaN(numId) && eventStore.activeEventId !== numId) {
+      eventStore.activeEventId = numId
+    }
+  },
+  { immediate: true },
+)
+
 const navItems = computed(() => {
   const kanban = eventStore.kanban
   const bracket = eventStore.bracket
@@ -37,13 +49,16 @@ const navItems = computed(() => {
     ? null
     : bracket.qf.length + bracket.sf.length + bracket.f.length
 
+  const eid = eventStore.activeEventId
+  const base = eid ? `/admin/events/${eid}` : null
+
   return [
-    { path: '/admin/tournoi',      label: 'Tournoi',       icon: '🏛', count: eventStore.events.length },
-    { path: '/admin/players',      label: 'Joueurs',       icon: '👤', count: eventStore.allPlayers.length },
-    { path: '/admin/inscriptions', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
-    { path: '/admin/groups',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
-    { path: '/admin/matches',      label: 'Planning',      icon: '⚡', count: matchCount },
-    { path: '/admin/bracket',      label: 'Tableau final', icon: '🏆', count: bracketCount },
+    { path: '/admin/tournoi',                   label: 'Tournoi',       icon: '🏛', count: eventStore.events.length },
+    { path: '/admin/players',                   label: 'Joueurs',       icon: '👤', count: eventStore.allPlayers.length },
+    { path: base ? `${base}/inscriptions` : '', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
+    { path: base ? `${base}/groups` : '',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
+    { path: base ? `${base}/matches` : '',      label: 'Planning',      icon: '⚡', count: matchCount },
+    { path: base ? `${base}/bracket` : '',      label: 'Tableau final', icon: '🏆', count: bracketCount },
   ]
 })
 </script>
@@ -67,17 +82,22 @@ const navItems = computed(() => {
 
       <!-- Navigation -->
       <nav class="sb-nav">
-        <RouterLink
-          v-for="item in navItems"
-          :key="item.path"
-          :to="item.path"
-          class="sb-nav-item"
-          :class="{ active: route.path.startsWith(item.path) }"
-        >
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span class="nav-label">{{ item.label }}</span>
-          <span v-if="item.count !== null" class="nav-badge">{{ item.count }}</span>
-        </RouterLink>
+        <template v-for="item in navItems" :key="item.label">
+          <RouterLink
+            v-if="item.path"
+            :to="item.path"
+            class="sb-nav-item"
+            :class="{ active: route.path.startsWith(item.path) }"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span v-if="item.count !== null" class="nav-badge">{{ item.count }}</span>
+          </RouterLink>
+          <span v-else class="sb-nav-item sb-nav-item--disabled">
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+          </span>
+        </template>
       </nav>
 
       <!-- Bas de sidebar -->
@@ -201,6 +221,12 @@ const navItems = computed(() => {
 .sb-nav-item.active .nav-badge {
   background: rgba(0, 0, 0, 0.12);
   color: #000;
+}
+
+.sb-nav-item--disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
 }
 
 /* Bas */

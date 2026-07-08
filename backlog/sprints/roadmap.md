@@ -10,4 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 10 — Contexte d'épreuve (URL) | (à créer) |
+| 1 | Sprint 11 — Cycle de vie : statut & « Débuter » | `backlog/sprints/11-cycle-de-vie-statut/sprint.md` |

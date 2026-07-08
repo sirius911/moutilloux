@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-27 — Session #26
-**Sprint actif :** 10 — Contexte d'épreuve (URL) (à créer)
-**Roadmap :** Sprint 09 terminé ✅ — Sprint 10 prochain (fichier sprint.md à créer)
-**Tickets clôturés cette session :** 1 (#102 ✅)
-**Branche :** `claude/sprint/09-calendrier-tv`
-**Issues restantes :** 0 (sprint terminé)
-**Contexte :** Session 26 — Sprint 09 terminé. #102 fermé (TvScoreboard : bandeau À suivre repositionné en bas, libellé "À SUIVRE", PrepPanel retiré du header). Milestone Sprint 09 à fermer manuellement (auto-mode a bloqué l'écriture GitHub). Sprint 09 archivé dans done/. Prochaine session : planifier Sprint 10.
+**Dernière session :** 2026-06-29 — Session #28
+**Sprint actif :** aucun (roadmap vide)
+**Roadmap :** Sprint 11 actif (ajouté en fin de session)
+**Tickets clôturés cette session :** 2 (#117 ✅, #119 ⚠️)
+**Branche :** `claude/sprint/10-contexte-url`
+**Issues restantes :** 0
+**Contexte :** Session 28 — Sprint 10 terminé. Sélecteurs épreuve migrés vers router.push (#117). États vides « Aucune épreuve active » ajoutés sur 4 écrans (#119). Milestone #9 fermé. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines si les sprints 11-13 ne sont pas encore dans la roadmap.

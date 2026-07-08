@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import type { Entry } from '@/types'
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
 const showAutoFill = ref(false)
 
 watch(() => eventStore.activeEventId, (id) => {
@@ -45,7 +47,7 @@ function entryDisplayName(entry: Entry): string {
 
 function setActiveEvent(id: string) {
   const numId = parseInt(id, 10)
-  if (!isNaN(numId)) eventStore.activeEventId = numId
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
 }
 
 const dropError = ref('')
@@ -115,7 +117,12 @@ async function onDropToUnassigned() {
 
     <AutoFillModal v-if="showAutoFill" @close="showAutoFill = false" @saved="showAutoFill = false" />
 
-    <div class="page-content">
+    <div v-if="eventStore.events.length === 0" class="empty-state">
+      <p>Aucune épreuve active.</p>
+      <RouterLink to="/admin/tournoi">Créer une épreuve dans Tournoi →</RouterLink>
+    </div>
+
+    <div v-else class="page-content">
       <div v-if="eventStore.groupsLocked" class="lock-banner">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -416,6 +423,26 @@ async function onDropToUnassigned() {
 .player-pill--locked { cursor: default; }
 .player-pill--locked:hover { background: var(--bg-3); }
 .player-pill--locked:active { cursor: default; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 40px;
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: center;
+}
+
+.empty-state a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.empty-state a:hover { text-decoration: underline; }
 
 .lock-banner {
   display: flex;

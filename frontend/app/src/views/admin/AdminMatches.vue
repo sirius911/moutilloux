@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import draggable from 'vuedraggable'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
@@ -14,6 +15,8 @@ type DayItem =
   | { kind: 'break'; data: Break }
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
 
 const editingMatch = ref<Match | null>(null)
 const showGenerateMatches = ref(false)
@@ -308,6 +311,11 @@ function onMatchSaved() {
   eventStore.fetchCalendar()
 }
 
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
+}
+
 // ── Drag-and-drop ──────────────────────────────────────────────────────────
 
 // Guard contre le double @end lors des drags inter-listes (SortableJS peut
@@ -370,7 +378,7 @@ async function onDragEnd() {
         <select
           class="event-selector"
           :value="eventStore.activeEventId"
-          @change="eventStore.activeEventId = Number(($event.target as HTMLSelectElement).value)"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
         >
           <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">
             {{ ev.name }}
@@ -413,7 +421,13 @@ async function onDragEnd() {
     />
 
     <!-- ── Corps ────────────────────────────────────────────────────────── -->
-    <div class="cal-layout">
+    <div v-if="eventStore.events.length === 0" class="empty-state">
+      <p>Aucune épreuve active.</p>
+      <RouterLink to="/admin/tournoi">Créer une épreuve dans Tournoi →</RouterLink>
+    </div>
+
+    <template v-else>
+      <div class="cal-layout">
       <!-- Pile à planifier -->
       <aside class="cal-pile">
         <div class="pile-head">
@@ -575,17 +589,18 @@ async function onDragEnd() {
           </button>
         </section>
       </main>
-    </div>
+      </div>
 
-    <!-- ── Légende ──────────────────────────────────────────────────────── -->
-    <footer class="cal-legend">
-      <div class="legend-item"><span class="cal-dot dot--live" /> En cours</div>
-      <div class="legend-item"><span class="cal-dot dot--next" /> Next</div>
-      <div class="legend-item"><span class="cal-dot dot--scheduled" /> Planifié</div>
-      <div class="legend-item"><span class="cal-dot dot--finished" /> Terminé</div>
-      <div class="legend-item"><span class="cal-dot dot--canceled" /> Annulé</div>
-      <div class="legend-item"><span class="rest-warning">⚠</span> Repos insuffisant</div>
-    </footer>
+      <!-- ── Légende ──────────────────────────────────────────────────────── -->
+      <footer class="cal-legend">
+        <div class="legend-item"><span class="cal-dot dot--live" /> En cours</div>
+        <div class="legend-item"><span class="cal-dot dot--next" /> Next</div>
+        <div class="legend-item"><span class="cal-dot dot--scheduled" /> Planifié</div>
+        <div class="legend-item"><span class="cal-dot dot--finished" /> Terminé</div>
+        <div class="legend-item"><span class="cal-dot dot--canceled" /> Annulé</div>
+        <div class="legend-item"><span class="rest-warning">⚠</span> Repos insuffisant</div>
+      </footer>
+    </template>
   </div>
 </template>
 
@@ -999,6 +1014,26 @@ async function onDragEnd() {
 
 .add-pause-btn:hover { color: var(--ink-1); background: var(--bg-3); }
 .add-pause-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 80px 40px;
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: center;
+}
+
+.empty-state a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.empty-state a:hover { text-decoration: underline; }
 
 /* ── Légende ─────────────────────────────────────────────────────────────── */
 .cal-legend {

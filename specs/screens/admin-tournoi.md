@@ -62,10 +62,16 @@ Deux notions distinctes y cohabitent, avec un vocabulaire strict :
   - configuration : taille de poule par défaut et nombre de qualifiés par poule
     (ex. « Poules de 4 · 2 qualifiés ») ;
   - nombre d'inscrits ;
-  - état d'avancement dérivé : « À préparer » (pas de poule), « Poules » (poules
-    créées, pas de tableau), « Phase finale » (tableau créé) ;
+  - **badge d'avancement** dérivé du **statut de l'épreuve** (voir
+    [[cycle-de-vie-epreuve]]) : « À préparer » / « Inscription » (`INSCRIPTION`),
+    « Poules » / « Phase finale » (`EN_COURS`), « Terminée » (`TERMINÉE`) ;
   - raccourcis **Inscriptions**, **Poules**, **Matchs** : sélectionnent l'épreuve
     puis naviguent vers l'écran correspondant ;
+  - **Débuter** (si `status = INSCRIPTION`) → lance la phase de jeu : génère les
+    matchs de poule, verrouille la composition, crée le squelette du tableau, ouvre
+    la planification (confirmation avec aperçu — voir Flux et
+    [[cycle-de-vie-epreuve]]). **Rouvrir** (si `status = TERMINÉE`) → repasse
+    l'épreuve en jeu pour corriger un résultat.
   - **Modifier** → modale Épreuve en mode édition ;
   - **Supprimer** → confirmation forte (voir Flux) ;
   - **Sélectionner** : définit l'épreuve active. Le bouton de l'épreuve déjà
@@ -123,6 +129,7 @@ récente à la plus ancienne :
 | Catégorie | Requise en création — sélecteur des catégories existantes **avec création inline** (voir ci-dessous). **Non modifiable en édition** (l'identité d'une épreuve est édition × catégorie). |
 | Joueurs par poule | 3 ou 4 (défaut 4) |
 | Qualifiés par poule | 1 ou 2 (défaut 2) |
+| Petite finale | Optionnel — match pour la 3e place (perdants des demies). Défaut : non. Voir [[cycle-de-vie-epreuve]]. |
 | Notes | Texte libre optionnel |
 
 **Création de catégorie inline**
@@ -175,6 +182,18 @@ récente à la plus ancienne :
    le message d'erreur est affiché tel quel.
 4. Si l'épreuve supprimée était l'épreuve active, la sélection bascule (voir spec
    [[admin-shell]]).
+
+## Flux : débuter / clôturer une épreuve
+
+1. Sur une épreuve `INSCRIPTION`, l'admin clique **« Débuter »**.
+2. Une **modale de confirmation** affiche l'aperçu du round-robin (matchs créés par
+   poule) et avertit si des inscrits ne sont pas placés (ils seront **exclus** tant
+   qu'on ne les rajoute pas — voir ajustements dans [[cycle-de-vie-epreuve]]).
+3. À la confirmation : matchs de poule générés, composition **verrouillée**,
+   squelette du tableau créé, planification ouverte, et l'épreuve passe
+   **`EN_COURS`**. Mécanique complète : [[cycle-de-vie-epreuve]].
+4. La **clôture** est **automatique** quand la finale est jouée (`→ TERMINÉE`) ;
+   « Rouvrir » est une action d'urgence pour corriger après coup.
 
 ---
 

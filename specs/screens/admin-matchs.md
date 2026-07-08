@@ -33,15 +33,18 @@ décision 17 de [[admin-panel-map]]).
 
 ## Cycle de vie
 
-1. **Génération** (action de cet écran) : crée le round-robin → tous les matchs
-   naissent **à planifier**, et verrouille la composition des poules (voir
-   [[admin-poules]]). Générer les matchs **vaut** validation des poules : il n'y a
-   pas d'étape « valider les poules » distincte.
-2. **Pré-pose** (optionnelle) : range automatiquement la pile à planifier.
-3. **Ajustement manuel** : glisser-déposer pour planifier / réordonner / insérer
+Les matchs de poule **existent déjà** quand on arrive ici : ils sont créés par
+**« Débuter l'épreuve »** (écran Tournoi, voir [[cycle-de-vie-epreuve]]), qui les
+fait naître **à planifier** et verrouille la composition des poules. Le calendrier
+n'est donc disponible que pour une épreuve **`EN_COURS`**.
+
+1. **Pré-pose** (optionnelle) : range automatiquement la pile à planifier.
+2. **Ajustement manuel** : glisser-déposer pour planifier / réordonner / insérer
    des pauses.
-4. **Déroulé** : l'arbitre fait vivre les matchs (En cours → Terminé) ; les heures
+3. **Déroulé** : l'arbitre fait vivre les matchs (En cours → Terminé) ; les heures
    à venir se recalent.
+4. **Ajustements ponctuels** : un **ajout tardif** (voir [[cycle-de-vie-epreuve]])
+   fait réapparaître de nouveaux matchs dans la pile « à planifier ».
 
 ---
 
@@ -55,8 +58,6 @@ décision 17 de [[admin-panel-map]]).
   fait foi et survit au rechargement (voir [[routing-context]]).
 - Titre « Calendrier des matchs », sous-titre « Qui joue, quand, contre qui ».
 - Actions :
-  - **« Générer les matchs de poule »** → modale de génération (prérequis : crée
-    les matchs à planifier).
   - **« Pré-poser »** → range automatiquement la pile à planifier (voir flux).
     Désactivé quand la pile est vide.
 
@@ -102,22 +103,18 @@ Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayD
 
 ---
 
-## Modale « Générer les matchs de poule »
+## Aperçu du round-robin (au moment de « Débuter »)
 
-- Sous-titre : « Round-robin complet pour chaque poule. »
-- Tableau de répartition : pour chaque poule — lettre, nombre de joueurs, nombre de
-  matchs à créer (n·(n−1)/2) ; ligne Total.
-- Le format appliqué est le **format de poule par défaut** (1 set à 5 jeux,
-  tie-break à 4-4) ; la modale l'indique en clair. Il reste ajustable ensuite match
-  par match via le panneau d'édition.
-- Bouton de confirmation : « Générer N matchs ».
-- Génération **idempotente** : les rencontres déjà créées ne sont pas dupliquées ;
-  relancer ne crée que les paires manquantes. La réponse indique le nombre
-  réellement créé.
-- Cas limites : aucune poule, ou poules à moins de 2 participants → 0 match à créer,
-  confirmation désactivée.
-- Après génération, les nouveaux matchs apparaissent dans la **pile « À planifier »**
-  et la composition des poules devient verrouillée (voir [[admin-poules]]).
+La génération du round-robin **n'est plus une action de cet écran** : elle est
+déclenchée par **« Débuter l'épreuve »** (écran Tournoi, voir
+[[cycle-de-vie-epreuve]]). La confirmation de « Débuter » affiche l'aperçu —
+répartition par poule (lettre, nombre de joueurs, n·(n−1)/2 matchs, total) et le
+**format de poule par défaut** (1 set à 5, TB à 4-4, ajustable ensuite match par
+match via le panneau d'édition).
+
+La génération est **idempotente et additive** : les rencontres déjà créées ne sont
+pas dupliquées ; un **ajout tardif** ne crée que les paires manquantes du nouveau
+venu. Les matchs créés arrivent dans la **pile « À planifier »**.
 
 ---
 
@@ -200,7 +197,11 @@ pied sans fermer le panneau).
   - Passer en « Terminé » sort le match de la séquence et retire sa mise en avant ;
     si c'est un quart ou une demi, le vainqueur est **promu automatiquement** dans
     le tableau final (voir [[admin-tableau-final]]).
-  - « Annulé » conserve le match dans l'historique (badge ANNULÉ, hors séquence).
+  - « Annulé » (`CANCELED`) = annulation sèche, **sans vainqueur**, conservée dans
+    l'historique (badge ANNULÉ, hors séquence).
+  - Un **forfait / walkover** est distinct de l'annulation : match « Terminé »
+    **avec vainqueur** par défaut, issu de l'abandon d'un inscrit (mécanique dans
+    [[cycle-de-vie-epreuve]]).
 - **Mise en avant** : interrupteur « Afficher ce match sur le scoreboard TV »
   (un seul match à la fois ; l'activer retire l'actuel).
 - La **position** dans la séquence se règle par glisser-déposer, pas dans ce
@@ -222,7 +223,7 @@ pied sans fermer le panneau).
 | Situation | Comportement |
 |---|---|
 | Aucune épreuve active | État vide avec lien vers Tournoi. |
-| Aucun match | Pile et journées vides + invite : générer les matchs de poule. |
+| Épreuve pas encore débutée (`INSCRIPTION`) | Le calendrier n'est pas disponible : invite à **débuter l'épreuve** depuis l'écran Tournoi (voir [[cycle-de-vie-epreuve]]). |
 | Aucune journée configurée | Invite à définir au moins une journée de jeu (date, début, fin cible — voir [[planning]]). Sans journée, on ne peut que générer / garder les matchs « à planifier ». |
 | Pile non vide en fin de planification | Ce n'est pas une erreur : les matchs restants demeurent « à planifier ». |
 
