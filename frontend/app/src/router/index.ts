@@ -20,10 +20,8 @@ const router = createRouter({
       component: () => import('@/views/tv/TvLayout.vue'),
       meta: { public: true },
       children: [
-        { path: 'live',    component: () => import('@/views/tv/TvScoreboard.vue') },
-        { path: 'groups',  component: () => import('@/views/tv/TvPoules.vue') },
-        { path: 'bracket', component: () => import('@/views/tv/TvBracket.vue') },
-        { path: '', redirect: 'live' },
+        { path: 'live', component: () => import('@/views/tv/TvScoreboard.vue') },
+        { path: '',     redirect: 'live' },
       ],
     },
 

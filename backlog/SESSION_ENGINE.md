@@ -373,39 +373,45 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #91
-**Sprint traité :** 22 — État TV : contrat back (clôturé cette session)
+**Dernière session :** 2026-07-05 — Session #95
+**Sprint traité :** 23 — TV live : écran & retraits legacy — **clôturé cette session**
 
-**Git :** branche `claude/sprint/22-tv-state-back`, parent effectif
-`claude/sprint/21-durcissements-api-specs` (résolu via
-`backlog/sprints/done/` — toujours pas mergée dans `origin/main`, merge sans
-conflit : already up to date). Working tree propre au démarrage.
+**Git :** branche `claude/sprint/23-tv-live-front`, parent effectif
+`claude/sprint/22-tv-state-back` (résolu via `backlog/sprints/done/` —
+toujours pas mergée dans `origin/main`, `git merge` déjà à jour, aucun
+conflit). Working tree propre au démarrage et en fin de session.
 
-**Spec review session #91 :** review de `specs/technical/tv-state.md`.
-Verdict ✅ Conforme (sections contrat back) — `get_tv_next` (#252),
-`api_tv_state`/`_pack_tv_stake` (#253, corrigé en session #90),
-`api_tv_idle` + packers associés (#254), modèle `Announcement` + migration
-(#255), CRUD Announcement complet services+endpoints+routes (#256) : tous
-conformes. `manage.py check` et `makemigrations --check --dry-run` OK.
-Legacy (`score_state`, `get_next_match`, `tv/upcoming`) et front
-(`stores/live.ts`/`types/index.ts` sur `fetchScoreState`/`fetchUpcoming`)
-toujours en place — attendu, hors périmètre jusqu'au sprint 23. Aucune
-nouvelle dérive, aucune nouvelle issue.
+**Spec review session #95 (à froid, après #260/#262) :** review de
+`specs/screens/tv-live.md`, `specs/tv-map.md`, `specs/technical/tv-state.md`
+confiée à un agent `reviewer`. Verdict initial ⚠️ Dérive mineure : une seule
+réserve, documentaire — `tv-state.md` demandait explicitement que
+`specs/screens/admin-tournoi.md` soit complétée pour la carte « Annonces TV »
+livrée par #260, jamais fait. Aucune divergence de comportement. Corrigé
+directement par l'orchestrateur (édition de spec, pas de code) : sections
+« Carte « Annonces TV »» et « Flux : supprimer une annonce » ajoutées à
+`admin-tournoi.md`. Ticket #276 créé puis fermé dans la même session.
+Verdict final : ✅ Conforme sur les 3 specs. `npx vue-tsc --noEmit` et
+`manage.py check` vérifiés propres par l'agent reviewer.
 
-**Tickets traités session #91 :** 0 — les 5 tickets du sprint (#252-256)
-étaient déjà clos avant cette session ; aucune issue ouverte restante sous
-le milestone Sprint 22.
+**Backlog engine session #95 :** 0 issue ouverte milestone Sprint 23 au
+démarrage (toutes fermées : #3, #21, #257-262) — aucun ticket à traiter.
 
-**Fin de sprint atteinte :** les deux conditions de clôture sont réunies
-(spec review ✅ Conforme + 0 issue ouverte sous le milestone). Milestone
-GitHub #21 fermé, ligne supprimée de `backlog/sprints/roadmap.md`, dossier
-déplacé vers `backlog/sprints/done/22-tv-state-back/`.
+**Clôture de sprint effectuée :** les 2 conditions de l'étape 3 sont
+simultanément vraies (spec review ✅ Conforme après correction #276, et 0
+issue ouverte sprint-23). Milestone « Sprint 23 » fermé via l'API GitHub,
+ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé dans
+`backlog/sprints/done/23-tv-live-front/`.
+
+**Point d'attention outillage (rappel) :** utiliser `npx vue-tsc -b --force`
+(pas `--noEmit` seul) pour tout type-check front — toujours pas de script
+`type-check` dans `package.json` (TODO CLAUDE.md §4).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
 hors périmètre de la Routine automatique.
 
-**Roadmap :** sprint 22 clôturé. Sprint 23 — TV live : écran & retraits
-legacy devient actif, sera traité à la prochaine échéance planifiée (pas
-démarré dans cette session). Puis 24 — Affiches de match.
+**Roadmap :** sprint 23 clôturé. Sprint 24 — Affiches de match devient
+actif ; conformément au protocole il ne démarre **pas** cette session (la
+prochaine échéance planifiée le prendra en charge, avec sa propre branche
+`claude/sprint/24-affiches-match`).

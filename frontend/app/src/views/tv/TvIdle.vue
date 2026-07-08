@@ -1,44 +1,108 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useLiveStore } from '@/stores/live'
-import { useEventStore } from '@/stores/event'
+import { usePolling } from '@/composables/usePolling'
 
 const live = useLiveStore()
-const eventStore = useEventStore()
+usePolling(() => live.fetchTvIdle(), 10000)
 
 const slide = ref(0)
-const SLIDES = ['hero', 'results', 'groups', 'bracket', 'programme'] as const
-let timer: ReturnType<typeof setInterval> | null = null
-let upcomingTimer: ReturnType<typeof setInterval> | null = null
 
-onMounted(() => {
-  eventStore.fetchEditions()
-  if (eventStore.activeEventId) {
-    eventStore.fetchMatches(eventStore.activeEventId)
-    eventStore.fetchGroups(eventStore.activeEventId)
-    eventStore.fetchBracket(eventStore.activeEventId)
+// Index de rotation par épreuve, indépendants de l'index de slide global.
+const groupsEventIndex = ref(0)
+const bracketEventIndex = ref(0)
+
+// La slide "Programme terminé" ne doit s'afficher qu'une seule fois puis
+// être sautée aux rotations suivantes tant qu'elle reste `finished`.
+const programmeFinishedShown = ref(false)
+
+type SlideKind = 'tournoi' | 'results' | 'groups' | 'bracket' | 'programme' | 'announces'
+
+interface SlideDef {
+  kind: SlideKind
+}
+
+const eventsWithGroups = computed(() =>
+  live.events.filter(e => e.groups.length > 0)
+)
+
+const eventsWithBracket = computed(() =>
+  live.events.filter(e => e.bracket !== null)
+)
+
+const currentGroupsEvent = computed(() => {
+  const list = eventsWithGroups.value
+  if (list.length === 0) return null
+  return list[groupsEventIndex.value % list.length]
+})
+
+const currentBracketEvent = computed(() => {
+  const list = eventsWithBracket.value
+  if (list.length === 0) return null
+  return list[bracketEventIndex.value % list.length]
+})
+
+const programmeVisible = computed(() => {
+  const p = live.programme
+  if (p.day === 'finished') {
+    return p.upcoming.length > 0 || !programmeFinishedShown.value
   }
-  live.fetchUpcoming(5)
-  timer = setInterval(() => {
-    slide.value = (slide.value + 1) % SLIDES.length
-  }, 6000)
-  upcomingTimer = setInterval(() => {
-    live.fetchUpcoming(5)
-  }, 4000)
+  return p.upcoming.length > 0
 })
 
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
-  if (upcomingTimer) clearInterval(upcomingTimer)
+const programmeTitle = computed(() => {
+  switch (live.programme.day) {
+    case 'tomorrow': return 'PROGRAMME DE DEMAIN'
+    case 'finished': return 'PROGRAMME TERMINÉ'
+    default: return 'PROCHAINS MATCHS'
+  }
 })
 
-const recentFinished = computed(() =>
-  (eventStore.kanban?.finished ?? []).slice(0, 5)
-)
+// Liste des slides réellement affichables à l'instant courant (contenu non
+// vide), calculée dynamiquement — le pager et la rotation ne portent que sur
+// celles-ci.
+const SLIDES = computed<SlideDef[]>(() => {
+  const list: SlideDef[] = [{ kind: 'tournoi' }]
+  if (live.recentResults.length > 0) list.push({ kind: 'results' })
+  if (currentGroupsEvent.value) list.push({ kind: 'groups' })
+  if (currentBracketEvent.value) list.push({ kind: 'bracket' })
+  if (programmeVisible.value) list.push({ kind: 'programme' })
+  if (live.announcements.length > 0) list.push({ kind: 'announces' })
+  return list
+})
 
-const groupsPreview = computed(() =>
-  (eventStore.groups ?? []).slice(0, 2)
-)
+const currentSlide = computed<SlideKind>(() => {
+  const list = SLIDES.value
+  if (list.length === 0) return 'tournoi'
+  return list[slide.value % list.length].kind
+})
+
+function advance() {
+  const count = SLIDES.value.length
+  if (count === 0) return
+  const nextIndex = (slide.value + 1) % count
+  const upcomingKind = SLIDES.value[nextIndex].kind
+
+  if (upcomingKind === 'groups') {
+    groupsEventIndex.value = (groupsEventIndex.value + 1) % Math.max(eventsWithGroups.value.length, 1)
+  }
+  if (upcomingKind === 'bracket') {
+    bracketEventIndex.value = (bracketEventIndex.value + 1) % Math.max(eventsWithBracket.value.length, 1)
+  }
+  if (upcomingKind === 'programme' && live.programme.day === 'finished') {
+    programmeFinishedShown.value = true
+  }
+
+  slide.value = nextIndex
+}
+
+function goTo(i: number) {
+  slide.value = i
+}
+
+usePolling(async () => {
+  advance()
+}, 8000)
 
 function nextPlayerName(side: 'A' | 'B'): string {
   if (!live.next) return 'À désigner'
@@ -69,8 +133,8 @@ function nextPlayerName(side: 'A' | 'B'): string {
 
     <!-- Slides -->
     <main class="tv-idle-main">
-      <!-- Slide 0 : Hero -->
-      <section :class="['tv-slide', { on: slide === 0 }]">
+      <!-- Slide : Tournoi -->
+      <section :class="['tv-slide', { on: currentSlide === 'tournoi' }]">
         <div class="tv-idle-hero">
           <div class="tv-idle-ball">
             <svg viewBox="0 0 24 24" width="80" height="80">
@@ -81,26 +145,30 @@ function nextPlayerName(side: 'A' | 'B'): string {
           <div class="tv-idle-status">EN ATTENTE DU PROCHAIN MATCH</div>
           <div class="tv-idle-hero-stats">
             <div class="tv-idle-hero-stat">
-              <span>MATCHS TERMINÉS</span>
-              <b class="tab">{{ eventStore.kanban?.finished?.length ?? 0 }}</b>
+              <span>MATCHS JOUÉS</span>
+              <b class="tab">{{ live.stats?.matchesFinished ?? 0 }} / {{ live.stats?.matchesTotal ?? 0 }}</b>
             </div>
             <div class="tv-idle-hero-stat">
-              <span>EN FILE D'ATTENTE</span>
-              <b class="tab">{{ eventStore.kanban?.queue?.length ?? 0 }}</b>
+              <span>INSCRITS</span>
+              <b class="tab">{{ live.stats?.entriesCount ?? 0 }}</b>
+            </div>
+            <div class="tv-idle-hero-stat">
+              <span>ÉPREUVES</span>
+              <b class="tab">{{ live.stats?.eventsCount ?? 0 }}</b>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Slide 1 : Derniers résultats -->
-      <section :class="['tv-slide', { on: slide === 1 }]">
+      <!-- Slide : Derniers résultats -->
+      <section :class="['tv-slide', { on: currentSlide === 'results' }]">
         <div class="tv-rotate">
           <h2 class="tv-rotate-title">
             DERNIERS RÉSULTATS
           </h2>
           <div class="tv-results">
             <div
-              v-for="m in recentFinished"
+              v-for="m in live.recentResults"
               :key="m.id"
               class="tv-result-row"
             >
@@ -108,11 +176,11 @@ function nextPlayerName(side: 'A' | 'B'): string {
               <div class="tv-result-match">
                 <div :class="['tv-result-side', { win: m.winnerSide === 'A' }]">
                   <span v-if="m.sideA?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'A' }">{{ m.sideA.seedHint }}</span>
-                  <span class="tv-result-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? '—' }}</span>
+                  <span class="tv-result-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner' }}</span>
                 </div>
                 <div :class="['tv-result-side', { win: m.winnerSide === 'B' }]">
                   <span v-if="m.sideB?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'B' }">{{ m.sideB.seedHint }}</span>
-                  <span class="tv-result-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? '—' }}</span>
+                  <span class="tv-result-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner' }}</span>
                 </div>
               </div>
               <span class="tv-result-score tab">
@@ -120,17 +188,20 @@ function nextPlayerName(side: 'A' | 'B'): string {
               </span>
               <span v-if="m.court" class="tv-result-court">{{ m.court }}</span>
             </div>
-            <div v-if="recentFinished.length === 0" class="tv-empty">Aucun résultat disponible</div>
+            <div v-if="live.recentResults.length === 0" class="tv-empty">Aucun résultat disponible</div>
           </div>
         </div>
       </section>
 
-      <!-- Slide 2 : Classement poules -->
-      <section :class="['tv-slide', { on: slide === 2 }]">
+      <!-- Slide : Poules (rotation par épreuve) -->
+      <section :class="['tv-slide', { on: currentSlide === 'groups' }]">
         <div class="tv-rotate">
-          <h2 class="tv-rotate-title">CLASSEMENT DES POULES</h2>
-          <div class="tv-groups">
-            <div v-for="g in groupsPreview" :key="g.id" class="tv-group">
+          <h2 class="tv-rotate-title">
+            CLASSEMENT DES POULES
+            <em v-if="currentGroupsEvent">{{ currentGroupsEvent.name }}</em>
+          </h2>
+          <div v-if="currentGroupsEvent" class="tv-groups">
+            <div v-for="g in currentGroupsEvent.groups" :key="g.id" class="tv-group">
               <div class="tv-group-head">
                 <span class="tv-group-letter">{{ g.name }}</span>
                 <span class="tv-group-title">Poule {{ g.name }}</span>
@@ -155,31 +226,34 @@ function nextPlayerName(side: 'A' | 'B'): string {
                 </div>
               </div>
             </div>
-            <div v-if="groupsPreview.length === 0" class="tv-empty">Aucune poule disponible</div>
           </div>
+          <div v-else class="tv-empty">Aucune poule disponible</div>
         </div>
       </section>
 
-      <!-- Slide 3 : Mini-bracket -->
-      <section :class="['tv-slide', { on: slide === 3 }]">
+      <!-- Slide : Tableau (rotation par épreuve) -->
+      <section :class="['tv-slide', { on: currentSlide === 'bracket' }]">
         <div class="tv-rotate">
-          <h2 class="tv-rotate-title">TABLEAU FINAL</h2>
-          <div v-if="eventStore.bracket" class="tv-mini-bracket">
+          <h2 class="tv-rotate-title">
+            TABLEAU FINAL
+            <em v-if="currentBracketEvent">{{ currentBracketEvent.name }}</em>
+          </h2>
+          <div v-if="currentBracketEvent?.bracket" class="tv-mini-bracket">
             <!-- QF -->
             <div class="tv-mini-col">
               <div class="tv-mini-col-head">QUARTS</div>
               <div
-                v-for="slot in eventStore.bracket.qf"
+                v-for="slot in currentBracketEvent.bracket.qf"
                 :key="slot.slot"
                 :class="['tv-mini-match', { done: slot.match?.winnerSide, live: slot.match?.status === 'LIVE' }]"
               >
                 <span v-if="slot.match?.status === 'LIVE'" class="tv-mini-live">EN DIRECT</span>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="tv-mini-seed" :class="{ 'tv-mini-seed--win': slot.match?.winnerSide === 'A' }">{{ slot.match?.sideA?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-seed" :class="{ 'tv-mini-seed--win': slot.match?.winnerSide === 'A' }">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
                   <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
                 </div>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '?' }}</span>
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
                   <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
                 </div>
               </div>
@@ -189,17 +263,17 @@ function nextPlayerName(side: 'A' | 'B'): string {
               <div class="tv-mini-col-head">DEMI-FINALES</div>
               <div style="height: 24px" />
               <div
-                v-for="(slot, i) in eventStore.bracket.sf"
+                v-for="(slot, i) in currentBracketEvent.bracket.sf"
                 :key="slot.slot"
                 :class="['tv-mini-match', { live: slot.match?.status === 'LIVE' }]"
                 :style="{ marginTop: i > 0 ? '60px' : '0' }"
               >
-                <div class="tv-mini-slot">
-                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '?' }}</span>
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
                   <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
                 </div>
-                <div class="tv-mini-slot">
-                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '?' }}</span>
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
                   <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
                 </div>
               </div>
@@ -208,14 +282,29 @@ function nextPlayerName(side: 'A' | 'B'): string {
             <div class="tv-mini-col">
               <div class="tv-mini-col-head">FINALE</div>
               <div style="height: 80px" />
-              <div v-for="slot in eventStore.bracket.f" :key="slot.slot" class="tv-mini-match final">
-                <div class="tv-mini-slot">
-                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '?' }}</span>
+              <div v-for="slot in currentBracketEvent.bracket.f" :key="slot.slot" class="tv-mini-match final">
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
                   <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'Vainqueur SF1' }}</span>
                 </div>
-                <div class="tv-mini-slot">
-                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '?' }}</span>
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
                   <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'Vainqueur SF2' }}</span>
+                </div>
+              </div>
+            </div>
+            <!-- 3e place (seulement si activée) -->
+            <div v-if="currentBracketEvent.bracket.p3?.length" class="tv-mini-col">
+              <div class="tv-mini-col-head">3E PLACE</div>
+              <div style="height: 80px" />
+              <div v-for="slot in currentBracketEvent.bracket.p3" :key="slot.slot" class="tv-mini-match">
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                </div>
+                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
                 </div>
               </div>
             </div>
@@ -235,24 +324,24 @@ function nextPlayerName(side: 'A' | 'B'): string {
         </div>
       </section>
 
-      <!-- Slide 4 : Programme -->
-      <section :class="['tv-slide', { on: slide === 4 }]">
+      <!-- Slide : Programme -->
+      <section :class="['tv-slide', { on: currentSlide === 'programme' }]">
         <div class="tv-rotate">
-          <h2 class="tv-rotate-title">PROCHAINS MATCHS</h2>
+          <h2 class="tv-rotate-title">{{ programmeTitle }}</h2>
           <div class="tv-programme">
-            <div v-if="live.upcoming.length === 0" class="tv-empty">
+            <div v-if="live.programme.upcoming.length === 0" class="tv-empty">
               Aucun match programmé
             </div>
             <div
-              v-for="(m, i) in live.upcoming"
+              v-for="(m, i) in live.programme.upcoming"
               :key="m.id"
               :class="['tv-prog-row', { bientot: i === 0 }]"
             >
               <span class="tv-prog-time tab">~{{ m.scheduledTime ?? '—' }}</span>
               <div class="tv-prog-match">
-                <span class="tv-prog-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? '?' }}</span>
+                <span class="tv-prog-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner' }}</span>
                 <em class="tv-prog-vs">vs</em>
-                <span class="tv-prog-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? '?' }}</span>
+                <span class="tv-prog-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner' }}</span>
               </div>
               <span class="tv-prog-group">{{ m.stageLabel }}</span>
               <span v-if="i === 0" class="tv-prog-bientot">bientôt</span>
@@ -261,6 +350,23 @@ function nextPlayerName(side: 'A' | 'B'): string {
           <p class="tv-prog-disclaimer">
             Horaires estimés — susceptibles de bouger
           </p>
+        </div>
+      </section>
+
+      <!-- Slide : Annonces -->
+      <section :class="['tv-slide', { on: currentSlide === 'announces' }]">
+        <div class="tv-rotate">
+          <h2 class="tv-rotate-title">ANNONCES</h2>
+          <div class="tv-announces">
+            <div
+              v-for="a in live.announcements"
+              :key="a.id"
+              class="tv-announce-row"
+            >
+              {{ a.message }}
+            </div>
+            <div v-if="live.announcements.length === 0" class="tv-empty">Aucune annonce</div>
+          </div>
         </div>
       </section>
     </main>
@@ -291,8 +397,8 @@ function nextPlayerName(side: 'A' | 'B'): string {
         <i
           v-for="(_, i) in SLIDES"
           :key="i"
-          :class="{ on: i === slide }"
-          @click="slide = i"
+          :class="{ on: i === slide % SLIDES.length }"
+          @click="goTo(i)"
         />
       </div>
     </footer>
@@ -879,5 +985,24 @@ function nextPlayerName(side: 'A' | 'B'): string {
   color: var(--ink-4);
   font-style: italic;
   text-align: center;
+}
+
+/* Slide Annonces */
+.tv-announces {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tv-announce-row {
+  background: var(--bg-2);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--r-md);
+  padding: 28px 36px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink-0);
+  text-align: center;
+  line-height: 1.4;
 }
 </style>

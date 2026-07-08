@@ -1047,7 +1047,7 @@ def api_match_feature(request, match_id):
     POST /api/matches/<id>/feature/
     Met le match en avant (source : admin_views.feature_match). Aucun payload.
     Effet : is_featured=True, mark_live() → statut LIVE ; order_index inchangé ;
-    devient le hero de /api/score_state/.
+    devient le hero de /api/tv/state/.
     """
     match = get_object_or_404(Match, pk=match_id)
     feature_match(match)
@@ -1926,60 +1926,6 @@ def api_tv_state(request):
         "hero": _pack_match(hero),
         "next": _pack_match(next_match),
         "stake": _pack_tv_stake(hero),
-    })
-
-
-@require_GET
-def api_tv_upcoming(request):
-    """
-    GET /api/tv/upcoming/
-    Lecture publique. Retourne le next match et les N prochains matchs planifiés
-    de la journée courante (ou prochaine), pour la TV (slide Programme + bandeau).
-    Paramètre ?n=5 (défaut 5, max 10).
-    """
-    edition = get_current_edition()
-    if edition is None:
-        return JsonResponse({"next": None, "upcoming": [], "currentPlayDay": None})
-
-    try:
-        n = min(int(request.GET.get("n", 5)), 10)
-    except (ValueError, TypeError):
-        n = 5
-
-    current_pd = (
-        PlayDay.objects.filter(edition=edition, date__gte=timezone.localdate())
-        .order_by("date")
-        .first()
-    )
-    if current_pd is None:
-        return JsonResponse({"next": None, "upcoming": [], "currentPlayDay": None})
-
-    matches = (
-        Match.objects.filter(
-            edition=edition,
-            status=Match.Status.SCHEDULED,
-            scheduled_time__date=current_pd.date,
-            order_index__isnull=False,
-        )
-        .select_related(
-            "court",
-            "side_a",
-            "side_a__player",
-            "side_b",
-            "side_b__player",
-            "group",
-            "event",
-        )
-        .order_by("order_index")[:n]
-    )
-
-    matches_list = list(matches)
-    next_match = matches_list[0] if matches_list else None
-
-    return JsonResponse({
-        "next": _pack_match(next_match) if next_match else None,
-        "upcoming": [_pack_match(m) for m in matches_list],
-        "currentPlayDay": _pack_play_day(current_pd),
     })
 
 

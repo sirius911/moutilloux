@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { useApi } from '@/composables/useApi'
 import { extractApiError } from '@/lib/apiError'
 import EditionModal from '@/components/modals/EditionModal.vue'
 import EventModal from '@/components/modals/EventModal.vue'
 import StartEventModal from '@/components/modals/StartEventModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
-import type { Edition, Event } from '@/types'
+import type { Announcement, Edition, Event } from '@/types'
 
 const router = useRouter()
 const eventStore = useEventStore()
+const api = useApi()
 
 onMounted(async () => {
   await eventStore.fetchEditions()
@@ -19,6 +21,61 @@ onMounted(async () => {
 const activeEdition = computed(() => eventStore.activeEdition)
 const editions = computed(() => eventStore.editions)
 const events = computed(() => eventStore.events)
+
+// ── Annonces TV ───────────────────────────────────────────────────────────
+const announcements = ref<Announcement[]>([])
+const newAnnouncementMessage = ref('')
+
+async function fetchAnnouncements() {
+  if (!activeEdition.value) {
+    announcements.value = []
+    return
+  }
+  try {
+    const data = await api.get<{ announcements: Announcement[] }>(
+      `/api/editions/${activeEdition.value.id}/announcements/`,
+    )
+    announcements.value = data.announcements
+  } catch (err) {
+    error.value = extractApiError(err)
+  }
+}
+
+watch(
+  () => activeEdition.value?.id,
+  () => {
+    fetchAnnouncements()
+  },
+  { immediate: true },
+)
+
+async function addAnnouncement() {
+  if (!activeEdition.value || !newAnnouncementMessage.value.trim()) return
+  error.value = ''
+  try {
+    await api.post(`/api/editions/${activeEdition.value.id}/announcements/create/`, {
+      message: newAnnouncementMessage.value.trim(),
+    })
+    newAnnouncementMessage.value = ''
+    await fetchAnnouncements()
+  } catch (err) {
+    error.value = extractApiError(err)
+  }
+}
+
+async function toggleAnnouncement(a: Announcement) {
+  error.value = ''
+  try {
+    await api.post(`/api/announcements/${a.id}/edit/`, { isActive: !a.isActive })
+    await fetchAnnouncements()
+  } catch (err) {
+    error.value = extractApiError(err)
+  }
+}
+
+function removeAnnouncement(a: Announcement) {
+  confirmState.value = { type: 'deleteAnnouncement', payload: a }
+}
 
 // ── Configuration (Phase 9) ──────────────────────────────────────────────
 const error = ref('')
@@ -29,6 +86,7 @@ type ConfirmAction =
   | { type: 'deleteEdition'; payload: Edition }
   | { type: 'deleteEvent'; payload: Event }
   | { type: 'reopenEvent'; payload: Event }
+  | { type: 'deleteAnnouncement'; payload: Announcement }
 const confirmState = ref<ConfirmAction | null>(null)
 const startConfirm = ref<Event | null>(null)
 
@@ -87,6 +145,9 @@ async function handleConfirm() {
       await eventStore.deleteEvent(action.payload.id)
     } else if (action.type === 'reopenEvent') {
       await eventStore.reopenEvent(action.payload.id)
+    } else if (action.type === 'deleteAnnouncement') {
+      await api.post(`/api/announcements/${action.payload.id}/delete/`)
+      await fetchAnnouncements()
     }
   } catch (err) {
     error.value = extractApiError(err)
@@ -150,6 +211,52 @@ async function handleConfirm() {
                 {{ activeEdition.matchesFinished }}<em>/{{ activeEdition.matchesTotal }}</em>
               </span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Annonces TV -->
+      <section v-if="activeEdition" class="adm-card">
+        <div class="adm-card-head">
+          <h3>Annonces TV</h3>
+        </div>
+
+        <div class="adm-announce-add">
+          <input
+            v-model="newAnnouncementMessage"
+            type="text"
+            class="adm-input"
+            placeholder="Nouvelle annonce…"
+            @keyup.enter="addAnnouncement"
+          />
+          <button
+            class="adm-btn primary"
+            type="button"
+            :disabled="!newAnnouncementMessage.trim()"
+            @click="addAnnouncement"
+          >
+            Ajouter
+          </button>
+        </div>
+
+        <div v-if="announcements.length === 0" class="adm-empty">
+          Aucune annonce.
+        </div>
+
+        <div v-else class="adm-announces">
+          <div v-for="a in announcements" :key="a.id" class="adm-announce">
+            <label class="adm-toggle">
+              <input
+                type="checkbox"
+                :checked="a.isActive"
+                @change="toggleAnnouncement(a)"
+              />
+              <span class="adm-toggle-track"><span class="adm-toggle-thumb" /></span>
+            </label>
+            <span :class="['adm-announce-msg', { 'is-inactive': !a.isActive }]">{{ a.message }}</span>
+            <button class="adm-btn danger" type="button" @click="removeAnnouncement(a)">
+              Supprimer
+            </button>
           </div>
         </div>
       </section>
@@ -336,6 +443,14 @@ async function handleConfirm() {
       :title="`Supprimer l'épreuve « ${(confirmState.payload as Event).name} » ?`"
       body="Cela efface inscriptions, poules, matchs et tableau de l'épreuve. Cette action est irréversible."
       confirm-label="Supprimer l'épreuve"
+      @confirm="handleConfirm"
+      @close="confirmState = null"
+    />
+    <ConfirmModal
+      v-if="confirmState?.type === 'deleteAnnouncement'"
+      title="Supprimer cette annonce ?"
+      :body="`« ${(confirmState.payload as Announcement).message} » sera définitivement supprimée.`"
+      confirm-label="Supprimer l'annonce"
       @confirm="handleConfirm"
       @close="confirmState = null"
     />
@@ -646,4 +761,94 @@ async function handleConfirm() {
 
 /* Tab monospace */
 .tab { font-family: var(--font-mono); }
+
+/* ── Annonces TV ───────────────────────────────────────────────────── */
+.adm-announce-add {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.adm-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-2);
+  background: var(--bg-3);
+  color: var(--ink-0);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.adm-input:focus { outline: none; border-color: var(--accent); }
+
+.adm-announces {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.adm-announce {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.adm-announce:last-child { border-bottom: none; }
+
+.adm-announce-msg {
+  flex: 1;
+  font-size: 14px;
+  color: var(--ink-0);
+}
+
+.adm-announce-msg.is-inactive { color: var(--ink-3); text-decoration: line-through; }
+
+.adm-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.adm-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.adm-toggle-track {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--bg-4);
+  border: 1px solid var(--line-2);
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  transition: background 150ms;
+}
+
+.adm-toggle-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  transition: transform 150ms, background 150ms;
+}
+
+.adm-toggle input:checked + .adm-toggle-track {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.adm-toggle input:checked + .adm-toggle-track .adm-toggle-thumb {
+  background: var(--accent);
+  transform: translateX(16px);
+}
 </style>

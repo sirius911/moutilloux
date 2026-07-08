@@ -1,16 +1,12 @@
 from django.urls import path
-from .views import results
 from . import views
 from . import api_views
 
 
 urlpatterns = [
     path("", views.home, name="home"),
-    path("results/live/", views.results_live_menu, name="results_live_menu"),
-    path("results/", results, name="results"),
 
     # ── API JSON (SPA Vue.js) ──────────────────────────────────────────
-    path("api/score_state/", views.score_state, name="score_state"),
     path("api/csrf/", api_views.api_csrf, name="api_csrf"),
     path("api/auth/login/", api_views.api_login, name="api_login"),
     path("api/auth/logout/", api_views.api_logout, name="api_logout"),
@@ -96,8 +92,6 @@ urlpatterns = [
     path("api/editions/<int:edition_id>/calendar/", api_views.api_edition_calendar, name="api_edition_calendar"),
     path("api/editions/<int:edition_id>/calendar/reorder/", api_views.api_calendar_reorder, name="api_calendar_reorder"),
     path("api/events/<int:event_id>/matches/auto-arrange/", api_views.api_matches_auto_arrange, name="api_matches_auto_arrange"),
-    # TV : prochains matchs (lecture publique)
-    path("api/tv/upcoming/", api_views.api_tv_upcoming, name="api_tv_upcoming"),
     # TV : état chaud unifié (sprint 22)
     path("api/tv/state/", api_views.api_tv_state, name="api_tv_state"),
     # TV : contenu froid du carousel (sprint 22)
@@ -107,12 +101,4 @@ urlpatterns = [
     path("api/editions/<int:edition_id>/announcements/create/", api_views.api_announcement_create, name="api_announcement_create"),
     path("api/announcements/<int:announcement_id>/edit/", api_views.api_announcement_edit, name="api_announcement_edit"),
     path("api/announcements/<int:announcement_id>/delete/", api_views.api_announcement_delete, name="api_announcement_delete"),
-
-    path("results/poules/", views.results_poules, name="results_poules"),
-    path("results/poules/start/", views.results_poules_start, name="results_poules_start"),
-    path("results/poules/<int:event_id>/", views.results_poules_event, name="results_poules_event"),
-    path("results/final/start/", views.results_final_start, name="results_final_start"),
-    path("results/final/<int:event_id>/", views.results_final_event, name="results_final_event"),
-    path("results/mix/start/", views.results_mix_start, name="results_mix_start"),
-    path("results/mix/<int:event_id>/", views.results_mix_event, name="results_mix_event"),
 ]
