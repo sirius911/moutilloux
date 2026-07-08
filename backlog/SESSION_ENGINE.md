@@ -373,47 +373,42 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #119
-**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (1ʳᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #120
+**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (2ᵉ session du sprint)
 
-**Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`
-créée depuis le parent effectif `claude/sprint/29-joueurs-attitudes-predefinies`
-(sprint 29 toujours non mergé dans `main`, déjà à jour, rien à fusionner).
-**Piège upstream rencontré** (voir mémoire `project_git_upstream_piege`) :
-`git checkout -b <branche30> origin/<branche29>` fait tracker la nouvelle
-branche sur le nom distant `claude/sprint/29-...` — push final fait
-explicitement avec `git push origin HEAD:claude/sprint/30-planning-journees-eta-ponctualite`.
+**Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`,
+parent effectif `claude/sprint/29-joueurs-attitudes-predefinies` (déjà à
+jour, rien à fusionner). Piège upstream déjà corrigé en session #119 (voir
+mémoire `project_git_upstream_piege`) — `git branch --set-upstream-to` fait,
+push nu `git push` fonctionne normalement cette session.
 
-**Spec review session #119 :** `planning.md` et `admin-matchs.md` ❌ Dérive
-bloquante attendue (sprint pas démarré) — 6 dérives, toutes déjà ticketées
-#302-307, 0 nouvelle issue.
+**Spec review session #120 :** `planning.md`/`admin-matchs.md` ❌ Dérive
+bloquante attendue (2 tickets restants en entrée de session), 0 nouvelle
+dérive.
 
-**Backlog engine session #119 :** 2 tickets traités (limite de la session,
-en parallèle car fichiers disjoints) — **#302** (back : service
-`generate_play_days` + endpoint `play-days/generate/`, idempotent, crée une
-`PlayDay` par jour manquant entre les dates de l'édition) et **#307** (front,
-bug : le calendrier ne scrollait pas dans les journées — cause réelle
-identifiée dans `AdminLayout.vue` (`.admin-main` manquait `min-height: 0`,
-piège flexbox classique empêchant le layout admin partagé de se contracter
-sous la hauteur de son contenu), pas dans `AdminMatches.vue` comme le
-suggérait le titre du ticket. Les deux `✅ Approuvé` en review, fermés sur
-GitHub. `npx vue-tsc -b --force` : 0 nouvelle erreur.
+**Backlog engine session #120 :** 2 tickets traités (limite de la session,
+en parallèle car fichiers disjoints) — **#303** (front, `PlayDayModal.vue` :
+bouton « Générer depuis l'édition », aperçu des dates manquantes calculé
+100% côté client, garde-fou 1000 itérations) et **#304** (front,
+`AdminMatches.vue` : réécriture de `computedETAs` — curseur strictement
+monotone sur les 4 branches FINISHED/LIVE/SCHEDULED/pause, suppression de la
+Map mémoire `lastAnnouncedEta` devenue inutile, heure affichée = `startedAt`
+réel pour FINISHED/LIVE au lieu d'une estimation ou de `finishedAt`).
+Golden paths vérifiés numériquement par le reviewer. Les deux `✅ Approuvé`,
+fermés sur GitHub. `npx vue-tsc -b --force` : 0 nouvelle erreur.
 
-**Fichiers partagés câblés par l'orchestrateur :** `live/urls.py` (route
-`api/editions/<id>/play-days/generate/` → `api_play_days_generate`, #302).
-`AdminLayout.vue` (layout admin partagé, pas dans la liste officielle des
-fichiers réservés du sprint mais signalé par transparence) a été livré
-directement par l'agent d'implémentation de #307, sans câblage orchestrateur
-nécessaire.
+**Fichiers partagés câblés par l'orchestrateur :** `stores/event.ts` (action
+`generatePlayDays(editionId, {startTime, targetEndTime})`, même convention
+que `createPlayDay`, #303).
 
-**Sprint 30 — non clôturé cette session :** 4 issues `sprint-30` restantes
-(#303 modale « Générer depuis l'édition », #304 moteur ETA monotone, #305
-teinte de ponctualité, #306 heure de début éditable). Ordre suggéré pour la
-suite : #303 (dépend de #302, désormais prêt) puis #304 → #305 → #306
-(séquentiel, même SFC `AdminMatches.vue`). Sera repris à la **prochaine
-échéance planifiée**.
+**Sprint 30 — non clôturé cette session :** 2 issues `sprint-30` restantes
+(#305 teinte de ponctualité, #306 heure de début éditable) — toutes deux
+séquentielles sur `AdminMatches.vue`, #305 consommant désormais les ETA
+correctes livrées par #304. Sera repris à la **prochaine échéance
+planifiée** — plausiblement la session de clôture du sprint (2 tickets
+restants, à confirmer si aucune dérive supplémentaire n'apparaît).
 
-**Point d'attention outillage :** confirmation supplémentaire (2ᵉ session de
+**Point d'attention outillage :** confirmation supplémentaire (3ᵉ session de
 suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit` seul
 ne type-check aucun fichier `.vue` dans cet environnement. Toujours pas de
 script `type-check` dans `package.json`, toujours pas de `.claude/launch.json`
