@@ -10,7 +10,6 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 34 — Tableau final au calendrier | `backlog/sprints/34-tableau-final-calendrier/sprint.md` |
-| 2 | 35 — TV : scène live & fin de match | `backlog/sprints/35-tv-scene-live-fin-de-match/sprint.md` |
-| 3 | 36 — Échauffement | `backlog/sprints/36-echauffement/sprint.md` |
-| 4 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |
+| 1 | 35 — TV : scène live & fin de match | `backlog/sprints/35-tv-scene-live-fin-de-match/sprint.md` |
+| 2 | 36 — Échauffement | `backlog/sprints/36-echauffement/sprint.md` |
+| 3 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |
