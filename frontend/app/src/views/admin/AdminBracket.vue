@@ -1,21 +1,40 @@
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
+import { usePolling } from '@/composables/usePolling'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import type { BracketSlot, Entry } from '@/types'
 
 const eventStore = useEventStore()
+const route = useRoute()
+const router = useRouter()
+
+async function loadEventData(id: number) {
+  await eventStore.fetchBracket(id)
+  await eventStore.fetchGroups(id)
+  await eventStore.fetchPlayers(id)
+}
 
 watch(() => eventStore.activeEventId, (id) => {
-  if (id) {
-    eventStore.fetchBracket(id)
-    eventStore.fetchGroups(id)
-    eventStore.fetchPlayers(id)
-  }
-}, { immediate: true })
+  if (id) loadEventData(id)
+})
+
+// Rafraîchissement périodique pour suivre la progression automatique des
+// gagnants (saisie arbitre) pendant la phase finale — cadence alignée sur
+// TvBracket (cible poules/bracket : ~4s). Couvre aussi le chargement initial
+// (usePolling lance fn() immédiatement au montage), le watch ci-dessus n'a
+// donc pas besoin d'`immediate: true` — évite un double fetch au montage.
+usePolling(async () => {
+  if (eventStore.activeEventId) await loadEventData(eventStore.activeEventId)
+}, 4000)
 
 const bracket = computed(() => eventStore.bracket)
 const error = ref('')
+
+const activeEvent = computed(() =>
+  eventStore.events.find((e) => e.id === eventStore.activeEventId),
+)
 
 // Un tableau existe dès qu'au moins un slot porte un match (y compris P3).
 const hasBracket = computed(() =>
@@ -35,16 +54,59 @@ function extractError(e: unknown): string {
   return 'Action impossible.'
 }
 
+function setActiveEvent(id: string) {
+  const numId = parseInt(id, 10)
+  if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
+}
+
+// ── Recréation du tableau — modale de confirmation ─────────────────────────
+
+const showRecreateConfirm = ref(false)
+const recreateError = ref('')
+
+const recreateModalBody = computed(() => {
+  const warning = 'Recréer le tableau efface les matchs planifiés actuels.'
+  return recreateError.value ? `${warning} Erreur : ${recreateError.value}` : warning
+})
+
+function closeRecreateConfirm() {
+  showRecreateConfirm.value = false
+  recreateError.value = ''
+}
+
 async function createOrRecreate() {
   if (!eventStore.activeEventId) return
-  // Étape de départ dérivée du nombre de poules : 4 poules → quarts, sinon demies.
-  const startStage = eventStore.groups.length >= 4 ? 'QF' : 'SF'
-  if (hasBracket.value && !confirm('Recréer le tableau effacera les matchs planifiés actuels. Continuer ?')) return
+  // La recréation (tableau déjà existant) exige une confirmation explicite ;
+  // la création initiale (pas encore de tableau) ne demande rien.
+  if (hasBracket.value) {
+    recreateError.value = ''
+    showRecreateConfirm.value = true
+    return
+  }
   try {
-    await eventStore.createBracket(eventStore.activeEventId, startStage, hasBracket.value)
+    await createBracketNow()
     error.value = ''
   } catch (e) {
     error.value = extractError(e)
+  }
+}
+
+async function createBracketNow() {
+  if (!eventStore.activeEventId) return
+  // Étape de départ (QF vs SF) dérivée du nombre de poules côté serveur depuis
+  // #197 — le front ne transmet plus start_stage, seulement force.
+  await eventStore.createBracket(eventStore.activeEventId, hasBracket.value)
+}
+
+async function confirmRecreate() {
+  try {
+    await createBracketNow()
+    recreateError.value = ''
+    showRecreateConfirm.value = false
+  } catch (e) {
+    // Règle serveur : refus si un match du tableau est déjà LIVE/FINISHED —
+    // le message reste affiché dans la modale, qui ne se ferme pas.
+    recreateError.value = extractError(e)
   }
 }
 
@@ -156,15 +218,36 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
 <template>
   <div class="admin-page">
     <header class="page-header">
-      <div>
-        <p class="breadcrumb">Tournoi · {{ eventStore.events.find(e => e.id === eventStore.activeEventId)?.name ?? '—' }}</p>
-        <h1 class="page-title">Tableau final</h1>
-        <p class="page-sub">Glissez les qualifiés dans les slots du bracket</p>
+      <div class="header-left">
+        <select
+          class="event-selector"
+          :value="eventStore.activeEventId"
+          @change="setActiveEvent(($event.target as HTMLSelectElement).value)"
+        >
+          <option v-for="ev in eventStore.events" :key="ev.id" :value="ev.id">
+            {{ ev.name }}
+          </option>
+        </select>
+        <div>
+          <h1 class="page-title">Tableau final</h1>
+          <p class="page-sub">Glissez les qualifiés dans les slots du bracket</p>
+        </div>
       </div>
       <div class="header-actions">
         <button v-if="hasBracket" class="adm-btn" type="button" @click="createOrRecreate">Recréer le tableau</button>
       </div>
     </header>
+
+    <ConfirmModal
+      v-if="showRecreateConfirm"
+      title="Recréer le tableau ?"
+      :body="recreateModalBody"
+      confirm-label="Recréer"
+      :danger="true"
+      :is-error="!!recreateError"
+      @confirm="confirmRecreate"
+      @close="closeRecreateConfirm"
+    />
 
     <div v-if="eventStore.events.length === 0" class="empty-state">
       <p>Aucune épreuve active.</p>
@@ -174,7 +257,12 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
     <div v-else class="page-content">
       <p v-if="error" class="bracket-error" role="alert">{{ error }}</p>
 
-      <div v-if="!hasBracket" class="bracket-empty bracket-empty--cta">
+      <div v-if="activeEvent?.status === 'INSCRIPTION'" class="empty-state">
+        <p>L'épreuve n'a pas encore été débutée.</p>
+        <RouterLink to="/admin/tournoi">Débuter depuis l'écran Tournoi →</RouterLink>
+      </div>
+
+      <div v-else-if="!hasBracket" class="bracket-empty bracket-empty--cta">
         <p>Aucun tableau final créé pour cette épreuve.</p>
         <button class="adm-btn primary" type="button" @click="createOrRecreate">Créer le tableau</button>
       </div>
@@ -290,6 +378,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
                     class="slot-side"
@@ -298,6 +387,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
               </div>
@@ -349,6 +439,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
                     class="slot-side"
@@ -357,6 +448,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
               </div>
@@ -408,6 +500,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
                     class="slot-side"
@@ -416,6 +509,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
               </div>
@@ -514,7 +608,23 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
   gap: 16px;
 }
 
-.breadcrumb { margin: 0 0 4px; font-size: 12px; color: var(--ink-3); letter-spacing: 0.06em; }
+.header-left { display: flex; flex-direction: column; gap: 6px; }
+
+.event-selector {
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-family: inherit;
+  max-width: 220px;
+}
+
+.event-selector:focus { outline: none; border-color: var(--accent); }
+
 .page-title { margin: 0 0 4px; font-size: 26px; font-weight: 700; color: var(--ink-0); }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-2); }
 

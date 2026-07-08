@@ -373,36 +373,48 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #57
-**Sprint actif :** — (Sprint 17 clôturé cette session ; **Sprint 18 — Tableau
-final conforme** devient le sprint actif à la prochaine échéance).
-Spec review (faite en début de session) : `specs/screens/admin-matchs.md`
-(§ Panneau d'édition de match) → **✅ Conforme**, `specs/technical/cycle-de-vie-match.md`
-(§ Invariant mono-LIVE, § Démarrer, § Terminer, § Rouvrir) → **✅ Conforme**.
-Les deux dérives corrigées en session #56 (#228, #229) sont confirmées résolues
-sans régression : `was_finished` bien calculé avant mutation dans
-`api_match_edit` et routé vers `reopen_match()`, `ConfirmModal` de réouverture
-sans empilement avec la modale de conflit mono-LIVE.
-**Roadmap :** 4 sprints planifiés (18 → 21), 18 en tête.
-**Tickets clôturés cette session :** 0 (0 issue ouverte sur le milestone en
+**Dernière session :** 2026-07-03 — Session #65
+**Sprint actif :** 19 — Poules & inscriptions : ajustements (devient actif
+cette session, pas encore démarré).
+
+**Sprint 18 — Tableau final conforme : CLÔTURÉ cette session (8ᵉ et dernière
+session du sprint).** Spec review de la session #65, relecture complète ligne
+par ligne de `specs/screens/admin-tableau-final.md` contre `AdminBracket.vue`,
+`ConfirmModal.vue`, `stores/event.ts`, `live/api_views.py`,
+`live/admin_views.py`, `live/bracket.py` → **✅ Conforme**, 0 dérive. Milestone
+GitHub #17 à 0 issue ouverte. Les deux conditions de clôture réunies :
+milestone fermé, ligne retirée de `backlog/sprints/roadmap.md`, dossier
+déplacé vers `backlog/sprints/done/18-tableau-final-conformite/`.
+**Tickets traités session #65 :** 0 (rien à traiter, milestone déjà à 0 en
 entrant en session).
-**Nouveaux tickets créés :** 0.
-**Branche :** `claude/sprint/17-panneau-edition-match` (sprint clos — la PR
-[#223](https://github.com/sirius911/moutilloux/pull/223) reste ouverte pour
-merge manuel ; le sprint 18 démarrera sur sa propre branche `claude/sprint/18-…`
-depuis le parent effectif résolu via `backlog/sprints/done/`).
 
-**Sprint 17 clôturé cette session.** Les deux conditions étaient réunies : spec
-review de la session ✅ sur les deux specs du sprint (admin-matchs.md,
-cycle-de-vie-match.md) et milestone à 0 issue ouverte. Milestone GitHub #16
-fermé, ligne retirée de `backlog/sprints/roadmap.md` (renumérotation 18→21 en
-1→4), dossier déplacé vers `backlog/sprints/done/17-panneau-edition-match/`.
+**Anomalie d'orchestration (session #65) :** en entrant en session, un
+fichier `backlog/logs/session_2026-07-03_64.md` était présent mais non
+committé — la session #64 (qui avait traité #236, commit `e68cc07`) s'était
+arrêtée avant de finaliser son étape 4 (commit du log, mise à jour section 6,
+push). Contenu du log #64 vérifié cohérent avec le commit `e68cc07` et
+conservé tel quel ; committé au tout début de la session #65 (étape 0,
+« working tree sale »), avant la review fraîche qui a mené à la clôture du
+sprint. Aucune perte de travail. Fait suite à l'anomalie de la session #63
+(issues apparues hors flux) — à surveiller sur les prochaines sessions,
+notamment si une session s'interrompt de nouveau avant son push final.
 
-**Problèmes d'orchestration (session #57) :** aucun.
+**Sessions #63-#64 (pour mémoire, résumé) :** #63 a ticketé et corrigé #234 ;
+a aussi vu apparaître hors flux normal #235/#236 (anomalie documentée dans
+`backlog/logs/session_2026-07-03_63.md`), #235 corrigée la même session. #64 a
+corrigé #236 (`ConfirmModal.vue` : prop `isError` → `role="alert"` ciblé) et
+revérifié #234/#235 sans régression (commit `e68cc07`), mais n'a pas finalisé
+sa clôture de session (voir anomalie ci-dessus, résolue en #65).
 
-Parent effectif pour la session #57 : `claude/sprint/16-arbitre-demarrer-match`
-(le sprint 16 est clos côté planification/milestone, mais sa PR #178 n'est pas
-encore mergée dans `main`). Déjà synchronisé, aucun merge nécessaire. Le
-prochain parent effectif (pour le sprint 18) devra être recalculé au prochain
-déclenchement via `backlog/sprints/done/` (16 reste le sprint le plus récent
-< 18 tant que sa PR n'est pas mergée dans `main`).
+**Sprint 17 :** clôturé en session #57 côté planification/milestone — sa PR
+#223 reste non mergée dans `main`, donc reste le parent effectif de la
+branche du sprint 18 (`claude/sprint/18-tableau-final-conformite`, ahead de
+`claude/sprint/17-panneau-edition-match`). Point à surveiller pour le sprint
+19 : sa branche devra être créée depuis `main` (le sprint 17, terminé, n'est
+plus dans `backlog/sprints/done/` avec un numéro < 19 qui changerait ce
+calcul — à revérifier avec l'algorithme de résolution du parent à l'étape 0
+de la prochaine session).
+
+**Roadmap :** 3 sprints planifiés (19 → 21), 19 en tête. Le sprint 19 n'a pas
+été démarré dans cette session (protocole : un sprint ne démarre qu'à la
+prochaine échéance planifiée).

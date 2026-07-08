@@ -190,7 +190,7 @@ export interface Bracket {
   qf: BracketSlot[]        // 4 slots
   sf: BracketSlot[]        // 2 slots
   f: BracketSlot[]         // 1 slot
-  p3?: BracketSlot[]       // 1 slot (petite finale, optionnel)
+  p3: BracketSlot[]        // 1 slot (petite finale)
 }
 
 // ─── Kanban ─────────────────────────────────────────────────────────────────

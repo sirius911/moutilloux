@@ -322,14 +322,11 @@ export const useEventStore = defineStore('event', () => {
 
   // ── Mutations — Phase 7 (bracket) ─────────────────────────────────────
 
-  async function createBracket(
-    eventId: number,
-    startStage: 'QF' | 'SF' | 'F',
-    force = false,
-  ) {
+  async function createBracket(eventId: number, force = false) {
     // L'endpoint renvoie la structure du bracket : on l'applique directement.
+    // Forme du tableau (QF vs SF) dérivée du nombre de poules côté serveur
+    // depuis #197 — le front ne transmet plus start_stage.
     bracket.value = await post<Bracket>(`/api/events/${eventId}/bracket/create/`, {
-      start_stage: startStage,
       force,
     })
   }
@@ -340,22 +337,33 @@ export const useEventStore = defineStore('event', () => {
     sideALabel: string,
     sideBLabel: string,
   ) {
-    await post(`/api/matches/${matchId}/bracket-labels/`, {
-      side_a_label: sideALabel,
-      side_b_label: sideBLabel,
-    })
-    await fetchBracket(eventId)
+    // Le bracket est rechargé même en cas d'échec (garde serveur) pour rester
+    // fidèle à l'état réel, sans attendre le prochain polling.
+    try {
+      await post(`/api/matches/${matchId}/bracket-labels/`, {
+        side_a_label: sideALabel,
+        side_b_label: sideBLabel,
+      })
+    } finally {
+      await fetchBracket(eventId)
+    }
   }
 
   // assign / clear : réutilisent les endpoints JSON déjà exposés par le panel admin.
   async function assignBracket(eventId: number, matchId: number, side: 'A' | 'B', entryId: number) {
-    await post(`/api/events/${eventId}/bracket/assign/`, { match_id: matchId, entry_id: entryId, side })
-    await fetchBracket(eventId)
+    try {
+      await post(`/api/events/${eventId}/bracket/assign/`, { match_id: matchId, entry_id: entryId, side })
+    } finally {
+      await fetchBracket(eventId)
+    }
   }
 
   async function clearBracket(eventId: number, matchId: number, side: 'A' | 'B') {
-    await post(`/api/events/${eventId}/bracket/clear/`, { match_id: matchId, side })
-    await fetchBracket(eventId)
+    try {
+      await post(`/api/events/${eventId}/bracket/clear/`, { match_id: matchId, side })
+    } finally {
+      await fetchBracket(eventId)
+    }
   }
 
   // ── Mutations — Sprint 11 (cycle de vie) ──────────────────────────────
