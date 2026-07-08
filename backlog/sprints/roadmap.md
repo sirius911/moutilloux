@@ -10,4 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 11 — Cycle de vie : statut & « Débuter » | `backlog/sprints/11-cycle-de-vie-statut/sprint.md` |
+| 1 | Sprint 12 — Forfait & ajustements en cours de jeu | `backlog/sprints/12-forfait-ajustements/sprint.md` |
+| 2 | Sprint 13 — Tableau : seeding général, byes & 3e place | `backlog/sprints/13-tableau-seeding/sprint.md` |

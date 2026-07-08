@@ -72,6 +72,9 @@ urlpatterns = [
     path("api/editions/<int:edition_id>/events/create/", api_views.api_event_create, name="api_event_create"),
     path("api/events/<int:event_id>/edit/", api_views.api_event_edit, name="api_event_edit"),
     path("api/events/<int:event_id>/delete/", api_views.api_event_delete, name="api_event_delete"),
+    path("api/events/<int:event_id>/start/", api_views.api_event_start, name="api_event_start"),
+    path("api/events/<int:event_id>/close/", api_views.api_event_close, name="api_event_close"),
+    path("api/events/<int:event_id>/reopen/", api_views.api_event_reopen, name="api_event_reopen"),
 
     # ── API JSON — Sprint 07 (calendrier : journées et pauses) ────────────────
     # PlayDay

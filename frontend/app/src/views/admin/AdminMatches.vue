@@ -6,7 +6,6 @@ import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
-import GenerateMatchesModal from '@/components/modals/GenerateMatchesModal.vue'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -19,9 +18,12 @@ const route = useRoute()
 const router = useRouter()
 
 const editingMatch = ref<Match | null>(null)
-const showGenerateMatches = ref(false)
 const bannerError = ref('')
 const arranging = ref(false)
+
+const activeEvent = computed(() =>
+  eventStore.events.find((e) => e.id === eventStore.activeEventId),
+)
 
 // ── Polling calendrier ─────────────────────────────────────────────────────
 
@@ -288,11 +290,6 @@ function formatDate(dateStr: string): string {
 
 // ── Actions ────────────────────────────────────────────────────────────────
 
-async function onMatchesGenerated() {
-  showGenerateMatches.value = false
-  await eventStore.fetchCalendar()
-}
-
 async function preArrange() {
   if (!eventStore.activeEventId) return
   arranging.value = true
@@ -390,9 +387,6 @@ async function onDragEnd() {
         </div>
       </div>
       <div class="header-actions">
-        <button class="adm-btn" type="button" @click="showGenerateMatches = true">
-          Générer les matchs de poule
-        </button>
         <button
           class="adm-btn primary"
           type="button"
@@ -408,11 +402,6 @@ async function onDragEnd() {
     <div v-if="bannerError" class="error-banner">{{ bannerError }}</div>
 
     <!-- Modales -->
-    <GenerateMatchesModal
-      v-if="showGenerateMatches"
-      @close="showGenerateMatches = false"
-      @saved="onMatchesGenerated"
-    />
     <EditMatchPanel
       v-if="editingMatch"
       :match="editingMatch"
@@ -426,6 +415,11 @@ async function onDragEnd() {
       <RouterLink to="/admin/tournoi">Créer une épreuve dans Tournoi →</RouterLink>
     </div>
 
+    <div v-else-if="activeEvent?.status === 'INSCRIPTION'" class="empty-state">
+      <p>L'épreuve n'a pas encore été débutée.</p>
+      <RouterLink to="/admin/tournoi">Débuter depuis l'écran Tournoi →</RouterLink>
+    </div>
+
     <template v-else>
       <div class="cal-layout">
       <!-- Pile à planifier -->
@@ -436,7 +430,7 @@ async function onDragEnd() {
         </div>
 
         <div v-if="unscheduledTotal === 0 && totalScheduledMatches === 0" class="pile-done">
-          Générez d'abord les matchs de poule.
+          Aucun match à planifier.
         </div>
         <div v-else-if="unscheduledTotal === 0" class="pile-done">
           Tout est planifié

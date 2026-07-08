@@ -25,6 +25,7 @@ export interface Entry {
 // ─── Tournoi ────────────────────────────────────────────────────────────────
 
 export type CategoryMode = 'S' | 'D'
+export type EventStatus = 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'
 
 export interface Edition {
   id: number
@@ -52,9 +53,11 @@ export interface Event {
   qualifiedPerGroup: number   // 1 | 2
   notes: string
   // ── Indicateurs d'état ──
+  status: EventStatus
   entriesCount: number
   hasGroups: boolean
   hasBracket: boolean
+  hasBracketStarted: boolean
 }
 
 // ─── Référentiels de configuration (Phase 9) ────────────────────────────────

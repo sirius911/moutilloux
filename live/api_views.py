@@ -55,6 +55,10 @@ from live.admin_views import (
     create_event,
     update_event,
     delete_event,
+    # Sprint 11 — cycle de vie
+    start_event,
+    close_event,
+    reopen_event,
     # Sprint 07 — calendrier (journées + pauses)
     create_play_day,
     update_play_day,
@@ -326,10 +330,16 @@ def _pack_event(event):
         "groupSizeDefault": event.group_size_default,
         "qualifiedPerGroup": event.qualified_per_group,
         "notes": event.notes,
+        "status": event.status,
         "entriesCount": Entry.objects.filter(event=event).count(),
         "hasGroups": Group.objects.filter(event=event).exists(),
         "hasBracket": Match.objects.filter(
             event=event, stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F]
+        ).exists(),
+        "hasBracketStarted": Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F],
+            status__in=[Match.Status.LIVE, Match.Status.FINISHED],
         ).exists(),
     }
 
@@ -487,7 +497,7 @@ def api_event_groups(request, event_id):
             "grid": grid,
         })
 
-    locked = Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists()
+    locked = event.status != Event.Status.INSCRIPTION
     return JsonResponse({"locked": locked, "groups": result})
 
 
@@ -899,7 +909,7 @@ def api_group_assign(request, event_id):
     """
     POST /api/events/<id>/groups/assign/
     Assigne/déplace une Entry dans une poule (source : admin_views.assign_entry_to_group).
-    Body JSON: {entry_id, group_id}. Verrouillé si des matchs de poule existent.
+    Body JSON: {entry_id, group_id}. Verrouillé si status != INSCRIPTION.
     """
     try:
         data = json.loads(request.body)
@@ -931,7 +941,7 @@ def api_group_unassign(request, event_id):
     """
     POST /api/events/<id>/groups/unassign/
     Retire une Entry de sa poule (source : admin_views.unassign_entry).
-    Body JSON: {entry_id}. Verrouillé si des matchs de poule existent.
+    Body JSON: {entry_id}. Verrouillé si status != INSCRIPTION.
     """
     try:
         data = json.loads(request.body)
@@ -1435,6 +1445,49 @@ def api_event_edit(request, event_id):
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse(_pack_event(event))
+
+
+@require_POST
+@superuser_required
+def api_event_start(request, event_id):
+    """POST /api/events/<id>/start/ — INSCRIPTION → EN_COURS.
+    Réponse : {event, created, unplaced}."""
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    try:
+        result = start_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({
+        "event": _pack_event(event),
+        "created": result["created"],
+        "unplaced": [_pack_entry(e) for e in result["unplaced"]],
+    })
+
+
+@require_POST
+@superuser_required
+def api_event_close(request, event_id):
+    """POST /api/events/<id>/close/ — EN_COURS → TERMINEE (manuel admin).
+    Réponse : {event}."""
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    try:
+        close_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"event": _pack_event(event)})
+
+
+@require_POST
+@superuser_required
+def api_event_reopen(request, event_id):
+    """POST /api/events/<id>/reopen/ — TERMINEE → EN_COURS (recours admin).
+    Réponse : {event}."""
+    event = get_object_or_404(Event.objects.select_related("category", "edition"), pk=event_id)
+    try:
+        reopen_event(event)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"event": _pack_event(event)})
 
 
 @require_POST

@@ -22,6 +22,11 @@ class Event(models.Model):
     """
     Une catégorie dans une édition : ex "Double mixte" pour 2026.
     """
+    class Status(models.TextChoices):
+        INSCRIPTION = "INSCRIPTION", "Inscription"
+        EN_COURS = "EN_COURS", "En cours"
+        TERMINEE = "TERMINEE", "Terminée"
+
     edition = models.ForeignKey(TournamentEdition, on_delete=models.CASCADE, related_name="events")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="events")
 
@@ -29,6 +34,9 @@ class Event(models.Model):
     group_size_default = models.PositiveIntegerField(default=4)  # 3 ou 4 en général
     qualified_per_group = models.PositiveIntegerField(default=2)  # 1 ou 2
     notes = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=15, choices=Status.choices, default=Status.INSCRIPTION, db_index=True
+    )
 
     class Meta:
         unique_together = [("edition", "category")]

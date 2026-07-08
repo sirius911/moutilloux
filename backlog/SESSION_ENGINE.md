@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-29 — Session #28
-**Sprint actif :** aucun (roadmap vide)
-**Roadmap :** Sprint 11 actif (ajouté en fin de session)
-**Tickets clôturés cette session :** 2 (#117 ✅, #119 ⚠️)
-**Branche :** `claude/sprint/10-contexte-url`
+**Dernière session :** 2026-06-26 — Session #35
+**Sprint actif :** Aucun — Roadmap vide.
+**Roadmap :** Vide — tous les sprints terminés.
+**Tickets clôturés cette session :** 0
+**Branche :** `claude/sprint/11-cycle-de-vie-statut`
 **Issues restantes :** 0
-**Contexte :** Session 28 — Sprint 10 terminé. Sélecteurs épreuve migrés vers router.push (#117). États vides « Aucune épreuve active » ajoutés sur 4 écrans (#119). Milestone #9 fermé. Roadmap vide — désactiver la Routine manuellement sur claude.ai/code/routines si les sprints 11-13 ne sont pas encore dans la roadmap.
+**Contexte :** Session 35 — Roadmap vide, rien à faire. Désactiver la Routine sur claude.ai/code/routines.
