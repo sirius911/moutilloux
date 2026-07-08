@@ -477,7 +477,8 @@ def api_event_groups(request, event_id):
             "grid": grid,
         })
 
-    return JsonResponse(result, safe=False)
+    locked = Match.objects.filter(event=event, stage=Match.Stage.GROUP).exists()
+    return JsonResponse({"locked": locked, "groups": result})
 
 
 @require_GET

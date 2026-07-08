@@ -62,6 +62,7 @@ export const useEventStore = defineStore('event', () => {
   const allPlayers = ref<Player[]>([])
   const players = ref<Entry[]>([])
   const groups = ref<Group[]>([])
+  const groupsLocked = ref(false)
   const kanban = ref<KanbanData | null>(null)
   const bracket = ref<Bracket | null>(null)
 
@@ -102,7 +103,9 @@ export const useEventStore = defineStore('event', () => {
   async function fetchGroups(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
-    groups.value = await get<Group[]>(`/api/events/${id}/groups/`)
+    const data = await get<{ locked: boolean; groups: Group[] }>(`/api/events/${id}/groups/`)
+    groups.value = data.groups
+    groupsLocked.value = data.locked
   }
 
   async function fetchMatches(eventId?: number) {
@@ -317,7 +320,7 @@ export const useEventStore = defineStore('event', () => {
   return {
     // State
     activeEdition, editions, events, activeEventId,
-    allPlayers, players, groups, kanban, bracket,
+    allPlayers, players, groups, groupsLocked, kanban, bracket,
     categories, courts,
     // Fetch
     fetchEditions, fetchAllPlayers, fetchPlayers, fetchGroups, fetchMatches, fetchBracket,
