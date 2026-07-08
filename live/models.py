@@ -149,12 +149,10 @@ class Match(models.Model):
                 .update(status=Match.Status.SCHEDULED)
 
             self.status = Match.Status.LIVE
-            # quand un match devient LIVE, il sort de la file
-            self.order_index = None
 
             if not self.started_at:
                 self.started_at = timezone.now()
-            self.save(update_fields=["status", "started_at", "order_index"])
+            self.save(update_fields=["status", "started_at"])
 
     def mark_finished(self):
         self.status = Match.Status.FINISHED

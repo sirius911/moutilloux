@@ -263,7 +263,6 @@ def referee_action(request, match_id: int):
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
                 match.is_featured = False
-                match.order_index = None
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
                 # on garde games_a/games_b comme score final du set si match en 1 set
@@ -310,7 +309,6 @@ def referee_action(request, match_id: int):
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
                 match.is_featured = False
-                match.order_index = None
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
                 # IMPORTANT: on garde games_a/games_b comme score final du set en 1 set
@@ -444,7 +442,7 @@ def referee_action(request, match_id: int):
             "set_scores",
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -458,7 +456,7 @@ def referee_action(request, match_id: int):
             "set_scores",
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -519,7 +517,7 @@ def referee_action(request, match_id: int):
             "tb_active", "tb_points_a", "tb_points_b",
             "sets_a", "sets_b",
             "set_scores",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -544,7 +542,7 @@ def referee_action(request, match_id: int):
             "tb_active", "tb_points_a", "tb_points_b",
             "sets_a", "sets_b",
             "set_scores",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
             "winner_side",
         ])
         return JsonResponse({"ok": True})
@@ -595,7 +593,6 @@ def referee_action(request, match_id: int):
         Match.objects.filter(event=match.event, is_featured=True).exclude(id=match.id).update(is_featured=False)
 
         match.is_featured = True
-        match.order_index = None
         match.mark_live()   # ✅ met status=LIVE + started_at si vide
         match.save()
 
@@ -604,7 +601,6 @@ def referee_action(request, match_id: int):
     if action == "finish_left":
         match.winner_side = side_from_left()
         match.is_featured = False
-        match.order_index = None
         match.mark_finished()   # ✅ met status=FINISHED + finished_at
         match.save()
 
@@ -633,7 +629,6 @@ def referee_action(request, match_id: int):
     if action == "finish_right":
         match.winner_side = side_from_right()
         match.is_featured = False
-        match.order_index = None
         match.mark_finished()
         match.save()
 
@@ -666,7 +661,6 @@ def referee_action(request, match_id: int):
 
         match.winner_side = winner          # repère modèle direct, pas de swap
         match.is_featured = False
-        match.order_index = None
         match.mark_finished()
         match.save()
 
@@ -716,7 +710,6 @@ def referee_action(request, match_id: int):
         match.set_scores = []
         match.status = Match.Status.SCHEDULED
         match.is_featured = False
-        match.order_index = None
         match.save(update_fields=[
             "points_a", "points_b",
             "games_a", "games_b",
@@ -724,7 +717,7 @@ def referee_action(request, match_id: int):
             "tb_active", "tb_points_a", "tb_points_b",
             "winner_side",
             "set_scores",
-            "status", "is_featured", "order_index",
+            "status", "is_featured",
         ])
         return JsonResponse({"ok": True})
 

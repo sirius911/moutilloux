@@ -36,7 +36,6 @@ from live.admin_views import (
     unassign_entry,
     finalize_match_edit,
     feature_match,
-    reorder_event_matches,
     set_match_bracket_labels,
     assign_bracket_entry,
     clear_bracket_entry,
@@ -1056,31 +1055,6 @@ def api_match_feature(request, match_id):
     return JsonResponse({"match": _pack_match(match)})
 
 
-@require_POST
-@superuser_required
-@transaction.atomic
-def api_matches_reorder(request, event_id):
-    """
-    POST /api/events/<id>/matches/reorder/
-    Réordonne la file des matchs (source : admin_views.reorder_event_matches).
-    Body JSON: {queue: [match_id, ...]}.
-    """
-    try:
-        data = json.loads(request.body)
-    except (json.JSONDecodeError, ValueError):
-        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
-
-    event = get_object_or_404(Event, pk=event_id)
-    queue = data.get("queue", [])
-
-    try:
-        reorder_event_matches(event, queue)
-    except ValueError as exc:
-        return JsonResponse({"error": str(exc)}, status=400)
-
-    return JsonResponse({"ok": True})
-
-
 # ── Phase 7 — Bracket (mutations) ───────────────────────────────────────────────
 @require_POST
 @superuser_required
@@ -1746,9 +1720,20 @@ def api_edition_calendar(request, edition_id):
         .order_by("event_id", "id")
     )
 
+    # Matchs annulés (quittent la séquence, poules uniquement — cohérent avec unscheduled)
+    canceled = (
+        Match.objects
+        .filter(edition=edition, status=Match.Status.CANCELED, stage=Match.Stage.GROUP)
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
+        .order_by("event_id", "id")
+    )
+
     return JsonResponse({
         "playDays": packed_play_days,
         "unscheduled": [_pack_match(m) for m in unscheduled],
+        "canceled": [_pack_match(m) for m in canceled],
     })
 
 

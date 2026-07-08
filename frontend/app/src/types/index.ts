@@ -218,6 +218,7 @@ export interface CalendarDay extends PlayDay {
 export interface CalendarData {
   playDays: CalendarDay[]
   unscheduled: Match[]      // SCHEDULED, GROUP, sans order_index
+  canceled: Match[]         // CANCELED, GROUP — retirés de leur journée
 }
 
 export interface TvUpcoming {

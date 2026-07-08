@@ -3,11 +3,10 @@
 
 <div class="card">
   <h1 style="margin:0;">Matchs</h1>
-  <p class="muted">Drag & drop : non ordonnés ↔ ordonnés. Les matchs terminés se remplissent automatiquement.</p>
+  <p class="muted">Vue en lecture seule (non ordonnés / ordonnés / terminés). Utilise le calendrier pour réordonner les matchs.</p>
   <p class="muted" style="margin-top:4px;">
     Note : la numérotation <b>#ordre</b> est globale à toute l’édition (tous events confondus).
   </p>
-  <div id="msg" class="muted"></div>
 </div>
 
 <!-- Match en cours -->
@@ -76,7 +75,6 @@
     padding: 10px 10px;
     margin: 8px 0;
     background: #fafafa;
-    cursor: grab;
     user-select: none;
   }
   .line { display:flex; justify-content:space-between; gap:10px; align-items:center; }
@@ -92,7 +90,7 @@
       <h2 style="margin:0 0 8px 0;">Matchs non ordonnés ({{ backlog|length }})</h2>
       <div class="dropzone" id="zone-backlog">
         {% for m in backlog %}
-          <div class="item" draggable="true" data-match-id="{{ m.id }}">
+          <div class="item" data-match-id="{{ m.id }}">
             <div class="line">
               <div>
                 <span class="tag">{% if m.stage == "GROUP" %}Poule {{ m.group.name }}{% else %}{{ m.get_stage_display }}{% endif %}</span>
@@ -119,7 +117,7 @@
       <div class="muted" style="margin-bottom:8px;">Glisse ici pour ajouter / réordonner. Les # affichés sont des positions globales de l’édition.</div>
       <div class="dropzone" id="zone-queue">
         {% for m in queue %}
-          <div class="item" draggable="true" data-match-id="{{ m.id }}">
+          <div class="item" data-match-id="{{ m.id }}">
             <div class="line">
               <div>
                 <span class="tag">#{{ m.order_index }}</span>
@@ -165,96 +163,5 @@
     </div>
   </div>
 </div>
-
-<script>
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-  const csrftoken = getCookie('csrftoken');
-  const msg = document.getElementById("msg");
-  function showMsg(text, isError=false) {
-    msg.style.color = isError ? "#c00" : "#666";
-    msg.textContent = text;
-  }
-
-  let dragged = null;
-
-  document.querySelectorAll(".item[draggable='true']").forEach(el => {
-    el.addEventListener("dragstart", (ev) => {
-      dragged = el;
-      ev.dataTransfer.setData("text/plain", el.dataset.matchId);
-    });
-  });
-
-  function getDragAfterElement(container, y) {
-    const els = [...container.querySelectorAll('.item')];
-    return els.reduce((closest, child) => {
-      const box = child.getBoundingClientRect();
-      const offset = y - box.top - box.height / 2;
-      if (offset < 0 && offset > closest.offset) return { offset, element: child };
-      return closest;
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
-  }
-
-  async function saveQueue() {
-    showMsg("Enregistrement de l’ordre...");
-    const zoneQueue = document.getElementById("zone-queue");
-    const ids = [...zoneQueue.querySelectorAll(".item")].map(el => parseInt(el.dataset.matchId, 10));
-
-    const resp = await fetch("{% url 'panel_matches_reorder' event.id %}", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-      body: JSON.stringify({queue: ids})
-    });
-
-    const data = await resp.json().catch(() => ({}));
-    if (!resp.ok || !data.ok) { showMsg(data.error || "Erreur sauvegarde", true); return; }
-    location.reload();
-  }
-
-  const backlog = document.getElementById("zone-backlog");
-  const queue = document.getElementById("zone-queue");
-
-  [backlog, queue].forEach(zone => {
-    zone.addEventListener("dragover", (ev) => {
-      ev.preventDefault();
-      zone.classList.add("over");
-      if (zone === queue && dragged) {
-        const after = getDragAfterElement(queue, ev.clientY);
-        if (dragged.parentElement === queue) {
-          if (after == null) queue.appendChild(dragged);
-          else queue.insertBefore(dragged, after);
-        }
-      }
-    });
-    zone.addEventListener("dragleave", () => zone.classList.remove("over"));
-    zone.addEventListener("drop", async (ev) => {
-      ev.preventDefault();
-      zone.classList.remove("over");
-      if (!dragged) return;
-
-      if (zone === backlog) backlog.appendChild(dragged);
-      if (zone === queue) {
-        if (dragged.parentElement !== queue) {
-          const after = getDragAfterElement(queue, ev.clientY);
-          if (after == null) queue.appendChild(dragged);
-          else queue.insertBefore(dragged, after);
-        }
-      }
-      await saveQueue();
-    });
-  });
-</script>
 
 {% endblock %}

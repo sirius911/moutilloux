@@ -95,6 +95,22 @@ const unscheduledTotal = computed(() =>
   Object.values(unscheduledByGroupDnd.value).reduce((s, arr) => s + arr.length, 0),
 )
 
+// ── Colonne « Annulés » (lecture seule) ────────────────────────────────────
+const canceledByGroup = computed<Record<string, Match[]>>(() => {
+  const groups: Record<string, Match[]> = {}
+  const cal = eventStore.calendar
+  if (!cal) return groups
+  for (const m of cal.canceled.filter((m) => m.eventId === eventStore.activeEventId)) {
+    const g = groupName(m) || '?'
+    ;(groups[g] ??= []).push(m)
+  }
+  return groups
+})
+
+const canceledMatches = computed<Match[]>(() =>
+  Object.values(canceledByGroup.value).flat(),
+)
+
 const totalScheduledMatches = computed(() =>
   Object.values(dayItemsDnd.value).reduce(
     (s, items) => s + items.filter((i) => i.kind === 'match').length, 0,
@@ -234,6 +250,16 @@ function isoToMin(iso: string): number {
   return d.getHours() * 60 + d.getMinutes()
 }
 
+// Compare `dateStr` (YYYY-MM-DD) à la date locale du jour — même convention que
+// `formatDate` (construction locale, pas UTC/`toISOString`). L'ancrage sur
+// « maintenant » ne doit s'appliquer qu'à la journée en cours (spec planning
+// §journées indépendantes).
+function isToday(dateStr: string): boolean {
+  const now = new Date()
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return dateStr === todayStr
+}
+
 // ── Moteur ETA frontal ─────────────────────────────────────────────────────
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
@@ -247,6 +273,7 @@ const computedETAs = computed<Map<string, string>>(() => {
   for (const day of calendarDays.value) {
     const items = dayItemsDnd.value[day.id] ?? []
     let cursor = timeToMin(day.startTime)
+    const anchorNow = isToday(day.date)
 
     for (const item of items) {
       if (item.kind === 'match') {
@@ -254,11 +281,11 @@ const computedETAs = computed<Map<string, string>>(() => {
         if (m.status === 'FINISHED' && m.finishedAt) {
           const ft = isoToMin(m.finishedAt)
           result.set(`m-${m.id}`, minToTime(ft))
-          cursor = ft
+          cursor = anchorNow ? Math.max(cursor, ft, nowMin) : Math.max(cursor, ft)
         } else if (m.status === 'LIVE') {
           result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
           const liveEnd = m.startedAt ? isoToMin(m.startedAt) + dur : cursor + dur
-          cursor = Math.max(nowMin, liveEnd)
+          cursor = anchorNow ? Math.max(cursor, liveEnd, nowMin) : Math.max(cursor, liveEnd)
         } else {
           result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
           cursor += dur
@@ -327,7 +354,7 @@ function onDragStart() {
 
 function checkMove(evt: { draggedContext: { element: DayItem }; to: Element }): boolean {
   const el = evt.draggedContext.element
-  if (el.kind === 'match' && el.data.status === 'LIVE') return false
+  if (el.kind === 'match' && el.data.status !== 'SCHEDULED') return false
   if (el.kind === 'break' && evt.to.classList.contains('pile-draggable')) return false
   return true
 }
@@ -467,6 +494,30 @@ async function onDragEnd() {
         </template>
       </aside>
 
+      <!-- Colonne Annulés (lecture seule) -->
+      <aside v-if="canceledMatches.length > 0" class="cal-pile cal-canceled">
+        <div class="pile-head">
+          <span class="pile-title">Annulés</span>
+          <span class="pile-count">{{ canceledMatches.length }}</span>
+        </div>
+
+        <template v-for="g in Object.keys(canceledByGroup).sort()" :key="g">
+          <div class="pile-group-hd">Poule {{ g }}</div>
+          <div
+            v-for="m in canceledByGroup[g]"
+            :key="m.id"
+            class="pile-card pile-card--readonly"
+            @click="editingMatch = m"
+          >
+            <span class="poule-pill">{{ g }}</span>
+            <span class="pile-card-players">
+              {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
+            </span>
+            <span class="canceled-badge" title="Match annulé">ANNULÉ</span>
+          </div>
+        </template>
+      </aside>
+
       <!-- Journées -->
       <main class="cal-days">
         <div v-if="calendarDays.length === 0" class="cal-empty">
@@ -521,7 +572,7 @@ async function onDragEnd() {
                 <div
                   v-if="element.kind === 'match'"
                   class="cal-row"
-                  :class="[`state--${displayState(element.data as Match)}`, { 'no-drag': (element.data as Match).status === 'LIVE' }]"
+                  :class="[`state--${displayState(element.data as Match)}`, { 'no-drag': (element.data as Match).status !== 'SCHEDULED' }]"
                   role="button"
                   tabindex="0"
                   @click="editingMatch = element.data as Match"
@@ -557,8 +608,8 @@ async function onDragEnd() {
                     >★ EN AVANT</span>
                   </span>
                   <span
+                    v-if="(element.data as Match).status === 'SCHEDULED'"
                     class="drag-handle"
-                    :class="{ 'drag-handle--locked': (element.data as Match).status === 'LIVE' }"
                   >⋮⋮</span>
                 </div>
                 <div v-else class="cal-row cal-row--break">
@@ -756,6 +807,22 @@ async function onDragEnd() {
 
 .pile-card:hover { background: var(--bg-4); }
 .pile-card--ghost { opacity: 0.35; background: var(--accent-soft); }
+
+/* ── Colonne Annulés (lecture seule) ─────────────────────────────────────── */
+.cal-canceled { border-right: 1px solid var(--line-1); }
+.pile-card--readonly { opacity: 0.7; }
+
+.canceled-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--danger, #e5484d);
+  border: 1px solid var(--danger, #e5484d);
+  padding: 2px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 .pile-card-players {
   flex: 1;
@@ -1004,11 +1071,6 @@ async function onDragEnd() {
   cursor: grab;
   user-select: none;
   flex-shrink: 0;
-}
-
-.drag-handle--locked {
-  cursor: not-allowed;
-  opacity: 0.3;
 }
 
 /* États DnD */

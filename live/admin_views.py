@@ -602,7 +602,11 @@ def finalize_match_edit(match):
 
     if match.status == Match.Status.FINISHED:
         match.is_featured = False
+
+    if match.status == Match.Status.CANCELED:
         match.order_index = None
+        match.scheduled_time = None
+        match.is_featured = False
 
     match.save()
 
@@ -638,13 +642,12 @@ def match_edit(request, event_id: int, match_id: int):
 def feature_match(match):
     """
     Service : met un match « en avant » et le démarre. Retire le drapeau des
-    autres matchs de l'event, met is_featured=True, order_index=None, puis
+    autres matchs de l'event, met is_featured=True, puis
     mark_live() (status=LIVE + started_at). Source : match_feature.
     Retourne le match.
     """
     Match.objects.filter(event=match.event, is_featured=True).update(is_featured=False)
     match.is_featured = True
-    match.order_index = None
     match.mark_live()  # met status=LIVE + started_at si besoin
     match.save()
     return match
@@ -763,13 +766,12 @@ def withdraw_entry(entry):
         m.status = Match.Status.FINISHED
         m.is_walkover = True
         m.is_featured = False
-        m.order_index = None
         if not m.finished_at:
             m.finished_at = timezone.now()
 
         m.save(update_fields=[
             "winner_side", "games_a", "games_b",
-            "status", "is_walkover", "is_featured", "order_index", "finished_at",
+            "status", "is_walkover", "is_featured", "finished_at",
         ])
 
         if m.group_id:
@@ -1416,85 +1418,6 @@ def group_unassign(request, event_id: int):
     return JsonResponse({"ok": True})
 
 
-def reorder_event_matches(event, queue):
-    """
-    Service : applique l'ordre de la file pour `event`. `queue` est une liste
-    d'ids de matchs. Met order_index = 1..N (en respectant l'unicité à l'échelle
-    de l'édition) pour ceux de la queue, NULL pour les autres (hors terminés).
-    Ignore le match featured. Lève ValueError si un court est requis mais absent.
-    """
-    queue = [int(x) for x in queue]
-
-    # Sécurité : ne garder que les matchs de cet event
-    valid_ids = set(Match.objects.filter(event=event).values_list("id", flat=True))
-    queue = [mid for mid in queue if mid in valid_ids]
-
-    # reset des matchs de cet event (hors terminés)
-    Match.objects.filter(event=event).exclude(status=Match.Status.FINISHED).update(order_index=None)
-    current_id = Match.objects.filter(event=event, is_featured=True).values_list("id", flat=True).first()
-    queue = [mid for mid in queue if mid != current_id]
-
-    # appliquer l'ordre
-    default_court = None
-    if queue:
-        default_court = Court.objects.order_by("id").first()
-        if not default_court:
-            raise ValueError("Aucun court disponible. Crée un court avant d’ordonner les matchs.")
-
-    # IMPORTANT: order_index est unique à l'échelle de l'édition
-    # On réserve tous les order_index déjà pris dans l'édition,
-    # y compris les matchs FINISHED du même event.
-    # On exclut seulement les matchs de la queue qu'on est en train de recalculer.
-    used_in_edition = set(
-        Match.objects
-        .filter(edition=event.edition)
-        .exclude(id__in=queue)
-        .exclude(order_index__isnull=True)
-        .values_list("order_index", flat=True)
-    )
-
-    next_idx = 1
-    for mid in queue:
-        while next_idx in used_in_edition:
-            next_idx += 1
-
-        m = Match.objects.select_for_update().filter(event=event, id=mid).first()
-        if not m:
-            continue
-        if m.court_id is None:
-            m.court = default_court
-        m.order_index = next_idx
-        m.save(update_fields=["order_index", "court"])
-        used_in_edition.add(next_idx)
-        next_idx += 1
-
-
-@superuser_required
-@require_POST
-@transaction.atomic
-def matches_reorder(request, event_id: int):
-    """
-    Reçoit la liste des match_ids dans l'ordre (queue).
-    Met order_index = 1..N pour ceux de la queue,
-    et order_index = NULL pour les autres matchs de l'event.
-    Payload JSON: {"queue": [1,2,3,...]}
-    """
-    event = get_object_or_404(Event, id=event_id)
-
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-        queue = payload.get("queue", [])
-    except Exception:
-        return JsonResponse({"ok": False, "error": "JSON invalide"}, status=400)
-
-    try:
-        reorder_event_matches(event, queue)
-    except ValueError as e:
-        return JsonResponse({"ok": False, "error": str(e)}, status=400)
-
-    return JsonResponse({"ok": True})
-
-
 def _pick(group, rank):
     return group.standings.select_related("entry").get(rank=rank).entry
 
@@ -1995,17 +1918,18 @@ def reorder_calendar(edition, play_day_sequences):
       date = celle de la journée (temps = start_time de la journée, ETA approximative).
     - Chaque Break reçoit un order_index local = sa position dans la séquence de la journée.
     - Les matchs absents de toute journée perdent order_index et scheduled_time.
-    - Les matchs FINISHED ne sont jamais déplacés.
+    - Les matchs LIVE et FINISHED ne sont jamais déplacés : order_index persiste.
     """
     edition_play_days = {pd.id: pd for pd in PlayDay.objects.filter(edition=edition)}
     default_court = Court.objects.order_by("id").first()
 
-    # Matchs déplaçables : SCHEDULED ou LIVE (pas FINISHED, pas CANCELED)
-    movable_statuses = [Match.Status.SCHEDULED, Match.Status.LIVE]
+    # Matchs déplaçables : uniquement SCHEDULED (pas LIVE, pas FINISHED, pas CANCELED) —
+    # order_index persiste à travers LIVE/FINISHED (cf. specs/technical/planning.md).
+    movable_statuses = [Match.Status.SCHEDULED]
     movable_qs = Match.objects.filter(edition=edition, status__in=movable_statuses)
     edition_matches = {m.id: m for m in movable_qs.select_for_update()}
 
-    # Indices déjà utilisés par les matchs non-déplaçables (FINISHED)
+    # Indices déjà utilisés par les matchs non-déplaçables (LIVE, FINISHED)
     used_indices = set(
         Match.objects.filter(edition=edition, order_index__isnull=False)
         .exclude(id__in=edition_matches.keys())

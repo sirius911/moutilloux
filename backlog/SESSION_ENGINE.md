@@ -373,10 +373,24 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-30 — Session #34
-**Sprint actif :** aucun — Sprint 14 terminé.
-**Roadmap :** vide — tous les sprints terminés.
-**Tickets clôturés cette session :** 2 (#152 ✅ #153 ✅)
-**Branche :** `claude/sprint/14-correctifs`
-**Issues Sprint 14 restantes :** 0
-**Contexte :** Session 34 — Sprint 14 clôturé. #152 (colonnes Téléphone & Email dans AdminPlayers) et #153 (Âge calculé remplace Né(e) en) implémentés. Spec review ✅ sur 5 specs. Milestone à fermer manuellement sur GitHub. Roadmap vide → désactiver la Routine.
+**Dernière session :** 2026-07-02 — Session #38
+**Sprint actif :** 16 — Arbitre : démarrer & lire un match
+**Roadmap :** 1 sprint restant (16).
+**Tickets clôturés cette session :** 2 (#164 ✅, #165 ✅)
+**Branche :** `claude/sprint/15-cycle-vie-match` (sprint 15 terminé et archivé cette session)
+**Issues Sprint 15 restantes :** 0 — sprint clos
+**Contexte :** Session 38 — traitement des 2 derniers tickets front du Sprint 15.
+Spec review en début de session : `planning.md` ✅, `admin-matchs.md` ⚠️ (seule
+dérive : colonne « Annulés » absente = #164, déjà ticketée), `cycle-de-vie-epreuve.md`
+✅ (point forfait). #164 (colonne « Annulés » en lecture seule dans
+`AdminMatches.vue`, type `CalendarData.canceled` câblé par l'orchestrateur dans
+`types/index.ts`) et #165 (moteur ETA : ancrage `max(cursor, ft/liveEnd, nowMin)`
+au lieu d'une réassignation sans plancher, limité à la journée du jour via un
+helper `isToday()`) implémentés et approuvés sans réserve, séquencés l'un après
+l'autre (fichier partagé `AdminMatches.vue`). Aucune nouvelle dérive hors
+périmètre. **Sprint 15 clos** : milestone GitHub #14 fermé, ligne retirée de
+`backlog/sprints/roadmap.md`, dossier archivé dans `backlog/sprints/done/15-cycle-vie-match/`.
+PR sprint 15 : #169 (accumule les commits, pas mergée — parent effectif encore
+`claude/sprint/14-correctifs`, PR #158 non mergée dans `main`). Roadmap : il
+reste le Sprint 16 (Arbitre : démarrer & lire un match), qui sera démarré à la
+**prochaine échéance planifiée**, pas dans cette session.
