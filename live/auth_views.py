@@ -8,7 +8,7 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
         user = self.request.user
         if user.is_superuser:
-            return reverse("panel_home")  # adapte si ton URL s'appelle différemment
+            return reverse("admin:index")
         if user.groups.filter(name="Arbitre").exists():
             return reverse("referee_home")
         return reverse("results")  # ou une page d'accueil

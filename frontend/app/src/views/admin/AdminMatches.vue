@@ -338,6 +338,14 @@ function isToday(dateStr: string): boolean {
   return dateStr === todayStr
 }
 
+// Dernière ETA affichée par match SCHEDULED (clé = id du match), pour la
+// garantie « jamais d'avance surprise » entre deux recalculs (specs
+// planning.md § Algorithme ETA). Réinitialisée par match si son orderIndex
+// change (réordonnancement = nouvelle annonce légitime) ou s'il quitte la
+// séquence courante. Map JS brute : mutée uniquement dans le corps du
+// computed ci-dessous, pas besoin de réactivité Vue.
+const lastAnnouncedEta = new Map<number, { orderIndex: number; min: number }>()
+
 // ── Moteur ETA frontal ─────────────────────────────────────────────────────
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
@@ -365,8 +373,12 @@ const computedETAs = computed<Map<string, string>>(() => {
           const liveEnd = m.startedAt ? isoToMin(m.startedAt) + dur : cursor + dur
           cursor = anchorNow ? Math.max(cursor, liveEnd, nowMin) : Math.max(cursor, liveEnd)
         } else {
-          result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
-          cursor += dur
+          const oi = m.orderIndex ?? -1
+          const prev = lastAnnouncedEta.get(m.id)
+          const etaMin = prev && prev.orderIndex === oi ? Math.max(cursor, prev.min) : cursor
+          lastAnnouncedEta.set(m.id, { orderIndex: oi, min: etaMin })
+          result.set(`m-${m.id}`, `~${minToTime(etaMin)}`)
+          cursor = etaMin + dur
         }
       } else {
         result.set(`b-${item.data.id}`, `~${minToTime(cursor)}`)
@@ -375,6 +387,18 @@ const computedETAs = computed<Map<string, string>>(() => {
     }
 
     result.set(`day-end-${day.id}`, minToTime(cursor))
+  }
+
+  const seenIds = new Set<number>()
+  for (const day of calendarDays.value) {
+    for (const item of dayItemsDnd.value[day.id] ?? []) {
+      if (item.kind === 'match' && item.data.status === 'SCHEDULED') {
+        seenIds.add(item.data.id)
+      }
+    }
+  }
+  for (const id of lastAnnouncedEta.keys()) {
+    if (!seenIds.has(id)) lastAnnouncedEta.delete(id)
   }
 
   return result

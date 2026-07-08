@@ -42,7 +42,9 @@ tableau sont par `Event`).
 
 ## La machine à états
 
-Statut stocké sur `Event` — **champ à créer** : `status` (`INSCRIPTION` par défaut).
+Statut stocké sur `Event` — **champ présent** : `status`
+(`competition/models.py:38-40`, `Event.Status` = INSCRIPTION/EN_COURS/TERMINEE,
+défaut INSCRIPTION).
 
 ```
   INSCRIPTION  ──[Débuter]──►  EN_COURS  ──[finale jouée]──►  TERMINÉE
@@ -87,7 +89,7 @@ joueront pas tant qu'on ne revient pas les ajouter — voir Ajustements).
 **Effets (atomiques) :**
 1. **Génère le round-robin** de chaque poule (service existant
    `generate_group_matches_for_event`, déjà **idempotent et additif** —
-   `admin_views.py:444`). Matchs en `SCHEDULED`, sans `order_index` (= « à
+   `admin_views.py:255`). Matchs en `SCHEDULED`, sans `order_index` (= « à
    planifier », voir [[planning]]).
 2. **Verrouille la structure** des poules : composition en lecture seule
    (le verrouillage ne dépend plus de « un match existe » mais de `status ≥ EN_COURS`).
@@ -122,16 +124,18 @@ jamais réécrit par un ajustement** ; seuls les matchs `SCHEDULED` sont touché
 |---|---|---|
 | **Remplacer un joueur** | échange le `player`/`team` porté par l'`Entry`, **même place** en poule. Aucun match touché, résultats déjà joués conservés. | faible |
 | **Ajout tardif** | nouvelle `Entry` + `GroupMembership` dans une poule **sous l'effectif** ; re-run de la génération (additive) → crée **uniquement** les matchs manquants du nouveau venu. Avertissement si l'effectif dépasse `group_size_default`. | faible–moyen |
-| **Forfait** | voir ci-dessous (walkover). | neuf |
-| **Retrait sans remplaçant** | = forfait, **plus** retrait de l'affichage poule. Forfaits en cascade sur tous ses matchs non joués. | neuf |
+| **Forfait** | voir ci-dessous (walkover). | présent — `withdraw_entry` (live/admin_views.py:589) |
+| **Retrait sans remplaçant** | = forfait, **plus** retrait de l'affichage poule. Forfaits en cascade sur tous ses matchs non joués. | présent — `withdraw_entry` (live/admin_views.py:589) |
 
 ### Forfait / walkover (logique neuve)
 
 Aujourd'hui un abandon est un `CANCELED` **sans vainqueur** ([[planning]]) — ce
 n'est pas un walkover. À créer :
 
-- **`Entry.withdrawn`** (bool, **champ à créer**) : l'inscription abandonne.
-- **`Match.is_walkover`** (bool, **champ à créer**) : marque une victoire par forfait.
+- **`Entry.withdrawn`** (bool, **champ présent**, `competition/models.py:62`) :
+  l'inscription abandonne.
+- **`Match.is_walkover`** (bool, **champ présent**, `live/models.py:140`) : marque
+  une victoire par forfait.
 - Au déclenchement du forfait sur une entry : tous ses matchs **non terminés**
   passent `FINISHED`, `winner_side` = l'adversaire, `is_walkover = True`, score de
   convention (adversaire `games_to_win`, partant 0). Ces matchs **restent à leur
@@ -278,34 +282,38 @@ forfait ou d'arbitrage. Même geste que le remplissage manuel existant
 
 ### Petite finale (optionnelle)
 
-- **`Event.has_third_place`** (bool, **champ à créer**) : active un match pour la 3e
-  place.
-- **`Match.Stage.P3`** (« 3e place », **valeur à créer**) : un slot `P3` opposant les
-  **perdants** des deux demi-finales.
-- Nécessite une **propagation des perdants** (neuve : seuls les vainqueurs se
-  propagent aujourd'hui, `bracket.py:241`). Proposable uniquement quand le tableau
+- **`Event.has_third_place`** (bool, **champ présent**, `competition/models.py:37`) :
+  active un match pour la 3e place.
+- **`Match.Stage.P3`** (« 3e place », **valeur présente**) : un slot `P3`
+  opposant les **perdants** des deux demi-finales (`live/bracket.py:186-197` pour la
+  création du slot, `live/bracket.py:363-395`, fonction `sync_p3_losers_for_event`,
+  pour la propagation des perdants).
+- La propagation des perdants existe désormais (`sync_p3_losers_for_event`,
+  `live/bracket.py:363-395`), en complément de la propagation des vainqueurs
+  (`sync_final_winners_for_event`). Proposable uniquement quand le tableau
   a deux vraies demi-finales.
 
 ---
 
 ## Récapitulatif : ce qui est neuf côté backend
 
-Cette spec dépasse le « exposer / brancher » (la logique métier n'existe pas
-toujours). À créer :
+Cette spec dépassait le « exposer / brancher » — l'essentiel de la logique
+métier est maintenant livré ; seule la généralisation du tableau au-delà de
+4 poules reste à faire si le besoin se présente.
 
 | Élément | Nature |
 |---|---|
-| `Event.status` + transitions Débuter/Clôturer | machine à états (migration + services) |
-| `Event.has_third_place` | config épreuve (migration) |
-| `Entry.withdrawn`, `Match.is_walkover` | forfait/walkover (migration) |
-| Service forfait (cascade walkover + recalcul) | logique neuve |
-| Généralisation du tableau (N poules, byes, séparation) | refonte `bracket.py` |
-| Propagation des **perdants** (3e place) | logique neuve |
-| Ajout tardif post-Débuter (déverrouillage ciblé + re-génération additive) | logique neuve (la génération additive, elle, existe) |
+| `Event.status` + transitions Débuter/Clôturer | livré (`competition/models.py:38-40` ; `live/admin_views.py:311` `start_event`, `:351` `close_event`, `:373` réouverture) |
+| `Event.has_third_place` | livré (`competition/models.py:37`) |
+| `Entry.withdrawn`, `Match.is_walkover` | livré (`competition/models.py:62` ; `live/models.py:140`) |
+| Service forfait (cascade walkover + recalcul) | livré (`withdraw_entry`, `live/admin_views.py:589-681`) |
+| Généralisation du tableau (N poules, byes, séparation) | livré pour N ≤ 4 (`bracket.py:_bracket_layout`) ; N > 4 reste non templé — à faire si besoin |
+| Propagation des **perdants** (3e place) | livré (`sync_p3_losers_for_event`, `live/bracket.py:363-395`) |
+| Ajout tardif post-Débuter (déverrouillage ciblé + re-génération additive) | livré (`add_late_entry`, `live/admin_views.py:682-715`) |
 
-> L'agent `django-api` est taillé pour *exposer* de l'existant ; ces briques
-> (forfait, seeding généralisé, 3e place) sont à **spécifier puis implémenter**
-> comme logique métier neuve, pas seulement à brancher.
+> La généralisation du tableau au-delà de 4 poules reste la seule brique à
+> **spécifier puis implémenter** comme logique métier neuve ; le reste est
+> désormais de l'exposition/branchement sur des services existants.
 
 ---
 

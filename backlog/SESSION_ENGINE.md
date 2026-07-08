@@ -373,46 +373,50 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-04 — Session #76
-**Sprint actif :** 21 — Durcissements API & specs (pas encore démarré).
+**Dernière session :** 2026-07-04 — Session #87
+**Sprint traité :** 21 — Durcissements API & specs — **clôturé cette session.**
 
-**Git :** branche `claude/sprint/20-transverse-erreurs-routing`, déjà à jour
-avec le parent effectif `claude/sprint/19-poules-inscriptions-ajustements`
-(sprint 19 toujours non mergé dans `main` — point récurrent, à traiter côté
-humain). Working tree propre au démarrage.
+**Git :** branche `claude/sprint/21-durcissements-api-specs`, parent effectif
+`claude/sprint/20-transverse-erreurs-routing` (résolu via
+`backlog/sprints/done/` — pas encore fusionné dans `origin/main`, merge sans
+conflit : already up to date). Working tree propre au démarrage, pas de
+conflit de merge.
 
-**Spec review session #76 :** `specs/technical/routing-context.md` →
-✅ Conforme (URL fait foi, watcher store, sélecteur navigue via `router.push`
-sur les 4 écrans dépendants — confirmé) ; `specs/screens/admin-shell.md` →
-⚠️ Dérive mineure au moment de la review (confirmation de #209 à
-`AdminLayout.vue:48-58` : compteur Tableau final comptait 7 slots fixes,
-compteurs Tournoi/Joueurs à 0 avant chargement), **résolue dans cette même
-session**. 0 nouvelle issue créée.
+**Spec review session #87 :** contrairement aux sessions #82-#86 (simple
+reconduction, aucun code concerné n'avait bougé), une **vraie** review a été
+faite : du code touché par les 4 specs du sprint avait changé depuis la
+baseline `aff032e` (commits `9c727a3` #215, `3ae4583` #219, `adc0b54` #250,
+tous des sessions précédentes). Verdicts : admin-tournoi.md ✅, planning.md ✅
+(archive insupprimable #215 fidèle au code ; section ETA revue à part pour
+#250), cycle-de-vie-match.md ✅. cycle-de-vie-epreuve.md ⚠️→✅ : le retrait des
+vues `panel_*` (#219, ~762 lignes supprimées de `live/admin_views.py`) avait
+rendu obsolètes 5 ancres de numéro de ligne dans la spec (aucune dérive
+fonctionnelle) — ticketée (#273) et corrigée dans la session (`c945ec0`).
+Détail complet dans `backlog/logs/session_2026-07-04_87.md`.
 
-**Tickets traités session #76 :** 1 —
-- **#209** : `AdminLayout.vue` — le compteur « Tableau final » ne compte
-  désormais que les slots avec un match assigné (`slot.match !== null` sur
-  QF+SF+F, plus le 4+2+1=7 fixe) ; ajout de deux flags locaux
-  `editionsLoaded`/`playersLoaded` pour distinguer « non chargé » (badge
-  masqué) de « 0 réel » sur les compteurs Tournoi et Joueurs. Aucun fichier
-  partagé touché (store `event.ts` non modifié, vérifié par le reviewer).
-  ✅ Approuvé (remarque mineure non bloquante : la reformulation de
-  `admin-shell.md` proposée dans le plan n'a pas été appliquée — hors
-  périmètre de la maintenance auto de specs, qui ne touche que le champ
-  `fichiers:`). Commit `bb9bbc8`.
+**Tickets traités session #87 :** 2 — #250 (✅ Approuvé : l'implémentation du
+clamp ETA existait déjà depuis la session #86 sous forme d'ébauche non
+mandatée avec un plan écrit rétroactivement ; cette session a fait ce qui
+manquait au cycle protocolaire, à savoir la review par un agent `reviewer`
+en lecture seule — verdict sans réserve bloquante, `vue-tsc` propre, aucune
+surface TV ne recalcule d'ETA côté client) et #273 (✅ Approuvé : correction
+mécanique des numéros de ligne obsolètes dans cycle-de-vie-epreuve.md,
+appliquée directement par l'orchestrateur — pas de décision de contenu de
+spec en jeu, donc pas de cycle plan→implémentation→review complet jugé
+nécessaire).
 
-`vue-tsc --noEmit` OK. Plan → implémentation → review réalisés par 3 agents
-distincts (dont `reviewer`, lecture seule).
+**Fin de sprint atteinte :** les deux conditions de clôture étaient réunies
+(4/4 specs ✅ Conforme après correction de #273, 0 issue ouverte sous le
+milestone Sprint 21 hors `en-attente`). Milestone GitHub fermé (numéro 20).
+Ligne retirée de `backlog/sprints/roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/21-durcissements-api-specs/`.
 
-**Fin de sprint atteinte :** specs conformes (dérive #209 résolue), 0 issue
-ouverte sous le milestone Sprint 20. Milestone fermé (id 19). Sprint déplacé
-vers `backlog/sprints/done/20-transverse-erreurs-routing/`, ligne retirée de
-`backlog/sprints/roadmap.md`.
+**Sprint 19/20 — PRs non mergées :** toujours d'actualité (PR #223/#232/#247).
+Point à traiter côté humain (revue/merge des PRs), hors périmètre de la
+Routine automatique.
 
-**Sprint 17/18/19 — PRs non mergées :** toujours d'actualité. Point à traiter
-côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
-
-**Roadmap :** 1 sprint restant (21 — Durcissements API & specs), devenu actif
-mais **non démarré cette session** (clôture de sprint et démarrage du suivant
-ne s'enchaînent pas dans le même run) — traité à la prochaine échéance
-planifiée.
+**Roadmap :** 3 sprints restants (22 — État TV : contrat back ; 23 — TV live :
+écran & retraits legacy ; 24 — Affiches de match). Le sprint 22 devient le
+sprint actif mais **ne sera pas démarré avant la prochaine échéance
+planifiée**, conformément au protocole (une clôture de sprint ne déclenche
+pas l'ouverture immédiate du suivant dans la même session).

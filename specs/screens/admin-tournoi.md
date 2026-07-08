@@ -74,8 +74,10 @@ Deux notions distinctes y cohabitent, avec un vocabulaire strict :
     l'épreuve en jeu pour corriger un résultat.
   - **Modifier** → modale Épreuve en mode édition ;
   - **Supprimer** → confirmation forte (voir Flux) ;
-  - **Sélectionner** : définit l'épreuve active. Le bouton de l'épreuve déjà
-    sélectionnée est désactivé et affiche « Sélectionnée ✓ ».
+  - Pas de bouton « Sélectionner » dédié : la sélection de l'épreuve est portée
+    par la navigation elle-même (raccourcis Inscriptions/Poules/Matchs
+    ci-dessus), cohérent avec le principe « sélection portée par l'URL »
+    énoncé en introduction (décision 22, [[routing-context]]).
 - État vide : « Aucune épreuve créée pour cette édition. »
 
 ### Carte « Historique des éditions »
@@ -106,6 +108,7 @@ récente à la plus ancienne :
 | Année | Requise, entier ; **unique** parmi les éditions |
 | Date de début | Optionnelle |
 | Date de fin | Optionnelle |
+| Durée de match par défaut (min) | Optionnelle, entier ≥ 1 (défaut 27) ; sert de base au moteur d'ETA du calendrier |
 
 **Comportement**
 - Le bouton d'enregistrement est désactivé tant que nom ou année sont vides,

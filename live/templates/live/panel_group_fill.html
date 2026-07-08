@@ -1,6 +1,0 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Remplir poules</title></head>
-<body>
-<h1>Remplir automatiquement les poules</h1>
-<p><a href="{% url 'panel_event' event.id %}">← Retour</a></p>
-<form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Remplir</button></form>
-</body></html>

@@ -19,7 +19,7 @@ fichiers:
 L'écran de saisie (`/arbitre/:matchId`) est le **poste de scoring** d'un match
 unique, sur **iPad portrait (834 × 1112)**. Il est mis à l'échelle pour tenir sur
 l'écran quel que soit l'appareil (scène fixe scalée, `useScale`). Il pilote la
-rencontre point par point et **alimente en direct le scoreboard TV** ([[tv-programme]]).
+rencontre point par point et **alimente en direct le scoreboard TV** ([[tv-live]]).
 
 Le cycle de vie du match (états, transitions, qui peut quoi, forfait/abandon/annulation,
 ré-ouverture) est décrit dans [[cycle-de-vie-match]] — cette spec en décrit l'**UI et

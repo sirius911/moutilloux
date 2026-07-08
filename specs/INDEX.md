@@ -33,6 +33,7 @@ et servent de sommaire à la rédaction des specs d'écran.
 | Module | Fichier | Statut |
 |--------|---------|--------|
 | admin-panel | [admin-panel-map.md](./admin-panel-map.md) | ✅ Actif |
+| tv | [tv-map.md](./tv-map.md) | ✅ Actif |
 
 ---
 
@@ -53,11 +54,15 @@ flux utilisateur, redirections, gestion des erreurs.
 | admin/tableau-final | [screens/admin-tableau-final.md](./screens/admin-tableau-final.md) | ✅ Actif |
 | arbitre/home | [screens/arbitre-home.md](./screens/arbitre-home.md) | ✅ Actif |
 | arbitre/match | [screens/arbitre-match.md](./screens/arbitre-match.md) | ✅ Actif |
-| tv/programme | [screens/tv-programme.md](./screens/tv-programme.md) | ✅ Actif |
+| tv/live | [screens/tv-live.md](./screens/tv-live.md) | ✅ Actif |
 
 > L'écran Configuration a été supprimé (décisions 11-12 du journal de
 > [admin-panel-map](./admin-panel-map.md)) : catégories créées inline dans la
 > modale Épreuve, court unique seedé en base.
+>
+> La spec `tv-programme.md` est **absorbée** par [tv-live.md](./screens/tv-live.md)
+> (décision 9 de [tv-map](./tv-map.md)) : slide Programme et bandeau « À suivre »
+> y sont désormais décrits, avec le reste de l'écran TV unique.
 
 ---
 
@@ -68,8 +73,9 @@ Décrivent des règles globales qui s'appliquent à plusieurs écrans ou composa
 | Module | Fichier | Statut |
 |--------|---------|--------|
 | erreurs-api | [transverse/erreurs-api.md](./transverse/erreurs-api.md) | ✅ Actif |
+| auth / matrice d'accès | [transverse/auth-matrice-acces.md](./transverse/auth-matrice-acces.md) | ✅ Actif |
 
-*Exemples à prévoir : auth (guards, session, logout), polling (intervalles, pause onglet caché).*
+*Exemples à prévoir : polling (intervalles, pause onglet caché).*
 
 ---
 
@@ -83,6 +89,9 @@ Décrivent les modèles de données, contrats d'API, structures de stores.
 | cycle-de-vie (match) | [technical/cycle-de-vie-match.md](./technical/cycle-de-vie-match.md) | ✅ Actif |
 | planning | [technical/planning.md](./technical/planning.md) | ✅ Actif |
 | routing | [technical/routing-context.md](./technical/routing-context.md) | ✅ Actif |
+| classement-poule | [technical/classement-poule.md](./technical/classement-poule.md) | ✅ Actif |
+| tv-state | [technical/tv-state.md](./technical/tv-state.md) | ✅ Actif |
+| affiche-match | [technical/affiche-match.md](./technical/affiche-match.md) | ✅ Actif |
 
 *Exemples à prévoir : match (structure `_pack_match`), event/edition, entry.*
 

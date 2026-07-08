@@ -10,7 +10,6 @@ from django.http import JsonResponse
 from django.db import transaction, IntegrityError
 from django.db.models import Count
 from django.contrib.auth import authenticate, login, logout as auth_logout
-from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
 from django.shortcuts import get_object_or_404
@@ -648,22 +647,22 @@ def api_arbitre_matches(request):
 
 
 @require_GET
-@login_required
+@superuser_required
 def api_players(request):
     """
     GET /api/players/
-    Retourne tous les joueurs du registre global.
+    Retourne tous les joueurs du registre global. Requiert le rôle superuser (admin).
     """
     players = Player.objects.all().order_by("last_name", "first_name")
     return JsonResponse([_pack_player(p) for p in players], safe=False)
 
 
 @require_POST
-@login_required
+@superuser_required
 def api_player_create(request):
     """
     POST /api/players/create/
-    Crée un joueur dans le registre global. Requiert d'être connecté.
+    Crée un joueur dans le registre global. Requiert le rôle superuser (admin).
     """
     try:
         data = json.loads(request.body)
@@ -994,27 +993,6 @@ def api_group_unassign(request, event_id):
 
 # ── Phase 4 — Planning (mutations) ─────────────────────────────────────────────
 
-def _resolve_court_pk(value):
-    """
-    Normalise une valeur de court fournie par le front en pk exploitable par
-    MatchEditForm (ModelChoiceField). Accepte :
-      - None / "" → None (aucun court)
-      - un pk entier (ou chaîne de chiffres) → ce pk
-      - un nom libre de court → get_or_create par nom, renvoie son pk
-    """
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, int):
-        return value
-    s = str(value).strip()
-    if not s:
-        return None
-    if s.isdigit():
-        return int(s)
-    court, _ = Court.objects.get_or_create(name=s)
-    return court.pk
-
-
 @require_POST
 @superuser_required
 def api_match_edit(request, match_id):
@@ -1024,7 +1002,6 @@ def api_match_edit(request, match_id):
     Fusion partielle : on part des valeurs actuelles puis on n'écrase que les
     champs fournis. Les champs verrouillés par le form (format quand LIVE,
     order_index) sont ignorés côté form → la règle de verrouillage est conservée.
-    Le court accepte un pk ou un nom libre (get_or_create).
     """
     try:
         data = json.loads(request.body)
@@ -1038,11 +1015,9 @@ def api_match_edit(request, match_id):
     fields = MatchEditForm.Meta.fields
     merged = {}
     for f in fields:
-        merged[f] = match.court_id if f == "court" else getattr(match, f)
+        merged[f] = getattr(match, f)
     for k, v in data.items():
-        if k == "court":
-            merged["court"] = _resolve_court_pk(v)
-        elif k in fields:
+        if k in fields:
             merged[k] = v
 
     form = MatchEditForm(merged, instance=match)
@@ -1262,7 +1237,7 @@ def api_courts(request):
 @superuser_required
 @transaction.atomic
 def api_edition_create(request):
-    """POST /api/editions/create/ — {name, year, start_dt?, end_dt?, activate?}."""
+    """POST /api/editions/create/ — {name, year, start_dt?, end_dt?}."""
     data, err = _json_body(request)
     if err:
         return err
@@ -1272,7 +1247,6 @@ def api_edition_create(request):
             year=data.get("year"),
             start_dt=_parse_edition_dt(data.get("start_dt"), "Date de début"),
             end_dt=_parse_edition_dt(data.get("end_dt"), "Date de fin"),
-            activate=bool(data.get("activate")),
         )
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
