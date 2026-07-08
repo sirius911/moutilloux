@@ -373,46 +373,56 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #114
-**Sprint traité :** 27 — Poules : suivi & suppression (4ᵉ et dernière session du sprint — **clôturé**)
+**Dernière session :** 2026-07-08 — Session #115
+**Sprint traité :** 28 — Admin : annonces & inscription par sélection (1ʳᵉ session du sprint)
 
-**Git :** branche `claude/sprint/27-poules-suivi-suppression`, déjà sur la
-bonne branche au démarrage. Parent effectif `claude/sprint/26-qualification-poule-terminee`
-(toujours non mergé dans `origin/main`). Working tree propre au démarrage,
-`git merge origin/<parent>` déjà à jour (rien à intégrer).
+**Git :** branche `claude/sprint/28-annonces-inscriptions-selection` créée
+depuis `origin/claude/sprint/27-poules-suivi-suppression` (parent effectif
+résolu via `backlog/sprints/done/` — sprint 27 toujours non mergé dans
+`origin/main`). Working tree propre au démarrage, `git merge origin/<parent>`
+déjà à jour (rien à intégrer).
 
-**Spec review session #114 :** verdict `✅ Conforme` sur `admin-poules.md`.
-0 dérive bloquante. Réserve mineure déjà connue (session #113) confirmée
-non bloquante : la pastille de légende « Forfait » utilise `--danger`
-(rouge) alors que la ligne de match walkover reste visuellement
-`gc-match--finished` (vert) dans la grille — seul le libellé texte change ;
-la spec ne précise que le libellé texte, donc conforme au texte strict,
-laissé en l'état. Tous les autres points (suppression de poule, refus
-serveur si `EN_COURS`, endpoint de suppression sans duplication de logique,
-mode suivi, légende + tooltip Q, `_pack_match` par poule, types, garde de
-rôle, composables/polling, CSS/tokens) vérifiés `✅`. `npx vue-tsc --noEmit` :
-0 erreur.
+**Spec review session #115 :** verdict `⚠️ Dérive mineure` sur
+`admin-tournoi.md` (carte Annonces TV) et `admin-inscriptions.md`
+(sélection par cases à cocher) — 2 dérives constatées, toutes deux déjà
+ticketées (#297, #298) dès la planification du sprint (revue produit
+2026-07-07). 0 nouvelle issue créée. Cette review a été faite **avant**
+l'implémentation des tickets (ordre normal du protocole) : elle ne reflète
+donc pas l'état du code en fin de session.
 
-**Backlog engine session #114 :** 0 ticket — les 5 tickets du sprint
-(#292-296) étaient déjà tous clos en entrée de session (traités lors des
-sessions #111/#112/#113).
+**Backlog engine session #115 :** 2 tickets traités et clos (max de la
+session) :
+- **#298** (majeure) — AdminInscriptions : remplacement du bouton
+  « Inscrire les N affichés » par une sélection par cases à cocher (case par
+  ligne + « Tout cocher » respectant le filtre de recherche, bouton
+  « Inscrire la sélection (N) » via `addRegistrationsBulk` déjà existant,
+  sélection vidée seulement après succès). Verdict reviewer : `✅ Approuvé`.
+- **#297** (mineure) — AdminTournoi : édition inline du message d'annonce
+  (Entrée/Enregistrer valide, Échap annule, message vide refusé, réutilise
+  l'endpoint `POST /api/announcements/<id>/edit/` déjà en place côté back).
+  Verdict reviewer : `⚠️ Approuvé avec réserves` — piège Vue 3 relevé (un
+  `ref` posé dans un `v-for` est toujours collecté en tableau même sous
+  `v-if`, rendant `editingInput.value?.focus()` silencieusement inopérant ;
+  `vue-tsc` ne le détecte pas). Corrigé en session par l'orchestrateur
+  (function-ref `setEditingInputRef`), type-check revérifié `0 erreur`, puis
+  clos.
 
-**Fichier partagé câblé :** aucun cette session.
+**Fichier partagé câblé :** aucun cette session — les deux tickets étaient
+purement front, fichiers SFC disjoints, endpoints back déjà en place, aucun
+changement de store/route/composable requis.
 
-**Sprint 27 — clôturé cette session :** les deux critères de l'étape 3
-étaient réunis (spec `✅ Conforme` + 0 issue `sprint-27` ouverte). Milestone
-GitHub n°26 fermé, ligne supprimée de `roadmap.md`, dossier déplacé vers
-`backlog/sprints/done/27-poules-suivi-suppression/`. PR #316 déjà ouverte
-pour la branche (rien à créer). Roadmap relue : 5 sprints restants
-(28 à 32) ; le sprint 28 — Admin : annonces & inscription par sélection —
-devient actif mais sera traité à la **prochaine échéance planifiée**, pas
-dans cette session.
+**Sprint 28 — non clôturé cette session :** 0 issue `sprint-28` ouverte en
+fin de session, mais la condition « spec review de cette session
+`✅ Conforme` » n'est pas remplie au sens strict (la review de l'étape 1,
+faite avant implémentation, a rendu `⚠️`). La prochaine échéance planifiée
+rejouera la spec review en tout début de session ; si elle rend
+`✅ Conforme` sur le code désormais implémenté, le sprint sera clôturé alors.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — `npx vue-tsc --noEmit` utilisé directement (aucune erreur).
-Toujours pas de `.claude/launch.json` pour prévisualiser l'app dans ce repo —
-vérification par type-check + revue de code uniquement (pas de QA
-navigateur en session automatisée).
+`package.json` — `npx vue-tsc --noEmit` utilisé directement (aucune erreur
+sur les deux tickets de cette session). Toujours pas de `.claude/launch.json`
+pour prévisualiser l'app dans ce repo — vérification par type-check + revue
+de code uniquement (pas de QA navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
