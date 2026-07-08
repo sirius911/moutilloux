@@ -407,13 +407,26 @@ function isToday(dateStr: string): boolean {
 }
 
 // ── Moteur ETA frontal ─────────────────────────────────────────────────────
+// Durée par étape (constantes applicatives, pas de config — spec planning
+// §Algorithme d'estimation des heures) : poule = défaut d'édition (~30 min
+// par défaut) ; QF/SF ~30-35 min (formats à un set, `_fmt_for_stage` :
+// QF_SET5_TB_5_5 / NORMAL_1SET) ; finale/3e place ~45 min (BO3, plus long).
+const ETA_DUR_QF_SF_MIN = 35
+const ETA_DUR_FINAL_MIN = 45
+
+function durFor(match: Match): number {
+  const editionDefault = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
+  if (match.stage === 'QF' || match.stage === 'SF') return ETA_DUR_QF_SF_MIN
+  if (match.stage === 'F' || match.stage === 'P3') return ETA_DUR_FINAL_MIN
+  return editionDefault
+}
+
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
 // Les pauses obtiennent leur ETA à leur position réelle dans la séquence unifiée.
 const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<number, number> }>(() => {
   const result = new Map<string, string>()
   const plannedMin = new Map<number, number>()
-  const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
   const now = new Date()
   const nowMin = now.getHours() * 60 + now.getMinutes()
 
@@ -425,6 +438,7 @@ const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<numbe
     for (const item of items) {
       if (item.kind === 'match') {
         const m = item.data
+        const dur = durFor(m)
         plannedMin.set(m.id, cursor)
         if (m.status === 'FINISHED' && m.finishedAt) {
           const displayMin = m.startedAt ? isoToMin(m.startedAt) : isoToMin(m.finishedAt)
@@ -459,7 +473,6 @@ type Punctuality = 'red' | 'orange' | 'green'
 
 const punctualityByMatchId = computed<Map<number, Punctuality>>(() => {
   const result = new Map<number, Punctuality>()
-  const dur = eventStore.activeEdition?.defaultMatchDurationMin ?? 30
   const now = new Date()
   const nowMin = now.getHours() * 60 + now.getMinutes()
 
@@ -470,6 +483,7 @@ const punctualityByMatchId = computed<Map<number, Punctuality>>(() => {
       const m = item.data
       const planned = plannedEtaMin.value.get(m.id)
       if (planned === undefined) continue
+      const dur = durFor(m)
 
       if (m.status === 'SCHEDULED') {
         if (nowMin > planned + 5) result.set(m.id, 'red')
