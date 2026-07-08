@@ -30,22 +30,30 @@ les flux**. Le match affiché est celui de l'URL (`:matchId`), poll via
 
 ## Comportement selon l'état du match
 
-L'écran a **trois modes**, dictés par `status` :
+L'écran a **quatre modes**, dictés par `status` et la phase du match
+(voir [[cycle-de-vie-match]], « Échauffement ») :
 
 | État | Zones de tap | Action principale | Autres actions |
 |---|---|---|---|
-| `SCHEDULED` (PRÉVU) | **inactives** | **« Démarrer le match »** | Forfait, Annuler |
-| `LIVE` (EN DIRECT) | **actives** (+ point) | saisie point par point | Annuler point, Corrections, Terminer |
+| `SCHEDULED` (PRÉVU) | **inactives** | **« Démarrer le match »** (→ échauffement) | Forfait, Annuler |
+| `LIVE` — **échauffement** (`playStartedAt` nul) | **inactives** | **« Lancer le match »** (choix du serveur) | Annuler, Reset |
+| `LIVE` — **jeu** | **actives** (+ point) | saisie point par point | Annuler point, Corrections, Terminer |
 | `FINISHED` (TERMINÉ) | inactives | — (retour) | *aucune* (ré-ouverture = admin seul) |
 
-- **Démarrer** : ouvre le **modal de démarrage** (voir Flux : démarrer un match) —
-  la première décision est **« Qui sert en premier ? »**, obligatoire avant que le
-  match ne passe `LIVE`. À la confirmation, le match passe `LIVE` avec le serveur
-  choisi et prend la mise en avant TV. Si **un autre match est déjà en cours**, le
-  même modal l'annonce (« Un autre match est en cours — le démarrer le mettra en
-  pause »), voir [[cycle-de-vie-match]]. Tant que le match est `SCHEDULED`, taper
-  une zone de score ne fait rien (pas de scoring implicite : le match doit être
-  démarré d'abord).
+- **Démarrer** : passe **immédiatement** le match en **échauffement** — `LIVE`
+  + `warmup_started_at`, mise en avant TV ([[tv-live]] affiche la scène
+  échauffement). Si **un autre match est déjà en cours**, une confirmation
+  l'annonce d'abord (« Un autre match est en cours — le démarrer le mettra en
+  pause », voir [[cycle-de-vie-match]]). Il n'y a **plus de choix du serveur à
+  ce stade**.
+- **Échauffement** : l'écran affiche un **compte à rebours de 5 min**
+  (constante, dérivé de `warmupStartedAt` — même source que la TV, donc
+  synchronisé). Le timer est **indicatif** : à 0:00 rien ne se déclenche (le
+  libellé passe à « prêt »). Taper une zone de score pendant l'échauffement ne
+  fait rien (refusé par le moteur). Le bouton **« Lancer le match »** ouvre le
+  modal « Qui sert en premier ? » (voir Flux) — le confirmer pose
+  `play_started_at` et active les zones. **Pas de bouton « passer
+  l'échauffement »** : lancer le match tôt le court-circuite naturellement.
 - **FINISHED** : l'écran est en **lecture seule**. Il montre le résultat (vainqueur,
   et le libellé « Forfait » / « Abandon » selon `end_reason`). L'arbitre **ne peut pas
   rouvrir** — s'il y a une erreur, il la signale à l'admin ([[cycle-de-vie-match]]).
@@ -60,14 +68,18 @@ L'écran a **trois modes**, dictés par `status` :
 - **Étape + format** au centre : l'étape (« Poule A », « Quart »…) et un **libellé de
   format lisible** (« 1 set à 5 · TB à 4 »), pour que l'arbitre voie les règles qu'il
   applique (`formatLabel` dans `_pack_match` — voir [[cycle-de-vie-match]]).
-- **Badge d'état** : EN COURS / JEU DÉCISIF (tie-break actif) / TERMINÉ.
+- **Badge d'état** : ÉCHAUFFEMENT (avec le compte à rebours) / EN COURS /
+  JEU DÉCISIF (tie-break actif) / TERMINÉ.
 
 ### Bloc score
 
 - **Joueur A** (gauche) et **Joueur B** (droite) : nom, **SETS n**, **JEUX n**, et un
   **indicateur de service** (●) du côté du serveur courant.
-- **Score central** : le point du jeu en cours — `0 / 15 / 30 / 40` hors tie-break,
-  **valeur numérique** en tie-break (avec le libellé « JEU DÉCISIF »).
+- **Score central** : le point du jeu en cours — `0 / 15 / 30 / 40 / AV` hors
+  tie-break (égalité affichée `40 / 40`), **valeur numérique** en tie-break (avec
+  le libellé « JEU DÉCISIF »). L'affichage vient de **`displayPointA/B`** de
+  `_pack_match` — le front **ne recalcule jamais** le libellé de point depuis les
+  points bruts (la gestion deuce/avantage appartient au moteur).
 
 ### Zones de tap (le cœur de la saisie)
 
@@ -110,26 +122,38 @@ appartient à l'admin (onglet Format, verrouillé quand le match est `LIVE` —
 
 ---
 
-## Flux : démarrer un match (avec choix du premier serveur)
+## Flux : démarrer un match (entrée en échauffement)
 
-Ouvert par « Démarrer le match » (match `SCHEDULED`). Modal **« Démarrer le
-match »** :
+Ouvert par « Démarrer le match » (match `SCHEDULED`) :
 
-1. **« Qui sert en premier ? »** : deux boutons, un par joueur — **aucun n'est
-   présélectionné** (la question doit être posée sur le court, pas héritée du
-   format). Le bouton de confirmation reste désactivé tant qu'aucun serveur
-   n'est choisi.
-2. Si un **autre match est déjà `LIVE`**, le même modal porte l'avertissement
+1. Si un **autre match est déjà `LIVE`**, une confirmation porte l'avertissement
    « Un autre match est en cours — le démarrer le mettra en pause »
-   ([[cycle-de-vie-match]]) : un seul geste, pas deux modales enchaînées.
-3. **Confirmer** → `démarrer` avec le serveur choisi (contrat : l'action de
-   démarrage porte un paramètre `server` A/B ; repère modèle, indépendant du
-   `swap`). Le match passe `LIVE`, les zones de tap s'activent.
-4. « Annuler » referme sans rien changer, le match reste `SCHEDULED`.
+   ([[cycle-de-vie-match]]). Sinon, l'action est directe (pas de modal).
+2. Le match passe `LIVE` en **phase d'échauffement** (`warmup_started_at` posé,
+   mise en avant TV). L'écran affiche le compte à rebours et le bouton
+   « Lancer le match » ; les zones de tap restent inactives.
+3. **Garde** : un match de tableau dont un slot n'est **pas résolu** (joueur
+   inconnu) est refusé par le serveur (erreur JSON → toast), voir
+   [[cycle-de-vie-match]].
 
-> **Cas hors parcours** : un match passé `LIVE` sans ce modal (mise en avant
-> depuis l'admin, [[admin-matchs]]) garde le serveur de son format ; l'arbitre
-> le corrige à 0-0 via le tiroir Corrections (`toggle_service`).
+## Flux : lancer le jeu (choix du premier serveur)
+
+Ouvert par « Lancer le match » (match en échauffement). Modal **« Qui sert en
+premier ? »** :
+
+1. Deux boutons, un par joueur — **aucun n'est présélectionné** (la question
+   doit être posée sur le court, pas héritée du format). Le bouton de
+   confirmation reste désactivé tant qu'aucun serveur n'est choisi.
+2. **Confirmer** → l'action de lancement porte un paramètre `server` A/B
+   (repère modèle, indépendant du `swap`) et pose `play_started_at`. Les zones
+   de tap s'activent, la TV bascule de la scène échauffement au scoreboard.
+3. « Annuler » referme sans rien changer, le match reste en échauffement.
+
+> **Cas hors parcours** : un match mis à l'antenne depuis l'admin
+> ([[admin-matchs]]) suit la même mécanique dérivée — jamais lancé
+> (`play_started_at` nul), il apparaît **en échauffement** et l'arbitre le lance
+> par ce même modal ; **repris** après une mise en pause (`play_started_at` déjà
+> posé), il revient **directement en jeu** (pas de ré-échauffement).
 
 ## Flux : Terminer (fin manuelle / abandon)
 
@@ -169,10 +193,11 @@ match à zéro (`SCHEDULED`, score effacé). À réserver aux vrais faux départ
 
 ## Modales & retours
 
-- **Modal de confirmation générique** (reset, annulation) : titre, corps « action
-  irréversible » le cas échéant, « Annuler » / « Confirmer ».
-- **Modal de démarrage** : choix obligatoire du premier serveur + avertissement
-  si un autre match est en cours (voir Flux : démarrer un match).
+- **Modal de confirmation générique** (reset, annulation, démarrage quand un
+  autre match est en cours) : titre, corps « action irréversible » le cas
+  échéant, « Annuler » / « Confirmer ».
+- **Modal de lancement** : choix obligatoire du premier serveur (voir Flux :
+  lancer le jeu).
 - **Modal de fin** : sélection du vainqueur (voir Flux) + bascule abandon.
 - **Toast d'erreur** : toute action **refusée par le moteur** renvoie une **erreur
   JSON** (`{ ok:false, error }`) que l'écran **affiche en toast** ~4 s. Exemples :
@@ -202,6 +227,22 @@ match à zéro (`SCHEDULED`, score effacé). À réserver aux vrais faux départ
 | Situation | Comportement |
 |---|---|
 | Match introuvable / supprimé | Erreur de chargement ; retour possible vers l'accueil. |
-| Joueurs non résolus (slot de tableau TBD) | Noms remplacés par les étiquettes ; le match ne devrait pas être démarrable tant que les deux joueurs ne sont pas connus. |
+| Joueurs non résolus (slot de tableau TBD) | Noms remplacés par les étiquettes ; « Démarrer » est **refusé par le serveur** tant que les deux joueurs ne sont pas connus (erreur JSON → toast, garde décrite dans [[cycle-de-vie-match]]). |
 | Un autre match passe `LIVE` (démarré ailleurs) | Ce match, s'il était `LIVE`, repasse `SCHEDULED` au tick suivant (invariant mono-`LIVE`) ; l'écran le reflète. |
 | Format `MANUAL` | Le moteur désactive la logique auto ; seules les corrections manuelles (jeux/sets) font foi. |
+
+---
+
+## Variante mobile (téléphone)
+
+L'écran a une **seconde scène fixe portrait** (~390 × 844) sélectionnée selon le
+viewport, scalée par le même `useScale` — socle, sélection de scène, verrou
+anti-tap et wake-lock décrits dans [[mobile]] :
+
+- zones de tap empilées **haut / bas** (joueur du haut / joueur du bas, mêmes
+  actions `point_left`/`point_right` re-mappées), score au centre ;
+- actions secondaires (Corrections, Terminer, Forfait…) repliées dans un menu ;
+- **verrou anti-tap** : un bouton cadenas gèle les zones (le téléphone vit dans
+  une main ou une poche) ;
+- comportements identiques à la scène iPad (mêmes modes, mêmes flux, mêmes
+  erreurs) : seule la disposition change.

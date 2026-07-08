@@ -17,7 +17,8 @@ fichiers:
 
 L'écran Calendrier (`/admin/events/:eventId/matches`, intitulé **« Calendrier des matchs »**)
 agence les matchs de l'**épreuve active** dans le temps : il transforme la liste
-des matchs de poule en un **planning ordonné par journée**, sur un court unique.
+des matchs — **poules et tableau final** — en un **planning ordonné par
+journée**, sur un court unique.
 
 On y voit d'un coup d'œil **qui joue, quand, contre qui**. L'admin pose les
 matchs (manuellement ou via la pré-pose), l'écran **estime les heures** et les
@@ -33,10 +34,13 @@ décision 17 de [[admin-panel-map]]).
 
 ## Cycle de vie
 
-Les matchs de poule **existent déjà** quand on arrive ici : ils sont créés par
-**« Débuter l'épreuve »** (écran Tournoi, voir [[cycle-de-vie-epreuve]]), qui les
-fait naître **à planifier** et verrouille la composition des poules. Le calendrier
-n'est donc disponible que pour une épreuve **`EN_COURS`**.
+Les matchs **existent déjà** quand on arrive ici : ils sont créés par
+**« Débuter l'épreuve »** (écran Tournoi, voir [[cycle-de-vie-epreuve]]), qui
+fait naître **à planifier** les matchs de poule **et** le squelette du tableau
+final (QF/SF/F/P3, étiquetés « A1 vs D2 » tant que non résolus — voir
+[[planning]], « Matchs de tableau au calendrier »), et verrouille la composition
+des poules. Le calendrier n'est donc disponible que pour une épreuve
+**`EN_COURS`**.
 
 1. **Pré-pose** (optionnelle) : range automatiquement la pile à planifier.
 2. **Ajustement manuel** : glisser-déposer pour planifier / réordonner / insérer
@@ -69,10 +73,14 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
 ### Pile « À planifier »
 
 - Colonne latérale listant les matchs `SCHEDULED` sans position de **toute
-  l'édition** (le calendrier est édition-scoped, voir Données), **groupés par
-  épreuve puis par poule**. Les matchs des autres épreuves sont **atténués**
-  (mise en évidence de l'épreuve active) mais restent déplaçables.
-- Chaque carte : pastille de poule, « {A} vs {B} », poignée de déplacement (⋮⋮).
+  l'édition** (le calendrier est édition-scoped, voir Données), **tous stages
+  confondus**, **groupés par épreuve puis par poule** — les matchs de tableau
+  d'une épreuve forment un groupe « Tableau » (ordre QF → SF → F/P3). Les
+  matchs des autres épreuves sont **atténués** (mise en évidence de l'épreuve
+  active) mais restent déplaçables.
+- Chaque carte : pastille de poule (ou pastille d'étape « QF1 », « SF2 »…),
+  « {A} vs {B} » — les slots non résolus affichent leur **étiquette de
+  provenance** (« A1 vs D2 », « Vainqueur QF1 ») —, poignée de déplacement (⋮⋮).
 - Compteur. C'est aussi une zone de dépôt : y déposer un match planifié l'y renvoie
   (= dé-planifie, perte de la journée et de la position).
 - État « tout placé » : « Tout est planifié ».
@@ -91,7 +99,12 @@ n'est donc disponible que pour une épreuve **`EN_COURS`**.
 
 ### Journées
 
-Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayDay`) :
+Empilées verticalement (pas d'onglets), dans la **zone scrollable** de l'écran.
+Les cartes de journée **ne clippent pas leur contenu** — pas d'`overflow:
+hidden` sur la carte (`.play-day`) : il casse le défilement et tout
+positionnement `sticky` interne (l'arrondi des coins est porté par l'en-tête
+et le pied de carte, pas par un clip). Une section par journée de jeu
+(`PlayDay`) :
 - En-tête : nom + date, nombre de matchs ; sous-ligne « Court central · début HH:MM
   · fin estimée ~HH:MM ». L'**heure de début est éditable en place** : cliquer
   « début HH:MM » ouvre un sélecteur d'heure inline (même mutation que
@@ -116,9 +129,11 @@ Empilées verticalement (pas d'onglets). Une section par journée de jeu (`PlayD
   [[planning]]) : **rouge** = en retard et pas démarré, **orange** = démarré en
   retard ou qui s'éternise, **vert** = en cours et à l'heure. Les lignes dans
   les temps, terminées ou annulées ne portent aucune teinte.
-- **Affiche** : pastille de poule, « {A} vs {B} ».
+- **Affiche** : pastille de poule (ou d'étape pour un match de tableau),
+  « {A} vs {B} » — étiquettes de provenance si les slots ne sont pas résolus.
 - **⚠ repos** si le match est adjacent, dans la séquence, à un autre match du même
-  joueur (voir [[planning]]).
+  joueur (voir [[planning]]) — inévaluable sur des slots non résolus (best-effort,
+  réévalué à la résolution).
 - Poignée de déplacement (⋮⋮) sur les seules lignes **déplaçables** (`SCHEDULED`).
   Les matchs **en cours et terminés** sont **verrouillés à leur place** (visibles,
   non déplaçables).

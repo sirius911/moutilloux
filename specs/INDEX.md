@@ -52,6 +52,7 @@ flux utilisateur, redirections, gestion des erreurs.
 | admin/poules | [screens/admin-poules.md](./screens/admin-poules.md) | ✅ Actif |
 | admin/matchs | [screens/admin-matchs.md](./screens/admin-matchs.md) | ✅ Actif |
 | admin/tableau-final | [screens/admin-tableau-final.md](./screens/admin-tableau-final.md) | ✅ Actif |
+| admin/regie-mobile | [screens/admin-regie-mobile.md](./screens/admin-regie-mobile.md) | ✅ Actif |
 | arbitre/home | [screens/arbitre-home.md](./screens/arbitre-home.md) | ✅ Actif |
 | arbitre/match | [screens/arbitre-match.md](./screens/arbitre-match.md) | ✅ Actif |
 | tv/live | [screens/tv-live.md](./screens/tv-live.md) | ✅ Actif |
@@ -61,8 +62,9 @@ flux utilisateur, redirections, gestion des erreurs.
 > modale Épreuve, court unique seedé en base.
 >
 > La spec `tv-programme.md` est **absorbée** par [tv-live.md](./screens/tv-live.md)
-> (décision 9 de [tv-map](./tv-map.md)) : slide Programme et bandeau « À suivre »
-> y sont désormais décrits, avec le reste de l'écran TV unique.
+> (décision 9 de [tv-map](./tv-map.md)) : slide Programme et carte « À préparer »
+> (ex-bandeau « À suivre ») y sont désormais décrits, avec le reste de l'écran TV
+> unique.
 
 ---
 
@@ -74,6 +76,7 @@ Décrivent des règles globales qui s'appliquent à plusieurs écrans ou composa
 |--------|---------|--------|
 | erreurs-api | [transverse/erreurs-api.md](./transverse/erreurs-api.md) | ✅ Actif |
 | auth / matrice d'accès | [transverse/auth-matrice-acces.md](./transverse/auth-matrice-acces.md) | ✅ Actif |
+| mobile | [transverse/mobile.md](./transverse/mobile.md) | ✅ Actif |
 
 *Exemples à prévoir : polling (intervalles, pause onglet caché).*
 

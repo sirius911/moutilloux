@@ -17,66 +17,139 @@ fichiers:
 
 `/tv/live` est **l'unique affichage public** du tournoi (une TV, un court —
 voir [[tv-map]]). Il est en lecture seule, sans aucune interaction attendue, et
-bascule **automatiquement** entre deux états :
+bascule **automatiquement** entre quatre états :
 
-- **SCOREBOARD** dès qu'un match est `LIVE` : le score en grand + l'enjeu du
-  match + le bandeau « À suivre » ;
+- **ÉCHAUFFEMENT** quand le match `LIVE` n'est pas encore lancé
+  (`playStartedAt` nul, voir [[cycle-de-vie-match]]) : l'affiche du match en
+  grand + compte à rebours ;
+- **SCOREBOARD** dès que le match est lancé : le score en grand + l'enjeu du
+  match + la carte « À préparer » ;
+- **FIN DE MATCH** (~30 s) quand le match affiché vient de se terminer : le
+  vainqueur et le score final ;
 - **CAROUSEL** sinon : rotation de slides d'information (stats, résultats,
   poules, tableau, programme, annonces).
 
-La bascule est **dérivée** de l'état serveur (`hero` non nul ⇄ nul, voir
-[[tv-state]]) — jamais d'action manuelle. La scène est fixée à 1920×1080 et
-mise à l'échelle sur l'écran réel (`TvLayout` / `useScale`).
+La bascule est **dérivée** de l'état serveur (`hero` et sa phase, voir
+[[tv-state]] ; la fenêtre Fin de match est tenue côté front) — jamais d'action
+manuelle. La scène est fixée à 1920×1080 et mise à l'échelle sur l'écran réel
+(`TvLayout` / `useScale`).
 
 ---
 
-## État SCOREBOARD (un match est LIVE)
+## État SCOREBOARD (un match est en jeu)
 
-### En-tête
+Scène **composée** : le score au centre (l'élément dominant de l'écran), la
+carte « À préparer » à droite, l'enjeu à gauche, l'affiche en fond. Référence
+design : la variante **« editorial »** du mock (`frontend/design/scoreboard.jsx`,
+`ScoreboardEditorial`) pour le centre, et le **`PrepPanel`** du même mock pour
+la carte de droite.
 
-- Marque du tournoi (« OPEN DE MOUTILLOUX · ÉDITION {année} »).
+### Bandeau haut (fin)
 
-### Bande de score (bas d'écran)
-
-- Ligne titre : pastille « EN DIRECT » + intitulé de l'étape (`stageLabel` :
-  « Match de poule — Poule A », « Demi-finale »…) + badge « JEU DÉCISIF » si
+- Marque du tournoi (« OPEN DE MOUTILLOUX · ÉDITION {année} »), intitulé de
+  l'étape (`stageLabel`), pastille « EN DIRECT », badge « JEU DÉCISIF » si
   tie-break en cours.
-- Par joueur : nom (nom d'équipe en Double), balle de service côté serveur,
-  **sets terminés** (boîtes par set, depuis `setScores`), **jeux** du set en
-  cours, **points** du jeu en cours (0/15/30/40/AV, points bruts en tie-break).
-- Pied de bande : court, durée du match (`clock`), horloge (`now`).
+
+### Centre : le score « editorial » (l'élément dominant)
+
+- Les **jeux du set en cours en très grand** (`5 — 3`), surmontés du label
+  explicite **« JEUX · SET {n} »** — c'est le contraste de taille **et**
+  l'étiquette qui lèvent l'ambiguïté points/jeux pour un spectateur qui arrive
+  en cours de match.
+- En dessous, **une ligne par joueur** : balle de service côté serveur, nom
+  (nom d'équipe en Double), tête de série, **points du jeu en cours** et
+  **sets gagnés**.
+- Les points affichent **`displayPointA/B`** de `_pack_match`
+  (`0/15/30/40/AV`, égalité `40/40`, points bruts en tie-break) — le front ne
+  recalcule **jamais** le libellé depuis les points bruts.
+- **Signal broadcast sur l'avantage** : le « AV » du côté avantagé passe en
+  **accent**, le « 40 » d'en face reste blanc — l'œil voit qui a la balle de
+  jeu. Le point qui vient de tomber peut marquer une brève pulsation.
+
+### Pied discret
+
+- Court, durée du match (`clock`), horloge (`now`).
 
 ### Fond de scène : l'affiche du match
 
 Si le match a une **affiche générée** (`hero.posterUrl`, voir
-[[affiche-match]]), elle remplace le fond de court sur toute la scène — son
-visuel réserve par conception la zone basse à la bande de score. Sans affiche,
-le fond de court actuel demeure.
+[[affiche-match]]), elle remplace le fond de court sur toute la scène — le
+score « editorial » se compose par-dessus. Sans affiche, le fond de court
+demeure.
 
-### Zone d'enjeu (centre de l'écran)
+### Gauche : le panneau d'enjeu (réduit)
 
-Le grand fond n'est plus vide : il accueille l'**enjeu du match**
-(décision 4 de [[tv-map]]), affiché **par-dessus l'affiche** le cas échéant,
-dans un panneau semi-transparent (l'affiche reste lisible derrière) :
+L'**enjeu du match** (décision 4 de [[tv-map]]) est **latéralisé** : panneau
+semi-transparent d'environ **480 px**, ancré à gauche, contraste adouci — il
+informe sans concurrencer le score :
 
 - **Match de poule** → le **classement de la poule** des deux joueurs
   (standings : rang, nom, V/D, points, badge Q — affiché seulement si la poule
   est **terminée**, voir [[cycle-de-vie-epreuve]]), les deux joueurs du match
   mis en évidence. Le public voit ce que le match peut changer.
-- **Match de tableau** (QF/SF/F/P3) → le **mini-tableau** de l'épreuve, le
-  match en cours mis en évidence (le chemin vers la finale).
+- **Match de tableau** (QF/SF/F/P3) → le **mini-tableau** de l'épreuve
+  (condensé au format colonne), le match en cours mis en évidence.
 - Données fournies par [[tv-state]] (`stake`) ; si l'enjeu n'est pas
-  disponible (données pas prêtes), la zone reste sobre (fond de court seul) —
-  jamais d'erreur visible.
+  disponible, le panneau est masqué — jamais d'erreur visible.
 
-### Bandeau « À suivre »
+### Droite : la carte « À préparer » (PrepPanel)
 
-Au-dessus de la bande de score, **uniquement s'il existe un next** (défini par
-[[tv-state]]) :
+Carte **flottante en haut à droite** (~360 px, portée du `PrepPanel` du mock),
+**uniquement s'il existe un next** (défini par [[tv-state]]) :
 
-- « À SUIVRE — {A} vs {B} · {étiquette de poule/étape} » + mention d'appel
-  (« Joueurs suivants, présentez-vous au juge-arbitre »).
+- avatars/initiales des deux joueurs, « {A} vs {B} », étiquette de poule/étape,
+  heure estimée (`~HH:MM`), et l'appel « Présentez-vous au juge-arbitre ».
 - But : laisser les joueurs suivants se préparer pendant le match en cours.
+- Remplace l'ancien bandeau pleine largeur au-dessus de la bande de score
+  (portage dégradé du design, retiré).
+
+---
+
+## État ÉCHAUFFEMENT (match démarré, pas encore lancé)
+
+Actif quand le `hero` est `LIVE` avec `playStartedAt` nul (l'arbitre a démarré
+le match, le serveur n'est pas encore choisi — voir [[cycle-de-vie-match]]) :
+
+- **L'affiche du match en plein écran** (sans bande de score) — c'est le moment
+  de mise en avant du dispositif [[affiche-match]]. Sans affiche : fond de
+  court + composition typographique des deux noms.
+- Libellé **« ÉCHAUFFEMENT »** + **compte à rebours** (5 min, constante),
+  dérivé de `warmupStartedAt` — même source que la tablette arbitre, donc
+  synchronisé. À 0:00, le compte à rebours laisse place à un libellé
+  d'imminence (« Le match va commencer ») — rien d'automatique.
+- Joueurs (« {A} vs {B} »), étape, court.
+- La carte « À préparer » reste affichée s'il existe un next.
+- La scène bascule sur le SCOREBOARD au poll où `playStartedAt` se remplit.
+
+---
+
+## État FIN DE MATCH (~30 s, tenu côté front)
+
+Quand le `hero` disparaît du poll alors que la TV affichait un match :
+
+1. Le front fait un **fetch one-shot** de `GET /api/matches/:id/` (lecture
+   publique) pour récupérer l'**état final** — le dernier état pollé ne
+   contient pas le point gagnant, puisque le serveur ne renvoie plus le match
+   une fois `FINISHED`.
+2. Si le match est `FINISHED` avec un vainqueur → scène **« photo finish »**
+   pendant **~30 s** : l'affiche du match en fond plein écran, « VICTOIRE »,
+   le **nom du vainqueur en très grand**, le **score par sets** (`setScores`),
+   la durée du match. Si `endReason = RETIREMENT`, la mention « Abandon »
+   accompagne le score (figé en l'état).
+3. Après ~30 s, fondu vers le CAROUSEL.
+
+Règles :
+
+- **Préemption** : un nouveau `hero` (match suivant démarré) interrompt la
+  fenêtre immédiatement — le direct gagne toujours.
+- Un match **rouvert** par l'admin pendant la fenêtre redevient `hero` au poll
+  suivant (même préemption).
+- Un match sorti du direct **sans vainqueur** (annulé, reset, mis en pause par
+  un autre démarrage) ne déclenche **pas** la scène : carousel direct.
+- Un **walkover** ne déclenche rien (le match n'a jamais été à l'antenne).
+- La fenêtre étant tenue côté front, un **rechargement de la TV** pendant les
+  30 s repart sur le carousel — assumé (choix : pas d'état serveur pour un
+  écran éphémère).
 
 ---
 
@@ -120,12 +193,16 @@ d'[[admin-panel-map]] / [[planning]]).
 
 ## Bascule d'état
 
-1. Le front polle l'état TV (~2 s, voir Données). `hero` non nul → SCOREBOARD ;
-   nul → CAROUSEL.
-2. La bascule est immédiate (au poll suivant), sans transition bloquante ; le
-   carousel reprend sa rotation là où il s'était arrêté.
+1. Le front polle l'état TV (~2 s, voir Données). `hero` non nul et
+   `playStartedAt` nul → ÉCHAUFFEMENT ; `hero` non nul et lancé → SCOREBOARD ;
+   `hero` passant à nul depuis un match affiché → FIN DE MATCH (~30 s, fetch
+   one-shot) ; sinon → CAROUSEL.
+2. Les bascules sont immédiates (au poll suivant), sans transition bloquante ;
+   le carousel reprend sa rotation là où il s'était arrêté.
 3. Un match mis « à l'antenne » depuis l'admin ([[admin-matchs]], mise en
-   avant) devient le `hero` : même mécanique, aucune logique TV spécifique.
+   avant) devient le `hero` : même mécanique, aucune logique TV spécifique
+   (jamais lancé → il apparaît en échauffement ; repris → directement le
+   scoreboard, voir [[cycle-de-vie-match]]).
 
 ## Gestion des erreurs
 
@@ -140,7 +217,9 @@ d'[[admin-panel-map]] / [[planning]]).
 |---|---|
 | Aucune édition active | Carousel réduit à la slide Tournoi avec la marque et l'horloge (état neutre). |
 | Édition active sans aucun match | Slide Tournoi seule (les autres sont sautées). |
-| Match LIVE sans poule ni tableau résolus | Scoreboard sans zone d'enjeu (fond de court sobre). |
+| Match LIVE sans poule ni tableau résolus | Scoreboard sans panneau d'enjeu (masqué). |
+| Match en échauffement sans affiche | Scène échauffement en composition typographique (fond de court, noms en grand). |
+| Fin de match : le fetch one-shot échoue | Pas de scène vainqueur, carousel direct (jamais d'erreur visible). |
 | Deux matchs LIVE (état anormal) | Le serveur choisit le hero (featured puis plus récent, voir [[tv-state]]) ; la TV n'affiche jamais deux scores. |
 
 ## Données

@@ -78,7 +78,12 @@ Lecture publique. Tout match est packé par `_pack_match`.
 ```
 
 - **Choix du hero** : match `LIVE` de l'édition active, tri `-is_featured,
-  -updated_at` (existant — gère le cas anormal de deux LIVE).
+  -updated_at` (existant — gère le cas anormal de deux LIVE). Le hero peut être
+  en **phase d'échauffement** (`playStartedAt` nul — voir
+  [[cycle-de-vie-match]]) : `_pack_match` expose `warmupStartedAt` et
+  `playStartedAt`, la TV en dérive la scène (échauffement ⇄ scoreboard,
+  [[tv-live]]). Un match `FINISHED` n'est **jamais** hero : la fenêtre
+  « fin de match » (~30 s) est tenue **côté front** (voir Front).
 - `stake` est **dérivé du hero** (sa poule ou le tableau de son épreuve) ;
   `null` si non résolvable. Les deux entries du hero sont identifiables dans
   les standings via `entryId`.
@@ -143,6 +148,14 @@ Lecture publique. Alimente les slides du carousel ([[tv-live]]) :
   `fetchTvState` (fin du flip-flop de formes).
 - `fetchScoreState`/`fetchUpcoming` et les types `ScoreState`/`TvUpcoming`
   sont retirés. `fetchMatch` (écran arbitre) est conservé tel quel.
+- **Fenêtre « fin de match » (~30 s, côté front)** : quand `hero` passe de
+  non-nul à nul, le store fait un **fetch one-shot** de
+  `GET /api/matches/:id/` (le dernier état pollé ne contient pas le point
+  gagnant — le serveur ne renvoie plus le match une fois `FINISHED`). Si le
+  résultat est `FINISHED` avec vainqueur, il alimente la scène « fin de
+  match » de [[tv-live]] pendant ~30 s. Un nouveau `hero` **préempte** la
+  fenêtre ; un rechargement de la page la perd (assumé — pas d'état serveur
+  pour un écran éphémère).
 
 ## Retraits (legacy)
 

@@ -94,7 +94,10 @@ joueront pas tant qu'on ne revient pas les ajouter — voir Ajustements).
 2. **Verrouille la structure** des poules : composition en lecture seule
    (le verrouillage ne dépend plus de « un match existe » mais de `status ≥ EN_COURS`).
 3. **Crée le squelette du tableau** (vide, étiquettes de provenance — voir
-   *Le tableau final*).
+   *Le tableau final*). Ses matchs naissent `SCHEDULED` sans `order_index` :
+   ils rejoignent la **pile « à planifier »** du calendrier au même titre que
+   les matchs de poule (étiquetés « A1 vs D2 » tant que non résolus — voir
+   [[planning]], « Matchs de tableau au calendrier »).
 4. **Ouvre la planification** : le calendrier ([[planning]]) n'accepte des matchs
    que pour les épreuves `EN_COURS`.
 5. Passe `status = EN_COURS`.
@@ -161,11 +164,14 @@ que « rollback global ».
 La planification ([[planning]]) est un **calque d'organisation, pas une barrière** :
 
 - un match généré est **jouable même non planifié** (l'arbitre peut le lancer) ;
-  le calendrier sert à ordonner courts/journées et estimer les heures.
-- Deux horizons : les **matchs de poule** (joueurs connus → planifiables dès
-  « Débuter ») et les **slots de tableau** (joueurs TBD → on planifie le *créneau*,
-  les étiquettes de provenance « A1/C2 » s'affichent jusqu'à résolution). Le
-  bracket au calendrier est la Phase 2 de [[planning]].
+  le calendrier sert à ordonner courts/journées et estimer les heures. Seule
+  exception : un match de tableau aux slots **non résolus** refuse `démarrer`
+  (garde serveur, [[cycle-de-vie-match]]).
+- Deux horizons, **tous deux planifiables dès « Débuter »** : les **matchs de
+  poule** (joueurs connus) et les **slots de tableau** (joueurs TBD → on
+  planifie le *créneau*, les étiquettes de provenance « A1/C2 » s'affichent
+  jusqu'à résolution). Règles dans [[planning]], « Matchs de tableau au
+  calendrier ».
 - Un ajustement qui crée des matchs (ajout tardif) les fait retomber dans la pile
   « à planifier ».
 

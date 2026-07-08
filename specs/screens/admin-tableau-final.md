@@ -20,6 +20,12 @@ tableau de phase finale de l'**épreuve active**. Le squelette est créé au mom
 possible, et suit la progression automatique des gagnants jusqu'à la finale (voir
 [[cycle-de-vie-epreuve]]).
 
+Cet écran gère la **composition** du tableau ; la **planification** de ses
+matchs (journée, ordre, heures estimées) se fait sur le Calendrier
+([[admin-matchs]]) : les matchs du squelette rejoignent la pile « à planifier »
+dès « Débuter », étiquetés par provenance, et un match aux slots non résolus
+refuse `démarrer` (voir [[planning]], « Matchs de tableau au calendrier »).
+
 ---
 
 ## Éléments d'interface

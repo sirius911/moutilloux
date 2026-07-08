@@ -68,20 +68,63 @@ et le match `LIVE` **est** le match affiché sur la TV ([[tv-live]]). Démarrer 
 match suivant « met en pause » le précédent (il repasse `SCHEDULED` en **conservant
 son score** ; il pourra être repris).
 
+### Les deux phases de `LIVE` : échauffement puis jeu
+
+`LIVE` se subdivise en **deux phases dérivées** de deux horodatages — pas de
+statut supplémentaire :
+
+| Champ | Posé par | Sens |
+|---|---|---|
+| `warmup_started_at` | l'entrée en `LIVE` d'un match jamais lancé | début de l'échauffement (le court est occupé) |
+| `play_started_at` | le **choix du premier serveur** | début du jeu réel |
+
+- **Échauffement** = `LIVE` **et** `play_started_at` nul. Le moteur **refuse
+  toute action de scoring** (`point_left/right`, jeux±, sets±) pendant cette
+  phase — erreur JSON affichée en toast ([[arbitre-match]]). La TV affiche la
+  scène échauffement ([[tv-live]]) : affiche du match + compte à rebours
+  **5 min** (constante applicative, purement **indicative** — rien ne se
+  déclenche à 0:00).
+- **Jeu** = `LIVE` et `play_started_at` posé. Comportement actuel inchangé.
+- Le passage échauffement → jeu est l'action de **choix du serveur** (modal
+  « Qui sert en premier ? », [[arbitre-match]]) : elle pose `play_started_at`
+  et le serveur choisi. Le choisir tôt **court-circuite** l'échauffement — il
+  n'y a pas d'action « passer » distincte.
+- Un match **repris** après une mise en pause (`play_started_at` déjà posé)
+  revient **directement en jeu** : pas de ré-échauffement. Un match **mis à
+  l'antenne** depuis l'admin sans avoir jamais été lancé entre en échauffement
+  comme n'importe quel démarrage — règle dérivée, aucun cas particulier.
+- `started_at` (base des ETA et de la ponctualité, [[planning]]) est posé à
+  l'**entrée en échauffement** : c'est le moment où le court est occupé. La
+  durée par défaut d'un match inclut donc l'échauffement.
+
 ---
 
 ## Transitions
 
-### Démarrer — `SCHEDULED → LIVE`
+### Démarrer — `SCHEDULED → LIVE` (phase échauffement)
 
 - **Qui** : arbitre **et** admin.
-- **Effet** : `mark_live()` (statut `LIVE` + `started_at` si vide), **mise en avant
-  TV** (`is_featured = True`), rétrogradation de l'éventuel autre match `LIVE`. Le
-  match **garde sa place** dans le calendrier (`order_index` conservé — voir plus bas).
-- **Garde** : si un autre match est déjà `LIVE`, une **confirmation** explicite
-  l'effet (« Un autre match est en cours — le démarrer le mettra en pause »), cohérent
-  avec la mise en avant côté admin ([[admin-matchs]], « mettre un match en avant »).
+- **Effet** : `mark_live()` (statut `LIVE` + `started_at` si vide), pose de
+  `warmup_started_at` si le match n'a jamais été lancé (voir « Les deux phases
+  de `LIVE` »), **mise en avant TV** (`is_featured = True`), rétrogradation de
+  l'éventuel autre match `LIVE`. Le match **garde sa place** dans le calendrier
+  (`order_index` conservé — voir plus bas).
+- **Gardes** :
+  - si un autre match est déjà `LIVE`, une **confirmation** explicite l'effet
+    (« Un autre match est en cours — le démarrer le mettra en pause »), cohérent
+    avec la mise en avant côté admin ([[admin-matchs]], « mettre un match en avant ») ;
+  - un match de **tableau dont un slot n'est pas résolu** (side manquant) est
+    **refusé par le serveur** (erreur JSON) — on ne démarre pas un match sans
+    ses deux joueurs (voir [[planning]], matchs de tableau au calendrier).
 - **Idempotence** : démarrer un match déjà `LIVE` est sans effet (pas d'erreur).
+
+### Lancer le jeu — échauffement → jeu (choix du serveur)
+
+- **Qui** : arbitre (et admin le cas échéant — même service).
+- **Effet** : pose `play_started_at` et le `server` choisi (A/B, repère modèle,
+  indépendant du `swap`). Les actions de scoring deviennent acceptées ; la TV
+  bascule de la scène échauffement au scoreboard ([[tv-live]]).
+- **Garde** : refusé si le match n'est pas `LIVE` en phase d'échauffement.
 
 ### Scorer — pendant `LIVE`
 
@@ -172,7 +215,9 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 
 | Champ | État actuel | Cible |
 |---|---|---|
-| `Match.status` (SCHEDULED/LIVE/FINISHED/CANCELED) | ✓ présent | inchangé |
+| `Match.status` (SCHEDULED/LIVE/FINISHED/CANCELED) | ✓ présent | inchangé (pas de statut WARMUP — phase dérivée) |
+| `Match.warmup_started_at` (DateTime, nullable) | à créer | posé à l'entrée en `LIVE` d'un match jamais lancé ; exposé `warmupStartedAt` dans `_pack_match` |
+| `Match.play_started_at` (DateTime, nullable) | à créer | posé au choix du serveur ; exposé `playStartedAt` dans `_pack_match` ; nul = phase d'échauffement |
 | `Match.winner_side` (A/B) | ✓ présent | inchangé |
 | `Match.is_walkover` | ✓ présent | conservé (compat), câblé en parallèle de `end_reason=WALKOVER` |
 | `Match.end_reason` (NORMAL / WALKOVER / RETIREMENT) | ✓ présent (migration `0022_match_end_reason`) | NORMAL câblé (`mark_finished()` + balle de match auto tie-break/set classique), WALKOVER câblé (`withdraw_entry`) et RETIREMENT **câblé** via le service `finish_match_manual` (`live/admin_views.py`), utilisé par l'action `finish_winner` (`live/referee_views.py`) avec `retirement=True` (ticket #281). Exposé dans `_pack_match` sous `endReason` |
@@ -200,6 +245,8 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 | Élément | Nature |
 |---|---|
 | Action `démarrer` exposée aussi côté **admin** | service partagé (existe côté arbitre) |
+| Phase d'échauffement (`warmup_started_at` / `play_started_at`, refus du scoring en échauffement, action « lancer le jeu ») | migration + évolution de `mark_live` / `referee_action` (retours TV 2026-07-08) |
+| Garde « slot non résolu » sur `démarrer` (matchs de tableau) | garde de service (retours TV 2026-07-08) |
 | `end_reason` (NORMAL/WALKOVER/RETIREMENT) | migration + câblage terminer/forfait faits (#279) ; câblage abandon (RETIREMENT) fait via `finish_match_manual` / action `finish_winner` (#281) |
 | Forfait / abandon / annulation **scopés au match** | services neufs (le walkover d'entry existe côté épreuve) |
 | `reopen` **conservant `set_scores`** et repassant `LIVE` | correction de bug |

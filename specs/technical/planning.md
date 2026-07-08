@@ -61,9 +61,13 @@ heure n'est saisie à la main.
 Une pause n'est pas un match : elle ne porte pas de joueurs ; le moteur d'ETA
 l'**enjambe** (le curseur avance de `duration_min`).
 
-> **Périmètre MVP** : seuls les matchs de **poule** (`stage = GROUP`) entrent au
-> calendrier — leurs deux joueurs sont connus dès la génération. Le bracket
-> (QF / SF / F, étiquettes « A1 », « D2 ») est hors périmètre (voir Phase 2).
+> **Périmètre** : **tous les matchs** entrent au calendrier — les matchs de
+> **poule** (joueurs connus dès la génération) **et** les matchs de **tableau**
+> (QF / SF / F / P3), planifiables dès la création du squelette avec leurs
+> étiquettes de provenance (« A1 vs D2 », « Vainqueur QF1 ») tant que les
+> joueurs ne sont pas résolus. Voir « Matchs de tableau au calendrier »
+> ci-dessous. *(L'exclusion initiale du bracket — ex-« Phase 2 » — est levée :
+> retours TV du 2026-07-08.)*
 
 ---
 
@@ -119,8 +123,12 @@ surprise » :
 - **match planifié** → ETA = `t` ; puis `t += durée`.
 - **pause** → `t += duration_min` (aucune heure de match ; bande « Pause »).
 
-`durée` = durée de match par défaut, **25–30 min** (réglable par édition ; une
-seule valeur au MVP — durées par format en Phase 2).
+`durée` = durée de match par défaut, **par étape** (constantes applicatives,
+pas de config) : **poule** ~30 min, **QF/SF** ~30–35 min, **finale / 3e place**
+~45 min — valeurs à caler sur les formats réels (`_fmt_for_stage`,
+`live/bracket.py`) au moment de l'implémentation. La durée **inclut
+l'échauffement** : `started_at` est posé à l'entrée en échauffement (le court
+est occupé dès ce moment — voir [[cycle-de-vie-match]]).
 
 Propriétés garanties :
 - **Re-flow automatique** : un match qui déborde (démarrage tardif ou durée
@@ -170,6 +178,37 @@ seul conflit réel est le **repos insuffisant** :
 - La pré-pose respecte la règle par construction.
 - Cas dégénéré (petite poule où l'évitement est impossible) : best-effort, le
   conflit résiduel reste signalé.
+- **Matchs de tableau** : la règle est **inévaluable** tant que les joueurs ne
+  sont pas résolus — best-effort, le ⚠ apparaît quand les slots se résolvent.
+
+---
+
+## Matchs de tableau au calendrier
+
+Les matchs de tableau (QF / SF / F / P3) suivent les **mêmes règles** que les
+matchs de poule, avec les particularités suivantes :
+
+- **Entrée dans la pile « à planifier » dès « Débuter »** : le squelette créé
+  par la transition Débuter ([[cycle-de-vie-epreuve]]) fait naître ses matchs
+  `SCHEDULED` sans `order_index` — ils apparaissent immédiatement dans la pile,
+  affichés avec leurs **étiquettes de provenance** (`side_a_label` /
+  `side_b_label` de `_pack_match` : « A1 vs D2 », « Vainqueur QF1 vs Vainqueur
+  QF2 »). L'organisateur peut ainsi **réserver les créneaux de la phase finale
+  avant la fin des poules** ; le public voit « Quart de finale — A1 vs D2 ·
+  ~14h » sur la TV.
+- **Garde de démarrage** : un match de tableau dont un slot n'est pas résolu
+  **refuse `démarrer`** (garde serveur, voir [[cycle-de-vie-match]]). Le
+  planifier est permis ; le jouer, non.
+- Une fois placés (`order_index`), ils bénéficient de **tout le circuit
+  existant** sans logique dédiée : définition du *next*, « À suivre » et slide
+  Programme TV, programme arbitre, indicateur de ponctualité, panneau
+  d'édition.
+- **Pré-pose** : l'heuristique continue de **ne consommer que les matchs de
+  poule** (son entrelacement est par poule) ; les matchs de tableau (≤ 8 par
+  épreuve) se placent **à la main**.
+- **Finale à heure fixe** : pas d'heure ancrée — une **pause** dimensionnée
+  avant la finale cale son début (le moteur d'ETA l'enjambe). L'ancrage vrai
+  reste hors périmètre (voir plus bas).
 
 ---
 
@@ -211,7 +250,7 @@ toucher à ce qui est déjà placé :
 | `POST /api/editions/<id>/play-days/generate/` | **génération des journées depuis les dates de l'édition** : crée une `PlayDay` par jour entre `start_date` et `end_date` de l'édition (bornes incluses), en **sautant** les dates portant déjà une journée. Plage horaire commune passée dans le body (défaut proposé par l'UI : **9:00 → 20:00**), modifiable journée par journée ensuite (CRUD). Refusée si l'édition n'a pas ses deux dates. Surface UI : modale « Gérer les journées » de [[admin-matchs]]. *(Endpoint à créer — service d'abord, convention CLAUDE.md §5.)* |
 | CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des pauses, ou des matchs `SCHEDULED`/`LIVE` (ces derniers sont **actionnables** : renvoyer d'abord les matchs vers la pile « à planifier » puis réessayer). Si la journée porte au moins un match `FINISHED`, le refus est **définitif** : la journée est conservée comme **archive** et ne redevient jamais supprimable (`live/urls.py:86-89` ; `api_play_days_list:1541`, `api_play_day_create:1551`, `api_play_day_edit:1576`, `api_play_day_delete:1611`). |
 | CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier) (`live/urls.py:91-94` ; `api_breaks_list:1623`, `api_break_create:1633`, `api_break_edit:1659`, `api_break_delete:1691`). |
-| Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA peuvent être calculées côté front. |
+| Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA peuvent être calculées côté front. **La pile et la colonne Annulés couvrent tous les stages** (le filtre `stage=GROUP` du MVP est retiré — voir « Matchs de tableau au calendrier »). |
 | Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-live]] (`live/urls.py:100`, `api_tv_upcoming` — `api_views.py:1817`). |
 
 > **Retrait.** L'ancien endpoint kanban `POST /api/events/<id>/matches/reorder/`
@@ -228,14 +267,17 @@ toucher à ce qui est déjà placé :
 
 ---
 
-## Hors périmètre (Phase 2)
+## Hors périmètre
 
-- **Bracket au calendrier** : planifier QF / SF / F avec participants « à désigner »
-  (étiquettes A1 / D2) tant que les poules ne sont pas finies.
 - **Multi-court** : le mono-court est une hypothèse ferme (décision 12). Si elle
   tombe, l'agenda devient une grille Temps × Courts — le champ `court` le supporte
   déjà.
-- **Durées par format / apprises** : une durée par format (poule ≠ finale), voire
-  apprise de `finished_at − started_at` (les horodatages existent déjà).
+- **Durées apprises** : affiner les constantes par étape avec
+  `finished_at − started_at` (les horodatages existent déjà).
 - **Heures ancrées** : figer l'heure réelle de certains matchs (ex. finale à
-  17:00) — écarté au MVP (heures purement dérivées).
+  17:00) — toujours écarté (heures purement dérivées) ; le contournement
+  retenu est la **pause** avant la finale (voir « Matchs de tableau au
+  calendrier »). À rouvrir si le contournement s'avère pénible.
+
+> *(« Bracket au calendrier », l'ancienne Phase 2, est entré au périmètre —
+> retours TV du 2026-07-08, section « Matchs de tableau au calendrier ».)*
