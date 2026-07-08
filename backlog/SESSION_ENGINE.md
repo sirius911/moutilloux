@@ -373,53 +373,79 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #122
-**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (4ᵉ et dernière session du sprint — **clos**)
+**Dernière session :** 2026-07-08 — Session #130
+**Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
+de sprint). Conformément au protocole (étape 0), la session s'est arrêtée
+sans exécuter les étapes 1 à 3. Aucun changement de code, aucun commit.
 
-**Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`,
-parent effectif `claude/sprint/29-joueurs-attitudes-predefinies`. Aucun
-commit de code cette session (revue à froid uniquement).
+**Roadmap toujours vide depuis la session #125** (sprint 32 clos, milestone
+fermé) — confirmé à nouveau aux sessions #126, #127, #128, #129 et #130
+(6 sessions consécutives), aucun sprint planifié entre-temps. **Désactiver
+la Routine manuellement sur claude.ai/code/routines**, ou planifier un
+nouveau sprint (`/plan-sprint`) avant la prochaine échéance — sinon la
+Routine continuera de se déclencher pour rien.
 
-**Continuité avec la session #121 :** au lancement de cette session, le
-travail de la session #121 (spec review, #305/#306 implémentés/revus/
-fermés sur GitHub, log de session, `SESSION_ENGINE.md` §6) était déjà
-effectué mais son commit final n'était pas encore visible dans les tout
-premiers instants de cette lecture — chevauchement transitoire entre la fin
-d'exécution de #121 et le déclenchement de #122, résolu seul en quelques
-secondes (rien à corriger). La session #121 avait explicitement annoncé
-dans son propre log que « la prochaine session devra mener une spec review
-propre » pour fermer le sprint (son verdict à elle datait d'avant #305/#306
-— schéma habituel des clôtures de fin de sprint) : cette session #122 est
-exactement cette suite.
+**Nouveau point d'attention (session #128) :** deux dossiers de sprint
+orphelins à la racine de `backlog/sprints/` en plus de leur copie dans
+`backlog/sprints/done/` : `04-admin-panel-map/` et `10-contexte-url/`.
+Les deux sprints sont bien clos (présents dans `done/`, absents de
+`roadmap.md`) — reliquats jamais supprimés lors de l'archivage à l'époque.
+Sans impact sur le protocole, mais à nettoyer côté humain
+(`git rm -r backlog/sprints/04-admin-panel-map backlog/sprints/10-contexte-url`).
 
-**Spec review session #122 :** `planning.md`/`admin-matchs.md` **✅
-Conforme** — revue à froid des 6 tickets du sprint ensemble (#302-307, tous
-déjà clos), aucune régression croisée constatée (notamment entre le moteur
-ETA `#304` et la teinte de ponctualité `#305`, qui consomme `plannedEtaMin`
-exposé par `etaEngine`). 0 nouvelle dérive.
+---
 
-**Backlog engine session #122 :** 0 ticket traité — le milestone n'avait
-plus d'issue ouverte en entrant dans la session.
+**Historique — session #125 (dernière session avec travail réel) :**
+**Sprint traité :** 32 — Arbitre : programme du jour & premier serveur (2ᵉ et
+dernière session du sprint — **clos cette session**, 4/4 tickets clos)
 
-**Sprint 30 — clos cette session :** les deux conditions de clôture
-réunies (spec review ✅ + 0 issue `sprint-30` ouverte). Milestone GitHub
-(#29) fermé, dossier déplacé dans
-`backlog/sprints/done/30-planning-journees-eta-ponctualite/`, ligne
-retirée de `roadmap.md`.
+**Git :** branche `claude/sprint/32-arbitre-programme-premier-serveur`, parent
+effectif `claude/sprint/31-tv-rotation-stable-pastille` (sprint 31 toujours
+non mergé dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de
+code cette session.
 
-**Roadmap :** 2 sprints restants (31, 32) — le **sprint 31 — TV : rotation
-stable & pastille de progression** devient actif. Conformément au
-protocole, il n'a **pas** démarré dans cette session ; il sera traité à la
-**prochaine échéance planifiée**.
+**Spec review session #125 :** `arbitre-home.md` ✅ Conforme (refonte #311 de
+la session précédente reconfirmée). `arbitre-match.md` ⚠️ en début de session
+(démarrage sans choix du serveur) → **✅ Conforme** après implémentation des
+tickets #312/#313 de cette session — dérive résorbée, 0 nouvelle issue.
 
-**Point d'attention outillage :** confirmation supplémentaire (5ᵉ session
+**Backlog engine session #125 :** 2 tickets traités séquentiellement (chaîne
+« Serveur », agents `django-api`/`vue-screen` puis `reviewer` par ticket) :
+- **#312** (majeure) — back : `start_match(match, server=None)` accepte
+  désormais un paramètre `server` optionnel (A/B, repère modèle) appliqué au
+  démarrage si fourni et valide (sinon `ValueError` → 400 JSON) ; comportement
+  legacy (mise en avant admin, édition calendrier) inchangé — vérifié no-op
+  sans régression sur les deux autres appelants. Verdict reviewer :
+  ✅ Approuvé.
+- **#313** (majeure) — front : `ArbitreMatch.vue` — modal de démarrage dédié
+  avec choix obligatoire du serveur (aucune présélection, Confirmer grisé
+  sans choix), avertissement « autre match en cours » dans le même modal.
+  Bug pré-existant corrigé au passage (même zone de code) : `handleStart()`
+  consommait `/api/arbitre/matches/` comme tableau plat alors qu'il renvoie
+  `{playDays, next}` depuis #310 (session #124) — la détection « autre match
+  LIVE » était silencieusement cassée depuis lors ; corrigée (`flatMap`,
+  pattern `ArbitreHome.vue`). Verdict reviewer : ✅ Approuvé.
+
+**Sprint 32 clos cette session :** les deux conditions étaient réunies
+(specs conformes + 0 issue ouverte sur le milestone). Milestone GitHub fermé,
+dossier déplacé vers `backlog/sprints/done/32-arbitre-programme-premier-serveur/`,
+ligne retirée de `backlog/sprints/roadmap.md`.
+
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance. Pas de PR créée pour cette
+session (condition de l'étape 4 non remplie : le sprint n'est plus dans
+`roadmap.md` en fin de session).
+
+**Point d'attention outillage :** confirmation supplémentaire (8ᵉ session
 de suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit`
 seul ne type-check aucun fichier `.vue` dans cet environnement. Toujours
 pas de script `type-check` dans `package.json`, toujours pas de
 `.claude/launch.json` — vérification par type-check + revue de code
 uniquement (pas de QA navigateur en session automatisée).
 
-**Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
-(PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
-fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
-hors périmètre de la Routine automatique.
+**Sprint 19/20/21 — PRs non mergées :** toujours d'actualité, chaîne
+désormais bien plus longue (`gh pr list` : 25 PRs ouvertes, empilées depuis
+le sprint 06 jusqu'au sprint 30, aucune fusionnée dans `main`). Point à
+traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
+automatique.

@@ -248,6 +248,11 @@ export interface CalendarData {
   canceled: Match[]         // CANCELED, GROUP — retirés de leur journée
 }
 
+export interface ArbitreProgramme {
+  playDays: CalendarDay[]
+  next: Match | null
+}
+
 // ─── TV — état chaud (polling /api/tv/state/) ──────────────────────────────
 
 export interface TvStakeStanding {

@@ -667,35 +667,23 @@ def api_event_bracket(request, event_id):
 def api_arbitre_matches(request):
     """
     GET /api/arbitre/matches/
-    Matchs LIVE et SCHEDULED pour l'arbitre (sélection de match).
-    Requiert le rôle Arbitre (ou superuser).
+    Miroir du calendrier pour l'arbitre : journées de l'édition courante avec leur
+    séquence ordonnée (matchs + pauses, matchs packés via _pack_match) et le next
+    (définition unique get_tv_next, partagée avec la TV). Pas de pile "à planifier"
+    ni de matchs CANCELED (gérés côté admin uniquement). Requiert le rôle Arbitre
+    (ou superuser).
     """
     edition = get_current_edition()
     if not edition:
-        return JsonResponse([], safe=False)
+        return JsonResponse({"playDays": [], "next": None})
 
-    # Matchs actifs (LIVE + SCHEDULED) — ordre existant préservé
-    active_qs = (
-        Match.objects.filter(
-            edition=edition,
-            status__in=[Match.Status.LIVE, Match.Status.SCHEDULED],
-        )
-        .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
-        .order_by("order_index", "scheduled_time", "id")
-    )
+    packed_play_days = _pack_calendar_play_days(edition)
+    next_match = get_tv_next(edition)
 
-    # 20 derniers FINISHED
-    finished_qs = (
-        Match.objects.filter(
-            edition=edition,
-            status=Match.Status.FINISHED,
-        )
-        .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "event", "group")
-        .order_by("-id")[:20]
-    )
-
-    matches = list(active_qs) + list(finished_qs)
-    return JsonResponse([_pack_match(m) for m in matches], safe=False)
+    return JsonResponse({
+        "playDays": packed_play_days,
+        "next": _pack_match(next_match),
+    })
 
 
 @require_GET
@@ -1909,16 +1897,14 @@ def api_break_delete(request, break_id):
 
 # ── Sprint 07 — Packer calendrier ────────────────────────────────────────────
 
-@require_GET
-@superuser_required
-def api_edition_calendar(request, edition_id):
+def _pack_calendar_play_days(edition):
     """
-    GET /api/editions/<id>/calendar/
-    Retourne les journées avec leurs matchs ordonnés + la pile des matchs
-    à planifier (SCHEDULED, sans order_index, poules uniquement — MVP).
+    Construit la liste des journées packées (PlayDay + breaks + matchs assignés,
+    order_index/scheduled_time non nuls) pour une édition. Utilisée par le
+    calendrier admin (api_edition_calendar) et par le programme arbitre
+    (api_arbitre_matches) — unique implémentation du regroupement matchs+pauses
+    par journée.
     """
-    edition = get_object_or_404(TournamentEdition, pk=edition_id)
-
     play_days = list(
         PlayDay.objects.filter(edition=edition)
         .prefetch_related("breaks")
@@ -1949,6 +1935,21 @@ def api_edition_calendar(request, edition_id):
             "breaks": [_pack_break(b) for b in sorted(pd.breaks.all(), key=lambda b: b.order_index)],
             "matches": [_pack_match(m) for m in matches_by_date.get(pd.date, [])],
         })
+
+    return packed_play_days
+
+
+@require_GET
+@superuser_required
+def api_edition_calendar(request, edition_id):
+    """
+    GET /api/editions/<id>/calendar/
+    Retourne les journées avec leurs matchs ordonnés + la pile des matchs
+    à planifier (SCHEDULED, sans order_index, poules uniquement — MVP).
+    """
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+
+    packed_play_days = _pack_calendar_play_days(edition)
 
     # Pile à planifier : SCHEDULED, order_index IS NULL, poules uniquement (MVP)
     unscheduled = (

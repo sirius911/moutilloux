@@ -6,8 +6,6 @@ import { usePolling } from '@/composables/usePolling'
 const live = useLiveStore()
 usePolling(() => live.fetchTvIdle(), 10000)
 
-const slide = ref(0)
-
 // Index de rotation par épreuve, indépendants de l'index de slide global.
 const groupsEventIndex = ref(0)
 const bracketEventIndex = ref(0)
@@ -60,7 +58,9 @@ const programmeTitle = computed(() => {
 
 // Liste des slides réellement affichables à l'instant courant (contenu non
 // vide), calculée dynamiquement — le pager et la rotation ne portent que sur
-// celles-ci.
+// celles-ci. Cette liste est recalculée à chaque poll `tv/idle`, mais elle ne
+// doit JAMAIS, à elle seule, changer la slide affichée : voir `displayed`
+// ci-dessous, qui fige la slide courante entre deux appels à `advance()`.
 const SLIDES = computed<SlideDef[]>(() => {
   const list: SlideDef[] = [{ kind: 'tournoi' }]
   if (live.recentResults.length > 0) list.push({ kind: 'results' })
@@ -72,17 +72,39 @@ const SLIDES = computed<SlideDef[]>(() => {
   return list
 })
 
-const currentSlide = computed<SlideKind>(() => {
-  const list = SLIDES.value
-  if (list.length === 0) return 'tournoi'
-  return list[slide.value % list.length].kind
+// Slide actuellement affichée, identifiée par sa nature (kind) — figée entre
+// deux ticks de rotation (`advance()`), indépendamment des recalculs de
+// SLIDES déclenchés par le polling `tv/idle`. Un rafraîchissement de données
+// ne change donc jamais la slide en cours de lecture (spec tv-live §Cadre).
+const displayedKind = ref<SlideKind>('tournoi')
+
+// Compteur technique incrémenté à chaque tick de rotation ou clic `goTo`,
+// utilisé comme clé de la pastille de progression : contrairement à
+// `displayedKind`, il change même quand la slide affichée reste la même
+// (composition à une seule slide), pour que le remplissage reparte de zéro
+// à chaque cycle de 8 s (voir spec tv-live §Cadre, pastille de progression).
+const pagerTick = ref(0)
+
+const currentSlide = computed<SlideKind>(() => displayedKind.value)
+
+// Position de la slide affichée dans la liste fraîche, pour le pager — par
+// recherche de kind, jamais par index brut.
+const displayedIndex = computed(() => {
+  const i = SLIDES.value.findIndex(s => s.kind === displayedKind.value)
+  return i === -1 ? 0 : i
 })
 
 function advance() {
-  const count = SLIDES.value.length
-  if (count === 0) return
-  const nextIndex = (slide.value + 1) % count
-  const upcomingKind = SLIDES.value[nextIndex].kind
+  const list = SLIDES.value
+  if (list.length === 0) return
+
+  // Position (dans la liste fraîche) de la slide actuellement affichée ; si
+  // elle a disparu de la composition (devenue vide), on avance depuis la
+  // position qu'elle occuperait pour rester cohérent avec l'ordre déclaré.
+  const currentIndex = list.findIndex(s => s.kind === displayedKind.value)
+
+  const nextIndex = (currentIndex + 1) % list.length
+  const upcomingKind = list[nextIndex].kind
 
   if (upcomingKind === 'groups') {
     groupsEventIndex.value = (groupsEventIndex.value + 1) % Math.max(eventsWithGroups.value.length, 1)
@@ -94,11 +116,15 @@ function advance() {
     programmeFinishedShown.value = true
   }
 
-  slide.value = nextIndex
+  displayedKind.value = upcomingKind
+  pagerTick.value++
 }
 
 function goTo(i: number) {
-  slide.value = i
+  const target = SLIDES.value[i]
+  if (!target) return
+  displayedKind.value = target.kind
+  pagerTick.value++
 }
 
 usePolling(async () => {
@@ -413,9 +439,15 @@ function nextPlayerName(side: 'A' | 'B'): string {
         <i
           v-for="(_, i) in SLIDES"
           :key="i"
-          :class="{ on: i === slide % SLIDES.length }"
+          :class="{ on: i === displayedIndex }"
           @click="goTo(i)"
-        />
+        >
+          <em
+            v-if="i === displayedIndex"
+            :key="pagerTick"
+            class="tv-idle-foot-pager-fill"
+          />
+        </i>
       </div>
     </footer>
   </div>
@@ -901,6 +933,7 @@ function nextPlayerName(side: 'A' | 'B'): string {
 }
 
 .tv-idle-foot-pager i {
+  position: relative;
   width: 20px;
   height: 4px;
   border-radius: 2px;
@@ -908,11 +941,26 @@ function nextPlayerName(side: 'A' | 'B'): string {
   cursor: pointer;
   transition: background 300ms, width 300ms;
   display: block;
+  overflow: hidden;
 }
 
 .tv-idle-foot-pager i.on {
-  background: var(--accent);
+  background: var(--line-3);
   width: 32px;
+}
+
+.tv-idle-foot-pager-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: pagerFill 8s linear forwards;
+}
+
+@keyframes pagerFill {
+  from { width: 0; }
+  to { width: 100%; }
 }
 
 .tv-empty {
