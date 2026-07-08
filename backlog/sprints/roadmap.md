@@ -10,7 +10,6 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 29 — Joueurs : attitudes prédéfinies | `backlog/sprints/29-joueurs-attitudes-predefinies/sprint.md` |
-| 2 | 30 — Planning : journées, ETA monotone & ponctualité | `backlog/sprints/30-planning-journees-eta-ponctualite/sprint.md` |
-| 3 | 31 — TV : rotation stable & pastille de progression | `backlog/sprints/31-tv-rotation-stable-pastille/sprint.md` |
-| 4 | 32 — Arbitre : programme du jour & premier serveur | `backlog/sprints/32-arbitre-programme-premier-serveur/sprint.md` |
+| 1 | 30 — Planning : journées, ETA monotone & ponctualité | `backlog/sprints/30-planning-journees-eta-ponctualite/sprint.md` |
+| 2 | 31 — TV : rotation stable & pastille de progression | `backlog/sprints/31-tv-rotation-stable-pastille/sprint.md` |
+| 3 | 32 — Arbitre : programme du jour & premier serveur | `backlog/sprints/32-arbitre-programme-premier-serveur/sprint.md` |

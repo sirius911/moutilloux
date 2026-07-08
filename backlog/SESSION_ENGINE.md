@@ -373,47 +373,53 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #117
-**Sprint traité :** 29 — Joueurs : attitudes prédéfinies (1ʳᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #118
+**Sprint traité :** 29 — Joueurs : attitudes prédéfinies (2ᵉ et dernière session du sprint — **clos**)
 
 **Git :** branche `claude/sprint/29-joueurs-attitudes-predefinies`,
-parent effectif `claude/sprint/28-annonces-inscriptions-selection` (sprint 28
-toujours non mergé dans `origin/main`, résolu via `backlog/sprints/done/`).
-Branche créée depuis `origin/claude/sprint/28-annonces-inscriptions-selection`
-(rien à intégrer, déjà à jour).
+parent effectif `claude/sprint/28-annonces-inscriptions-selection` (déjà à
+jour, rien à fusionner).
 
-**Spec review session #117 :** verdict `⚠️ Dérive mineure` sur
-`admin-joueurs.md` et `affiche-match.md` — dérive attendue et déjà entièrement
-ticketée avant le début de la session (`Player.attitude` CharField texte libre
-au lieu de `Player.attitudes` JSONField liste prédéfinie), 0 nouvelle dérive,
-0 nouvelle issue créée.
+**Spec review session #118 :** `admin-joueurs.md` ✅ Conforme (multi-sélection
+livrée par #300). `affiche-match.md` ⚠️ au moment de la revue initiale
+(`EditMatchPanel.vue:19-22` lisait encore `player.attitude` mono-valeur au
+lieu du tirage au sort + choix explicite — dérive déjà ticketée #301), puis
+re-vérifié **✅ Conforme** après traitement de #301 dans cette même session.
+0 nouvelle dérive, 0 nouvelle issue créée.
 
-**Backlog engine session #117 :** 2 tickets traités (limite de la session) —
-#299 (back : `Player.attitude` → `Player.attitudes` JSONField, migration de
-schéma sans reprise de données, packers `_pack_entry`/`_pack_player` et
-endpoints player create/edit adaptés, fallback `live/posters.py` corrigé) et
-#300 (front : `constants/attitudes.json` nouveau + multi-sélection par chips
-dans `AddPlayerModal.vue`, payload `attitudes: string[]`). Les deux `✅
-Approuvé` en review, fermés sur GitHub. `npx vue-tsc --noEmit` : 0 erreur
-après câblage orchestrateur.
+**Backlog engine session #118 :** 1 ticket traité — #301 (front : onglet
+Affiche — pré-remplissage par tirage au sort parmi `Player.attitudes` de
+chaque joueur au montage du panneau, remplaçable par un `<select>` explicite
+avec `attitudes du joueur` puis liste complète de `constants/attitudes.json`,
+payload de génération `{attitudes: {A,B}}` inchangé ; corrige au passage le
+stopgap posé en session #117 sur les doubles, `attitudes?.[0]`). `✅ Approuvé`
+en review, fermé sur GitHub.
 
 **Fichiers partagés câblés par l'orchestrateur :** `types/index.ts`
-(`Player.attitudes: string[]`), `stores/event.ts`
-(`PlayerEditPayload.attitudes?: string[]`), et un correctif minimal de
-compilation dans `EditMatchPanel.vue` (stopgap `side.team.playerN.attitudes?.[0]
-?? ''`, la vraie feature tirage/choix explicite reste le périmètre du ticket
-#301).
+(`EntryPlayer.attitude: string` → `attitudes: string[]`, pour aligner sur le
+contrat réel de `_pack_entry` déjà migré côté back depuis #299 ; seul usage du
+champ dans le front, renommage sûr confirmé en review).
 
-**Sprint 29 — non clôturé cette session :** ticket #301 encore ouvert (« Front :
-onglet Affiche — tirage au sort + choix explicite d'attitude »), non traité
-(limite de 2 tickets/session atteinte avec #299/#300). Sera repris à la
+**Sprint 29 — clos cette session :** aucune issue `sprint-29` restante,
+milestone GitHub #28 fermé, dossier déplacé vers
+`backlog/sprints/done/29-joueurs-attitudes-predefinies/`, ligne supprimée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap :** 3 sprints restants (30, 31, 32) — le **sprint 30 — Planning :
+journées, ETA monotone & ponctualité** devient actif. Conformément au
+protocole, il n'a **pas** démarré dans cette session ; il sera traité à la
 **prochaine échéance planifiée**.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — `npx vue-tsc --noEmit` utilisé directement. Toujours pas
-de `.claude/launch.json` pour prévisualiser l'app dans ce repo —
-vérification par type-check + revue de code uniquement (pas de QA
-navigateur en session automatisée).
+`package.json`. Constaté cette session : `npx vue-tsc --noEmit` seul ne
+type-checkait **aucun** fichier `.vue` dans cet environnement (project
+references non déclenchées) — `npx vue-tsc -b --force` (qui correspond au
+script `build` réel du projet) a été utilisé à la place pour toutes les
+vérifications de cette session, et donne des résultats fiables. À utiliser
+en priorité dans les prochaines sessions. Toujours pas de
+`.claude/launch.json` pour prévisualiser l'app — vérification par
+type-check + revue de code uniquement (pas de QA navigateur en session
+automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
