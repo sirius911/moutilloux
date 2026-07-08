@@ -373,16 +373,25 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #127
+**Dernière session :** 2026-07-08 — Session #128
 **Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
 de sprint). Conformément au protocole (étape 0), la session s'est arrêtée
 sans exécuter les étapes 1 à 3. Aucun changement de code, aucun commit.
 
 **Roadmap toujours vide depuis la session #125** (sprint 32 clos, milestone
-fermé) — confirmé à nouveau aux sessions #126 et #127, aucun sprint planifié
-entre-temps. **Désactiver la Routine manuellement sur claude.ai/code/routines**,
-ou planifier un nouveau sprint (`/plan-sprint`) avant la prochaine échéance —
-sinon la Routine continuera de se déclencher pour rien.
+fermé) — confirmé à nouveau aux sessions #126, #127 et #128, aucun sprint
+planifié entre-temps. **Désactiver la Routine manuellement sur
+claude.ai/code/routines**, ou planifier un nouveau sprint (`/plan-sprint`)
+avant la prochaine échéance — sinon la Routine continuera de se déclencher
+pour rien.
+
+**Nouveau point d'attention (session #128) :** deux dossiers de sprint
+orphelins à la racine de `backlog/sprints/` en plus de leur copie dans
+`backlog/sprints/done/` : `04-admin-panel-map/` et `10-contexte-url/`.
+Les deux sprints sont bien clos (présents dans `done/`, absents de
+`roadmap.md`) — reliquats jamais supprimés lors de l'archivage à l'époque.
+Sans impact sur le protocole, mais à nettoyer côté humain
+(`git rm -r backlog/sprints/04-admin-panel-map backlog/sprints/10-contexte-url`).
 
 ---
 
