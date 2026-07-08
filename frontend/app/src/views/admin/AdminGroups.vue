@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
+import { usePolling } from '@/composables/usePolling'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
@@ -19,6 +20,14 @@ watch(() => eventStore.activeEventId, (id) => {
     eventStore.fetchGroups(id)
   }
 }, { immediate: true })
+
+// Mode suivi (épreuve EN_COURS) : rafraîchit le classement + les matchs de
+// chaque poule. Aucun fetch tant que l'épreuve est en composition (INSCRIPTION).
+usePolling(async () => {
+  if (eventStore.groupsLocked && eventStore.activeEventId) {
+    await eventStore.fetchGroups(eventStore.activeEventId)
+  }
+}, 5000)
 
 // Rattrapage : si activeEventId était null au montage (fetchEditions pas encore répondu)
 watch(() => eventStore.events, () => {
@@ -384,9 +393,11 @@ async function executeDeleteGroup() {
                 @dragstart="onDragStart(row.entryId)"
               >
                 <span v-if="!eventStore.groupsLocked" class="grip">⋮⋮</span>
+                <span v-if="eventStore.groupsLocked" class="pill-rank">{{ row.rank }}</span>
                 <span class="pill-name" :class="{ 'pill-name--crossed': row.withdrawn }">{{ row.name }}</span>
                 <span v-if="row.qualified" class="q-badge">Q</span>
                 <span v-if="row.withdrawn" class="w-badge">WO</span>
+                <span v-if="eventStore.groupsLocked" class="pill-stats tab">{{ row.wins }}-{{ row.losses }} · {{ row.points }} pts</span>
                 <!-- Actions déverrouillées : retrait libre -->
                 <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="removeFromGroup(row.entryId)" @mousedown.stop>✕</button>
                 <!-- Ajustements en cours de jeu (épreuve EN_COURS) -->
@@ -400,6 +411,38 @@ async function executeDeleteGroup() {
 
             <div v-if="group.standings.length === 0" class="gc-empty gc-empty--small">
               Glissez un joueur ici
+            </div>
+
+            <!-- Mode suivi : liste des matchs de la poule avec leur état -->
+            <div v-if="eventStore.groupsLocked && group.matches.length > 0" class="gc-matches">
+              <div class="gc-matches-title">Matchs de la poule</div>
+              <div
+                v-for="m in group.matches"
+                :key="m.id"
+                :class="['gc-match', `gc-match--${m.status.toLowerCase()}`]"
+              >
+                <span class="gc-match-side" :class="{ win: m.winnerSide === 'A' }">
+                  {{ m.sideA?.displayName ?? m.sideALabel ?? 'À désigner' }}
+                </span>
+                <span class="gc-match-vs">vs</span>
+                <span class="gc-match-side" :class="{ win: m.winnerSide === 'B' }">
+                  {{ m.sideB?.displayName ?? m.sideBLabel ?? 'À désigner' }}
+                </span>
+                <span class="gc-match-state tab">
+                  <template v-if="m.status === 'FINISHED'">
+                    {{ m.isWalkover ? 'Forfait' : (m.setScores?.length ? m.setScores.map(s => `${s.a}-${s.b}`).join(' ') : `${m.gamesA}-${m.gamesB}`) }}
+                  </template>
+                  <template v-else-if="m.status === 'LIVE'">
+                    En cours · {{ m.gamesA }}-{{ m.gamesB }}
+                  </template>
+                  <template v-else-if="m.status === 'SCHEDULED'">
+                    {{ m.scheduledTime ? new Date(m.scheduledTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'À venir' }}
+                  </template>
+                  <template v-else>
+                    Annulé
+                  </template>
+                </span>
+              </div>
             </div>
 
             <!-- Ajouter tardif : visible dès que l'épreuve est EN_COURS (dépassement d'effectif autorisé, avec avertissement) -->
@@ -764,6 +807,96 @@ async function executeDeleteGroup() {
 .pill-action:hover { background: var(--bg-4); color: var(--ink-0); }
 .pill-action.danger:hover { border-color: var(--danger); color: var(--danger); }
 .pill-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pill-rank {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  background: var(--bg-4);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pill-stats {
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Matchs de la poule (mode suivi) ─────────────────────────────────── */
+.gc-matches {
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--line-1);
+}
+
+.gc-matches-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding: 10px 0 2px;
+}
+
+.gc-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.gc-match-side {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.gc-match-side.win { color: var(--ink-0); font-weight: 700; }
+
+.gc-match-vs {
+  font-size: 10px;
+  color: var(--ink-4);
+  flex-shrink: 0;
+}
+
+.gc-match-state {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.gc-match--live {
+  border-color: var(--accent);
+}
+
+.gc-match--live .gc-match-state { color: var(--accent); }
+
+.gc-match--finished .gc-match-state { color: var(--success); }
+
+.gc-match--canceled {
+  opacity: 0.5;
+}
+
+.gc-match--canceled .gc-match-state { color: var(--danger); }
 
 .gc-add-late {
   padding: 8px 12px;
