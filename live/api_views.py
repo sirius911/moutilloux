@@ -71,6 +71,7 @@ from live.admin_views import (
     create_play_day,
     update_play_day,
     delete_play_day,
+    generate_play_days,
     create_break,
     update_break,
     delete_break,
@@ -1802,6 +1803,31 @@ def api_play_day_delete(request, play_day_id):
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=409)
     return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_play_days_generate(request, edition_id):
+    """POST /api/editions/<id>/play-days/generate/
+    Body : {startTime, targetEndTime} — défaut proposé côté UI 9:00→20:00,
+    mais le serveur ne pose pas de défaut : les deux champs sont requis."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Corps JSON invalide"}, status=400)
+
+    start_time = parse_time(data.get("startTime", ""))
+    target_end_time = parse_time(data.get("targetEndTime", ""))
+    if not start_time or not target_end_time:
+        return JsonResponse({"error": "startTime et targetEndTime sont requis"}, status=400)
+
+    try:
+        created = generate_play_days(edition, start_time, target_end_time)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse({"playDays": [_pack_play_day(pd) for pd in created]}, status=201)
 
 
 @require_GET

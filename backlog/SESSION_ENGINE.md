@@ -373,53 +373,51 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #118
-**Sprint traité :** 29 — Joueurs : attitudes prédéfinies (2ᵉ et dernière session du sprint — **clos**)
+**Dernière session :** 2026-07-08 — Session #122
+**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (4ᵉ et dernière session du sprint — **clos**)
 
-**Git :** branche `claude/sprint/29-joueurs-attitudes-predefinies`,
-parent effectif `claude/sprint/28-annonces-inscriptions-selection` (déjà à
-jour, rien à fusionner).
+**Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`,
+parent effectif `claude/sprint/29-joueurs-attitudes-predefinies`. Aucun
+commit de code cette session (revue à froid uniquement).
 
-**Spec review session #118 :** `admin-joueurs.md` ✅ Conforme (multi-sélection
-livrée par #300). `affiche-match.md` ⚠️ au moment de la revue initiale
-(`EditMatchPanel.vue:19-22` lisait encore `player.attitude` mono-valeur au
-lieu du tirage au sort + choix explicite — dérive déjà ticketée #301), puis
-re-vérifié **✅ Conforme** après traitement de #301 dans cette même session.
-0 nouvelle dérive, 0 nouvelle issue créée.
+**Continuité avec la session #121 :** au lancement de cette session, le
+travail de la session #121 (spec review, #305/#306 implémentés/revus/
+fermés sur GitHub, log de session, `SESSION_ENGINE.md` §6) était déjà
+effectué mais son commit final n'était pas encore visible dans les tout
+premiers instants de cette lecture — chevauchement transitoire entre la fin
+d'exécution de #121 et le déclenchement de #122, résolu seul en quelques
+secondes (rien à corriger). La session #121 avait explicitement annoncé
+dans son propre log que « la prochaine session devra mener une spec review
+propre » pour fermer le sprint (son verdict à elle datait d'avant #305/#306
+— schéma habituel des clôtures de fin de sprint) : cette session #122 est
+exactement cette suite.
 
-**Backlog engine session #118 :** 1 ticket traité — #301 (front : onglet
-Affiche — pré-remplissage par tirage au sort parmi `Player.attitudes` de
-chaque joueur au montage du panneau, remplaçable par un `<select>` explicite
-avec `attitudes du joueur` puis liste complète de `constants/attitudes.json`,
-payload de génération `{attitudes: {A,B}}` inchangé ; corrige au passage le
-stopgap posé en session #117 sur les doubles, `attitudes?.[0]`). `✅ Approuvé`
-en review, fermé sur GitHub.
+**Spec review session #122 :** `planning.md`/`admin-matchs.md` **✅
+Conforme** — revue à froid des 6 tickets du sprint ensemble (#302-307, tous
+déjà clos), aucune régression croisée constatée (notamment entre le moteur
+ETA `#304` et la teinte de ponctualité `#305`, qui consomme `plannedEtaMin`
+exposé par `etaEngine`). 0 nouvelle dérive.
 
-**Fichiers partagés câblés par l'orchestrateur :** `types/index.ts`
-(`EntryPlayer.attitude: string` → `attitudes: string[]`, pour aligner sur le
-contrat réel de `_pack_entry` déjà migré côté back depuis #299 ; seul usage du
-champ dans le front, renommage sûr confirmé en review).
+**Backlog engine session #122 :** 0 ticket traité — le milestone n'avait
+plus d'issue ouverte en entrant dans la session.
 
-**Sprint 29 — clos cette session :** aucune issue `sprint-29` restante,
-milestone GitHub #28 fermé, dossier déplacé vers
-`backlog/sprints/done/29-joueurs-attitudes-predefinies/`, ligne supprimée de
-`backlog/sprints/roadmap.md`.
+**Sprint 30 — clos cette session :** les deux conditions de clôture
+réunies (spec review ✅ + 0 issue `sprint-30` ouverte). Milestone GitHub
+(#29) fermé, dossier déplacé dans
+`backlog/sprints/done/30-planning-journees-eta-ponctualite/`, ligne
+retirée de `roadmap.md`.
 
-**Roadmap :** 3 sprints restants (30, 31, 32) — le **sprint 30 — Planning :
-journées, ETA monotone & ponctualité** devient actif. Conformément au
+**Roadmap :** 2 sprints restants (31, 32) — le **sprint 31 — TV : rotation
+stable & pastille de progression** devient actif. Conformément au
 protocole, il n'a **pas** démarré dans cette session ; il sera traité à la
 **prochaine échéance planifiée**.
 
-**Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json`. Constaté cette session : `npx vue-tsc --noEmit` seul ne
-type-checkait **aucun** fichier `.vue` dans cet environnement (project
-references non déclenchées) — `npx vue-tsc -b --force` (qui correspond au
-script `build` réel du projet) a été utilisé à la place pour toutes les
-vérifications de cette session, et donne des résultats fiables. À utiliser
-en priorité dans les prochaines sessions. Toujours pas de
-`.claude/launch.json` pour prévisualiser l'app — vérification par
-type-check + revue de code uniquement (pas de QA navigateur en session
-automatisée).
+**Point d'attention outillage :** confirmation supplémentaire (5ᵉ session
+de suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit`
+seul ne type-check aucun fichier `.vue` dans cet environnement. Toujours
+pas de script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` — vérification par type-check + revue de code
+uniquement (pas de QA navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non

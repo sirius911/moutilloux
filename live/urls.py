@@ -89,6 +89,7 @@ urlpatterns = [
     # PlayDay
     path("api/editions/<int:edition_id>/play-days/", api_views.api_play_days_list, name="api_play_days_list"),
     path("api/editions/<int:edition_id>/play-days/create/", api_views.api_play_day_create, name="api_play_day_create"),
+    path("api/editions/<int:edition_id>/play-days/generate/", api_views.api_play_days_generate, name="api_play_days_generate"),
     path("api/play-days/<int:play_day_id>/edit/", api_views.api_play_day_edit, name="api_play_day_edit"),
     path("api/play-days/<int:play_day_id>/delete/", api_views.api_play_day_delete, name="api_play_day_delete"),
     # Break

@@ -264,5 +264,6 @@ const navItems = computed(() => {
   flex: 1;
   overflow-y: auto;
   min-width: 0;
+  min-height: 0;
 }
 </style>

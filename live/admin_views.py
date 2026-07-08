@@ -1329,6 +1329,35 @@ def delete_play_day(play_day):
     play_day.delete()
 
 
+def generate_play_days(edition, start_time, target_end_time):
+    """Crée une PlayDay par jour entre edition.start_dt et edition.end_dt
+    (bornes incluses), en sautant les dates déjà couvertes. Idempotent :
+    relancer ne crée que les jours manquants. Lève ValueError si l'édition
+    n'a pas ses deux dates."""
+    if not edition.start_dt or not edition.end_dt:
+        raise ValueError("L'édition doit avoir une date de début et de fin pour générer les journées.")
+    start_date = edition.start_dt.date()
+    end_date = edition.end_dt.date()
+    if start_date > end_date:
+        raise ValueError("La date de début de l'édition est postérieure à sa date de fin.")
+
+    existing_dates = set(
+        PlayDay.objects.filter(edition=edition).values_list("date", flat=True)
+    )
+    created = []
+    current = start_date
+    while current <= end_date:
+        if current not in existing_dates:
+            created.append(PlayDay.objects.create(
+                edition=edition,
+                date=current,
+                start_time=start_time,
+                target_end_time=target_end_time,
+            ))
+        current += datetime.timedelta(days=1)
+    return created
+
+
 def create_break(play_day, order_index, duration_min, label):
     if duration_min <= 0:
         raise ValueError("La durée d'une pause doit être supérieure à 0.")
