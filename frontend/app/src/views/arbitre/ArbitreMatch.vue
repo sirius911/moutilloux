@@ -5,7 +5,7 @@ import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
 import { useApi } from '@/composables/useApi'
-import type { Match } from '@/types'
+import type { ArbitreProgramme } from '@/types'
 
 const props = defineProps<{ matchId: number }>()
 const router = useRouter()
@@ -23,8 +23,12 @@ const TARGET_H = 1112
 const containerRef = ref<HTMLElement | null>(null)
 const { scale, offsetX, offsetY } = useScale(containerRef, TARGET_W, TARGET_H)
 
-// Modal de confirmation générique (reset_all)
+// Modal de confirmation générique (reset_all, annuler)
 const confirmModal = ref<{ action: string; label: string } | null>(null)
+
+// Modal de démarrage — choix obligatoire du premier serveur
+const startModal = ref<{ anotherLive: boolean } | null>(null)
+const chosenServer = ref<'A' | 'B' | null>(null)
 
 // Modal de fin de match — sélection du vainqueur
 interface FinishCandidate {
@@ -197,18 +201,27 @@ const isReadOnly = computed(() => isFinished.value || isCanceled.value)
 
 async function handleStart() {
   try {
-    const others = await get<Match[]>('/api/arbitre/matches/')
-    const anotherLive = others.some((m) => m.id !== props.matchId && m.status === 'LIVE')
-    if (anotherLive) {
-      askConfirm('start', 'Démarrer le match ?')
-    } else {
-      await sendAction('start')
-    }
+    const programme = await get<ArbitreProgramme>('/api/arbitre/matches/')
+    const allMatches = programme.playDays.flatMap((d) => d.matches)
+    const anotherLive = allMatches.some((m) => m.id !== props.matchId && m.status === 'LIVE')
+    chosenServer.value = null
+    startModal.value = { anotherLive }
   } catch {
-    // Si la vérification échoue (réseau), on retombe sur l'action directe :
-    // le back est idempotent et gère l'invariant mono-LIVE de toute façon.
-    await sendAction('start')
+    // Si la vérification échoue (réseau), on ouvre quand même le modal : le choix du
+    // serveur reste obligatoire, seul l'avertissement "autre match en cours" est sauté.
+    chosenServer.value = null
+    startModal.value = { anotherLive: false }
   }
+}
+
+function cancelStart() {
+  startModal.value = null
+}
+
+async function confirmStart() {
+  if (!startModal.value || !chosenServer.value) return
+  const ok = await sendAction('start', { server: chosenServer.value })
+  if (ok) startModal.value = null
 }
 </script>
 
@@ -348,20 +361,55 @@ async function handleStart() {
       <div v-if="error" class="arb-toast" role="alert">{{ error }}</div>
     </Teleport>
 
-    <!-- Modal de confirmation générique (reset_all, etc.) -->
+    <!-- Modal de confirmation générique (reset_all, annuler) -->
     <Teleport to="body">
       <div v-if="confirmModal" class="modal-backdrop" @click.self="cancel">
         <div class="modal-card">
           <div class="modal-icon">⚠</div>
           <h3 class="modal-title">{{ confirmModal.label }}</h3>
-          <p class="modal-body">
-            {{ confirmModal.action === 'start'
-              ? 'Un autre match est en cours — le démarrer le mettra en pause.'
-              : 'Cette action est irréversible.' }}
-          </p>
+          <p class="modal-body">Cette action est irréversible.</p>
           <div class="modal-actions">
             <button class="btn-secondary" @click="cancel">Annuler</button>
             <button class="btn-danger" @click="confirm">Confirmer</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Modal de démarrage — choix obligatoire du premier serveur -->
+    <Teleport to="body">
+      <div v-if="startModal" class="modal-backdrop" @click.self="cancelStart">
+        <div class="modal-card">
+          <div class="modal-icon">▶</div>
+          <h3 class="modal-title">Démarrer le match</h3>
+          <p class="modal-body">Qui sert en premier ?</p>
+          <p v-if="startModal.anotherLive" class="modal-body modal-body--warning">
+            Un autre match est en cours — le démarrer le mettra en pause.
+          </p>
+
+          <div class="modal-actions modal-actions--vertical">
+            <button
+              class="btn-finish"
+              :class="{ 'btn-finish--leading': chosenServer === 'A' }"
+              @click="chosenServer = 'A'"
+            >
+              <span>{{ playerName('A') }}</span>
+              <span v-if="chosenServer === 'A'" class="leading-badge">Choisi</span>
+            </button>
+
+            <button
+              class="btn-finish"
+              :class="{ 'btn-finish--leading': chosenServer === 'B' }"
+              @click="chosenServer = 'B'"
+            >
+              <span>{{ playerName('B') }}</span>
+              <span v-if="chosenServer === 'B'" class="leading-badge">Choisi</span>
+            </button>
+
+            <div class="modal-actions">
+              <button class="btn-secondary" @click="cancelStart">Annuler</button>
+              <button class="btn-danger" :disabled="!chosenServer" @click="confirmStart">Confirmer</button>
+            </div>
           </div>
         </div>
       </div>
@@ -885,6 +933,16 @@ async function handleStart() {
   padding: 12px 28px;
   color: white;
   font-size: 15px;
+  font-weight: 600;
+}
+
+.btn-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modal-body--warning {
+  color: var(--gold);
   font-weight: 600;
 }
 
