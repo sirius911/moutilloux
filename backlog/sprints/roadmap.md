@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 32 — Arbitre : programme du jour & premier serveur | `backlog/sprints/32-arbitre-programme-premier-serveur/sprint.md` |

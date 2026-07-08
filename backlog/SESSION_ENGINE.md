@@ -373,50 +373,49 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #124
-**Sprint traité :** 32 — Arbitre : programme du jour & premier serveur (1ʳᵉ session du sprint — **en cours**, 2/4 tickets clos)
+**Dernière session :** 2026-07-08 — Session #125
+**Sprint traité :** 32 — Arbitre : programme du jour & premier serveur (2ᵉ et
+dernière session du sprint — **clos cette session**, 4/4 tickets clos)
 
 **Git :** branche `claude/sprint/32-arbitre-programme-premier-serveur`, parent
 effectif `claude/sprint/31-tv-rotation-stable-pastille` (sprint 31 toujours
-non mergé dans `main` au moment du checkout, déduit depuis
-`backlog/sprints/done/` — pas depuis `branche-parent:` du frontmatter qui
-indiquait `main`). 2 commits de code cette session.
+non mergé dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de
+code cette session.
 
-**Spec review session #124 :** `arbitre-home.md` et `arbitre-match.md` —
-verdict **⚠️ Dérive mineure** sur les deux (avant implémentation des tickets
-du sprint : UI à onglets sur `ArbitreHome.vue` et démarrage sans choix de
-serveur sur `ArbitreMatch.vue`, déjà couvertes par #310/#311 et #312/#313
-posés à la planification du sprint, 0 nouvelle issue créée). Point secondaire
-soulevé par le reviewer (invariant mono-LIVE au niveau `status`, pas
-seulement `is_featured`) vérifié directement par l'orchestrateur dans
-`live/models.py` (`mark_live()`) : bien appliqué, non-problème.
+**Spec review session #125 :** `arbitre-home.md` ✅ Conforme (refonte #311 de
+la session précédente reconfirmée). `arbitre-match.md` ⚠️ en début de session
+(démarrage sans choix du serveur) → **✅ Conforme** après implémentation des
+tickets #312/#313 de cette session — dérive résorbée, 0 nouvelle issue.
 
-**Backlog engine session #124 :** 2 tickets traités séquentiellement
-(chaîne « Programme », agents `django-api`/`vue-screen` puis `reviewer` par
-ticket) :
-- **#310** (majeure) — back : `api_arbitre_matches` renvoie désormais
-  `{playDays, next}` au lieu d'un tableau plat, via une fonction partagée
-  `_pack_calendar_play_days(edition)` extraite d'`api_edition_calendar` (non
-  duplication du regroupement matchs+pauses par journée) + `get_tv_next`
-  (définition unique du next, partagée avec la TV). Non-régression
-  `api_edition_calendar` confirmée par comparaison JSON bit-à-bit. Verdict
-  reviewer : ✅ Approuvé.
-- **#311** (majeure) — front : `ArbitreHome.vue` entièrement réécrit —
-  suppression des onglets, bloc « À l'instant » (LIVE sinon next, absent du
-  DOM si aucun des deux), journées empilées repliables (état d'expansion
-  initialisé une fois puis piloté par l'utilisateur, jamais réinitialisé par
-  le polling), fusion matchs+pauses triée par `orderIndex`. ETA simplifiée V1
-  documentée comme point d'attention (pas de recalcul dynamique en cas de
-  retard, contrairement au moteur `etaEngine` d'`AdminMatches.vue`, non
-  extrait en composable — hors périmètre de ce ticket). Verdict reviewer :
+**Backlog engine session #125 :** 2 tickets traités séquentiellement (chaîne
+« Serveur », agents `django-api`/`vue-screen` puis `reviewer` par ticket) :
+- **#312** (majeure) — back : `start_match(match, server=None)` accepte
+  désormais un paramètre `server` optionnel (A/B, repère modèle) appliqué au
+  démarrage si fourni et valide (sinon `ValueError` → 400 JSON) ; comportement
+  legacy (mise en avant admin, édition calendrier) inchangé — vérifié no-op
+  sans régression sur les deux autres appelants. Verdict reviewer :
   ✅ Approuvé.
+- **#313** (majeure) — front : `ArbitreMatch.vue` — modal de démarrage dédié
+  avec choix obligatoire du serveur (aucune présélection, Confirmer grisé
+  sans choix), avertissement « autre match en cours » dans le même modal.
+  Bug pré-existant corrigé au passage (même zone de code) : `handleStart()`
+  consommait `/api/arbitre/matches/` comme tableau plat alors qu'il renvoie
+  `{playDays, next}` depuis #310 (session #124) — la détection « autre match
+  LIVE » était silencieusement cassée depuis lors ; corrigée (`flatMap`,
+  pattern `ArbitreHome.vue`). Verdict reviewer : ✅ Approuvé.
 
-**Sprint 32 — pas clos cette session :** 2 issues encore ouvertes
-(#312, #313 — chaîne « Serveur : premier serveur au démarrage »), max 2
-tickets/session déjà atteint. Sera repris à la **prochaine échéance
-planifiée**.
+**Sprint 32 clos cette session :** les deux conditions étaient réunies
+(specs conformes + 0 issue ouverte sur le milestone). Milestone GitHub fermé,
+dossier déplacé vers `backlog/sprints/done/32-arbitre-programme-premier-serveur/`,
+ligne retirée de `backlog/sprints/roadmap.md`.
 
-**Point d'attention outillage :** confirmation supplémentaire (7ᵉ session
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance. Pas de PR créée pour cette
+session (condition de l'étape 4 non remplie : le sprint n'est plus dans
+`roadmap.md` en fin de session).
+
+**Point d'attention outillage :** confirmation supplémentaire (8ᵉ session
 de suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit`
 seul ne type-check aucun fichier `.vue` dans cet environnement. Toujours
 pas de script `type-check` dans `package.json`, toujours pas de
