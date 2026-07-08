@@ -373,46 +373,46 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-03 — Session #73
-**Sprint actif :** 20 — Transverse : erreurs API & routing (pas encore démarré,
-prochaine échéance).
+**Dernière session :** 2026-07-04 — Session #76
+**Sprint actif :** 21 — Durcissements API & specs (pas encore démarré).
 
-**Parent effectif inchangé :** `claude/sprint/18-tableau-final-conformite` (sprint 18
-toujours non mergé dans `main` — point récurrent, à traiter côté humain,
-hors périmètre de la Routine). Working tree propre au démarrage, merge avec
-le parent effectif : déjà à jour, rien à fusionner.
+**Git :** branche `claude/sprint/20-transverse-erreurs-routing`, déjà à jour
+avec le parent effectif `claude/sprint/19-poules-inscriptions-ajustements`
+(sprint 19 toujours non mergé dans `main` — point récurrent, à traiter côté
+humain). Working tree propre au démarrage.
 
-**Spec review session #73 (relance complète, milestone Sprint 19 à 1 issue
-ouverte au démarrage — #245) :** `admin-poules.md` → ⚠️→✅ (seule dérive
-restante : #245, duplication locale de `apiErrorMessage` dans
-`AdminGroups.vue` — corrigée en session) ; `admin-inscriptions.md` → ✅
-Conforme ; `cycle-de-vie-epreuve.md` → ✅ Conforme. Vérification indépendante
-par `grep` exhaustif sur `frontend/app/src` après correctif : plus aucune
-redéfinition locale de `apiErrorMessage`, les 4 fichiers du périmètre
-(`AutoFillModal.vue`, `AdminGroups.vue`, `CreateTeamModal.vue`,
-`AdminInscriptions.vue`) importent tous depuis `useApi.ts`. 0 nouvelle issue
-créée.
+**Spec review session #76 :** `specs/technical/routing-context.md` →
+✅ Conforme (URL fait foi, watcher store, sélecteur navigue via `router.push`
+sur les 4 écrans dépendants — confirmé) ; `specs/screens/admin-shell.md` →
+⚠️ Dérive mineure au moment de la review (confirmation de #209 à
+`AdminLayout.vue:48-58` : compteur Tableau final comptait 7 slots fixes,
+compteurs Tournoi/Joueurs à 0 avant chargement), **résolue dans cette même
+session**. 0 nouvelle issue créée.
 
-**Tickets traités session #73 :** 1 — #245 (AdminGroups : import de
-`apiErrorMessage` depuis `@/composables/useApi`, suppression de la
-définition locale dupliquée aux lignes 182-189, signature identique, aucun
-changement de comportement, `vue-tsc --noEmit` OK, ✅ Approuvé). Commit
-`1956eb4`. Aucun fichier partagé modifié.
+**Tickets traités session #76 :** 1 —
+- **#209** : `AdminLayout.vue` — le compteur « Tableau final » ne compte
+  désormais que les slots avec un match assigné (`slot.match !== null` sur
+  QF+SF+F, plus le 4+2+1=7 fixe) ; ajout de deux flags locaux
+  `editionsLoaded`/`playersLoaded` pour distinguer « non chargé » (badge
+  masqué) de « 0 réel » sur les compteurs Tournoi et Joueurs. Aucun fichier
+  partagé touché (store `event.ts` non modifié, vérifié par le reviewer).
+  ✅ Approuvé (remarque mineure non bloquante : la reformulation de
+  `admin-shell.md` proposée dans le plan n'a pas été appliquée — hors
+  périmètre de la maintenance auto de specs, qui ne touche que le champ
+  `fichiers:`). Commit `bb9bbc8`.
 
-**Sprint 19 clôturé cette session :** les deux conditions de l'étape 3 sont
-remplies — spec review ✅ Conforme sur les 3 specs du sprint et 0 issue
-ouverte sous le milestone (hors `en-attente`). Milestone GitHub
-« Sprint 19 — Poules & inscriptions : ajustements » (n°18) fermé (15 issues
-closes). Ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé
-vers `backlog/sprints/done/19-poules-inscriptions-ajustements/`.
+`vue-tsc --noEmit` OK. Plan → implémentation → review réalisés par 3 agents
+distincts (dont `reviewer`, lecture seule).
 
-**Sprint suivant :** 20 — « Transverse : erreurs API & routing » devient le
-sprint actif en tête de roadmap, mais **ne démarre pas cette session** — sera
-traité à la prochaine échéance planifiée de la Routine.
+**Fin de sprint atteinte :** specs conformes (dérive #209 résolue), 0 issue
+ouverte sous le milestone Sprint 20. Milestone fermé (id 19). Sprint déplacé
+vers `backlog/sprints/done/20-transverse-erreurs-routing/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
 
-**Sprint 17/18 — PRs non mergées :** toujours d'actualité, ni la PR #223
-(sprint 17) ni celle du sprint 18 ne semblent mergées dans `main`. Point à
-traiter côté humain (revue/merge des PRs), hors périmètre de la Routine
-automatique.
+**Sprint 17/18/19 — PRs non mergées :** toujours d'actualité. Point à traiter
+côté humain (revue/merge des PRs), hors périmètre de la Routine automatique.
 
-**Roadmap :** 2 sprints planifiés (20 → 21), 20 en tête, pas encore démarré.
+**Roadmap :** 1 sprint restant (21 — Durcissements API & specs), devenu actif
+mais **non démarré cette session** (clôture de sprint et démarrage du suivant
+ne s'enchaînent pas dans le même run) — traité à la prochaine échéance
+planifiée.

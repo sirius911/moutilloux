@@ -222,14 +222,6 @@ async function handleConfirm() {
               <button class="adm-btn danger" type="button" @click="removeEvent(ev)">
                 Supprimer
               </button>
-              <button
-                class="adm-btn"
-                type="button"
-                :disabled="eventStore.activeEventId === ev.id"
-                @click="eventStore.activeEventId = ev.id"
-              >
-                {{ eventStore.activeEventId === ev.id ? 'Sélectionnée ✓' : 'Sélectionner' }}
-              </button>
             </div>
           </article>
         </div>

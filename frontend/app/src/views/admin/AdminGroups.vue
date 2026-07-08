@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
-import { apiErrorMessage } from '@/composables/useApi'
+import { extractApiError } from '@/lib/apiError'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
@@ -72,7 +72,7 @@ async function createGroup() {
   try {
     await eventStore.createGroup(eventStore.activeEventId, nextGroupLetter.value)
   } catch (e) {
-    dropError.value = apiErrorMessage(e, 'Erreur lors de la création de la poule.')
+    dropError.value = extractApiError(e, 'Erreur lors de la création de la poule.')
   } finally {
     createGroupBusy.value = false
   }
@@ -127,7 +127,7 @@ async function executeWithdraw() {
   try {
     await eventStore.withdrawEntry(confirmState.value.entryId, confirmState.value.action === 'retrait')
   } catch (e) {
-    adjustError.value = apiErrorMessage(e, 'Erreur lors du forfait.')
+    adjustError.value = extractApiError(e, 'Erreur lors du forfait.')
   } finally {
     adjustBusy.value = false
   }
@@ -147,7 +147,7 @@ async function executeReplace() {
     await eventStore.replacePlayer(replaceState.value.entryId, { player: selectedReplacePlayerId.value })
     replaceState.value.show = false
   } catch (e) {
-    adjustError.value = apiErrorMessage(e, 'Erreur lors du remplacement.')
+    adjustError.value = extractApiError(e, 'Erreur lors du remplacement.')
   } finally {
     adjustBusy.value = false
   }
@@ -174,7 +174,7 @@ async function executeAddLate() {
       ? `Poule ${groupName} au-delà de l'effectif prévu — vérifiez la composition.`
       : ''
   } catch (e) {
-    adjustError.value = apiErrorMessage(e, "Erreur lors de l'ajout.")
+    adjustError.value = extractApiError(e, "Erreur lors de l'ajout.")
   } finally {
     adjustBusy.value = false
   }
@@ -205,7 +205,7 @@ async function onDropToGroup(groupId: number) {
     await assign(id, groupId)
     dropError.value = ''
   } catch (e) {
-    dropError.value = apiErrorMessage(e, 'Erreur lors de l\'assignation.')
+    dropError.value = extractApiError(e, 'Erreur lors de l\'assignation.')
     await resyncAfterError()
   }
 }
@@ -222,7 +222,7 @@ async function removeFromGroup(entryId: number) {
     await unassign(entryId)
     dropError.value = ''
   } catch (e) {
-    dropError.value = apiErrorMessage(e, 'Erreur lors du retrait.')
+    dropError.value = extractApiError(e, 'Erreur lors du retrait.')
     await resyncAfterError()
   }
 }
