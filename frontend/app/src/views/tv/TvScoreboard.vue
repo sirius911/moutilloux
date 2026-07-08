@@ -5,6 +5,10 @@ import TvIdle from './TvIdle.vue'
 
 const live = useLiveStore()
 usePolling(() => live.fetchTvState(), 2000)
+
+function initials(name: string): string {
+  return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
+}
 </script>
 
 <template>
@@ -151,20 +155,35 @@ usePolling(() => live.fetchTvState(), 2000)
         </div>
       </header>
 
-      <!-- Bandeau « À suivre » — inchangé dans ce ticket (repositionnement #330) -->
-      <div v-if="live.next" class="sb-next-band">
-        <span class="sb-next-lbl">À SUIVRE</span>
-        <span class="sb-next-dash">—</span>
-        <span class="sb-next-players">
-          {{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?' }}
-          <em class="sb-next-vs">vs</em>
-          {{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?' }}
-        </span>
-        <span v-if="live.next.stageLabel" class="sb-next-stage">· {{ live.next.stageLabel }}</span>
-        <span class="sb-next-call">
-          <i class="sb-next-dot" />
-          Joueurs suivants, présentez-vous au juge-arbitre
-        </span>
+      <!-- Carte « À préparer » (PrepPanel) — flottante en haut à droite -->
+      <div v-if="live.next" class="tv-prep">
+        <i class="tv-prep-bar" />
+        <div class="tv-prep-head">
+          <span class="tv-prep-lbl">À PRÉPARER · ~{{ live.next.scheduledTime }}</span>
+          <span class="tv-prep-stage">{{ live.next.stageLabel }}</span>
+        </div>
+        <div class="tv-prep-players">
+          <div class="tv-prep-player">
+            <div class="tv-prep-avatar tv-prep-avatar-a">
+              {{ initials(live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?') }}
+            </div>
+            <span class="tv-prep-name">{{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?' }}</span>
+          </div>
+          <em class="tv-prep-vs">vs</em>
+          <div class="tv-prep-player">
+            <div class="tv-prep-avatar">
+              {{ initials(live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?') }}
+            </div>
+            <span class="tv-prep-name">{{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?' }}</span>
+          </div>
+        </div>
+        <div class="tv-prep-foot">
+          <span class="tv-prep-court">{{ live.next.court }}</span>
+          <span class="tv-prep-call">
+            <i class="tv-prep-call-dot" />
+            Présentez-vous au juge-arbitre
+          </span>
+        </div>
       </div>
 
       <!-- Centre editorial : jeux du set en cours en très grand -->
@@ -313,79 +332,145 @@ usePolling(() => live.fetchTvState(), 2000)
   font-weight: 700;
 }
 
-/* ── Bandeau « À suivre » ────────────────────────────────────── */
-.sb-next-band {
+/* ── Carte « À préparer » (PrepPanel, portée depuis scoreboard.css:4-94) ── */
+.tv-prep {
   position: absolute;
-  bottom: 240px;
+  top: 130px;
+  right: 56px;
+  width: 360px;
+  background: rgba(8, 12, 16, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px 20px 16px;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 6;
+  color: var(--ink-0);
+  animation: tv-prep-in 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@keyframes tv-prep-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.tv-prep-bar {
+  position: absolute;
   left: 0;
-  right: 0;
-  height: 56px;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+}
+
+.tv-prep-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tv-prep-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-shadow: 0 0 16px var(--accent-glow);
+}
+
+.tv-prep-stage {
+  font-size: 11px;
+  color: var(--ink-2);
+  letter-spacing: 0.04em;
+}
+
+.tv-prep-players {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 48px;
-  background: rgba(5, 6, 8, 0.88);
-  border-top: 1px solid var(--accent-soft);
-  border-bottom: 1px solid var(--line-2);
-  z-index: 10;
 }
 
-.sb-next-lbl {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--accent);
-  text-transform: uppercase;
-  flex-shrink: 0;
-}
-
-.sb-next-dash {
-  color: var(--ink-3);
-  flex-shrink: 0;
-}
-
-.sb-next-players {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink-0);
+.tv-prep-player {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
-.sb-next-vs {
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--ink-3);
-  letter-spacing: 0.08em;
-}
-
-.sb-next-stage {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-2);
-  letter-spacing: 0.06em;
-}
-
-.sb-next-call {
-  margin-left: auto;
+.tv-prep-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  font-weight: 800;
   font-size: 12px;
-  color: var(--ink-3);
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ink-0);
 }
 
-.sb-next-dot {
+.tv-prep-avatar-a {
+  background: var(--accent);
+  color: #001215;
+}
+
+.tv-prep-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-prep-vs {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-3);
+  letter-spacing: 0.16em;
+  font-weight: 500;
+}
+
+.tv-prep-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+}
+
+.tv-prep-court {
+  color: var(--ink-2);
+  letter-spacing: 0.06em;
+  font-family: var(--font-mono);
+}
+
+.tv-prep-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-1);
+  font-weight: 600;
+}
+
+.tv-prep-call-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  animation: pulse 1.5s ease-in-out infinite;
-  display: inline-block;
-  flex-shrink: 0;
+  box-shadow: 0 0 8px var(--accent-glow);
+  animation: pulse 1.4s infinite;
 }
 
 .live-dot {
