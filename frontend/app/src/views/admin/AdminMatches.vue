@@ -110,7 +110,7 @@ const unscheduledTotal = computed(() =>
 // ── Groupage épreuve + poule (pile et annulés) ─────────────────────────────
 
 function pileGroupKey(m: Match): string {
-  return `${groupName(m) || '?'}|${m.eventId}`
+  return `${pileGroupLetter(m)}|${m.eventId}`
 }
 
 function eventName(eventId: number): string {
@@ -141,10 +141,20 @@ function parsePileKey(key: string): PileGroup {
   return { key, letter: key.slice(0, sep), eventId, eventName: eventName(eventId) }
 }
 
+// Poules triées alphabétiquement, groupe « Tableau » toujours en dernier
+// (ordre du cycle de vie d'une épreuve : poules puis QF → SF → F/P3, déjà
+// garanti par le tri serveur à l'intérieur du groupe Tableau lui-même).
+function groupSortKey(letter: string): string {
+  return letter === 'Tableau' ? '￿' : letter
+}
+
 const pileGroups = computed<PileGroup[]>(() =>
   Object.keys(unscheduledByGroupDnd.value)
     .map(parsePileKey)
-    .sort((a, b) => a.eventName.localeCompare(b.eventName) || a.letter.localeCompare(b.letter)),
+    .sort((a, b) =>
+      a.eventName.localeCompare(b.eventName) ||
+      groupSortKey(a.letter).localeCompare(groupSortKey(b.letter)),
+    ),
 )
 
 // ── Colonne « Annulés » (lecture seule) ────────────────────────────────────
@@ -159,7 +169,10 @@ const canceledGroups = computed<CanceledGroup[]>(() => {
   }
   return Object.entries(byKey)
     .map(([key, matches]) => ({ ...parsePileKey(key), matches }))
-    .sort((a, b) => a.eventName.localeCompare(b.eventName) || a.letter.localeCompare(b.letter))
+    .sort((a, b) =>
+      a.eventName.localeCompare(b.eventName) ||
+      groupSortKey(a.letter).localeCompare(groupSortKey(b.letter)),
+    )
 })
 
 const canceledCount = computed(() =>
@@ -267,6 +280,22 @@ async function confirmStartMatch() {
 function groupName(match: Match): string {
   const parts = match.stageLabel.split(' — Poule ')
   return parts[1] ?? ''
+}
+
+// Lettre de groupement de la pile / Annulés : lettre de poule pour un match
+// de poule, groupe unique « Tableau » pour tout stage de tableau final
+// (QF/SF/F/P3) — cf. spec « la pile … groupés par épreuve puis par poule —
+// les matchs de tableau … forment un groupe "Tableau" »).
+function pileGroupLetter(match: Match): string {
+  if (match.stage === 'GROUP') return groupName(match) || '?'
+  return 'Tableau'
+}
+
+// Pastille affichée sur une carte/ligne : lettre de poule, ou pastille
+// d'étape (bracketSlot, ex. « QF1 », « SF2 ») pour un match de tableau.
+function stagePillLabel(match: Match): string {
+  if (match.stage === 'GROUP') return groupName(match) || match.stageLabel
+  return match.bracketSlot ?? match.stage
 }
 
 function playerLabel(match: Match, side: 'A' | 'B'): string {
@@ -645,7 +674,7 @@ async function onDragEnd() {
         <template v-else>
           <template v-for="g in pileGroups" :key="g.key">
             <div class="pile-group-hd">
-              Poule {{ g.letter }}<span v-if="multiEvent" class="pile-group-ev"> · {{ g.eventName }}</span>
+              {{ g.letter === 'Tableau' ? 'Tableau' : `Poule ${g.letter}` }}<span v-if="multiEvent" class="pile-group-ev"> · {{ g.eventName }}</span>
             </div>
             <draggable
               v-model="unscheduledByGroupDnd[g.key]"
@@ -662,7 +691,7 @@ async function onDragEnd() {
                   :class="{ 'is-foreign': isForeign(element.data as Match) }"
                   @click="openMatchPanel(element.data as Match)"
                 >
-                  <span class="poule-pill">{{ g.letter }}</span>
+                  <span class="poule-pill">{{ stagePillLabel(element.data as Match) }}</span>
                   <span class="pile-card-players">
                     {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
                   </span>
@@ -683,7 +712,7 @@ async function onDragEnd() {
 
         <template v-for="g in canceledGroups" :key="g.key">
           <div class="pile-group-hd">
-            Poule {{ g.letter }}<span v-if="multiEvent" class="pile-group-ev"> · {{ g.eventName }}</span>
+            {{ g.letter === 'Tableau' ? 'Tableau' : `Poule ${g.letter}` }}<span v-if="multiEvent" class="pile-group-ev"> · {{ g.eventName }}</span>
           </div>
           <div
             v-for="m in g.matches"
@@ -692,7 +721,7 @@ async function onDragEnd() {
             :class="{ 'is-foreign': isForeign(m) }"
             @click="openMatchPanel(m)"
           >
-            <span class="poule-pill">{{ g.letter }}</span>
+            <span class="poule-pill">{{ stagePillLabel(m) }}</span>
             <span class="pile-card-players">
               {{ playerLabel(m, 'A') }} <em class="vs">vs</em> {{ playerLabel(m, 'B') }}
             </span>
@@ -796,7 +825,7 @@ async function onDragEnd() {
                     :class="`dot--${displayState(element.data as Match)}`"
                     :title="stateLabel(displayState(element.data as Match))"
                   />
-                  <span class="poule-pill">{{ groupName(element.data as Match) || (element.data as Match).stageLabel }}</span>
+                  <span class="poule-pill">{{ stagePillLabel(element.data as Match) }}</span>
                   <span v-if="multiEvent" class="cal-event-tag">{{ eventName((element.data as Match).eventId) }}</span>
                   <span class="cal-players">
                     {{ playerLabel(element.data as Match, 'A') }} <em class="vs">vs</em> {{ playerLabel(element.data as Match, 'B') }}
