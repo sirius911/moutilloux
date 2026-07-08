@@ -608,8 +608,9 @@ def referee_action(request, match_id: int):
 
     # --- Démarrer / finir / réouvrir ---
     if action == "start":
+        server = data.get("server") or None
         try:
-            start_match(match)
+            start_match(match, server=server)
         except ValueError as exc:
             return JsonResponse({"ok": False, "error": str(exc)}, status=400)
         return JsonResponse({"ok": True})

@@ -511,15 +511,23 @@ def finalize_match_edit(match, was_live: bool = False, was_finished: bool = Fals
     return match
 
 
-def start_match(match):
+def start_match(match, server=None):
     """
     Service : démarre un match (SCHEDULED -> LIVE), le met en avant TV.
     Réutilisé par referee_action('start') et par l'API admin.
     Idempotent : si le match est déjà LIVE, no-op (pas de re-déclenchement de la
-    rétrogradation des autres matchs ni du featured).
+    rétrogradation des autres matchs ni du featured, ni de `server` : un match déjà
+    LIVE ignore un `server` fourni en repassant par 'start').
+
+    `server` : repère modèle du premier serveur ("A"/"B"), optionnel — posé par le
+    modal de démarrage arbitre (specs/screens/arbitre-match.md, « Flux : démarrer un
+    match »). Si None/absent/"" : comportement legacy inchangé, le serveur reste celui
+    du format (mise en avant admin, cf. specs/technical/cycle-de-vie-match.md, « cas
+    hors parcours »). Toute autre valeur lève ValueError (action invalide).
+
     Retire is_featured des autres matchs de l'edition, met is_featured=True,
-    puis mark_live() (status=LIVE + started_at si vide). Ne touche jamais
-    order_index (persistance calendrier — sprint 15 / #159).
+    applique `server` si fourni, puis mark_live() (status=LIVE + started_at si
+    besoin). Ne touche jamais order_index (persistance calendrier — sprint 15 / #159).
     Retourne le match.
     """
     if match.status == Match.Status.LIVE:
@@ -527,6 +535,11 @@ def start_match(match):
 
     if match.side_a_id is None or match.side_b_id is None:
         raise ValueError("Les deux joueurs doivent être connus avant de démarrer le match.")
+
+    if server:
+        if server not in (Match.Server.A, Match.Server.B):
+            raise ValueError("server invalide : valeurs acceptées 'A' ou 'B'.")
+        match.server = server
 
     Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
     match.is_featured = True
