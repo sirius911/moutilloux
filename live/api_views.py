@@ -1219,9 +1219,15 @@ def api_match_feature(request, match_id):
     Met le match en avant (source : admin_views.feature_match). Aucun payload.
     Effet : is_featured=True, mark_live() → statut LIVE ; order_index inchangé ;
     devient le hero de /api/tv/state/.
+    Garde : refuse (400, {"error": ...}) si un slot du match n'est pas résolu
+    (side_a ou side_b nul) — on ne met pas à l'antenne un match sans ses deux
+    joueurs.
     """
     match = get_object_or_404(Match, pk=match_id)
-    feature_match(match)
+    try:
+        feature_match(match)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"match": _pack_match(match)})
 
 
