@@ -373,59 +373,51 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #121
-**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (3ᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #122
+**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (4ᵉ et dernière session du sprint — **clos**)
 
 **Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`,
-parent effectif `claude/sprint/29-joueurs-attitudes-predefinies` (déjà à
-jour, rien à fusionner).
+parent effectif `claude/sprint/29-joueurs-attitudes-predefinies`. Aucun
+commit de code cette session (revue à froid uniquement).
 
-**Anomalie de démarrage (résolue seule, aucune action destructive) :** au
-lancement de cette session, la branche avait un working tree sale (4
-fichiers modifiés non commités) correspondant exactement au travail de la
-session #120 (déjà fermé sur GitHub — #303/#304 avec verdicts ✅), et HEAD
-était en retrait de 2 commits par rapport à `91424ec` (commit de clôture
-#120, déjà présent sur `origin`). L'historique était intact via
-`reflog`/`fsck`. Pendant l'investigation, le dépôt s'est resynchronisé seul
-sur `91424ec` — vraisemblablement un chevauchement entre la fin d'exécution
-de la session #120 et le déclenchement de cette session #121, pas une
-véritable interruption. Rien à corriger, juste à attendre.
+**Continuité avec la session #121 :** au lancement de cette session, le
+travail de la session #121 (spec review, #305/#306 implémentés/revus/
+fermés sur GitHub, log de session, `SESSION_ENGINE.md` §6) était déjà
+effectué mais son commit final n'était pas encore visible dans les tout
+premiers instants de cette lecture — chevauchement transitoire entre la fin
+d'exécution de #121 et le déclenchement de #122, résolu seul en quelques
+secondes (rien à corriger). La session #121 avait explicitement annoncé
+dans son propre log que « la prochaine session devra mener une spec review
+propre » pour fermer le sprint (son verdict à elle datait d'avant #305/#306
+— schéma habituel des clôtures de fin de sprint) : cette session #122 est
+exactement cette suite.
 
-**Spec review session #121 :** `planning.md`/`admin-matchs.md` ❌ Dérive
-bloquante attendue (2 tickets restants en entrée de session : #305, #306),
-0 nouvelle dérive — `computedETAs` (#304) et `PlayDayModal.vue` (#303)
-reconfirmés conformes, aucune régression.
+**Spec review session #122 :** `planning.md`/`admin-matchs.md` **✅
+Conforme** — revue à froid des 6 tickets du sprint ensemble (#302-307, tous
+déjà clos), aucune régression croisée constatée (notamment entre le moteur
+ETA `#304` et la teinte de ponctualité `#305`, qui consomme `plannedEtaMin`
+exposé par `etaEngine`). 0 nouvelle dérive.
 
-**Backlog engine session #121 :** 2 tickets traités séquentiellement (même
-SFC `AdminMatches.vue`) — **#305** (teinte de ponctualité rouge/orange/vert,
-tolérance 5 min, restreinte à `isToday(day.date)` comme le moteur ETA ;
-refactor de `computedETAs` en `etaEngine` pour exposer l'ETA planifiée par
-match sans changer le comportement d'affichage existant ; légende à jour)
-et **#306** (heure de début de journée éditable en place — bouton cliquable
-→ `<input type="time">` inline, Entrée/blur valide, Échap annule, réutilise
-`eventStore.updatePlayDay` déjà existant). Les deux `✅ Approuvé`, fermés sur
-GitHub. `npx vue-tsc -b --force` : 0 nouvelle erreur (9 erreurs préexistantes
-stables, hors périmètre : `useApi.ts` ×1, `event.ts` ×1, `AdminBracket.vue`
-×7).
+**Backlog engine session #122 :** 0 ticket traité — le milestone n'avait
+plus d'issue ouverte en entrant dans la session.
 
-**Fichiers partagés câblés par l'orchestrateur :** aucun — les deux tickets
-réutilisaient des actions de store déjà existantes.
+**Sprint 30 — clos cette session :** les deux conditions de clôture
+réunies (spec review ✅ + 0 issue `sprint-30` ouverte). Milestone GitHub
+(#29) fermé, dossier déplacé dans
+`backlog/sprints/done/30-planning-journees-eta-ponctualite/`, ligne
+retirée de `roadmap.md`.
 
-**Sprint 30 — non clôturé cette session malgré 0 issue `sprint-30`
-ouverte :** la spec review *de cette session* a été menée **avant**
-l'implémentation de #305/#306 et a donc rendu ❌, pas ✅ — condition stricte
-de l'étape 3 du protocole non remplie. La **prochaine session** devra mener
-une spec review propre (aucune dérive connue restante cette fois) ; si elle
-rend ✅ Conforme sur `planning.md` et `admin-matchs.md`, elle pourra fermer
-le milestone, retirer la ligne du sprint dans `roadmap.md` et archiver le
-dossier dans `backlog/sprints/done/`.
+**Roadmap :** 2 sprints restants (31, 32) — le **sprint 31 — TV : rotation
+stable & pastille de progression** devient actif. Conformément au
+protocole, il n'a **pas** démarré dans cette session ; il sera traité à la
+**prochaine échéance planifiée**.
 
-**Point d'attention outillage :** confirmation supplémentaire (4ᵉ session de
-suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit` seul
-ne type-check aucun fichier `.vue` dans cet environnement. Toujours pas de
-script `type-check` dans `package.json`, toujours pas de `.claude/launch.json`
-— vérification par type-check + revue de code uniquement (pas de QA
-navigateur en session automatisée).
+**Point d'attention outillage :** confirmation supplémentaire (5ᵉ session
+de suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit`
+seul ne type-check aucun fichier `.vue` dans cet environnement. Toujours
+pas de script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` — vérification par type-check + revue de code
+uniquement (pas de QA navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non

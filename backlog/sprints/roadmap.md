@@ -10,6 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 30 — Planning : journées, ETA monotone & ponctualité | `backlog/sprints/30-planning-journees-eta-ponctualite/sprint.md` |
-| 2 | 31 — TV : rotation stable & pastille de progression | `backlog/sprints/31-tv-rotation-stable-pastille/sprint.md` |
-| 3 | 32 — Arbitre : programme du jour & premier serveur | `backlog/sprints/32-arbitre-programme-premier-serveur/sprint.md` |
+| 1 | 31 — TV : rotation stable & pastille de progression | `backlog/sprints/31-tv-rotation-stable-pastille/sprint.md` |
+| 2 | 32 — Arbitre : programme du jour & premier serveur | `backlog/sprints/32-arbitre-programme-premier-serveur/sprint.md` |
