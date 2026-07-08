@@ -373,7 +373,64 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #131
+**Dernière session :** 2026-07-08 — Session #132
+**Sprint traité :** 34 — Tableau final au calendrier (1ère session du sprint,
+2/6 tickets clos — `#325` à `#328` restants).
+
+**Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
+`claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #132 :** `planning.md`, `admin-matchs.md` et
+`cycle-de-vie-match.md` — ⚠️ Dérive mineure en début de session (sprint tout
+juste planifié, aucun ticket encore implémenté) → dérives partiellement
+résorbées pour `#323`/`#324` traités cette session, le reste attendu pour
+`#325`-`#328`. `cycle-de-vie-epreuve.md` — ✅ Conforme. Toutes les dérives
+relevées correspondaient exactement aux tickets déjà ouverts lors de la
+planification (session précédente) — 0 nouvelle issue créée cette session.
+
+**Backlog engine session #132 :** 2 tickets traités séquentiellement (chaîne
+`django-api` puis `reviewer` par ticket), conformément à l'ordre suggéré par
+`sprint.md` (les deux back, indépendants, débloquant le front) :
+- **#323** (majeure) — back : `live/api_views.py`, `api_edition_calendar` —
+  retrait du filtre `stage=GROUP` sur la pile « à planifier » et la colonne
+  Annulés (les deux ne couvraient que les poules) ; tri stable ajouté via
+  annotation `Case`/`When` (poules avant QF avant SF avant F/P3). Vérifié :
+  `reorder_calendar` et `_pack_match` gèrent déjà des sides nuls, aucune
+  régression sur les autres usages du filtre `stage=GROUP` (génération de
+  poules, `auto_arrange_matches`, classements). Verdict reviewer :
+  ✅ Approuvé.
+- **#324** (majeure, label `infra`) — back : `live/api_views.py`,
+  `api_match_feature` — ajout d'un `try/except ValueError` autour de
+  `feature_match(match)`, même pattern que `api_match_start`. La garde
+  métier « slot non résolu refuse démarrer » existait déjà dans le service
+  partagé `start_match` (dont `feature_match` est un alias direct,
+  `live/admin_views.py:554`) et était déjà catchée côté arbitre
+  (`referee_views.py`, action `start`) et `api_match_start` — seul le
+  chemin « mettre à l'antenne » laissait fuiter un 500 non géré. **Aucun
+  câblage de fichier partagé nécessaire** malgré le label `infra` posé lors
+  de la planification (signalé par le reviewer, sans impact protocole).
+  Verdict reviewer : ✅ Approuvé.
+
+**Sprint 34 non clos cette session :** 4 issues encore ouvertes sur le
+milestone (`#325`, `#326`, `#327`, `#328`, tous front `AdminMatches.vue`,
+séquentiels par construction — un seul agent `vue-screen` les enchaînera).
+Sprint 34 reste actif, sera repris à la **prochaine échéance planifiée**.
+
+**Roadmap non vide** — 3 autres sprints en attente après le 34 (35 — TV :
+scène live & fin de match, 36 — Échauffement, 37 — Mobile : arbitre &
+régie).
+
+**Point d'attention outillage :** `.venv/bin/python manage.py check` utilisé
+pour la vérification back cette session (pas de suite de tests dédiée
+identifiée) — fiable, aucune erreur. Toujours pas de script `type-check`
+dans `package.json`, toujours pas de `.claude/launch.json` côté front (non
+pertinent cette session, aucun ticket front traité).
+
+---
+
+**Historique — session #131 :**
 **Sprint traité :** 33 — Avantage (AV) affiché (seule et unique session du
 sprint — **clos cette session**, 2/2 tickets clos).
 
