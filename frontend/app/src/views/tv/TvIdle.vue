@@ -78,6 +78,13 @@ const SLIDES = computed<SlideDef[]>(() => {
 // ne change donc jamais la slide en cours de lecture (spec tv-live §Cadre).
 const displayedKind = ref<SlideKind>('tournoi')
 
+// Compteur technique incrémenté à chaque tick de rotation ou clic `goTo`,
+// utilisé comme clé de la pastille de progression : contrairement à
+// `displayedKind`, il change même quand la slide affichée reste la même
+// (composition à une seule slide), pour que le remplissage reparte de zéro
+// à chaque cycle de 8 s (voir spec tv-live §Cadre, pastille de progression).
+const pagerTick = ref(0)
+
 const currentSlide = computed<SlideKind>(() => displayedKind.value)
 
 // Position de la slide affichée dans la liste fraîche, pour le pager — par
@@ -110,12 +117,14 @@ function advance() {
   }
 
   displayedKind.value = upcomingKind
+  pagerTick.value++
 }
 
 function goTo(i: number) {
   const target = SLIDES.value[i]
   if (!target) return
   displayedKind.value = target.kind
+  pagerTick.value++
 }
 
 usePolling(async () => {
@@ -432,7 +441,13 @@ function nextPlayerName(side: 'A' | 'B'): string {
           :key="i"
           :class="{ on: i === displayedIndex }"
           @click="goTo(i)"
-        />
+        >
+          <em
+            v-if="i === displayedIndex"
+            :key="pagerTick"
+            class="tv-idle-foot-pager-fill"
+          />
+        </i>
       </div>
     </footer>
   </div>
@@ -918,6 +933,7 @@ function nextPlayerName(side: 'A' | 'B'): string {
 }
 
 .tv-idle-foot-pager i {
+  position: relative;
   width: 20px;
   height: 4px;
   border-radius: 2px;
@@ -925,11 +941,26 @@ function nextPlayerName(side: 'A' | 'B'): string {
   cursor: pointer;
   transition: background 300ms, width 300ms;
   display: block;
+  overflow: hidden;
 }
 
 .tv-idle-foot-pager i.on {
-  background: var(--accent);
+  background: var(--line-3);
   width: 32px;
+}
+
+.tv-idle-foot-pager-fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: var(--accent);
+  border-radius: 2px;
+  animation: pagerFill 8s linear forwards;
+}
+
+@keyframes pagerFill {
+  from { width: 0; }
+  to { width: 100%; }
 }
 
 .tv-empty {
