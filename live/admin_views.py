@@ -783,6 +783,10 @@ def withdraw_entry(entry):
     for gid in affected_groups:
         recalc_one_group(gid)
 
+    if affected_groups:
+        from live.bracket import sync_final_bracket_for_event
+        sync_final_bracket_for_event(event)
+
     if has_qf_sf:
         from live.bracket import sync_final_winners_for_event
         sync_final_winners_for_event(event)
@@ -1873,13 +1877,15 @@ def create_event(edition, category, group_size_default=4, qualified_per_group=2,
     )
 
 
-def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHANGE, notes=_NOCHANGE):
+def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHANGE, notes=_NOCHANGE, has_third_place=_NOCHANGE):
     if group_size_default is not _NOCHANGE:
         event.group_size_default = _as_choice_int(group_size_default, (3, 4), "La taille de poule par défaut")
     if qualified_per_group is not _NOCHANGE:
         event.qualified_per_group = _as_choice_int(qualified_per_group, (1, 2), "Le nombre de qualifiés par poule")
     if notes is not _NOCHANGE:
         event.notes = notes or ""
+    if has_third_place is not _NOCHANGE:
+        event.has_third_place = bool(has_third_place)
     event.save()
     return event
 

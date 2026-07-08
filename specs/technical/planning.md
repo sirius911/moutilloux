@@ -172,8 +172,8 @@ toucher à ce qui est déjà placé :
 | Endpoint | Rôle |
 |---|---|
 | `POST /api/events/<id>/matches/auto-arrange/` | applique l'heuristique de pré-pose côté serveur. |
-| CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). |
-| CRUD `Break` | insérer / déplacer / retirer une pause dans une journée. |
+| CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des matchs ou des pauses. |
+| CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier). |
 | Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`). Les ETA peuvent être calculées côté front. |
 | Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-programme]]. |
 

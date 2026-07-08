@@ -373,10 +373,10 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-06-26 — Session #32
-**Sprint actif :** 13 — Tableau : seeding général, byes & 3e place.
-**Roadmap :** 1 sprint restant (Sprint 13).
-**Tickets clôturés cette session :** 2 (#136 ⚠️, #137 ✅)
-**Branche :** `claude/sprint/12-forfait-ajustements`
-**Sprint 12 terminé :** milestone fermé, dossier archivé, roadmap mise à jour.
-**Contexte :** Session 32 — Sprint 12 clôturé. AdminGroups affordances forfait/remplacer/retirer/ajouter-tardif ; AdminInscriptions chemin forfait EN_COURS ; AdminMatches badge FORFAIT walkover. Sprint 13 démarrera à la prochaine échéance.
+**Dernière session :** 2026-06-26 — Session #40
+**Sprint actif :** — (roadmap vide)
+**Roadmap :** 0 sprint restant.
+**Tickets clôturés cette session :** 0
+**Branche :** `claude/sprint/13-tableau-seeding`
+**Issues Sprint 13 restantes :** 0
+**Contexte :** Session 40 — Roadmap vide confirmée (2e fois). Aucun sprint actif. Désactiver la Routine manuellement sur claude.ai/code/routines.

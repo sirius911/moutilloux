@@ -34,6 +34,7 @@ class Event(models.Model):
     group_size_default = models.PositiveIntegerField(default=4)  # 3 ou 4 en général
     qualified_per_group = models.PositiveIntegerField(default=2)  # 1 ou 2
     notes = models.TextField(blank=True, default="")
+    has_third_place = models.BooleanField(default=False)
     status = models.CharField(
         max_length=15, choices=Status.choices, default=Status.INSCRIPTION, db_index=True
     )

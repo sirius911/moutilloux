@@ -18,6 +18,7 @@ class Match(models.Model):
         QF = "QF", "Quart"
         SF = "SF", "Demi"
         F = "F", "Finale"
+        P3 = "P3", "3e place"
 
     class Status(models.TextChoices):
         SCHEDULED = "SCHEDULED", "Planifié"

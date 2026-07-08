@@ -35,8 +35,13 @@ ponctuels** (forfait, remplacement, ajout tardif, retrait) restent possibles.
   `/admin/events/:eventId/…` (`router.push`) ; l'URL fait foi et survit au
   rechargement (voir [[routing-context]]).
 - Titre « Poules », sous-titre « Glissez-déposez les joueurs dans leur groupe ».
-- Action principale : **« Remplir automatiquement »** → modale de remplissage.
-  Désactivée quand les poules sont verrouillées.
+- Actions :
+  - **« + Nouvelle poule »** → crée une poule **vide** (lettre suivante : A, B,
+    C…) sans passer par le remplissage automatique. Permet de composer entièrement
+    à la main (créer les poules vides puis glisser-déposer les joueurs).
+    Désactivée quand les poules sont verrouillées.
+  - **« Remplir automatiquement »** → modale de remplissage. Désactivée quand les
+    poules sont verrouillées.
 
 ### Colonne « Non assignés »
 
@@ -100,6 +105,15 @@ Titre « Remplir les poules automatiquement ».
 
 ---
 
+## Flux : créer une poule à la main
+
+1. Tant que l'épreuve n'est pas débutée, l'admin clique **« + Nouvelle poule »**.
+2. Une poule vide apparaît dans la grille (lettre = première lettre libre A, B,
+   C…), avec sa zone de dépôt « Glissez un joueur ici ».
+3. L'admin répartit les inscrits par glisser-déposer (voir flux suivant). Aucune
+   génération de matchs ni verrouillage n'est déclenché : la composition reste
+   libre jusqu'à « Débuter l'épreuve » (écran Tournoi).
+
 ## Flux : déplacement manuel
 
 1. L'admin saisit une pastille (depuis « Non assignés » ou une poule) et la
@@ -128,7 +142,7 @@ Titre « Remplir les poules automatiquement ».
 |---|---|
 | Aucune épreuve active | État vide avec lien vers Tournoi. |
 | Aucun inscrit | « Non assignés » vide + invite à passer par l'écran Inscriptions ; « Remplir automatiquement » désactivé. |
-| Aucune poule encore créée | Seule la colonne « Non assignés » est peuplée ; le remplissage automatique crée les poules. |
+| Aucune poule encore créée | Seule la colonne « Non assignés » est peuplée. Deux voies pour créer des poules : **« + Nouvelle poule »** (poules vides à composer à la main par glisser-déposer) ou **« Remplir automatiquement »** (création + répartition en un geste). |
 | Poules verrouillées | Bandeau + lecture seule (voir ci-dessus). |
 
 ## Données

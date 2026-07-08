@@ -16,6 +16,7 @@ const categoryId = ref<number | 'new' | null>(props.editing?.categoryId ?? null)
 const groupSize = ref<number>(props.editing?.groupSizeDefault ?? 4)
 const qualified = ref<number>(props.editing?.qualifiedPerGroup ?? 2)
 const notes = ref(props.editing?.notes ?? '')
+const hasThirdPlace = ref<boolean>(props.editing?.hasThirdPlace ?? false)
 const saving = ref(false)
 const error = ref('')
 
@@ -77,6 +78,7 @@ async function save() {
         group_size_default: groupSize.value,
         qualified_per_group: qualified.value,
         notes: notes.value,
+        has_third_place: hasThirdPlace.value,
       })
     } else {
       await eventStore.createEvent(props.editionId, {
@@ -84,6 +86,7 @@ async function save() {
         group_size_default: groupSize.value,
         qualified_per_group: qualified.value,
         notes: notes.value,
+        has_third_place: hasThirdPlace.value,
       })
     }
     emit('saved')
@@ -155,6 +158,11 @@ async function save() {
           <span class="fld-lbl">Notes</span>
           <textarea v-model="notes" class="inp" rows="3" placeholder="Optionnel"></textarea>
         </label>
+
+        <label class="fld fld-span-2 fld-toggle">
+          <input type="checkbox" v-model="hasThirdPlace" class="toggle-input" />
+          <span class="fld-lbl">Petite finale (3e place)</span>
+        </label>
       </div>
 
       <p v-if="generated && qualified < 2" class="fld-hint warn">
@@ -198,6 +206,9 @@ async function save() {
 .inp:focus { border-color: var(--accent); }
 .inp:disabled { opacity: 0.6; cursor: not-allowed; }
 textarea.inp { resize: vertical; }
+
+.fld-toggle { flex-direction: row; align-items: center; gap: 10px; }
+.toggle-input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
 
 .mdl-error { margin: 8px 0 0; font-size: 13px; color: var(--danger); }
 
