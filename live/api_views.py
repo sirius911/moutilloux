@@ -246,6 +246,14 @@ def _pack_match(m):
         "sideALabel": m.side_a_label,
         "sideBLabel": m.side_b_label,
         "server": m.server,
+        "matchFormat": m.match_format,
+        "bestOf": m.best_of,
+        "gamesToWin": m.games_to_win,
+        "tbAt": m.tb_at,
+        "tbPointsToWin": m.tb_points_to_win,
+        "tbWinByTwo": m.tb_win_by_two,
+        "decidingSetMode": m.deciding_set_mode,
+        "decidingTbPointsToWin": m.deciding_tb_points_to_win,
         "setsA": m.sets_a,
         "setsB": m.sets_b,
         "gamesA": m.games_a,
@@ -1023,6 +1031,8 @@ def api_match_edit(request, match_id):
         return JsonResponse({"error": "Corps JSON invalide"}, status=400)
 
     match = get_object_or_404(Match, pk=match_id)
+    was_live = match.status == Match.Status.LIVE
+    was_finished = match.status == Match.Status.FINISHED
 
     fields = MatchEditForm.Meta.fields
     merged = {}
@@ -1040,8 +1050,10 @@ def api_match_edit(request, match_id):
 
     try:
         form.save()
-        finalize_match_edit(form.instance)
+        finalize_match_edit(form.instance, was_live=was_live, was_finished=was_finished)
     except IntegrityError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
     return JsonResponse({"match": _pack_match(form.instance)})

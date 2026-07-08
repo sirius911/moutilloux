@@ -18,14 +18,25 @@ export interface MatchEditPayload {
   scheduled_time?: string | null
   court?: string | null
   server?: 'A' | 'B' | null
+  is_featured?: boolean
   sets_a?: number
   sets_b?: number
   games_a?: number
   games_b?: number
+  points_a?: number
+  points_b?: number
   tb_active?: boolean
   tb_points_a?: number
   tb_points_b?: number
   winner_side?: 'A' | 'B' | null
+  match_format?: string
+  best_of?: number
+  games_to_win?: number
+  tb_at?: number
+  tb_points_to_win?: number
+  tb_win_by_two?: boolean
+  deciding_set_mode?: 'FULL_SET' | 'SUPER_TB'
+  deciding_tb_points_to_win?: number
 }
 
 // ── Payloads Phase 9 (configuration) — clés snake_case attendues par l'API ──

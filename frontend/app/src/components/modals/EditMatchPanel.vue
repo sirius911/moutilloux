@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { useEventStore } from '@/stores/event'
 import type { CalendarReorderPayload } from '@/stores/event'
 import Segmented from '@/components/ui/Segmented.vue'
+import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import { extractApiError } from '@/lib/apiError'
 import type { Match } from '@/types'
 
 const props = defineProps<{ match: Match }>()
@@ -10,7 +12,11 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const eventStore = useEventStore()
 
-const tab = ref<'score' | 'format' | 'planning' | 'history'>('score')
+// Mapping formatSets (index UI 1/2/3) ↔ best_of (nombre de sets back 1/3/5)
+const FORMAT_SETS_TO_BEST_OF: Record<number, number> = { 1: 1, 2: 3, 3: 5 }
+const BEST_OF_TO_FORMAT_SETS: Record<number, number> = { 1: 1, 3: 2, 5: 3 }
+
+const tab = ref<'score' | 'format' | 'planning'>('score')
 const saving = ref(false)
 const error = ref('')
 
@@ -19,17 +25,76 @@ const setsA = ref(props.match.setsA)
 const setsB = ref(props.match.setsB)
 const gamesA = ref(props.match.gamesA)
 const gamesB = ref(props.match.gamesB)
-const pointsA = ref(props.match.displayPointA)
-const pointsB = ref(props.match.displayPointB)
+const pointsA = ref(props.match.pointsA)
+const pointsB = ref(props.match.pointsB)
 const tbActive = ref(props.match.tbActive)
-const winnerSide = ref<'none' | 'A' | 'B' | 'abandon'>(props.match.winnerSide ?? 'none')
+const winnerSide = ref<'none' | 'A' | 'B'>(props.match.winnerSide ?? 'none')
 
 // Format tab
-const formatSets = ref(1)
-const formatGames = ref('5')
-const formatTb = ref('4')
-const formatTbPoints = ref('7')
-const formatServer = ref<'A' | 'B' | 'rand'>(props.match.server ?? 'A')
+const formatSets = ref(BEST_OF_TO_FORMAT_SETS[props.match.bestOf] ?? 1)
+const formatGames = ref(String(props.match.gamesToWin ?? 5))
+const formatTb = ref(String(props.match.tbAt ?? 4))
+const formatTbPoints = ref(String(props.match.tbPointsToWin ?? 7))
+const formatServer = ref<'A' | 'B'>(props.match.server === 'B' ? 'B' : 'A')
+const formatTbWinByTwo = ref(props.match.tbWinByTwo ?? true)
+const formatDecidingSetMode = ref<'FULL_SET' | 'SUPER_TB'>(
+  props.match.decidingSetMode === 'SUPER_TB' ? 'SUPER_TB' : 'FULL_SET'
+)
+const formatDecidingTbPoints = ref(String(props.match.decidingTbPointsToWin ?? 10))
+
+const initialFormatSnapshot = {
+  formatSets: formatSets.value,
+  formatGames: formatGames.value,
+  formatTb: formatTb.value,
+  formatTbPoints: formatTbPoints.value,
+  formatServer: formatServer.value,
+  formatTbWinByTwo: formatTbWinByTwo.value,
+  formatDecidingSetMode: formatDecidingSetMode.value,
+  formatDecidingTbPoints: formatDecidingTbPoints.value,
+}
+
+// Sélecteur de préréglage nommé (Poule / Quart / Demi / Finale / Manuel)
+const formatPreset = ref(props.match.matchFormat || 'MANUAL')
+
+const formatPresetOptions = [
+  { value: 'G_SET5_TB44', label: 'Poule : 1 set à 5, TB à 4-4' },
+  { value: 'QF_SET5_TB55', label: 'Quart : 1 set à 6, TB à 5-5' },
+  { value: 'NORMAL_1SET', label: 'Demi : 1 set normal' },
+  { value: 'BO3', label: 'Finale : 2 sets gagnants' },
+  { value: 'MANUAL', label: 'Manuel' },
+]
+
+const decidingSetModeOptions = [
+  { value: 'FULL_SET', label: 'Set complet' },
+  { value: 'SUPER_TB', label: 'Super tie-break' },
+]
+
+const PRESET_VALUES: Record<string, {
+  formatSets: number; formatGames: string; formatTb: string; formatTbPoints: string
+  formatTbWinByTwo: boolean
+  formatDecidingSetMode?: 'FULL_SET' | 'SUPER_TB'
+  formatDecidingTbPoints?: string
+}> = {
+  G_SET5_TB44: { formatSets: 1, formatGames: '5', formatTb: '4', formatTbPoints: '7', formatTbWinByTwo: true },
+  QF_SET5_TB55: { formatSets: 1, formatGames: '6', formatTb: '5', formatTbPoints: '7', formatTbWinByTwo: true },
+  NORMAL_1SET: { formatSets: 1, formatGames: '6', formatTb: '6', formatTbPoints: '7', formatTbWinByTwo: true },
+  BO3: {
+    formatSets: 2, formatGames: '6', formatTb: '6', formatTbPoints: '7', formatTbWinByTwo: true,
+    formatDecidingSetMode: 'FULL_SET', formatDecidingTbPoints: '10',
+  },
+}
+
+function applyPresetToFields() {
+  const preset = PRESET_VALUES[formatPreset.value]
+  if (!preset) return // MANUAL : ne touche à rien, l'admin garde ses valeurs actuelles
+  formatSets.value = preset.formatSets
+  formatGames.value = preset.formatGames
+  formatTb.value = preset.formatTb
+  formatTbPoints.value = preset.formatTbPoints
+  formatTbWinByTwo.value = preset.formatTbWinByTwo
+  if (preset.formatDecidingSetMode) formatDecidingSetMode.value = preset.formatDecidingSetMode
+  if (preset.formatDecidingTbPoints) formatDecidingTbPoints.value = preset.formatDecidingTbPoints
+}
 
 // Planning tab
 const status = ref<'scheduled' | 'live' | 'finished' | 'canceled'>(
@@ -101,14 +166,12 @@ const tabItems = [
   { id: 'score' as const, label: 'Score' },
   { id: 'format' as const, label: 'Format' },
   { id: 'planning' as const, label: 'Planning' },
-  { id: 'history' as const, label: 'Historique' },
 ]
 
 const winnerOptions = computed(() => [
   { value: 'none', label: 'À déterminer' },
   { value: 'A', label: nameA.value },
   { value: 'B', label: nameB.value },
-  { value: 'abandon', label: 'Abandon' },
 ])
 
 const formatSetsOptions = [
@@ -120,7 +183,6 @@ const formatSetsOptions = [
 const serverOptions = computed(() => [
   { value: 'A', label: nameA.value },
   { value: 'B', label: nameB.value },
-  { value: 'rand', label: 'Tirage au sort' },
 ])
 
 const planningStatusOptions = [
@@ -130,43 +192,110 @@ const planningStatusOptions = [
   { value: 'canceled', label: 'Annulé' },
 ]
 
+const showStartConfirm = ref(false)
+const showFinishConfirm = ref(false)
+const showFeatureConfirm = ref(false)
+const showReopenConfirm = ref(false)
+
+function hasOtherLiveMatch(): boolean {
+  const allMatches = eventStore.calendar?.playDays.flatMap((d) => d.matches) ?? []
+  return allMatches.some((m) => m.status === 'LIVE' && m.id !== props.match.id)
+}
+
 async function save() {
+  if (props.match.status === 'FINISHED' && status.value === 'live' && !showReopenConfirm.value) {
+    showReopenConfirm.value = true
+    return
+  }
+
+  if (status.value === 'live' && props.match.status !== 'LIVE' && hasOtherLiveMatch() && !showStartConfirm.value) {
+    showReopenConfirm.value = false
+    showStartConfirm.value = true
+    return
+  }
+
+  if (status.value === 'finished' && props.match.status !== 'FINISHED' && !showFinishConfirm.value) {
+    showFinishConfirm.value = true
+    return
+  }
+
+  if (featured.value && !props.match.isFeatured && !showFeatureConfirm.value) {
+    showFeatureConfirm.value = true
+    return
+  }
+
   const eventId = eventStore.activeEventId
   if (!eventId) return
   saving.value = true
   error.value = ''
   try {
-    // Édition via MatchEditForm. On omet les points bruts, les champs de
-    // format (onglet décoratif), court (mono-court, non éditable) et
-    // scheduled_time (ETA dérivée, lecture seule — décisions 18-19).
+    // Édition via MatchEditForm. On omet le court (mono-court, non éditable)
+    // et scheduled_time (ETA dérivée, lecture seule — décisions 18-19). Les
+    // champs de format sont inclus ; match_format ne bascule sur
+    // MANUAL que si les champs détaillés ont réellement changé (sinon
+    // MatchEditForm.clean() réappliquerait le preset silencieusement, ou on
+    // basculerait à tort le format sur « Manuel » lors d'une simple édition
+    // de score).
+    const formatChanged =
+      formatSets.value !== initialFormatSnapshot.formatSets ||
+      formatGames.value !== initialFormatSnapshot.formatGames ||
+      formatTb.value !== initialFormatSnapshot.formatTb ||
+      formatTbPoints.value !== initialFormatSnapshot.formatTbPoints ||
+      formatServer.value !== initialFormatSnapshot.formatServer ||
+      formatTbWinByTwo.value !== initialFormatSnapshot.formatTbWinByTwo ||
+      formatDecidingSetMode.value !== initialFormatSnapshot.formatDecidingSetMode ||
+      formatDecidingTbPoints.value !== initialFormatSnapshot.formatDecidingTbPoints
+
+    // match_format à envoyer :
+    // - si le sélecteur de préréglage a changé vers un preset nommé (≠ MANUAL) :
+    //   on envoie ce preset — le serveur (MatchEditForm.clean()) réapplique alors
+    //   lui-même le détail exact, la source de vérité reste le back.
+    // - si le sélecteur est resté sur MANUAL (ou est lui-même MANUAL) et qu'un champ
+    //   détaillé a divergé de l'instantané initial : on force MANUAL (comportement #7).
+    // - sinon (rien n'a changé) : on renvoie le matchFormat actuel du match, inchangé.
+    const presetChanged = formatPreset.value !== props.match.matchFormat
+    const matchFormatToSend =
+      presetChanged && formatPreset.value !== 'MANUAL'
+        ? formatPreset.value
+        : formatChanged
+          ? 'MANUAL'
+          : props.match.matchFormat
+
     await eventStore.editMatch(eventId, props.match.id, {
       status: status.value.toUpperCase(),
       sets_a: setsA.value,
       sets_b: setsB.value,
       games_a: gamesA.value,
       games_b: gamesB.value,
+      points_a: pointsA.value,
+      points_b: pointsB.value,
       tb_active: tbActive.value,
       winner_side:
         winnerSide.value === 'A' || winnerSide.value === 'B' ? winnerSide.value : null,
+      match_format: matchFormatToSend,
+      best_of: FORMAT_SETS_TO_BEST_OF[formatSets.value] ?? 1,
+      games_to_win: Number(formatGames.value),
+      tb_at: Number(formatTb.value),
+      tb_points_to_win: Number(formatTbPoints.value),
+      tb_win_by_two: formatTbWinByTwo.value,
+      deciding_set_mode: formatDecidingSetMode.value,
+      deciding_tb_points_to_win: Number(formatDecidingTbPoints.value),
+      server: formatServer.value,
+      is_featured: featured.value,
     })
     if (featured.value && !props.match.isFeatured) {
-      const ok = window.confirm(
-        'Ce match passe EN DIRECT et devient le match affiché sur la TV. Le match actuellement à l\'antenne est retiré.\n\nConfirmer ?'
-      )
-      if (!ok) {
-        featured.value = false
-        // Les autres modifications ont déjà été enregistrées — on ferme sans
-        // déclencher la mise en avant.
-        emit('saved')
-        emit('close')
-        return
-      }
+      // L'activation doit toujours passer par start_match() (mark_live +
+      // rétrogradation des autres matchs featured, invariant mono-LIVE —
+      // cf. specs/technical/cycle-de-vie-match.md) : MatchEditForm.clean()
+      // neutralise silencieusement toute activation via le payload générique
+      // ci-dessus si le statut n'est pas lui-même passé à LIVE, donc c'est
+      // ce second appel dédié qui active réellement la mise en avant.
       await eventStore.featureMatch(eventId, props.match.id)
     }
     emit('saved')
     emit('close')
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
+    error.value = extractApiError(e, 'Erreur lors de la sauvegarde.')
   } finally {
     saving.value = false
   }
@@ -236,7 +365,7 @@ async function save() {
                   </span>
                   <input v-model.number="setsA" class="inp inp-num tab" type="number" min="0" />
                   <input v-model.number="gamesA" class="inp inp-num tab" type="number" min="0" />
-                  <input v-model="pointsA" class="inp inp-num tab" />
+                  <input v-model.number="pointsA" class="inp inp-num tab" type="number" min="0" />
                 </div>
                 <div class="score-grid-row">
                   <span class="score-grid-name">
@@ -246,7 +375,7 @@ async function save() {
                   </span>
                   <input v-model.number="setsB" class="inp inp-num tab" type="number" min="0" />
                   <input v-model.number="gamesB" class="inp inp-num tab" type="number" min="0" />
-                  <input v-model="pointsB" class="inp inp-num tab" />
+                  <input v-model.number="pointsB" class="inp inp-num tab" type="number" min="0" />
                 </div>
               </div>
               <label class="sw" style="margin-top: 14px">
@@ -272,6 +401,12 @@ async function save() {
               <div class="slide-section">
                 <h4>Format du match</h4>
                 <div class="fld-col">
+                  <label class="fld">
+                    <span class="fld-lbl">Préréglage</span>
+                    <select v-model="formatPreset" class="inp" @change="applyPresetToFields">
+                      <option v-for="p in formatPresetOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
+                    </select>
+                  </label>
                   <label class="fld">
                     <span class="fld-lbl">Sets à gagner</span>
                     <Segmented v-model="formatSets" :options="formatSetsOptions" />
@@ -300,6 +435,19 @@ async function save() {
                   <label class="fld">
                     <span class="fld-lbl">Service initial</span>
                     <Segmented v-model="formatServer" :options="serverOptions" />
+                  </label>
+                  <label class="sw">
+                    <input v-model="formatTbWinByTwo" type="checkbox" />
+                    <i />
+                    <span>Tie-break : 2 points d'écart</span>
+                  </label>
+                  <label class="fld">
+                    <span class="fld-lbl">Set décisif (égalité en sets)</span>
+                    <Segmented v-model="formatDecidingSetMode" :options="decidingSetModeOptions" />
+                  </label>
+                  <label v-if="formatDecidingSetMode === 'SUPER_TB'" class="fld">
+                    <span class="fld-lbl">Points du super tie-break décisif</span>
+                    <input v-model="formatDecidingTbPoints" class="inp tab" type="number" min="1" />
                   </label>
                 </div>
               </div>
@@ -356,18 +504,6 @@ async function save() {
               </p>
             </div>
           </template>
-
-          <!-- Historique -->
-          <template v-if="tab === 'history'">
-            <div class="slide-section">
-              <h4>Activité</h4>
-              <div class="log">
-                <div class="log-row log-empty">
-                  <span>Historique non disponible pour ce match.</span>
-                </div>
-              </div>
-            </div>
-          </template>
         </div>
 
         <!-- Footer -->
@@ -381,6 +517,42 @@ async function save() {
         </footer>
       </aside>
     </div>
+    <ConfirmModal
+      v-if="showReopenConfirm"
+      title="Rouvrir ce match ?"
+      body="Le match repasse EN DIRECT, le score actuel est conservé. Cette action est réservée aux administrateurs."
+      confirm-label="Rouvrir"
+      :danger="false"
+      @confirm="save"
+      @close="showReopenConfirm = false"
+    />
+    <ConfirmModal
+      v-if="showStartConfirm"
+      title="Démarrer ce match ?"
+      body="Un autre match est en cours — le démarrer le mettra en pause (il repasse Prévu, score conservé)."
+      confirm-label="Démarrer"
+      :danger="false"
+      @confirm="save"
+      @close="showStartConfirm = false"
+    />
+    <ConfirmModal
+      v-if="showFinishConfirm"
+      title="Terminer ce match ?"
+      body="Le vainqueur sera figé, la mise en avant retirée si active, et le classement/tableau final recalculés. Une réouverture reste possible ensuite (admin)."
+      confirm-label="Terminer"
+      :danger="false"
+      @confirm="save"
+      @close="showFinishConfirm = false"
+    />
+    <ConfirmModal
+      v-if="showFeatureConfirm"
+      title="Mettre ce match en avant ?"
+      body="Ce match passe EN DIRECT et devient le match affiché sur la TV. Le match actuellement à l'antenne est retiré."
+      confirm-label="Mettre en avant"
+      :danger="false"
+      @confirm="save"
+      @close="showFeatureConfirm = false"
+    />
   </Teleport>
 </template>
 
@@ -717,38 +889,6 @@ async function save() {
 
 .sw input:checked ~ i { background: var(--accent); }
 .sw input:checked ~ i::after { transform: translateX(16px); }
-
-/* History log */
-.log {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-md);
-  overflow: hidden;
-}
-
-.log-row {
-  display: grid;
-  grid-template-columns: 90px 160px 1fr;
-  gap: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  border-bottom: 1px solid var(--line-1);
-  align-items: center;
-}
-
-.log-row:last-child { border-bottom: none; }
-
-.log-empty {
-  grid-template-columns: 1fr;
-  color: var(--ink-3);
-  text-align: center;
-  padding: 20px;
-}
-
-.log-time { font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); }
-.log-who { font-size: 12px; color: var(--ink-2); font-weight: 500; }
-.log-what { color: var(--ink-0); }
 
 /* ── Format lock ──────────────────────────────────────────────────── */
 .format-lock-banner {

@@ -373,29 +373,36 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-02 — Session #48
-**Sprint actif :** 16 — Arbitre : démarrer & lire un match → **clôturé cette
-session**. 17 — Panneau d'édition de match devient actif au **prochain
-déclenchement** (pas démarré dans cette session).
-**Roadmap :** 5 sprints planifiés (17 → 21).
-**Tickets clôturés cette session :** 0 (aucune issue ouverte sur le milestone
-Sprint 16 — rien à traiter côté backlog engine).
-**Branche :** `claude/sprint/16-arbitre-demarrer-match`
-**Contexte :** Session 48 — spec review confirmée par continuité (aucun
-fichier des 3 specs ni des modules sprint-16 modifié depuis la session #47).
-Les 3 specs restent `✅ Conforme`. Aucun ticket à traiter (0 issue ouverte).
-**Troisième tentative de fermeture du milestone** via
-`gh api … -X PATCH -f state=closed` : cette fois **acceptée** par le
-classifieur de permissions auto-mode, après deux refus consécutifs en
-sessions #46 et #47 (cf. mémoire `feedback_scheduled_run_milestone_close.md`).
-Même commande, même contexte de session planifiée sans changement de
-protocole — la différence de verdict du classifieur n'est pas expliquée côté
-repo. Sprint 16 clôturé dans la foulée : ligne retirée de
-`backlog/sprints/roadmap.md`, dossier déplacé vers
-`backlog/sprints/done/16-arbitre-demarrer-match/`.
+**Dernière session :** 2026-07-03 — Session #57
+**Sprint actif :** — (Sprint 17 clôturé cette session ; **Sprint 18 — Tableau
+final conforme** devient le sprint actif à la prochaine échéance).
+Spec review (faite en début de session) : `specs/screens/admin-matchs.md`
+(§ Panneau d'édition de match) → **✅ Conforme**, `specs/technical/cycle-de-vie-match.md`
+(§ Invariant mono-LIVE, § Démarrer, § Terminer, § Rouvrir) → **✅ Conforme**.
+Les deux dérives corrigées en session #56 (#228, #229) sont confirmées résolues
+sans régression : `was_finished` bien calculé avant mutation dans
+`api_match_edit` et routé vers `reopen_match()`, `ConfirmModal` de réouverture
+sans empilement avec la modale de conflit mono-LIVE.
+**Roadmap :** 4 sprints planifiés (18 → 21), 18 en tête.
+**Tickets clôturés cette session :** 0 (0 issue ouverte sur le milestone en
+entrant en session).
+**Nouveaux tickets créés :** 0.
+**Branche :** `claude/sprint/17-panneau-edition-match` (sprint clos — la PR
+[#223](https://github.com/sirius911/moutilloux/pull/223) reste ouverte pour
+merge manuel ; le sprint 18 démarrera sur sa propre branche `claude/sprint/18-…`
+depuis le parent effectif résolu via `backlog/sprints/done/`).
 
-Parent effectif toujours `claude/sprint/15-cycle-vie-match` (PR #169 du
-sprint 15 pas encore mergée dans `main`). PR du sprint 16 : #178, laissée
-ouverte (le milestone/roadmap sont clos côté planification, mais le merge de
-la branche vers `main` reste une action séparée, non automatisée par cette
-Routine).
+**Sprint 17 clôturé cette session.** Les deux conditions étaient réunies : spec
+review de la session ✅ sur les deux specs du sprint (admin-matchs.md,
+cycle-de-vie-match.md) et milestone à 0 issue ouverte. Milestone GitHub #16
+fermé, ligne retirée de `backlog/sprints/roadmap.md` (renumérotation 18→21 en
+1→4), dossier déplacé vers `backlog/sprints/done/17-panneau-edition-match/`.
+
+**Problèmes d'orchestration (session #57) :** aucun.
+
+Parent effectif pour la session #57 : `claude/sprint/16-arbitre-demarrer-match`
+(le sprint 16 est clos côté planification/milestone, mais sa PR #178 n'est pas
+encore mergée dans `main`). Déjà synchronisé, aucun merge nécessaire. Le
+prochain parent effectif (pour le sprint 18) devra être recalculé au prochain
+déclenchement via `backlog/sprints/done/` (16 reste le sprint le plus récent
+< 18 tant que sa PR n'est pas mergée dans `main`).

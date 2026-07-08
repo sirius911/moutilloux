@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
-from live.admin_views import start_match
+from live.admin_views import start_match, reopen_match
 
 
 def is_referee(user):
@@ -706,14 +706,7 @@ def referee_action(request, match_id: int):
                 {"ok": False, "error": "Réouverture réservée à l'administrateur."},
                 status=403,
             )
-        Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
-        match.is_featured = True
-        match.winner_side = None
-        match.mark_live()  # repasse LIVE (+ started_at si besoin), conserve set_scores
-        match.save(update_fields=["is_featured", "winner_side"])
-
-        if match.stage == Match.Stage.GROUP and match.group_id:
-            recalc_one_group(match.group_id)
+        reopen_match(match)
 
         return JsonResponse({"ok": True})
 
