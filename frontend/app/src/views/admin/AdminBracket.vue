@@ -538,7 +538,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
               <span v-else class="grip">&#8942;&#8942;</span>
             </div>
             <div v-if="qualifiedItems.length === 0" class="qp-empty">
-              Aucun qualifié encore
+              Aucune poule terminée
             </div>
           </div>
         </div>
