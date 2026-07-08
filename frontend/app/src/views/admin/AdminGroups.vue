@@ -395,7 +395,7 @@ async function executeDeleteGroup() {
                 <span v-if="!eventStore.groupsLocked" class="grip">⋮⋮</span>
                 <span v-if="eventStore.groupsLocked" class="pill-rank">{{ row.rank }}</span>
                 <span class="pill-name" :class="{ 'pill-name--crossed': row.withdrawn }">{{ row.name }}</span>
-                <span v-if="row.qualified" class="q-badge">Q</span>
+                <span v-if="row.qualified" class="q-badge" title="Qualifié pour le tableau final">Q</span>
                 <span v-if="row.withdrawn" class="w-badge">WO</span>
                 <span v-if="eventStore.groupsLocked" class="pill-stats tab">{{ row.wins }}-{{ row.losses }} · {{ row.points }} pts</span>
                 <!-- Actions déverrouillées : retrait libre -->
@@ -457,6 +457,15 @@ async function executeDeleteGroup() {
           </div>
         </div>
       </div>
+
+      <footer v-if="eventStore.groupsLocked" class="groups-legend">
+        <div class="legend-item"><span class="legend-dot legend-dot--q">Q</span> Qualifié pour le tableau final</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--finished" /> Terminé</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--walkover" /> Forfait</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--live" /> En cours</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--scheduled" /> À venir</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--canceled" /> Annulé</div>
+      </footer>
     </div>
 
     <!-- ── Modale suppression de poule (épreuve INSCRIPTION) ───────────────── -->
@@ -920,6 +929,49 @@ async function executeDeleteGroup() {
 
 .gc-add-late-btn:hover { background: var(--accent-soft); }
 .gc-add-late-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Légende (mode suivi) ─────────────────────────────────────────────── */
+.groups-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 4px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--line-1);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; }
+
+.legend-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot--q {
+  width: auto;
+  height: auto;
+  border-radius: var(--r-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent);
+  color: #000;
+  padding: 2px 6px;
+}
+
+.legend-dot--finished { background: var(--success); }
+.legend-dot--walkover { background: var(--danger); }
+.legend-dot--live { background: var(--accent); }
+.legend-dot--scheduled { background: var(--ink-3); }
+.legend-dot--canceled { background: var(--ink-4); }
 
 .adj-form {
   display: flex;
