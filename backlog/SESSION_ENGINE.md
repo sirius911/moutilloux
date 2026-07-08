@@ -373,25 +373,71 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #130
-**Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
-de sprint). Conformément au protocole (étape 0), la session s'est arrêtée
-sans exécuter les étapes 1 à 3. Aucun changement de code, aucun commit.
+**Dernière session :** 2026-07-08 — Session #131
+**Sprint traité :** 33 — Avantage (AV) affiché (seule et unique session du
+sprint — **clos cette session**, 2/2 tickets clos).
 
-**Roadmap toujours vide depuis la session #125** (sprint 32 clos, milestone
-fermé) — confirmé à nouveau aux sessions #126, #127, #128, #129 et #130
-(6 sessions consécutives), aucun sprint planifié entre-temps. **Désactiver
-la Routine manuellement sur claude.ai/code/routines**, ou planifier un
-nouveau sprint (`/plan-sprint`) avant la prochaine échéance — sinon la
-Routine continuera de se déclencher pour rien.
+**Roadmap re-remplie depuis la session #130** (5 sprints planifiés le
+2026-07-08 : 33 à 37, retours produit TV) — fin de la série de 6 sessions à
+vide (#125 à #130). Sprint 33 traité et clos dès la première occasion.
 
-**Nouveau point d'attention (session #128) :** deux dossiers de sprint
-orphelins à la racine de `backlog/sprints/` en plus de leur copie dans
-`backlog/sprints/done/` : `04-admin-panel-map/` et `10-contexte-url/`.
-Les deux sprints sont bien clos (présents dans `done/`, absents de
-`roadmap.md`) — reliquats jamais supprimés lors de l'archivage à l'époque.
-Sans impact sur le protocole, mais à nettoyer côté humain
-(`git rm -r backlog/sprints/04-admin-panel-map backlog/sprints/10-contexte-url`).
+**Git :** branche `claude/sprint/33-affichage-avantage`, parent effectif
+`main` (déduit depuis `backlog/sprints/done/` — aucun sprint < 33 avec une
+branche encore non mergée dans `main`). 3 commits de code cette session.
+
+**Spec review session #131 :** `tv-live.md` (section score) et
+`arbitre-match.md` (section Bloc score) — ⚠️ Dérive mineure en début de
+session (mapping local plafonné à « 40 », dupliqué dans les deux SFC,
+l'avantage post 40-40 ne s'affichait jamais) → **✅ Conforme** après
+implémentation des tickets #321/#322 de cette session. Les deux dérives
+étaient déjà ticketées lors de la planification du sprint (session #130) —
+0 nouvelle issue créée cette session.
+
+**Backlog engine session #131 :** 2 tickets traités séquentiellement (chaîne
+`vue-screen` puis `reviewer` par ticket), malgré le fait que `sprint.md`
+suggérait un traitement parallélisable (fichiers disjoints) — le protocole de
+l'étape 2 impose le séquentiel :
+- **#321** (majeure) — front : `TvScoreboard.vue` — suppression de
+  `pointLabel` (mapping local plafonné), affichage direct de
+  `live.hero.displayPointA/B` (packer backend, déjà correct), signal
+  broadcast `accent-text` symétrisé sur les deux côtés (l'ancien code posait
+  la classe en dur côté A uniquement — asymétrie corrigée au passage).
+  Verdict reviewer : ✅ Approuvé.
+- **#322** (majeure) — front : `ArbitreMatch.vue` — suppression de
+  `pointDisplay`/`sidePoints`, ajout de `sideDisplayPoint(side)` lisant
+  `match.value.displayPointA/B`, écran resté sobre (pas de mise en accent,
+  contrairement à la TV — décision produit). Compatibilité `swap` vérifiée
+  (côté modèle `leftModelSide`/`rightModelSide` inchangé). Verdict reviewer :
+  ✅ Approuvé.
+
+**Sprint 33 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation + 0 issue ouverte sur le milestone).
+Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/33-affichage-avantage/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 4 sprints restants (34 — Tableau final au calendrier,
+35 — TV : scène live & fin de match, 36 — Échauffement, 37 — Mobile :
+arbitre & régie). Le sprint 34 sera traité à la **prochaine échéance
+planifiée**, pas démarré dans cette session.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit` seul ne
+type-check aucun fichier `.vue` dans cet environnement. Toujours pas de
+script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` — vérification par type-check + revue de code
+uniquement (pas de QA navigateur en session automatisée).
+
+**Nouveau point d'attention (session #128, non revérifié depuis) :** deux
+dossiers de sprint orphelins à la racine de `backlog/sprints/` en plus de
+leur copie dans `backlog/sprints/done/` : `04-admin-panel-map/` et
+`10-contexte-url/`. Sans impact sur le protocole, mais à nettoyer côté
+humain (`git rm -r backlog/sprints/04-admin-panel-map backlog/sprints/10-contexte-url`).
+
+**Sprint 19/20/21 — PRs non mergées :** point non revérifié cette session
+(hors périmètre du protocole) — dernier état connu (session #125) : 25 PRs
+ouvertes empilées depuis le sprint 06, aucune fusionnée dans `main`. À
+traiter côté humain.
 
 ---
 
