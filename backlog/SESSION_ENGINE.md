@@ -373,45 +373,40 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #113
-**Sprint traité :** 27 — Poules : suivi & suppression (3ᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #114
+**Sprint traité :** 27 — Poules : suivi & suppression (4ᵉ et dernière session du sprint — **clôturé**)
 
 **Git :** branche `claude/sprint/27-poules-suivi-suppression`, déjà sur la
 bonne branche au démarrage. Parent effectif `claude/sprint/26-qualification-poule-terminee`
-(toujours non mergé dans `origin/main`, même mécanique que les sessions
-#111/#112). Working tree propre au démarrage, `git merge origin/<parent>`
-déjà à jour (rien à intégrer).
+(toujours non mergé dans `origin/main`). Working tree propre au démarrage,
+`git merge origin/<parent>` déjà à jour (rien à intégrer).
 
-**Spec review session #113 :** verdict `⚠️ Dérive mineure` sur
-`admin-poules.md`, exécutée avant le traitement du ticket (ordre Étape 1 →
-Étape 2). 1 dérive confirmée : légende du badge Q et des états absente de
-`AdminGroups.vue`, déjà couverte par #296 (traité dans la foulée, voir
-ci-dessous). Reste du golden path intégralement conforme. 0 nouvelle issue.
-Point de process relevé sans conséquence : `live/urls.py` avait été câblé
-par l'agent du ticket #292 (session #111) au lieu de l'orchestrateur —
-route correcte, aucun conflit, rien à corriger.
+**Spec review session #114 :** verdict `✅ Conforme` sur `admin-poules.md`.
+0 dérive bloquante. Réserve mineure déjà connue (session #113) confirmée
+non bloquante : la pastille de légende « Forfait » utilise `--danger`
+(rouge) alors que la ligne de match walkover reste visuellement
+`gc-match--finished` (vert) dans la grille — seul le libellé texte change ;
+la spec ne précise que le libellé texte, donc conforme au texte strict,
+laissé en l'état. Tous les autres points (suppression de poule, refus
+serveur si `EN_COURS`, endpoint de suppression sans duplication de logique,
+mode suivi, légende + tooltip Q, `_pack_match` par poule, types, garde de
+rôle, composables/polling, CSS/tokens) vérifiés `✅`. `npx vue-tsc --noEmit` :
+0 erreur.
 
-**Backlog engine session #113 :** 1 ticket traité (dernier du sprint) :
-- #296 ⚠️ Approuvé avec réserves — tooltip « Qualifié pour le tableau
-  final » sur le badge Q + légende en pied de grille (Q, Terminé, Forfait,
-  En cours, À venir, Annulé), visible seulement en mode suivi. Réserve du
-  reviewer : la pastille « Forfait » utilise `--danger` (rouge) alors que
-  les matchs walkover restent visuellement `gc-match--finished` (vert) dans
-  la grille — seul le libellé texte change. Écart mineur non bloquant,
-  laissé en l'état.
+**Backlog engine session #114 :** 0 ticket — les 5 tickets du sprint
+(#292-296) étaient déjà tous clos en entrée de session (traités lors des
+sessions #111/#112/#113).
 
-**Fichier partagé câblé :** aucun cette session (#296 n'a touché que
-`AdminGroups.vue`).
+**Fichier partagé câblé :** aucun cette session.
 
-**Sprint 27 — pas clôturable cette session :** au sens strict du protocole,
-la spec review **de cette session** (exécutée avant #296) a rendu `⚠️`, pas
-`✅` → 1er critère de l'étape 3 non réuni pour cette session précise, même
-si le 2ᵉ critère (0 issue `sprint-27` ouverte) est désormais rempli après
-la clôture de #296. Sprint 27 reste actif, sera repris à la **prochaine
-échéance planifiée** : une spec review fraîche en tout début de session,
-exécutée après la fermeture de #296, devrait cette fois rendre
-`✅ Conforme` (plus aucune dérive connue), auquel cas les deux critères
-seront réunis dans la même session et le sprint pourra être clos.
+**Sprint 27 — clôturé cette session :** les deux critères de l'étape 3
+étaient réunis (spec `✅ Conforme` + 0 issue `sprint-27` ouverte). Milestone
+GitHub n°26 fermé, ligne supprimée de `roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/27-poules-suivi-suppression/`. PR #316 déjà ouverte
+pour la branche (rien à créer). Roadmap relue : 5 sprints restants
+(28 à 32) ; le sprint 28 — Admin : annonces & inscription par sélection —
+devient actif mais sera traité à la **prochaine échéance planifiée**, pas
+dans cette session.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
 `package.json` — `npx vue-tsc --noEmit` utilisé directement (aucune erreur).
