@@ -14,6 +14,7 @@ const showCreateTeam = ref(false)
 const busy = ref(false)
 const error = ref('')
 const confirmState = ref<{ show: boolean; entryId: number; name: string }>({ show: false, entryId: 0, name: '' })
+const selectedIds = ref<Set<number>>(new Set())
 
 const activeEvent = computed(() =>
   eventStore.events.find((e) => e.id === eventStore.activeEventId) ?? null,
@@ -30,6 +31,30 @@ const availablePlayers = computed(() => {
   const q = search.value.trim().toLowerCase()
   return q ? pool.filter((p) => p.fullName.toLowerCase().includes(q)) : pool
 })
+
+const allVisibleChecked = computed(
+  () => availablePlayers.value.length > 0 && availablePlayers.value.every((p) => selectedIds.value.has(p.id)),
+)
+
+function toggleSelect(playerId: number) {
+  const next = new Set(selectedIds.value)
+  if (next.has(playerId)) {
+    next.delete(playerId)
+  } else {
+    next.add(playerId)
+  }
+  selectedIds.value = next
+}
+
+function toggleSelectAllVisible() {
+  const next = new Set(selectedIds.value)
+  if (allVisibleChecked.value) {
+    for (const p of availablePlayers.value) next.delete(p.id)
+  } else {
+    for (const p of availablePlayers.value) next.add(p.id)
+  }
+  selectedIds.value = next
+}
 
 async function reload() {
   if (!eventStore.activeEventId) return
@@ -48,6 +73,9 @@ async function inscrire(playerId: number) {
   error.value = ''
   try {
     await eventStore.addRegistration(eventStore.activeEventId, playerId)
+    const next = new Set(selectedIds.value)
+    next.delete(playerId)
+    selectedIds.value = next
   } catch (e) {
     error.value = extractApiError(e, 'Erreur inconnue.')
   } finally {
@@ -55,14 +83,15 @@ async function inscrire(playerId: number) {
   }
 }
 
-async function inscrireTout() {
+async function inscrireSelection() {
   if (!eventStore.activeEventId) return
-  const ids = availablePlayers.value.map((p) => p.id)
+  const ids = [...selectedIds.value]
   if (ids.length === 0) return
   busy.value = true
   error.value = ''
   try {
     await eventStore.addRegistrationsBulk(eventStore.activeEventId, ids)
+    selectedIds.value = new Set()
   } catch (e) {
     error.value = extractApiError(e, 'Erreur inconnue.')
   } finally {
@@ -145,10 +174,10 @@ function initials(name: string): string {
         v-else
         class="adm-btn primary"
         type="button"
-        :disabled="busy || availablePlayers.length === 0"
-        @click="inscrireTout"
+        :disabled="busy || selectedIds.size === 0"
+        @click="inscrireSelection"
       >
-        Inscrire les {{ availablePlayers.length }} affichés
+        Inscrire la sélection ({{ selectedIds.size }})
       </button>
     </header>
 
@@ -239,8 +268,29 @@ function initials(name: string): string {
         </div>
         <div class="table-wrap">
           <table class="data-table">
+            <thead>
+              <tr>
+                <th class="col-check">
+                  <input
+                    type="checkbox"
+                    :checked="allVisibleChecked"
+                    :disabled="availablePlayers.length === 0"
+                    @change="toggleSelectAllVisible"
+                  />
+                </th>
+                <th>Participant</th>
+                <th class="col-actions-h">Actions</th>
+              </tr>
+            </thead>
             <tbody>
               <tr v-for="p in availablePlayers" :key="p.id">
+                <td class="col-check">
+                  <input
+                    type="checkbox"
+                    :checked="selectedIds.has(p.id)"
+                    @change="toggleSelect(p.id)"
+                  />
+                </td>
                 <td class="col-player">
                   <div class="avatar" :style="{ background: avatarColor(p.fullName) }">
                     {{ initials(p.fullName) }}
@@ -254,13 +304,13 @@ function initials(name: string): string {
                 </td>
               </tr>
               <tr v-if="availablePlayers.length === 0 && eventStore.allPlayers.length === 0">
-                <td colspan="2" class="empty-row">
+                <td colspan="3" class="empty-row">
                   Aucune fiche joueur dans le registre.
                   <RouterLink to="/admin/players">Créer une fiche joueur →</RouterLink>
                 </td>
               </tr>
               <tr v-else-if="availablePlayers.length === 0">
-                <td colspan="2" class="empty-row">Tous les joueurs du registre sont inscrits</td>
+                <td colspan="3" class="empty-row">Tous les joueurs du registre sont inscrits</td>
               </tr>
             </tbody>
           </table>
@@ -419,6 +469,9 @@ function initials(name: string): string {
 
 .col-actions-h { text-align: right; }
 .col-actions { text-align: right; white-space: nowrap; }
+
+.col-check { width: 40px; text-align: center; }
+.col-check input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
 
 .row-btn {
   padding: 6px 12px;
