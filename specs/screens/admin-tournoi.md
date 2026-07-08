@@ -23,8 +23,10 @@ tournoi et que l'on configure ce qui sera joué.
 Deux notions distinctes y cohabitent, avec un vocabulaire strict :
 - **Activer** une édition : bascule globale et persistée — toute l'application
   (admin, arbitre, TV) travaille sur cette édition.
-- **Sélectionner** une épreuve : choix local d'affichage qui définit l'épreuve
-  active des écrans Inscriptions / Poules / Matchs / Tableau final.
+- **Sélectionner** une épreuve : choix d'affichage **porté par l'URL** (segment
+  `/admin/events/:eventId/…`) qui définit l'épreuve active des écrans Inscriptions /
+  Poules / Planning / Tableau final ; il survit au rechargement et au partage de
+  lien (décision 22, voir [[routing-context]]).
 
 ---
 

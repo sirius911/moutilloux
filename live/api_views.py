@@ -1650,8 +1650,9 @@ def api_edition_calendar(request, edition_id):
     assigned_matches = (
         Match.objects
         .filter(edition=edition, order_index__isnull=False, scheduled_time__isnull=False)
-        .select_related("court", "side_a__player1", "side_a__player2",
-                        "side_b__player1", "side_b__player2", "group", "event")
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
         .order_by("order_index")
     )
 
@@ -1675,8 +1676,9 @@ def api_edition_calendar(request, edition_id):
         Match.objects
         .filter(edition=edition, status=Match.Status.SCHEDULED,
                 order_index__isnull=True, stage=Match.Stage.GROUP)
-        .select_related("court", "side_a__player1", "side_a__player2",
-                        "side_b__player1", "side_b__player2", "group", "event")
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
         .order_by("event_id", "id")
     )
 

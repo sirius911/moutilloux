@@ -42,7 +42,7 @@ const navItems = computed(() => {
     { path: '/admin/players',      label: 'Joueurs',       icon: '👤', count: eventStore.allPlayers.length },
     { path: '/admin/inscriptions', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
     { path: '/admin/groups',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
-    { path: '/admin/matches',      label: 'Matchs',        icon: '⚡', count: matchCount },
+    { path: '/admin/matches',      label: 'Planning',      icon: '⚡', count: matchCount },
     { path: '/admin/bracket',      label: 'Tableau final', icon: '🏆', count: bracketCount },
   ]
 })
