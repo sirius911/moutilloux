@@ -18,8 +18,8 @@ from django.utils.dateparse import parse_datetime, parse_date, parse_time
 
 from core.models import get_current_edition, TournamentEdition, Player, Team
 from competition.models import Category, Event, Entry, Group, GroupStanding, GroupMembership
-from live.models import Match, Court, PlayDay, Break
-from live.views import build_event_group_tables
+from live.models import Match, Court, PlayDay, Break, Announcement
+from live.views import build_event_group_tables, get_hero_match
 from live.admin_views import (
     superuser_required,
     PlayerForm,
@@ -70,6 +70,10 @@ from live.admin_views import (
     delete_break,
     reorder_calendar,
     auto_arrange_matches,
+    # Sprint 22 — CRUD Announcement
+    create_announcement,
+    update_announcement,
+    delete_announcement,
 )
 from live.referee_views import referee_required
 
@@ -1813,6 +1817,118 @@ def api_matches_auto_arrange(request, event_id):
 
 # ── Sprint 07 — TV : prochains matchs ────────────────────────────────────────
 
+def get_tv_next(edition):
+    """
+    Définition unique du « next » TV : premier match SCHEDULED (plus petit
+    order_index) de la première PlayDay de date >= aujourd'hui qui a encore
+    des SCHEDULED ordonnés ; à défaut, pas de repli (ni journée passée, ni
+    hors séquence) — retourne None.
+    Ne pack pas le match (voir _pack_match) : à la charge de l'appelant.
+    """
+    play_days = (
+        PlayDay.objects.filter(edition=edition, date__gte=timezone.localdate())
+        .order_by("date")
+    )
+
+    for play_day in play_days:
+        match = (
+            Match.objects.filter(
+                edition=edition,
+                status=Match.Status.SCHEDULED,
+                scheduled_time__date=play_day.date,
+                order_index__isnull=False,
+            )
+            .select_related(
+                "event",
+                "event__category",
+                "court",
+                "side_a",
+                "side_a__player",
+                "side_b",
+                "side_b__player",
+                "group",
+            )
+            .order_by("order_index")
+            .first()
+        )
+        if match is not None:
+            return match
+
+    return None
+
+
+def _pack_tv_stake(hero):
+    """Dérive l'enjeu (« stake ») du match hero : sa poule, ou le tableau de
+    son épreuve. `None` si le hero est `None` ou si l'enjeu n'est pas
+    résolvable (pas de groupe ni stage de tableau)."""
+    if hero is None:
+        return None
+
+    if hero.stage == Match.Stage.GROUP and hero.group_id:
+        standings_qs = (
+            GroupStanding.objects.filter(group=hero.group)
+            .select_related("entry", "entry__player", "entry__team__player1", "entry__team__player2")
+            .order_by("rank", "-points", "-games_won")
+        )
+        qualified_per_group = hero.event.qualified_per_group
+        standings = [
+            {
+                "entryId": s.entry_id,
+                "rank": s.rank,
+                "name": _entry_display_name(s.entry),
+                "wins": s.wins,
+                "losses": s.losses,
+                "points": s.points,
+                "qualified": bool(s.rank) and s.rank <= qualified_per_group,
+            }
+            for s in standings_qs
+        ]
+        return {
+            "kind": "group",
+            "groupName": hero.group.name,
+            "eventName": hero.event.category.name,
+            "standings": standings,
+        }
+
+    if hero.stage in (Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3) and hero.event_id:
+        return {
+            "kind": "bracket",
+            "eventName": hero.event.category.name,
+            "bracket": _pack_event_bracket(hero.event),
+        }
+
+    return None
+
+
+@require_GET
+def api_tv_state(request):
+    """
+    GET /api/tv/state/
+    Lecture publique. État chaud de la TV (pollé ~2 s) : match hero (LIVE),
+    next (définition unique `get_tv_next`) et l'enjeu (stake) du hero.
+    """
+    edition = get_current_edition()
+    if edition is None:
+        return JsonResponse({
+            "editionYear": None,
+            "now": timezone.localtime(timezone.now()).strftime("%Hh%M"),
+            "hero": None,
+            "next": None,
+            "stake": None,
+        })
+
+    hero = get_hero_match(edition)
+    next_match = get_tv_next(edition)
+
+    return JsonResponse({
+        "editionYear": edition.year,
+        "now": timezone.localtime(timezone.now()).strftime("%Hh%M"),
+        "hero": _pack_match(hero),
+        "next": _pack_match(next_match),
+        "stake": _pack_tv_stake(hero),
+    })
+
+
 @require_GET
 def api_tv_upcoming(request):
     """
@@ -1950,3 +2066,235 @@ def api_entry_replace(request, entry_id):
         return JsonResponse({"error": str(exc)}, status=400)
 
     return JsonResponse({"entry": _pack_entry(entry)})
+
+
+# ── Sprint 22 — TV : contenu froid du carousel (idle) ────────────────────────
+
+def _pack_tv_programme(edition):
+    """Bascule de journée (today/tomorrow/finished) + prochains matchs planifiés
+    de la même PlayDay que le next TV (définition unique `get_tv_next`)."""
+    next_match = get_tv_next(edition)
+    if next_match is None:
+        return {"day": "finished", "playDay": None, "upcoming": []}
+
+    play_day = PlayDay.objects.get(edition=edition, date=next_match.scheduled_time.date())
+    day = "today" if play_day.date == timezone.localdate() else "tomorrow"
+
+    upcoming = (
+        Match.objects.filter(
+            edition=edition,
+            status=Match.Status.SCHEDULED,
+            scheduled_time__date=play_day.date,
+            order_index__isnull=False,
+            order_index__gte=next_match.order_index,
+        )
+        .select_related(
+            "event",
+            "event__category",
+            "court",
+            "side_a",
+            "side_a__player",
+            "side_b",
+            "side_b__player",
+            "group",
+        )
+        .order_by("order_index")[:6]
+    )
+
+    return {
+        "day": day,
+        "playDay": _pack_play_day(play_day),
+        "upcoming": [_pack_match(m) for m in upcoming],
+    }
+
+
+def _pack_tv_stats(edition):
+    """Agrégats simples pour la slide Tournoi. Ne réutilise pas `_pack_edition`
+    (trop coûteux / hors périmètre) : calcule directement les 4 agrégats."""
+    events_qs = Event.objects.filter(edition=edition)
+    matches_qs = Match.objects.filter(event__in=events_qs)
+    return {
+        "matchesFinished": matches_qs.filter(status=Match.Status.FINISHED).count(),
+        "matchesTotal": matches_qs.count(),
+        "entriesCount": Entry.objects.filter(event__in=events_qs).count(),
+        "eventsCount": events_qs.count(),
+    }
+
+
+def _pack_tv_events(edition):
+    """Poules (standings, sans grille croisée) + tableau final par épreuve,
+    pour la slide Poules / Tableau TV."""
+    events = Event.objects.filter(edition=edition).select_related("category").order_by("category__name")
+
+    result = []
+    for event in events:
+        tables = build_event_group_tables(edition, [event])
+        groups_data = tables.get(event.id, [])
+
+        groups = []
+        for table in groups_data:
+            group = table["group"]
+            entries = table["entries"]
+            standing_by = table["standing_by_entry_id"]
+            qualif = table["qualif"]
+
+            standings = []
+            for i, entry in enumerate(entries):
+                s = standing_by.get(entry.id)
+                if s:
+                    wins = s.wins
+                    losses = s.losses
+                    points = s.points
+                    rank = s.rank or (i + 1)
+                else:
+                    wins = losses = points = 0
+                    rank = i + 1
+
+                standings.append({
+                    "entryId": entry.id,
+                    "rank": rank,
+                    "name": _entry_display_name(entry),
+                    "wins": wins,
+                    "losses": losses,
+                    "points": points,
+                    "qualified": qualif.get(entry.id, "-") != "-",
+                })
+
+            groups.append({
+                "id": group.id,
+                "name": group.name,
+                "standings": standings,
+            })
+
+        has_bracket_matches = Match.objects.filter(
+            event=event,
+            stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+        ).exists()
+        bracket = _pack_event_bracket(event) if has_bracket_matches else None
+
+        result.append({
+            "id": event.id,
+            "name": event.category.name,
+            "groups": groups,
+            "bracket": bracket,
+        })
+
+    return result
+
+
+@require_GET
+def api_tv_idle(request):
+    """
+    GET /api/tv/idle/
+    Lecture publique. Contenu froid du carousel TV (pollé ~10 s) : stats
+    tournoi, derniers résultats, poules/tableau par épreuve, programme
+    (bascule de journée) et annonces actives.
+    """
+    edition = get_current_edition()
+    if edition is None:
+        return JsonResponse({
+            "stats": None,
+            "recentResults": [],
+            "events": [],
+            "programme": {"day": "finished", "playDay": None, "upcoming": []},
+            "announcements": [],
+        })
+
+    recent_results = (
+        Match.objects.filter(edition=edition, status=Match.Status.FINISHED)
+        .select_related(
+            "court",
+            "side_a",
+            "side_a__player",
+            "side_b",
+            "side_b__player",
+            "group",
+        )
+        .order_by("-finished_at")[:5]
+    )
+
+    announcements = Announcement.objects.filter(edition=edition, is_active=True).order_by("created_at")
+
+    return JsonResponse({
+        "stats": _pack_tv_stats(edition),
+        "recentResults": [_pack_match(m) for m in recent_results],
+        "events": _pack_tv_events(edition),
+        "programme": _pack_tv_programme(edition),
+        "announcements": [{"id": a.id, "message": a.message} for a in announcements],
+    })
+
+
+# ── Sprint 22 — CRUD Announcement ────────────────────────────────────────────
+
+def _pack_announcement(a):
+    return {
+        "id": a.id,
+        "editionId": a.edition_id,
+        "message": a.message,
+        "isActive": a.is_active,
+    }
+
+
+@require_GET
+@superuser_required
+def api_announcements_list(request, edition_id):
+    """GET /api/editions/<id>/announcements/ — toutes les annonces de l'édition
+    (actives et inactives — vue admin)."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    announcements = Announcement.objects.filter(edition=edition)
+    return JsonResponse({"announcements": [_pack_announcement(a) for a in announcements]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_announcement_create(request, edition_id):
+    """POST /api/editions/<id>/announcements/create/ — {message, isActive?}."""
+    edition = get_object_or_404(TournamentEdition, pk=edition_id)
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    message = data.get("message")
+    if not message:
+        return JsonResponse({"error": "message est requis"}, status=400)
+    is_active = data.get("isActive", True)
+
+    try:
+        announcement = create_announcement(edition, message, is_active=is_active)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_announcement(announcement), status=201)
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_announcement_edit(request, announcement_id):
+    """POST /api/announcements/<id>/edit/ — {message?, isActive?}."""
+    announcement = get_object_or_404(Announcement, pk=announcement_id)
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    kwargs = {}
+    if "message" in data:
+        kwargs["message"] = data["message"]
+    if "isActive" in data:
+        kwargs["is_active"] = data["isActive"]
+
+    try:
+        announcement = update_announcement(announcement, **kwargs)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    return JsonResponse(_pack_announcement(announcement))
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_announcement_delete(request, announcement_id):
+    """POST /api/announcements/<id>/delete/"""
+    announcement = get_object_or_404(Announcement, pk=announcement_id)
+    delete_announcement(announcement)
+    return JsonResponse({"ok": True})

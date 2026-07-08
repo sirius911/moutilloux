@@ -267,3 +267,19 @@ class Break(models.Model):
 
     def __str__(self):
         return f"{self.play_day.date} — {self.label} ({self.duration_min} min)"
+
+
+class Announcement(models.Model):
+    """Annonce libre diffusée en slide TV (décision 7 de tv-map)."""
+    edition = models.ForeignKey(
+        TournamentEdition, on_delete=models.CASCADE, related_name="announcements"
+    )
+    message = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.edition} — {self.message[:40]}"
