@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
+import { usePolling } from '@/composables/usePolling'
 import AutoFillModal from '@/components/modals/AutoFillModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
@@ -19,6 +20,14 @@ watch(() => eventStore.activeEventId, (id) => {
     eventStore.fetchGroups(id)
   }
 }, { immediate: true })
+
+// Mode suivi (épreuve EN_COURS) : rafraîchit le classement + les matchs de
+// chaque poule. Aucun fetch tant que l'épreuve est en composition (INSCRIPTION).
+usePolling(async () => {
+  if (eventStore.groupsLocked && eventStore.activeEventId) {
+    await eventStore.fetchGroups(eventStore.activeEventId)
+  }
+}, 5000)
 
 // Rattrapage : si activeEventId était null au montage (fetchEditions pas encore répondu)
 watch(() => eventStore.events, () => {
@@ -226,6 +235,32 @@ async function removeFromGroup(entryId: number) {
     await resyncAfterError()
   }
 }
+
+// ── Suppression de poule (épreuve INSCRIPTION) ────────────────────────────
+
+const deleteGroupBusy = ref(false)
+const deleteGroupState = ref<{ show: boolean; groupId: number; groupName: string; memberCount: number }>({
+  show: false, groupId: 0, groupName: '', memberCount: 0,
+})
+
+function openDeleteGroup(groupId: number, groupName: string, memberCount: number) {
+  dropError.value = ''
+  deleteGroupState.value = { show: true, groupId, groupName, memberCount }
+}
+
+async function executeDeleteGroup() {
+  if (!eventStore.activeEventId || deleteGroupBusy.value) return
+  deleteGroupBusy.value = true
+  dropError.value = ''
+  try {
+    await eventStore.deleteGroup(deleteGroupState.value.groupId, eventStore.activeEventId)
+    deleteGroupState.value.show = false
+  } catch (e) {
+    dropError.value = extractApiError(e, 'Erreur lors de la suppression de la poule.')
+  } finally {
+    deleteGroupBusy.value = false
+  }
+}
 </script>
 
 <template>
@@ -327,6 +362,22 @@ async function removeFromGroup(entryId: number) {
               <span class="gc-letter">{{ group.name }}</span>
               <span class="gc-title">Poule {{ group.name }}</span>
               <span class="gc-count">{{ group.standings.length }}</span>
+              <button
+                v-if="!eventStore.groupsLocked"
+                class="gc-delete"
+                type="button"
+                title="Supprimer la poule"
+                aria-label="Supprimer la poule"
+                :disabled="deleteGroupBusy"
+                @click="openDeleteGroup(group.id, group.name, group.standings.length)"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/>
+                  <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
             </div>
 
             <div class="gc-list">
@@ -342,9 +393,11 @@ async function removeFromGroup(entryId: number) {
                 @dragstart="onDragStart(row.entryId)"
               >
                 <span v-if="!eventStore.groupsLocked" class="grip">⋮⋮</span>
+                <span v-if="eventStore.groupsLocked" class="pill-rank">{{ row.rank }}</span>
                 <span class="pill-name" :class="{ 'pill-name--crossed': row.withdrawn }">{{ row.name }}</span>
-                <span v-if="row.qualified" class="q-badge">Q</span>
+                <span v-if="row.qualified" class="q-badge" title="Qualifié pour le tableau final">Q</span>
                 <span v-if="row.withdrawn" class="w-badge">WO</span>
+                <span v-if="eventStore.groupsLocked" class="pill-stats tab">{{ row.wins }}-{{ row.losses }} · {{ row.points }} pts</span>
                 <!-- Actions déverrouillées : retrait libre -->
                 <button v-if="!eventStore.groupsLocked" class="pill-remove" @click="removeFromGroup(row.entryId)" @mousedown.stop>✕</button>
                 <!-- Ajustements en cours de jeu (épreuve EN_COURS) -->
@@ -360,6 +413,38 @@ async function removeFromGroup(entryId: number) {
               Glissez un joueur ici
             </div>
 
+            <!-- Mode suivi : liste des matchs de la poule avec leur état -->
+            <div v-if="eventStore.groupsLocked && group.matches.length > 0" class="gc-matches">
+              <div class="gc-matches-title">Matchs de la poule</div>
+              <div
+                v-for="m in group.matches"
+                :key="m.id"
+                :class="['gc-match', `gc-match--${m.status.toLowerCase()}`]"
+              >
+                <span class="gc-match-side" :class="{ win: m.winnerSide === 'A' }">
+                  {{ m.sideA?.displayName ?? m.sideALabel ?? 'À désigner' }}
+                </span>
+                <span class="gc-match-vs">vs</span>
+                <span class="gc-match-side" :class="{ win: m.winnerSide === 'B' }">
+                  {{ m.sideB?.displayName ?? m.sideBLabel ?? 'À désigner' }}
+                </span>
+                <span class="gc-match-state tab">
+                  <template v-if="m.status === 'FINISHED'">
+                    {{ m.isWalkover ? 'Forfait' : (m.setScores?.length ? m.setScores.map(s => `${s.a}-${s.b}`).join(' ') : `${m.gamesA}-${m.gamesB}`) }}
+                  </template>
+                  <template v-else-if="m.status === 'LIVE'">
+                    En cours · {{ m.gamesA }}-{{ m.gamesB }}
+                  </template>
+                  <template v-else-if="m.status === 'SCHEDULED'">
+                    {{ m.scheduledTime ? new Date(m.scheduledTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'À venir' }}
+                  </template>
+                  <template v-else>
+                    Annulé
+                  </template>
+                </span>
+              </div>
+            </div>
+
             <!-- Ajouter tardif : visible dès que l'épreuve est EN_COURS (dépassement d'effectif autorisé, avec avertissement) -->
             <div
               v-if="eventStore.groupsLocked && activeEvent"
@@ -372,7 +457,28 @@ async function removeFromGroup(entryId: number) {
           </div>
         </div>
       </div>
+
+      <footer v-if="eventStore.groupsLocked" class="groups-legend">
+        <div class="legend-item"><span class="legend-dot legend-dot--q">Q</span> Qualifié pour le tableau final</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--finished" /> Terminé</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--walkover" /> Forfait</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--live" /> En cours</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--scheduled" /> À venir</div>
+        <div class="legend-item"><span class="legend-dot legend-dot--canceled" /> Annulé</div>
+      </footer>
     </div>
+
+    <!-- ── Modale suppression de poule (épreuve INSCRIPTION) ───────────────── -->
+    <ConfirmModal
+      v-if="deleteGroupState.show"
+      :title="`Supprimer la poule ${deleteGroupState.groupName} ?`"
+      :body="deleteGroupState.memberCount === 0
+        ? 'Cette poule vide sera supprimée.'
+        : `Les ${deleteGroupState.memberCount} joueur(s) seront renvoyés vers «Non assignés». Aucune inscription n'est supprimée.`"
+      confirm-label="Supprimer"
+      @confirm="executeDeleteGroup"
+      @close="deleteGroupState.show = false"
+    />
 
     <!-- ── Modales ajustements ─────────────────────────────────────────────── -->
     <ConfirmModal
@@ -576,6 +682,24 @@ async function removeFromGroup(entryId: number) {
   border-radius: 99px;
 }
 
+.gc-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--ink-4);
+  padding: 4px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--r-xs);
+  transition: background 100ms, color 100ms;
+  flex-shrink: 0;
+}
+
+.gc-delete:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.gc-delete:disabled { opacity: 0.4; cursor: not-allowed; }
+
 .gc-list {
   padding: 10px 12px;
   display: flex;
@@ -693,6 +817,96 @@ async function removeFromGroup(entryId: number) {
 .pill-action.danger:hover { border-color: var(--danger); color: var(--danger); }
 .pill-action:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.pill-rank {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-3);
+  background: var(--bg-4);
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pill-stats {
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Matchs de la poule (mode suivi) ─────────────────────────────────── */
+.gc-matches {
+  padding: 4px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--line-1);
+}
+
+.gc-matches-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  padding: 10px 0 2px;
+}
+
+.gc-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.gc-match-side {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.gc-match-side.win { color: var(--ink-0); font-weight: 700; }
+
+.gc-match-vs {
+  font-size: 10px;
+  color: var(--ink-4);
+  flex-shrink: 0;
+}
+
+.gc-match-state {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.gc-match--live {
+  border-color: var(--accent);
+}
+
+.gc-match--live .gc-match-state { color: var(--accent); }
+
+.gc-match--finished .gc-match-state { color: var(--success); }
+
+.gc-match--canceled {
+  opacity: 0.5;
+}
+
+.gc-match--canceled .gc-match-state { color: var(--danger); }
+
 .gc-add-late {
   padding: 8px 12px;
   border-top: 1px dashed var(--line-2);
@@ -715,6 +929,49 @@ async function removeFromGroup(entryId: number) {
 
 .gc-add-late-btn:hover { background: var(--accent-soft); }
 .gc-add-late-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Légende (mode suivi) ─────────────────────────────────────────────── */
+.groups-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 4px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--line-1);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; }
+
+.legend-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-dot--q {
+  width: auto;
+  height: auto;
+  border-radius: var(--r-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--accent);
+  color: #000;
+  padding: 2px 6px;
+}
+
+.legend-dot--finished { background: var(--success); }
+.legend-dot--walkover { background: var(--danger); }
+.legend-dot--live { background: var(--accent); }
+.legend-dot--scheduled { background: var(--ink-3); }
+.legend-dot--canceled { background: var(--ink-4); }
 
 .adj-form {
   display: flex;

@@ -38,6 +38,7 @@ from live.admin_views import (
     generate_group_matches_for_event,
     assign_entry_to_group,
     unassign_entry,
+    delete_group,
     finalize_match_edit,
     feature_match,
     start_match,
@@ -492,6 +493,17 @@ def api_event_groups(request, event_id):
     tables = build_event_group_tables(edition, [event])
     groups_data = tables.get(event.id, [])
 
+    group_ids = [table["group"].id for table in groups_data]
+    matches_by_group = {}
+    if group_ids:
+        matches_qs = (
+            Match.objects.filter(group_id__in=group_ids, stage=Match.Stage.GROUP)
+            .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "group")
+            .order_by("id")
+        )
+        for m in matches_qs:
+            matches_by_group.setdefault(m.group_id, []).append(_pack_match(m))
+
     result = []
     for table in groups_data:
         group = table["group"]
@@ -558,6 +570,7 @@ def api_event_groups(request, event_id):
             "name": group.name,
             "standings": standings,
             "grid": grid,
+            "matches": matches_by_group.get(group.id, []),
         })
 
     locked = event.status != Event.Status.INSCRIPTION
@@ -1132,6 +1145,25 @@ def api_group_unassign(request, event_id):
 
     try:
         unassign_entry(event, entry)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_group_delete(request, group_id):
+    """
+    POST /api/groups/<id>/delete/
+    Supprime une poule (source : admin_views.delete_group). Verrouillé si
+    l'épreuve est EN_COURS.
+    """
+    group = get_object_or_404(Group, pk=group_id)
+
+    try:
+        delete_group(group)
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 

@@ -235,6 +235,12 @@ export const useEventStore = defineStore('event', () => {
     await fetchGroups(eventId)
   }
 
+  async function deleteGroup(groupId: number, eventId: number) {
+    await post(`/api/groups/${groupId}/delete/`, {})
+    await fetchGroups(eventId)
+    await fetchPlayers(eventId)
+  }
+
   async function autofillGroups(
     eventId: number,
     shuffle: boolean,
@@ -493,7 +499,7 @@ export const useEventStore = defineStore('event', () => {
     // Mutations — P2 inscriptions
     editPlayer, createTeam, addRegistration, addRegistrationsBulk, removeRegistration,
     // Mutations — P3 poules
-    assignGroup, createGroup, autofillGroups, generateMatches,
+    assignGroup, createGroup, deleteGroup, autofillGroups, generateMatches,
     // Mutations — P4 planning
     editMatch, featureMatch, startMatch,
     // Mutations — Sprint 08 calendrier

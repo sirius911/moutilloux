@@ -373,48 +373,48 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #110
-**Sprint traité :** 26 — Qualification à la poule terminée (**clôturé cette session**)
+**Dernière session :** 2026-07-08 — Session #114
+**Sprint traité :** 27 — Poules : suivi & suppression (4ᵉ et dernière session du sprint — **clôturé**)
 
-**Git :** branche `claude/sprint/26-qualification-poule-terminee`, parent
-effectif toujours `claude/sprint/25-arbitre-fins-speciales` (sprint 25
-toujours non mergé dans `origin/main`). Working tree propre au démarrage,
-rien à merger.
+**Git :** branche `claude/sprint/27-poules-suivi-suppression`, déjà sur la
+bonne branche au démarrage. Parent effectif `claude/sprint/26-qualification-poule-terminee`
+(toujours non mergé dans `origin/main`). Working tree propre au démarrage,
+`git merge origin/<parent>` déjà à jour (rien à intégrer).
 
-**Spec review session #110 :** verdict `✅ Conforme` sur les 4 specs
-(`cycle-de-vie-epreuve.md`, `classement-poule.md`, `admin-tableau-final.md`,
-`tv-state.md`). Vérification de code : `group_is_finished`
-(`live/bracket.py:5-11`) garde bien `_resolve_label_to_entry` et les quatre
-calculs du flag `qualified` (`build_event_group_tables` réutilisé par
-`api_event_groups` et `tv/idle`, `_pack_tv_stake` pour `tv/state`) ; côté
-front, `AdminBracket.vue` lit `row.qualified` tel quel (aucun recalcul
-client) et affiche « Aucune poule terminée » en état vide. 0 nouvelle
-dérive, 0 nouvelle issue.
+**Spec review session #114 :** verdict `✅ Conforme` sur `admin-poules.md`.
+0 dérive bloquante. Réserve mineure déjà connue (session #113) confirmée
+non bloquante : la pastille de légende « Forfait » utilise `--danger`
+(rouge) alors que la ligne de match walkover reste visuellement
+`gc-match--finished` (vert) dans la grille — seul le libellé texte change ;
+la spec ne précise que le libellé texte, donc conforme au texte strict,
+laissé en l'état. Tous les autres points (suppression de poule, refus
+serveur si `EN_COURS`, endpoint de suppression sans duplication de logique,
+mode suivi, légende + tooltip Q, `_pack_match` par poule, types, garde de
+rôle, composables/polling, CSS/tokens) vérifiés `✅`. `npx vue-tsc --noEmit` :
+0 erreur.
 
-**Backlog engine session #110 :** 0 ticket — aucune issue ouverte sur le
-milestone Sprint 26 à l'entrée en session (les 4 tickets #289/#290/#291/#315
-avaient déjà été fermés lors des sessions #108/#109).
+**Backlog engine session #114 :** 0 ticket — les 5 tickets du sprint
+(#292-296) étaient déjà tous clos en entrée de session (traités lors des
+sessions #111/#112/#113).
 
-Aucun fichier partagé câblé. Aucune migration.
+**Fichier partagé câblé :** aucun cette session.
 
-**Sprint 26 — clôturé cette session :** les deux conditions de l'étape 3
-étaient réunies (`✅ Conforme` sur les 4 specs + 0 issue ouverte). Milestone
-GitHub #25 fermé via l'API. Ligne supprimée de `roadmap.md`, dossier déplacé
-dans `backlog/sprints/done/26-qualification-poule-terminee/`.
-
-**Sprint suivant :** 27 — Poules : suivi & suppression, devient le premier
-sprint de la roadmap (6 sprints restants : 27 à 32). Non démarré cette
-session (règle : un seul sprint par session) — sera traité à la **prochaine
-échéance planifiée**.
+**Sprint 27 — clôturé cette session :** les deux critères de l'étape 3
+étaient réunis (spec `✅ Conforme` + 0 issue `sprint-27` ouverte). Milestone
+GitHub n°26 fermé, ligne supprimée de `roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/27-poules-suivi-suppression/`. PR #316 déjà ouverte
+pour la branche (rien à créer). Roadmap relue : 5 sprints restants
+(28 à 32) ; le sprint 28 — Admin : annonces & inscription par sélection —
+devient actif mais sera traité à la **prochaine échéance planifiée**, pas
+dans cette session.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — non pertinent cette session (0 changement de code).
+`package.json` — `npx vue-tsc --noEmit` utilisé directement (aucune erreur).
+Toujours pas de `.claude/launch.json` pour prévisualiser l'app dans ce repo —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
-hors périmètre de la Routine automatique. Tant que cette chaîne n'est pas
-mergée dans `main`, le sprint 27 gardera probablement
-`claude/sprint/25-arbitre-fins-speciales` comme parent effectif à sa
-prochaine session (même mécanique de résolution de parent que pour le
-sprint 26).
+hors périmètre de la Routine automatique.

@@ -122,6 +122,7 @@ export interface Group {
   name: string               // "A", "B", "C", "D"
   standings: StandingRow[]
   grid: GridCell[][]         // matrice n×n
+  matches: Match[]
 }
 
 // ─── Match ──────────────────────────────────────────────────────────────────

@@ -1050,6 +1050,19 @@ def unassign_entry(event, entry):
     GroupMembership.objects.filter(entry=entry, group__event=event).delete()
 
 
+def delete_group(group):
+    """
+    Service : supprime une poule vide ou avec membres. Les GroupMembership
+    sont supprimés (les Entry/inscriptions sont conservées, elles reviennent
+    en « Non assignés »). Lève ValueError si l'épreuve est déjà débutée.
+    """
+    event = group.event
+    _assert_groups_unlocked(event)
+    GroupMembership.objects.filter(group=group).delete()
+    GroupStanding.objects.filter(group=group).delete()
+    group.delete()
+
+
 # =========================================================================
 # Phase 9 — Administration de la configuration (services réutilisables)
 # Éditions, catégories, courts, épreuves. CRUD neuf : aucune logique

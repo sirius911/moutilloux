@@ -33,6 +33,7 @@ urlpatterns = [
     path("api/events/<int:event_id>/groups/autofill/", api_views.api_groups_autofill, name="api_groups_autofill"),
     path("api/events/<int:event_id>/groups/assign/", api_views.api_group_assign, name="api_group_assign"),
     path("api/events/<int:event_id>/groups/unassign/", api_views.api_group_unassign, name="api_group_unassign"),
+    path("api/groups/<int:group_id>/delete/", api_views.api_group_delete, name="api_group_delete"),
     path("api/events/<int:event_id>/matches/generate/", api_views.api_matches_generate, name="api_matches_generate"),
 
     # ── API JSON — Phase 4 (planning, mutations) ───────────────────────
