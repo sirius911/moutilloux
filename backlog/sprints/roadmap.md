@@ -10,5 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | Sprint 09 — Calendrier : programme TV | (à créer) |
-| 2 | Sprint 10 — Contexte d'épreuve (URL) | (à créer) |
+| 1 | Sprint 10 — Contexte d'épreuve (URL) | (à créer) |
