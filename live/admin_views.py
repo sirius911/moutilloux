@@ -26,7 +26,7 @@ def superuser_required(view):
 class PlayerForm(forms.ModelForm):
     class Meta:
         model = Player
-        fields = ["first_name", "last_name", "gender", "birth_year", "phone", "email", "license_number", "attitude"]
+        fields = ["first_name", "last_name", "gender", "birth_year", "phone", "email", "license_number", "attitudes"]
         labels = {
             "first_name": "Prénom",
             "last_name": "Nom",
@@ -35,7 +35,7 @@ class PlayerForm(forms.ModelForm):
             "phone": "Téléphone",
             "email": "Email",
             "license_number": "Numéro de licence",
-            "attitude": "Attitude (pour les affiches)",
+            "attitudes": "Attitudes (pour les affiches)",
         }
 
 

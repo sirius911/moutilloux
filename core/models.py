@@ -39,7 +39,7 @@ class Player(models.Model):
     license_number = models.CharField(max_length=50, blank=True, default="", db_index=True)
 
     photo = models.ImageField(upload_to="players/", null=True, blank=True)
-    attitude = models.CharField(max_length=80, blank=True, default="")
+    attitudes = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["last_name", "first_name"]
