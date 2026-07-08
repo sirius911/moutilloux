@@ -11,7 +11,7 @@ export interface Player {
   email: string
   phone: string
   photoUrl: string | null
-  attitude: string
+  attitudes: string[]
 }
 
 export interface EntryPlayer {

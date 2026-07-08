@@ -18,8 +18,8 @@ function buildPosterSlots(match: Match): PosterSlot[] {
     if (side.player) {
       slots.push({ key: prefix, label: side.player.fullName, defaultAttitude: side.player.attitude ?? '', photoUrl: side.player.photoUrl })
     } else if (side.team) {
-      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitude ?? '', photoUrl: side.team.player1.photoUrl })
-      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitude ?? '', photoUrl: side.team.player2.photoUrl })
+      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitudes?.[0] ?? '', photoUrl: side.team.player1.photoUrl })
+      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitudes?.[0] ?? '', photoUrl: side.team.player2.photoUrl })
     }
   }
   addSide(match.sideA, 'A')

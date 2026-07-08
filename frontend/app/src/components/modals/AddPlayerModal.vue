@@ -5,6 +5,7 @@ import Segmented from '@/components/ui/Segmented.vue'
 import { useApi } from '@/composables/useApi'
 import { useEventStore } from '@/stores/event'
 import type { Player } from '@/types'
+import ATTITUDES from '@/constants/attitudes.json'
 
 const props = defineProps<{
   editing?: Player | null
@@ -22,7 +23,7 @@ const currentYear = new Date().getFullYear()
 const gender = ref<'M' | 'F' | 'O' | ''>(props.editing?.gender ?? '')
 const email = ref(props.editing?.email ?? '')
 const phone = ref(props.editing?.phone ?? '')
-const attitude = ref(props.editing?.attitude ?? '')
+const attitudes = ref<string[]>(props.editing?.attitudes ?? [])
 const saving = ref(false)
 const error = ref('')
 const fieldErrors = ref<Record<string, string[]>>({})
@@ -39,6 +40,12 @@ function initials(name: string): string {
 }
 
 const initialsPreview = computed(() => initials(`${firstName.value} ${lastName.value}`.trim()))
+
+function toggleAttitude(a: string) {
+  attitudes.value = attitudes.value.includes(a)
+    ? attitudes.value.filter((v) => v !== a)
+    : [...attitudes.value, a]
+}
 
 function revokePreviewIfBlob() {
   if (photoPreviewUrl.value?.startsWith('blob:')) {
@@ -125,7 +132,7 @@ async function save() {
         birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
-        attitude: attitude.value || undefined,
+        attitudes: attitudes.value,
       })
       if (hasPhotoChange.value) {
         try {
@@ -145,7 +152,7 @@ async function save() {
         gender: gender.value || undefined,
         email: email.value || undefined,
         phone: phone.value || undefined,
-        attitude: attitude.value || undefined,
+        attitudes: attitudes.value,
       })
       if (photoFile.value) {
         try {
@@ -254,10 +261,21 @@ onUnmounted(() => {
           </div>
           <span v-if="photoError" class="fld-error">{{ photoError }}</span>
         </label>
-        <label class="fld">
-          <span class="fld-lbl">Attitude (pour les affiches)</span>
-          <input v-model="attitude" class="inp" placeholder="ex. charmeuse, furieux…" />
-          <span v-if="fieldErrors.attitude?.length" class="fld-error">{{ fieldErrors.attitude[0] }}</span>
+        <label class="fld fld-attitudes">
+          <span class="fld-lbl">Attitudes (pour les affiches)</span>
+          <div class="chip-row" role="group" aria-label="Attitudes">
+            <button
+              v-for="a in ATTITUDES"
+              :key="a"
+              type="button"
+              class="chip"
+              :class="{ active: attitudes.includes(a) }"
+              :aria-pressed="attitudes.includes(a)"
+              @click="toggleAttitude(a)"
+            >
+              {{ a }}
+            </button>
+          </div>
         </label>
       </div>
     </div>
@@ -377,6 +395,41 @@ onUnmounted(() => {
 }
 
 .fld-photo { grid-column: 1 / -1; }
+.fld-attitudes { grid-column: 1 / -1; }
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+  transition: background 150ms, border-color 150ms, color 150ms;
+  font-family: inherit;
+}
+
+.chip:hover {
+  background: var(--bg-4);
+  color: var(--ink-1);
+}
+
+.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  font-weight: 600;
+}
 
 .photo-picker {
   display: flex;
