@@ -6,7 +6,7 @@ from django.contrib import messages
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.utils import timezone
 
 from core.models import TournamentEdition, Player, Team
@@ -715,6 +715,149 @@ def remove_entry(event, entry):
             f"Impossible de retirer {entry} : déjà utilisé dans un ou plusieurs matchs."
         )
     entry.delete()
+
+
+@transaction.atomic
+def withdraw_entry(entry):
+    """
+    Service : déclare le forfait d'une Entry (EN_COURS requis).
+    - Pose entry.withdrawn = True.
+    - Tous les matchs non terminés (SCHEDULED/LIVE) → FINISHED, is_walkover=True,
+      winner_side = adversaire, score de convention (games_to_win / 0).
+    - Recalcule les standings de chaque poule affectée.
+    - Propage les vainqueurs du tableau (QF/SF/F).
+    Lève ValueError si l'event n'est pas EN_COURS.
+    Retourne {"matches_walkover": int}.
+    """
+    from competition.standings import recalc_one_group
+
+    event = entry.event
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible de déclarer un forfait : statut = {event.status}.")
+
+    entry.withdrawn = True
+    entry.save(update_fields=["withdrawn"])
+
+    non_finished = Match.objects.filter(
+        event=event,
+        status__in=[Match.Status.SCHEDULED, Match.Status.LIVE],
+    ).filter(
+        Q(side_a=entry) | Q(side_b=entry)
+    )
+
+    affected_groups = set()
+    has_qf_sf = False
+    has_finale = False
+    count = 0
+
+    for m in non_finished:
+        if m.side_a_id == entry.id:
+            m.winner_side = Match.WinnerSide.B
+            m.games_a = 0
+            m.games_b = m.games_to_win
+        else:
+            m.winner_side = Match.WinnerSide.A
+            m.games_a = m.games_to_win
+            m.games_b = 0
+
+        m.status = Match.Status.FINISHED
+        m.is_walkover = True
+        m.is_featured = False
+        m.order_index = None
+        if not m.finished_at:
+            m.finished_at = timezone.now()
+
+        m.save(update_fields=[
+            "winner_side", "games_a", "games_b",
+            "status", "is_walkover", "is_featured", "order_index", "finished_at",
+        ])
+
+        if m.group_id:
+            affected_groups.add(m.group_id)
+        if m.stage in (Match.Stage.QF, Match.Stage.SF):
+            has_qf_sf = True
+        if m.stage == Match.Stage.F:
+            has_finale = True
+        count += 1
+
+    for gid in affected_groups:
+        recalc_one_group(gid)
+
+    if has_qf_sf:
+        from live.bracket import sync_final_winners_for_event
+        sync_final_winners_for_event(event)
+
+    if has_finale:
+        try:
+            close_event(event)
+        except ValueError:
+            pass
+
+    return {"matches_walkover": count}
+
+
+@transaction.atomic
+def add_late_entry(event, group, player=None, team=None):
+    """
+    Service : ajout tardif d'un inscrit dans une poule, en EN_COURS.
+    - Crée l'Entry (player ou team) si elle n'existe pas déjà.
+    - Crée le GroupMembership dans la poule désignée.
+    - Ré-exécute generate_group_matches_for_event (additif) → seuls les matchs
+      du nouveau venu sont créés ; les matchs déjà joués ne bougent pas.
+    Lève ValueError si event.status != EN_COURS, si player et team sont tous
+    les deux None, ou si le player/team est déjà inscrit dans l'event.
+    Retourne (entry, created_count, over_capacity).
+    """
+    if event.status != Event.Status.EN_COURS:
+        raise ValueError(f"Impossible d'ajouter un inscrit tardif : statut = {event.status}.")
+
+    if player is None and team is None:
+        raise ValueError("Il faut renseigner un joueur (simple) ou une équipe (double).")
+
+    if player is not None and Entry.objects.filter(event=event, player=player).exists():
+        raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
+    if team is not None and Entry.objects.filter(event=event, team=team).exists():
+        raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+
+    entry = Entry.objects.create(event=event, player=player, team=team)
+    GroupMembership.objects.get_or_create(group=group, entry=entry)
+
+    current_size = GroupMembership.objects.filter(group=group).count()
+    over_capacity = current_size > event.group_size_default
+
+    created_count, _ = generate_group_matches_for_event(event)
+
+    return entry, created_count, over_capacity
+
+
+@transaction.atomic
+def replace_entry_player(entry, player=None, team=None):
+    """
+    Service : remplace le player/team d'une Entry existante.
+    La place en poule et les résultats déjà joués sont conservés ; aucun match recréé.
+    Lève ValueError si player et team sont tous les deux None, si la catégorie ne
+    correspond pas (SINGLE/DOUBLE), ou si le nouveau player/team est déjà inscrit
+    dans le même event.
+    Retourne l'Entry mise à jour.
+    """
+    if player is None and team is None:
+        raise ValueError("Il faut renseigner un joueur (simple) ou une équipe (double).")
+
+    mode = entry.event.category.mode
+    if mode == Category.Mode.SINGLE and player is None:
+        raise ValueError("Cette catégorie est en simple : il faut un joueur.")
+    if mode == Category.Mode.DOUBLE and team is None:
+        raise ValueError("Cette catégorie est en double : il faut une équipe.")
+
+    if player is not None and Entry.objects.filter(event=entry.event, player=player).exclude(pk=entry.pk).exists():
+        raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
+    if team is not None and Entry.objects.filter(event=entry.event, team=team).exclude(pk=entry.pk).exists():
+        raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+
+    entry.player = player
+    entry.team = team
+    entry.save(update_fields=["player", "team"])
+    return entry
 
 
 @superuser_required

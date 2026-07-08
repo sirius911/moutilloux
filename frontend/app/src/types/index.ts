@@ -20,6 +20,7 @@ export interface Entry {
   seedHint: number | null
   groupId: number | null
   groupName: string | null    // "A", "B", etc.
+  withdrawn?: boolean
 }
 
 // ─── Tournoi ────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ export interface StandingRow {
   gamesRatio: string         // "12/8"
   points: number
   qualified: boolean
+  withdrawn?: boolean
 }
 
 export interface GridCell {
@@ -141,6 +143,7 @@ export interface Match {
   tbPointsB: number
   setScores: SetResult[]
   winnerSide: MatchSide | null
+  isWalkover?: boolean
 
   // Points affichage tennis (retournés par le backend)
   displayPointA: string     // "0", "15", "30", "40", "AV"

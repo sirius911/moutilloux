@@ -18,6 +18,7 @@ const activeEvent = computed(() =>
   eventStore.events.find((e) => e.id === eventStore.activeEventId) ?? null,
 )
 const isDouble = computed(() => activeEvent.value?.categoryMode === 'D')
+const isEnCours = computed(() => activeEvent.value?.status === 'EN_COURS')
 
 const inscribedPlayerIds = computed(
   () => new Set(eventStore.players.map((e) => e.player?.id).filter((id): id is number => id != null)),
@@ -84,7 +85,11 @@ async function executeRetrait() {
   busy.value = true
   error.value = ''
   try {
-    await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
+    if (isEnCours.value) {
+      await eventStore.withdrawEntry(confirmState.value.entryId)
+    } else {
+      await eventStore.removeRegistration(eventStore.activeEventId, confirmState.value.entryId)
+    }
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Erreur inconnue.'
   } finally {
@@ -154,9 +159,9 @@ function initials(name: string): string {
 
     <ConfirmModal
       v-if="confirmState.show"
-      :title="`Retirer ${confirmState.name} de l'épreuve ?`"
-      body="L'historique du joueur est conservé."
-      confirm-label="Retirer"
+      :title="isEnCours ? `Déclarer le forfait de ${confirmState.name} ?` : `Retirer ${confirmState.name} de l'épreuve ?`"
+      :body="isEnCours ? 'Tous ses matchs non joués seront marqués comme walkover (victoire adverse).' : `L'historique du joueur est conservé.`"
+      :confirm-label="isEnCours ? 'Déclarer le forfait' : 'Retirer'"
       @confirm="executeRetrait"
       @close="confirmState.show = false"
     />
@@ -190,14 +195,21 @@ function initials(name: string): string {
                   <div class="avatar" :style="{ background: avatarColor(e.displayName) }">
                     {{ initials(e.displayName) }}
                   </div>
-                  <span class="player-name">{{ e.displayName }}</span>
+                  <span class="player-name" :class="{ 'player-withdrawn': e.withdrawn }">{{ e.displayName }}</span>
+                  <span v-if="e.withdrawn" class="wo-badge">WO</span>
                 </td>
                 <td>
                   <span class="player-meta">{{ e.groupName ?? '—' }}</span>
                 </td>
                 <td class="col-actions">
-                  <button class="row-btn danger" type="button" :disabled="busy" @click="retirer(e.id, e.displayName)">
-                    Retirer
+                  <button
+                    v-if="!e.withdrawn"
+                    class="row-btn danger"
+                    type="button"
+                    :disabled="busy"
+                    @click="retirer(e.id, e.displayName)"
+                  >
+                    {{ isEnCours ? 'Forfait' : 'Retirer' }}
                   </button>
                 </td>
               </tr>
@@ -385,6 +397,17 @@ function initials(name: string): string {
 }
 
 .player-name { font-weight: 500; color: var(--ink-0); }
+.player-withdrawn { text-decoration: line-through; color: var(--ink-3); }
+.wo-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+  padding: 2px 6px;
+  border-radius: 99px;
+  margin-left: 4px;
+  white-space: nowrap;
+}
 .player-meta { font-size: 13px; color: var(--ink-3); }
 
 .col-actions-h { text-align: right; }

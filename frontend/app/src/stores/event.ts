@@ -49,6 +49,19 @@ export interface EventConfigPayload {
   notes?: string
 }
 
+// ── Payloads Sprint 12 (ajustements en cours de jeu) ─────────────────────────
+
+export interface AddLateEntryPayload {
+  group_id: number
+  player?: number
+  team?: number
+}
+
+export interface ReplacePlayerPayload {
+  player?: number
+  team?: number
+}
+
 // ── Payloads Sprint 08 (calendrier) ──────────────────────────────────────────
 
 export interface PlayDayPayload {
@@ -350,6 +363,32 @@ export const useEventStore = defineStore('event', () => {
     await fetchEditions()
   }
 
+  // ── Mutations — Sprint 12 (ajustements en cours de jeu) ──────────────
+
+  async function withdrawEntry(entryId: number) {
+    await post(`/api/entries/${entryId}/withdraw/`, {})
+    const id = activeEventId.value
+    if (!id) return
+    await fetchGroups(id)
+    await fetchPlayers(id)
+    await fetchMatches(id)
+    await fetchBracket(id)
+  }
+
+  async function addLateEntry(eventId: number, payload: AddLateEntryPayload) {
+    await post(`/api/events/${eventId}/entries/late/`, payload)
+    await fetchGroups(eventId)
+    await fetchPlayers(eventId)
+  }
+
+  async function replacePlayer(entryId: number, payload: ReplacePlayerPayload) {
+    await post(`/api/entries/${entryId}/replace/`, payload)
+    const id = activeEventId.value
+    if (!id) return
+    await fetchPlayers(id)
+    await fetchGroups(id)
+  }
+
   // ── Mutations — Phase 9 (configuration) ───────────────────────────────
   // Éditions, catégories, courts, épreuves. Chaque action recâble vers le ref
   // concerné (fetchEditions rafraîchit aussi events + compteurs d'épreuves).
@@ -442,6 +481,8 @@ export const useEventStore = defineStore('event', () => {
     createBracket, updateBracketLabels, assignBracket, clearBracket,
     // Mutations — Sprint 11 cycle de vie
     startEvent, closeEvent, reopenEvent,
+    // Mutations — Sprint 12 ajustements en cours de jeu
+    withdrawEntry, addLateEntry, replacePlayer,
     // Mutations — P9 configuration
     createEdition, editEdition, activateEdition, deleteEdition,
     createCategory, editCategory, deleteCategory,

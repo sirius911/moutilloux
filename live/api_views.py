@@ -59,6 +59,10 @@ from live.admin_views import (
     start_event,
     close_event,
     reopen_event,
+    # Sprint 12 — ajustements en cours de jeu
+    withdraw_entry,
+    add_late_entry,
+    replace_entry_player,
     # Sprint 07 — calendrier (journées + pauses)
     create_play_day,
     update_play_day,
@@ -135,6 +139,7 @@ def _pack_entry(entry):
         "seedHint": entry.seed_hint,
         "groupId": None,
         "groupName": None,
+        "withdrawn": entry.withdrawn,
     }
     # Groupe assigné (via GroupMembership)
     membership = getattr(entry, "_membership_cache", None)
@@ -245,6 +250,7 @@ def _pack_match(m):
         "displayPointA": display_point_a,
         "displayPointB": display_point_b,
         "winnerSide": m.winner_side,
+        "isWalkover": m.is_walkover,
         "scheduledTime": scheduled_str,
         "startedAt": m.started_at.isoformat() if m.started_at else None,
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
@@ -463,6 +469,7 @@ def api_event_groups(request, event_id):
                 "gamesRatio": f"{games_won}/{games_lost}",
                 "points": points,
                 "qualified": qualif.get(entry.id, "-") != "-",
+                "withdrawn": entry.withdrawn,
             })
 
         # Grille croisée (matrice n×n)
@@ -1840,3 +1847,83 @@ def api_tv_upcoming(request):
         "upcoming": [_pack_match(m) for m in matches_list],
         "currentPlayDay": _pack_play_day(current_pd),
     })
+
+
+# ── Sprint 12 — Ajustements en cours de jeu ──────────────────────────────────
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_entry_withdraw(request, entry_id):
+    """POST /api/entries/<id>/withdraw/ — forfait / retrait d'un inscrit (EN_COURS requis).
+    Réponse : {entry, matchesWalkover}."""
+    entry = get_object_or_404(Entry.objects.select_related("event", "player", "team"), pk=entry_id)
+    try:
+        result = withdraw_entry(entry)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=409)
+    return JsonResponse({"entry": _pack_entry(entry), "matchesWalkover": result["matches_walkover"]})
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_entry_add_late(request, event_id):
+    """POST /api/events/<id>/entries/late/ — ajout tardif d'un inscrit dans une poule.
+    Body JSON : {group_id, player?, team?}.
+    Réponse : {entry, createdCount, overCapacity}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    event = get_object_or_404(Event, pk=event_id)
+    group_id = data.get("group_id")
+    if not group_id:
+        return JsonResponse({"error": "group_id est requis"}, status=400)
+    group = get_object_or_404(Group, pk=group_id, event=event)
+
+    player = None
+    team = None
+    if "player" in data and data["player"] is not None:
+        player = get_object_or_404(Player, pk=data["player"])
+    if "team" in data and data["team"] is not None:
+        team = get_object_or_404(Team, pk=data["team"])
+
+    try:
+        entry, created_count, over_capacity = add_late_entry(event, group, player=player, team=team)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({
+        "entry": _pack_entry(entry),
+        "createdCount": created_count,
+        "overCapacity": over_capacity,
+    })
+
+
+@require_POST
+@superuser_required
+@transaction.atomic
+def api_entry_replace(request, entry_id):
+    """POST /api/entries/<id>/replace/ — remplace le joueur/équipe d'un inscrit.
+    Body JSON : {player?, team?}.
+    Réponse : {entry}."""
+    data, err = _json_body(request)
+    if err:
+        return err
+
+    entry = get_object_or_404(Entry.objects.select_related("event__category", "player", "team"), pk=entry_id)
+
+    player = None
+    team = None
+    if "player" in data and data["player"] is not None:
+        player = get_object_or_404(Player, pk=data["player"])
+    if "team" in data and data["team"] is not None:
+        team = get_object_or_404(Team, pk=data["team"])
+
+    try:
+        entry = replace_entry_player(entry, player=player, team=team)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"entry": _pack_entry(entry)})
