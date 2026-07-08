@@ -373,56 +373,45 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #115
-**Sprint traité :** 28 — Admin : annonces & inscription par sélection (1ʳᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #116
+**Sprint traité :** 28 — Admin : annonces & inscription par sélection (2ᵉ et dernière session du sprint — clôture)
 
-**Git :** branche `claude/sprint/28-annonces-inscriptions-selection` créée
-depuis `origin/claude/sprint/27-poules-suivi-suppression` (parent effectif
-résolu via `backlog/sprints/done/` — sprint 27 toujours non mergé dans
-`origin/main`). Working tree propre au démarrage, `git merge origin/<parent>`
-déjà à jour (rien à intégrer).
+**Git :** branche `claude/sprint/28-annonces-inscriptions-selection`,
+parent effectif `claude/sprint/27-poules-suivi-suppression` (sprint 27
+toujours non mergé dans `origin/main`, résolu via `backlog/sprints/done/`).
+Working tree propre au démarrage, `git merge origin/<parent>` déjà à jour
+(rien à intégrer).
 
-**Spec review session #115 :** verdict `⚠️ Dérive mineure` sur
-`admin-tournoi.md` (carte Annonces TV) et `admin-inscriptions.md`
-(sélection par cases à cocher) — 2 dérives constatées, toutes deux déjà
-ticketées (#297, #298) dès la planification du sprint (revue produit
-2026-07-07). 0 nouvelle issue créée. Cette review a été faite **avant**
-l'implémentation des tickets (ordre normal du protocole) : elle ne reflète
-donc pas l'état du code en fin de session.
+**Spec review session #116 :** verdict `✅ Conforme` sur `admin-tournoi.md`
+(carte Annonces TV) et `admin-inscriptions.md` (sélection par cases à
+cocher) — cette fois vérifiée contre le code effectivement implémenté en
+session #115 (les deux tickets #297/#298 étaient déjà clos avant le début
+de cette session). Comportement conforme point par point : édition inline
+Entrée/Échap/vide refusé côté annonces ; case par ligne + « Tout cocher »
+respectant le filtre de recherche + sélection non perdue au filtrage +
+vidée seulement après succès côté inscriptions. `npx vue-tsc --noEmit` :
+0 erreur. 0 nouvelle dérive, 0 nouvelle issue.
 
-**Backlog engine session #115 :** 2 tickets traités et clos (max de la
-session) :
-- **#298** (majeure) — AdminInscriptions : remplacement du bouton
-  « Inscrire les N affichés » par une sélection par cases à cocher (case par
-  ligne + « Tout cocher » respectant le filtre de recherche, bouton
-  « Inscrire la sélection (N) » via `addRegistrationsBulk` déjà existant,
-  sélection vidée seulement après succès). Verdict reviewer : `✅ Approuvé`.
-- **#297** (mineure) — AdminTournoi : édition inline du message d'annonce
-  (Entrée/Enregistrer valide, Échap annule, message vide refusé, réutilise
-  l'endpoint `POST /api/announcements/<id>/edit/` déjà en place côté back).
-  Verdict reviewer : `⚠️ Approuvé avec réserves` — piège Vue 3 relevé (un
-  `ref` posé dans un `v-for` est toujours collecté en tableau même sous
-  `v-if`, rendant `editingInput.value?.focus()` silencieusement inopérant ;
-  `vue-tsc` ne le détecte pas). Corrigé en session par l'orchestrateur
-  (function-ref `setEditingInputRef`), type-check revérifié `0 erreur`, puis
-  clos.
+**Backlog engine session #116 :** 0 ticket traité — les 2 tickets du sprint
+(#297, #298) étaient déjà clos en session #115 ; aucune issue `sprint-28`
+ouverte à traiter.
 
-**Fichier partagé câblé :** aucun cette session — les deux tickets étaient
-purement front, fichiers SFC disjoints, endpoints back déjà en place, aucun
-changement de store/route/composable requis.
+**Sprint 28 — clôturé cette session :** les deux conditions de fin de
+sprint sont remplies (spec review `✅ Conforme` + 0 issue `sprint-28`
+ouverte). Milestone GitHub n°27 fermé via l'API, ligne supprimée de
+`backlog/sprints/roadmap.md`, dossier déplacé dans
+`backlog/sprints/done/28-annonces-inscriptions-selection/`. Commit
+`7ae19ac`.
 
-**Sprint 28 — non clôturé cette session :** 0 issue `sprint-28` ouverte en
-fin de session, mais la condition « spec review de cette session
-`✅ Conforme` » n'est pas remplie au sens strict (la review de l'étape 1,
-faite avant implémentation, a rendu `⚠️`). La prochaine échéance planifiée
-rejouera la spec review en tout début de session ; si elle rend
-`✅ Conforme` sur le code désormais implémenté, le sprint sera clôturé alors.
+**Sprint suivant dans la roadmap :** 29 — Joueurs : attitudes prédéfinies.
+Ne sera traité qu'à la **prochaine échéance planifiée** (règle : un seul
+sprint démarré par session).
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — `npx vue-tsc --noEmit` utilisé directement (aucune erreur
-sur les deux tickets de cette session). Toujours pas de `.claude/launch.json`
-pour prévisualiser l'app dans ce repo — vérification par type-check + revue
-de code uniquement (pas de QA navigateur en session automatisée).
+`package.json` — `npx vue-tsc --noEmit` utilisé directement. Toujours pas
+de `.claude/launch.json` pour prévisualiser l'app dans ce repo —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
