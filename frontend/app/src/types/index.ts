@@ -21,7 +21,7 @@ export interface EntryPlayer {
   fullName: string
   gender: 'M' | 'F' | 'O'
   licenseNumber: string
-  attitude: string             // adjectif d'attitude par défaut (affiches)
+  attitudes: string[]           // adjectifs d'attitude prédéfinis (affiches)
   photoUrl: string | null
 }
 

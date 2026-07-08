@@ -8,18 +8,19 @@ import { extractApiError } from '@/lib/apiError'
 import { useApi } from '@/composables/useApi'
 import { usePolling } from '@/composables/usePolling'
 import type { Entry, Match, PosterState } from '@/types'
+import ATTITUDES from '@/constants/attitudes.json'
 
-interface PosterSlot { key: string; label: string; defaultAttitude: string; photoUrl: string | null }
+interface PosterSlot { key: string; label: string; attitudes: string[]; photoUrl: string | null }
 
 function buildPosterSlots(match: Match): PosterSlot[] {
   const slots: PosterSlot[] = []
   const addSide = (side: Entry | null, prefix: string) => {
     if (!side) return
     if (side.player) {
-      slots.push({ key: prefix, label: side.player.fullName, defaultAttitude: side.player.attitude ?? '', photoUrl: side.player.photoUrl })
+      slots.push({ key: prefix, label: side.player.fullName, attitudes: side.player.attitudes ?? [], photoUrl: side.player.photoUrl })
     } else if (side.team) {
-      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, defaultAttitude: side.team.player1.attitudes?.[0] ?? '', photoUrl: side.team.player1.photoUrl })
-      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, defaultAttitude: side.team.player2.attitudes?.[0] ?? '', photoUrl: side.team.player2.photoUrl })
+      slots.push({ key: `${prefix}1`, label: side.team.player1.fullName, attitudes: side.team.player1.attitudes ?? [], photoUrl: side.team.player1.photoUrl })
+      slots.push({ key: `${prefix}2`, label: side.team.player2.fullName, attitudes: side.team.player2.attitudes ?? [], photoUrl: side.team.player2.photoUrl })
     }
   }
   addSide(match.sideA, 'A')
@@ -180,11 +181,15 @@ const posterActionError = ref('')   // erreur d'action (generate/select/clear), 
 const posterActionBusy = ref(false) // désactive les boutons pendant generate/select/clear/retirer
 const showRemovePosterConfirm = ref(false)
 
-// Attitude par joueur (2 slots en Simple, 4 en Double), pré-remplie depuis
-// Player.attitude (exposé par _pack_entry / _pack_team)
+// Attitude par joueur (2 slots en Simple, 4 en Double), pré-remplie par
+// tirage au sort parmi Player.attitudes (exposé par _pack_entry / _pack_team)
+// — un seul tirage par ouverture du panneau, pas à chaque render.
 const posterSlots = buildPosterSlots(props.match)
 const posterAttitudes = reactive<Record<string, string>>(
-  Object.fromEntries(posterSlots.map(s => [s.key, s.defaultAttitude]))
+  Object.fromEntries(posterSlots.map(s => [
+    s.key,
+    s.attitudes.length > 0 ? s.attitudes[Math.floor(Math.random() * s.attitudes.length)] : '',
+  ]))
 )
 
 async function fetchPosterState() {
@@ -637,7 +642,15 @@ async function save() {
               <div class="fld-col">
                 <label v-for="slot in posterSlots" :key="slot.key" class="fld">
                   <span class="fld-lbl">Attitude — {{ slot.label }}</span>
-                  <input v-model="posterAttitudes[slot.key]" class="inp" type="text" placeholder="ex. charmeuse, furieux…" />
+                  <select v-model="posterAttitudes[slot.key]" class="inp">
+                    <option value="">—</option>
+                    <optgroup v-if="slot.attitudes.length > 0" label="Attitudes du joueur">
+                      <option v-for="a in slot.attitudes" :key="a" :value="a">{{ a }}</option>
+                    </optgroup>
+                    <optgroup label="Toutes les attitudes">
+                      <option v-for="a in ATTITUDES" :key="a" :value="a">{{ a }}</option>
+                    </optgroup>
+                  </select>
                 </label>
               </div>
               <p v-if="generateDisabledReason" class="slide-hint">{{ generateDisabledReason }}</p>
