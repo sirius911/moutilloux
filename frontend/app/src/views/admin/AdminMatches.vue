@@ -25,6 +25,11 @@ const showPlayDayModal = ref(false)
 const bannerError = ref('')
 const arranging = ref(false)
 
+const editingStartDayId = ref<number | null>(null)
+const editingStartValue = ref('')
+const savingStart = ref<Record<number, boolean>>({})
+const startError = ref<Record<number, string>>({})
+
 function openMatchPanel(match: Match, initialTab: 'score' | 'format' | 'planning' | 'poster' = 'score') {
   editingMatch.value = match
   editingMatchInitialTab.value = initialTab
@@ -193,6 +198,34 @@ async function deletePause(breakId: number) {
     bannerError.value = e instanceof Error ? e.message : 'Erreur lors de la suppression de la pause.'
   } finally {
     deletingBreak.value[breakId] = false
+  }
+}
+
+function openStartEdit(day: CalendarDay) {
+  editingStartDayId.value = day.id
+  editingStartValue.value = day.startTime
+  startError.value[day.id] = ''
+}
+
+function cancelStartEdit() {
+  editingStartDayId.value = null
+}
+
+async function confirmStartEdit(day: CalendarDay) {
+  if (editingStartDayId.value !== day.id) return
+  if (editingStartValue.value === day.startTime) {
+    cancelStartEdit()
+    return
+  }
+  savingStart.value[day.id] = true
+  startError.value[day.id] = ''
+  try {
+    await eventStore.updatePlayDay(day.id, { startTime: editingStartValue.value })
+    editingStartDayId.value = null
+  } catch (e) {
+    startError.value[day.id] = e instanceof Error ? e.message : 'Erreur lors de la mise à jour.'
+  } finally {
+    savingStart.value[day.id] = false
   }
 }
 
@@ -691,9 +724,29 @@ async function onDragEnd() {
             </div>
             <div class="pd-header-right">
               <span class="pd-times">
-                Court central · début {{ day.startTime }} · fin estimée
-                ~{{ dayEndEstimate(day) ?? '—' }}
+                Court central ·
+                <button
+                  v-if="editingStartDayId !== day.id"
+                  type="button"
+                  class="pd-start-trigger"
+                  @click="openStartEdit(day)"
+                >début {{ day.startTime }}</button>
+                <span v-else class="pd-start-edit">
+                  début
+                  <input
+                    v-model="editingStartValue"
+                    type="time"
+                    class="pd-input pd-start-input"
+                    :disabled="savingStart[day.id]"
+                    autofocus
+                    @keydown.enter="confirmStartEdit(day)"
+                    @keydown.esc="cancelStartEdit"
+                    @blur="confirmStartEdit(day)"
+                  />
+                </span>
+                · fin estimée ~{{ dayEndEstimate(day) ?? '—' }}
               </span>
+              <span v-if="startError[day.id]" class="pd-start-error">{{ startError[day.id] }}</span>
               <span
                 v-if="dayEndEstimate(day)"
                 :class="['pd-capacity', capacityOver(day) ? 'over' : '']"
@@ -1090,6 +1143,20 @@ async function onDragEnd() {
 }
 
 .pd-times { color: var(--ink-3); }
+
+.pd-start-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline dotted;
+  cursor: pointer;
+}
+.pd-start-trigger:hover { color: var(--accent); }
+.pd-start-edit { display: inline-flex; align-items: center; gap: 4px; }
+.pd-start-input { padding: 1px 4px; font-size: inherit; }
+.pd-start-error { color: var(--danger); font-size: 11px; margin-left: 4px; }
 
 .pd-capacity {
   padding: 3px 10px;
