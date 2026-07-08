@@ -373,7 +373,61 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #133
+**Dernière session :** 2026-07-09 — Session #134
+**Sprint traité :** 34 — Tableau final au calendrier (3ᵉ et dernière session
+du sprint — **clos cette session**, 6/6 tickets clos).
+
+**Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
+`claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 4 commits cette session (2 de
+code + 2 de clôture de sprint).
+
+**Spec review session #134 :** `planning.md`, `cycle-de-vie-match.md` et
+`cycle-de-vie-epreuve.md` — ✅ Conforme. `admin-matchs.md` — ⚠️ Dérive mineure
+en début de session (l'unique dérive relevée correspondait exactement au
+ticket déjà ouvert `#328`) → **✅ Conforme** après implémentation du ticket
+cette session — 0 nouvelle issue créée.
+
+**Backlog engine session #134 :** 2 tickets traités séquentiellement (chaîne
+plan → `vue-screen` → `reviewer` par ticket), tous deux dans
+`AdminMatches.vue`, conformément à l'ordre suggéré par `sprint.md` :
+- **#327** (mineure) — front : `AdminMatches.vue`, `restWarnings` — analyse
+  du plan confirmée par la review : le chaînage optionnel (`?.`) combiné au
+  test `!= null` avant tout `currIds.add(...)` blindait déjà intrinsèquement
+  la fonction contre les sides nuls (matchs de tableau non résolus) — aucun
+  faux ⚠, aucun crash possible, réévaluation déjà automatique via le
+  `computed` + le polling existant. Aucun changement de logique nécessaire ;
+  seul le commentaire au-dessus de la fonction a été enrichi pour documenter
+  explicitement ce comportement best-effort. Verdict reviewer : ✅ Approuvé.
+- **#328** (mineure, résidu #307) — front : `AdminMatches.vue`, CSS —
+  retrait de `overflow: hidden` sur `.play-day`, arrondi reporté sur les
+  enfants (`.pd-header` coins hauts, `.add-pause-btn` coins bas) pour que les
+  fonds ne débordent pas du radius malgré la disparition du clip. Review
+  confirmée : `.pd-rows` (bloc intermédiaire, contenu drag-and-drop) n'a
+  aucun fond propre, donc aucun risque de débordement visuel. Verdict
+  reviewer : ✅ Approuvé.
+
+**Sprint 34 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation des deux derniers tickets + 0 issue
+ouverte sur le milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/34-tableau-final-calendrier/`, ligne retirée de
+`backlog/sprints/roadmap.md`. Pas de nouvelle PR créée (condition non remplie
+puisque le sprint n'est plus dans `roadmap.md` en fin de session) — la PR
+existante (#343, ouverte) accumule simplement les commits de cette session.
+
+**Roadmap non vide** — 3 sprints restants (35 — TV : scène live & fin de
+match, 36 — Échauffement, 37 — Mobile : arbitre & régie). Le sprint 35 sera
+traité à la **prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc --noEmit` passe sans erreur sur les deux tickets de cette
+session. Toujours pas de script `type-check` dans `package.json`, toujours
+pas de `.claude/launch.json` côté front — vérification par type-check +
+revue de code uniquement (pas de QA navigateur en session automatisée).
+
+---
+
+**Historique — session #133 :**
 **Sprint traité :** 34 — Tableau final au calendrier (2ᵉ session du sprint,
 4/6 tickets clos — `#327` et `#328` restants).
 
