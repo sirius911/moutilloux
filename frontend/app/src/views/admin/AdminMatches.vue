@@ -1149,7 +1149,6 @@ async function onDragEnd() {
 .play-day {
   border: 1px solid var(--line-1);
   border-radius: var(--r-lg);
-  overflow: hidden;
 }
 
 .pd-header {
@@ -1160,6 +1159,7 @@ async function onDragEnd() {
   padding: 14px 18px;
   background: var(--bg-3);
   border-bottom: 1px solid var(--line-1);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
   flex-wrap: wrap;
 }
 
@@ -1437,6 +1437,7 @@ async function onDragEnd() {
   background: none;
   border: none;
   border-top: 1px dashed var(--line-2);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
   font-size: 12px;
   font-weight: 600;
   color: var(--ink-3);
