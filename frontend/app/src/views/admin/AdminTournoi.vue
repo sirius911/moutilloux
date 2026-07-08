@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { useApi } from '@/composables/useApi'
@@ -75,6 +75,38 @@ async function toggleAnnouncement(a: Announcement) {
 
 function removeAnnouncement(a: Announcement) {
   confirmState.value = { type: 'deleteAnnouncement', payload: a }
+}
+
+const editingAnnouncementId = ref<number | null>(null)
+const editingMessage = ref('')
+const editingInput = ref<HTMLInputElement | null>(null)
+
+function startEditAnnouncement(a: Announcement) {
+  editingAnnouncementId.value = a.id
+  editingMessage.value = a.message
+  nextTick(() => {
+    editingInput.value?.focus()
+  })
+}
+
+function setEditingInputRef(el: Element | ComponentPublicInstance | null) {
+  editingInput.value = el instanceof HTMLInputElement ? el : null
+}
+
+function cancelEditAnnouncement() {
+  editingAnnouncementId.value = null
+}
+
+async function saveEditAnnouncement(a: Announcement) {
+  if (!editingMessage.value.trim()) return
+  error.value = ''
+  try {
+    await api.post(`/api/announcements/${a.id}/edit/`, { message: editingMessage.value.trim() })
+    await fetchAnnouncements()
+    editingAnnouncementId.value = null
+  } catch (err) {
+    error.value = extractApiError(err)
+  }
 }
 
 // ── Configuration (Phase 9) ──────────────────────────────────────────────
@@ -253,10 +285,37 @@ async function handleConfirm() {
               />
               <span class="adm-toggle-track"><span class="adm-toggle-thumb" /></span>
             </label>
-            <span :class="['adm-announce-msg', { 'is-inactive': !a.isActive }]">{{ a.message }}</span>
-            <button class="adm-btn danger" type="button" @click="removeAnnouncement(a)">
-              Supprimer
-            </button>
+            <input
+              v-if="editingAnnouncementId === a.id"
+              :ref="setEditingInputRef"
+              v-model="editingMessage"
+              type="text"
+              class="adm-input"
+              @keyup.enter="saveEditAnnouncement(a)"
+              @keyup.esc="cancelEditAnnouncement()"
+            />
+            <span
+              v-else
+              :class="['adm-announce-msg', { 'is-inactive': !a.isActive }]"
+            >{{ a.message }}</span>
+            <template v-if="editingAnnouncementId === a.id">
+              <button
+                class="adm-btn primary"
+                type="button"
+                :disabled="!editingMessage.trim()"
+                @click="saveEditAnnouncement(a)"
+              >
+                Enregistrer
+              </button>
+            </template>
+            <template v-else>
+              <button class="adm-btn" type="button" @click="startEditAnnouncement(a)">
+                Modifier
+              </button>
+              <button class="adm-btn danger" type="button" @click="removeAnnouncement(a)">
+                Supprimer
+              </button>
+            </template>
           </div>
         </div>
       </section>
