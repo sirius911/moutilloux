@@ -22,6 +22,13 @@ const confirmDeleteId = ref<number | null>(null)
 const deleteError = ref<Record<number, string>>({})
 const deleting = ref<Record<number, boolean>>({})
 
+// ── Génération depuis l'édition ─────────────────────────────────────────────
+const generateFormVisible = ref(false)
+const generateStart = ref('09:00')
+const generateEnd = ref('20:00')
+const generating = ref(false)
+const generateError = ref('')
+
 const calendarDays = computed<CalendarDay[]>(() => eventStore.calendar?.playDays ?? [])
 
 function isArchived(day: CalendarDay): boolean {
@@ -41,6 +48,77 @@ function itemCount(day: CalendarDay): string {
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+// ── Génération depuis l'édition ─────────────────────────────────────────────
+function addDays(dateStr: string, n: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const missingDates = computed<string[]>(() => {
+  const start = eventStore.activeEdition?.startDt
+  const end = eventStore.activeEdition?.endDt
+  if (!start || !end) return []
+  const startDate = start.slice(0, 10)
+  const endDate = end.slice(0, 10)
+  const existing = new Set(calendarDays.value.map((d) => d.date))
+  const dates: string[] = []
+  let cursor = startDate
+  let guard = 0
+  while (cursor <= endDate && guard < 1000) {
+    if (!existing.has(cursor)) dates.push(cursor)
+    if (cursor === endDate) break
+    cursor = addDays(cursor, 1)
+    guard += 1
+  }
+  return dates
+})
+
+const generateDisabledReason = computed<string>(() => {
+  const start = eventStore.activeEdition?.startDt
+  const end = eventStore.activeEdition?.endDt
+  if (!start || !end) return "L'édition n'a pas de dates de début/fin."
+  if (missingDates.value.length === 0) return 'Toutes les journées entre les dates de l\'édition sont déjà créées.'
+  return ''
+})
+
+const generateDisabled = computed(() => generateDisabledReason.value !== '')
+
+const generateFormValid = computed(() => generateStart.value && generateEnd.value && missingDates.value.length > 0)
+
+function openGenerate() {
+  generateStart.value = '09:00'
+  generateEnd.value = '20:00'
+  generateError.value = ''
+  generateFormVisible.value = true
+}
+
+function closeGenerate() {
+  generateFormVisible.value = false
+}
+
+async function confirmGenerate() {
+  if (!generateFormValid.value) return
+  const editionId = eventStore.activeEdition?.id
+  if (!editionId) return
+  generating.value = true
+  generateError.value = ''
+  try {
+    await eventStore.generatePlayDays(editionId, {
+      startTime: generateStart.value,
+      targetEndTime: generateEnd.value,
+    })
+    closeGenerate()
+  } catch (e) {
+    generateError.value = e instanceof Error ? e.message : 'Erreur lors de la génération.'
+  } finally {
+    generating.value = false
+  }
 }
 
 // ── Formulaire ─────────────────────────────────────────────────────────────
@@ -162,6 +240,42 @@ async function confirmDelete(id: number) {
       </div>
     </div>
 
+    <!-- ── Générer depuis l'édition ────────────────────────────────────── -->
+    <div v-if="generateFormVisible" class="pd-form">
+      <h4 class="pd-form-title">Générer depuis l'édition</h4>
+      <div class="pd-form-fields">
+        <label class="pd-fld">
+          <span class="pd-fld-lbl">Heure de début <span class="req">*</span></span>
+          <input v-model="generateStart" type="time" class="pd-input" :disabled="generating" />
+        </label>
+        <label class="pd-fld">
+          <span class="pd-fld-lbl">Heure de fin cible <span class="req">*</span></span>
+          <input v-model="generateEnd" type="time" class="pd-input" :disabled="generating" />
+        </label>
+      </div>
+      <p v-if="generateDisabledReason" class="pd-form-error">{{ generateDisabledReason }}</p>
+      <template v-else>
+        <div class="pd-generate-preview">
+          <p class="pd-generate-preview-title">Journées qui seront créées ({{ missingDates.length }}) :</p>
+          <ul class="pd-generate-preview-list">
+            <li v-for="date in missingDates" :key="date">{{ formatDate(date) }}</li>
+          </ul>
+        </div>
+      </template>
+      <p v-if="generateError" class="pd-form-error">{{ generateError }}</p>
+      <div class="pd-form-actions">
+        <button class="adm-btn" type="button" :disabled="generating" @click="closeGenerate">Annuler</button>
+        <button
+          class="adm-btn primary"
+          type="button"
+          :disabled="!generateFormValid || generating"
+          @click="confirmGenerate"
+        >
+          {{ generating ? 'Génération…' : `Créer ${missingDates.length} journée${missingDates.length > 1 ? 's' : ''}` }}
+        </button>
+      </div>
+    </div>
+
     <!-- ── Formulaire création / édition ───────────────────────────────── -->
     <div v-if="formVisible" class="pd-form">
       <h4 class="pd-form-title">{{ editingId !== null ? 'Modifier la journée' : 'Nouvelle journée' }}</h4>
@@ -189,7 +303,17 @@ async function confirmDelete(id: number) {
     </div>
 
     <template #footer>
-      <button v-if="!formVisible" class="adm-btn primary" type="button" @click="openCreate">
+      <button
+        v-if="!formVisible && !generateFormVisible"
+        class="adm-btn"
+        type="button"
+        :disabled="generateDisabled"
+        :title="generateDisabled ? generateDisabledReason : undefined"
+        @click="openGenerate"
+      >
+        Générer depuis l'édition
+      </button>
+      <button v-if="!formVisible && !generateFormVisible" class="adm-btn primary" type="button" @click="openCreate">
         + Nouvelle journée
       </button>
       <button class="adm-btn" type="button" @click="emit('close')">Fermer</button>
@@ -337,6 +461,37 @@ async function confirmDelete(id: number) {
   margin: 0;
   font-size: 13px;
   color: var(--danger);
+}
+
+.pd-generate-preview {
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-sm);
+  background: var(--bg-2);
+  padding: 10px 14px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.pd-generate-preview-title {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.pd-generate-preview-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pd-generate-preview-list li {
+  font-size: 13px;
+  color: var(--ink-0);
+  text-transform: capitalize;
 }
 
 .pd-form-actions {

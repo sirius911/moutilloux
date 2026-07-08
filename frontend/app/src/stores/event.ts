@@ -285,6 +285,12 @@ export const useEventStore = defineStore('event', () => {
     await fetchCalendar(editionId)
   }
 
+  async function generatePlayDays(editionId: number, payload: { startTime: string; targetEndTime: string }) {
+    const result = await post<{ playDays: PlayDay[] }>(`/api/editions/${editionId}/play-days/generate/`, payload)
+    await fetchCalendar(editionId)
+    return result
+  }
+
   async function updatePlayDay(playDayId: number, payload: Partial<PlayDayPayload>) {
     const editionId = activeEdition.value?.id
     await post(`/api/play-days/${playDayId}/edit/`, payload)
@@ -503,7 +509,7 @@ export const useEventStore = defineStore('event', () => {
     // Mutations — P4 planning
     editMatch, featureMatch, startMatch,
     // Mutations — Sprint 08 calendrier
-    createPlayDay, updatePlayDay, deletePlayDay,
+    createPlayDay, updatePlayDay, deletePlayDay, generatePlayDays,
     createBreak, updateBreak, deleteBreak,
     reorderCalendar, autoArrangeMatches,
     // Mutations — P7 bracket
