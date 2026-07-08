@@ -373,51 +373,54 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #111
-**Sprint traité :** 27 — Poules : suivi & suppression (1ʳᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #112
+**Sprint traité :** 27 — Poules : suivi & suppression (2ᵉ session du sprint)
 
-**Git :** branche `claude/sprint/27-poules-suivi-suppression`, créée depuis
-`claude/sprint/26-qualification-poule-terminee` (parent effectif — sprint 26
-toujours non mergé dans `origin/main`). Working tree propre au démarrage,
-rien à merger.
+**Git :** branche `claude/sprint/27-poules-suivi-suppression`, déjà sur la
+bonne branche au démarrage (3 commits d'avance sur
+`origin/claude/sprint/26-qualification-poule-terminee`, résolue comme
+parent effectif — sprint 26 toujours non mergé dans `origin/main`, même
+mécanique que la session #111 ; la prédiction de bascule vers
+`claude/sprint/25-arbitre-fins-speciales` ne s'est pas produite). Working
+tree propre au démarrage, rien à merger (`git merge origin/<parent>` déjà
+à jour).
 
-**Spec review session #111 :** verdict `❌ Dérive bloquante` sur
-`admin-poules.md` — attendu, sprint pas encore démarré à l'entrée en
-session. 3 dérives confirmées dans le code réel (`AdminGroups.vue` : aucune
-action « Supprimer la poule » en `INSCRIPTION` ; `api_event_groups`
-n'exposait aucun détail de matchs par poule ; aucune légende du badge Q ni
-des états), toutes déjà couvertes par les 5 issues du sprint (#292-296). 0
-nouvelle issue.
+**Spec review session #112 :** verdict `❌ Dérive bloquante` sur
+`admin-poules.md` — attendu (2/5 tickets seulement traités en entrée de
+session). 3 dérives confirmées, toutes déjà couvertes par les issues
+ouvertes du sprint (#293, #295, #296). 0 nouvelle issue.
 
-**Backlog engine session #111 :** 2 tickets traités (max de la session,
-back uniquement — ordre suggéré par `sprint.md`, débloque #293/#295 pour la
-session suivante) :
-- #292 ✅ Approuvé — service `delete_group` (`live/admin_views.py`) +
-  endpoint `POST /api/groups/<id>/delete/` (`live/api_views.py`).
-- #294 ⚠️ Approuvé avec réserves → corrigé dans la session — endpoint
-  `api_event_groups` enrichi d'une clé `matches` par poule (`_pack_match`) ;
-  la review a détecté un N+1 réel (`select_related` omettait `"group"`,
-  déréférencé par `_pack_match.stage_label` pour tout match `GROUP` —
-  mesuré : 24 requêtes supplémentaires sur un event à 4 poules/24 matchs),
-  corrigé par l'orchestrateur avant clôture.
+**Backlog engine session #112 :** 2 tickets traités (max de la session,
+front uniquement — ordre suggéré par `sprint.md`) :
+- #293 ✅ Approuvé — bouton « Supprimer la poule » sur l'en-tête de carte
+  (`AdminGroups.vue`), visible seulement hors verrouillage, `ConfirmModal`
+  avec message adapté poule vide/avec membres.
+- #295 ✅ Approuvé — mode suivi : rang/V-D/points ajoutés aux lignes de
+  classement, nouveau bloc « Matchs de la poule » (4 états : terminé
+  score+vainqueur/Forfait, en cours, à venir, annulé), polling ~5s
+  (`usePolling`) actif seulement en mode suivi. Écart mineur au plan
+  justifié : `Entry.displayName` utilisé plutôt que `player.fullName` pour
+  couvrir aussi les matchs de double.
 
-**Fichier partagé câblé :** `live/urls.py` — route
-`api/groups/<int:group_id>/delete/` → `api_views.api_group_delete` (#292).
-Aucune migration.
+**Fichier partagé câblé :** `frontend/app/src/stores/event.ts` — action
+`deleteGroup(groupId, eventId)` ajoutée par l'orchestrateur pour #293
+(`types/index.ts` n'est pas un fichier réservé — édité directement par
+l'agent pour #295). Aucune migration.
 
 **Sprint 27 — pas clôturable cette session :** spec review `❌` (attendu) +
-3 issues encore ouvertes (#293, #295, #296) → conditions de l'étape 3 non
-réunies. Sprint 27 reste actif, sera repris à la **prochaine échéance
-planifiée**.
+1 issue encore ouverte (#296, mineure — légende du badge Q, hors périmètre
+de cette session par la limite des 2 tickets/session) → conditions de
+l'étape 3 non réunies. Sprint 27 reste actif, sera repris à la **prochaine
+échéance planifiée** (devrait être clôturable dès la session suivante :
+#296 seul restant, spec review devrait alors passer `✅ Conforme`).
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
-`package.json` — non pertinent cette session (0 changement front).
+`package.json` — `npx vue-tsc --noEmit` utilisé directement (2× cette
+session, aucune erreur). Toujours pas de `.claude/launch.json` pour
+prévisualiser l'app dans ce repo — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non
 fusionnée dans `main`). Point à traiter côté humain (revue/merge des PRs),
-hors périmètre de la Routine automatique. Tant que cette chaîne n'est pas
-mergée dans `main`, le sprint 27 gardera probablement
-`claude/sprint/25-arbitre-fins-speciales` comme parent effectif à sa
-prochaine session (même mécanique de résolution de parent que pour le
-sprint 26).
+hors périmètre de la Routine automatique.
