@@ -10,3 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
+| 1 | Sprint 08 — Calendrier : écran admin | (à créer) |
+| 2 | Sprint 09 — Calendrier : programme TV | (à créer) |
