@@ -373,39 +373,41 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #116
-**Sprint traité :** 28 — Admin : annonces & inscription par sélection (2ᵉ et dernière session du sprint — clôture)
+**Dernière session :** 2026-07-08 — Session #117
+**Sprint traité :** 29 — Joueurs : attitudes prédéfinies (1ʳᵉ session du sprint)
 
-**Git :** branche `claude/sprint/28-annonces-inscriptions-selection`,
-parent effectif `claude/sprint/27-poules-suivi-suppression` (sprint 27
+**Git :** branche `claude/sprint/29-joueurs-attitudes-predefinies`,
+parent effectif `claude/sprint/28-annonces-inscriptions-selection` (sprint 28
 toujours non mergé dans `origin/main`, résolu via `backlog/sprints/done/`).
-Working tree propre au démarrage, `git merge origin/<parent>` déjà à jour
-(rien à intégrer).
+Branche créée depuis `origin/claude/sprint/28-annonces-inscriptions-selection`
+(rien à intégrer, déjà à jour).
 
-**Spec review session #116 :** verdict `✅ Conforme` sur `admin-tournoi.md`
-(carte Annonces TV) et `admin-inscriptions.md` (sélection par cases à
-cocher) — cette fois vérifiée contre le code effectivement implémenté en
-session #115 (les deux tickets #297/#298 étaient déjà clos avant le début
-de cette session). Comportement conforme point par point : édition inline
-Entrée/Échap/vide refusé côté annonces ; case par ligne + « Tout cocher »
-respectant le filtre de recherche + sélection non perdue au filtrage +
-vidée seulement après succès côté inscriptions. `npx vue-tsc --noEmit` :
-0 erreur. 0 nouvelle dérive, 0 nouvelle issue.
+**Spec review session #117 :** verdict `⚠️ Dérive mineure` sur
+`admin-joueurs.md` et `affiche-match.md` — dérive attendue et déjà entièrement
+ticketée avant le début de la session (`Player.attitude` CharField texte libre
+au lieu de `Player.attitudes` JSONField liste prédéfinie), 0 nouvelle dérive,
+0 nouvelle issue créée.
 
-**Backlog engine session #116 :** 0 ticket traité — les 2 tickets du sprint
-(#297, #298) étaient déjà clos en session #115 ; aucune issue `sprint-28`
-ouverte à traiter.
+**Backlog engine session #117 :** 2 tickets traités (limite de la session) —
+#299 (back : `Player.attitude` → `Player.attitudes` JSONField, migration de
+schéma sans reprise de données, packers `_pack_entry`/`_pack_player` et
+endpoints player create/edit adaptés, fallback `live/posters.py` corrigé) et
+#300 (front : `constants/attitudes.json` nouveau + multi-sélection par chips
+dans `AddPlayerModal.vue`, payload `attitudes: string[]`). Les deux `✅
+Approuvé` en review, fermés sur GitHub. `npx vue-tsc --noEmit` : 0 erreur
+après câblage orchestrateur.
 
-**Sprint 28 — clôturé cette session :** les deux conditions de fin de
-sprint sont remplies (spec review `✅ Conforme` + 0 issue `sprint-28`
-ouverte). Milestone GitHub n°27 fermé via l'API, ligne supprimée de
-`backlog/sprints/roadmap.md`, dossier déplacé dans
-`backlog/sprints/done/28-annonces-inscriptions-selection/`. Commit
-`7ae19ac`.
+**Fichiers partagés câblés par l'orchestrateur :** `types/index.ts`
+(`Player.attitudes: string[]`), `stores/event.ts`
+(`PlayerEditPayload.attitudes?: string[]`), et un correctif minimal de
+compilation dans `EditMatchPanel.vue` (stopgap `side.team.playerN.attitudes?.[0]
+?? ''`, la vraie feature tirage/choix explicite reste le périmètre du ticket
+#301).
 
-**Sprint suivant dans la roadmap :** 29 — Joueurs : attitudes prédéfinies.
-Ne sera traité qu'à la **prochaine échéance planifiée** (règle : un seul
-sprint démarré par session).
+**Sprint 29 — non clôturé cette session :** ticket #301 encore ouvert (« Front :
+onglet Affiche — tirage au sort + choix explicite d'attitude »), non traité
+(limite de 2 tickets/session atteinte avec #299/#300). Sera repris à la
+**prochaine échéance planifiée**.
 
 **Point d'attention outillage :** toujours pas de script `type-check` dans
 `package.json` — `npx vue-tsc --noEmit` utilisé directement. Toujours pas
