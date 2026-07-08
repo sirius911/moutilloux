@@ -493,6 +493,17 @@ def api_event_groups(request, event_id):
     tables = build_event_group_tables(edition, [event])
     groups_data = tables.get(event.id, [])
 
+    group_ids = [table["group"].id for table in groups_data]
+    matches_by_group = {}
+    if group_ids:
+        matches_qs = (
+            Match.objects.filter(group_id__in=group_ids, stage=Match.Stage.GROUP)
+            .select_related("court", "side_a", "side_a__player", "side_b", "side_b__player", "group")
+            .order_by("id")
+        )
+        for m in matches_qs:
+            matches_by_group.setdefault(m.group_id, []).append(_pack_match(m))
+
     result = []
     for table in groups_data:
         group = table["group"]
@@ -559,6 +570,7 @@ def api_event_groups(request, event_id):
             "name": group.name,
             "standings": standings,
             "grid": grid,
+            "matches": matches_by_group.get(group.id, []),
         })
 
     locked = event.status != Event.Status.INSCRIPTION
