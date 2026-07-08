@@ -11,7 +11,7 @@ export interface PlayerEditPayload {
   phone?: string
   email?: string
   license_number?: string
-  attitude?: string
+  attitudes?: string[]
 }
 
 export interface MatchEditPayload {

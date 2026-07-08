@@ -11,7 +11,7 @@ export interface Player {
   email: string
   phone: string
   photoUrl: string | null
-  attitude: string
+  attitudes: string[]
 }
 
 export interface EntryPlayer {
@@ -21,7 +21,7 @@ export interface EntryPlayer {
   fullName: string
   gender: 'M' | 'F' | 'O'
   licenseNumber: string
-  attitude: string             // adjectif d'attitude par défaut (affiches)
+  attitudes: string[]           // adjectifs d'attitude prédéfinis (affiches)
   photoUrl: string | null
 }
 

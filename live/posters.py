@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import base64
 import os
+import random
 import threading
 import uuid
 from pathlib import Path
@@ -276,7 +277,10 @@ def _run_poster_job(job_id: int) -> None:
         if len(attitude_values) == len(players):
             adjectives = attitude_values
         else:
-            adjectives = [p.attitude or "déterminé" for p in players]
+            adjectives = [
+                random.choice(p.attitudes) if p.attitudes else "déterminé"
+                for p in players
+            ]
 
         prompt = build_prompt(names, sexes, adjectives)
 

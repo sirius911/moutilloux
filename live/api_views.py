@@ -164,7 +164,7 @@ def _pack_entry(entry):
             "fullName": str(p),
             "gender": p.gender,
             "licenseNumber": p.license_number,
-            "attitude": p.attitude,
+            "attitudes": list(p.attitudes or []),
             "photoUrl": p.photo.url if p.photo else None,
         }
     else:
@@ -187,7 +187,7 @@ def _pack_player(p):
         "email": p.email,
         "licenseNumber": p.license_number,
         "photoUrl": p.photo.url if p.photo else None,
-        "attitude": p.attitude,
+        "attitudes": list(p.attitudes or []),
     }
 
 
@@ -726,7 +726,9 @@ def api_player_create(request):
     email = data.get("email", "").strip()
     phone = data.get("phone", "").strip()
     license_number = data.get("license_number", "").strip()
-    attitude = data.get("attitude", "").strip()
+    attitudes = data.get("attitudes")
+    if not isinstance(attitudes, list):
+        attitudes = []
 
     if not first_name or not last_name:
         return JsonResponse({"error": "Prénom et nom requis."}, status=400)
@@ -749,7 +751,7 @@ def api_player_create(request):
         email=email,
         phone=phone,
         license_number=license_number,
-        attitude=attitude,
+        attitudes=attitudes,
     )
 
     return JsonResponse({"ok": True, "playerId": player.id})
@@ -793,7 +795,12 @@ def api_player_edit(request, player_id):
     # la modale n'envoie que nom/prénom/genre.
     fields = PlayerForm.Meta.fields
     merged = {f: getattr(player, f) for f in fields}
-    merged.update({k: v for k, v in data.items() if k in fields})
+    provided = {k: v for k, v in data.items() if k in fields}
+    if "attitudes" in provided and not isinstance(provided["attitudes"], list):
+        # Ne pas écraser avec une valeur non-liste (ex. null) : le serveur ne
+        # revalide pas le contenu de la liste, seulement sa forme.
+        provided.pop("attitudes")
+    merged.update(provided)
 
     form = PlayerForm(merged, instance=player)
     if not form.is_valid():
