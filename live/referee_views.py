@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
-from live.admin_views import start_match, reopen_match
+from live.admin_views import start_match, reopen_match, forfait_match, cancel_match, finish_match_manual
 
 
 def is_referee(user):
@@ -279,6 +279,7 @@ def referee_action(request, match_id: int):
             # Match terminé ?
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
+                match.end_reason = Match.EndReason.NORMAL
                 match.is_featured = False
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
@@ -325,6 +326,7 @@ def referee_action(request, match_id: int):
 
             if match.sets_a >= sets_needed or match.sets_b >= sets_needed:
                 match.status = Match.Status.FINISHED
+                match.end_reason = Match.EndReason.NORMAL
                 match.is_featured = False
                 match.winner_side = "A" if match.sets_a > match.sets_b else "B"
 
@@ -460,7 +462,7 @@ def referee_action(request, match_id: int):
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
             "status", "is_featured",
-            "winner_side",
+            "winner_side", "end_reason",
         ])
         return JsonResponse({"ok": True})
 
@@ -474,7 +476,7 @@ def referee_action(request, match_id: int):
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
             "status", "is_featured",
-            "winner_side",
+            "winner_side", "end_reason",
         ])
         return JsonResponse({"ok": True})
 
@@ -673,31 +675,29 @@ def referee_action(request, match_id: int):
         if winner not in ("A", "B"):
             return JsonResponse({"ok": False, "error": "winner doit être 'A' ou 'B'"}, status=400)
 
-        match.winner_side = winner          # repère modèle direct, pas de swap
-        match.is_featured = False
-        match.mark_finished()
-        match.save()
+        retirement = bool(data.get("retirement", False))
+        try:
+            finish_match_manual(match, winner, retirement=retirement)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
 
-        if match.stage == Match.Stage.GROUP and match.group_id:
-            gid = match.group_id
-            _ev_winner = match.event
-            transaction.on_commit(lambda: recalc_one_group(gid))
-            from live.bracket import sync_final_bracket_for_event
-            transaction.on_commit(lambda ev=_ev_winner: sync_final_bracket_for_event(ev))
-        if match.stage in (Match.Stage.QF, Match.Stage.SF):
-            from live.bracket import sync_final_winners_for_event, sync_p3_losers_for_event
-            transaction.on_commit(lambda: sync_final_winners_for_event(match.event))
-            transaction.on_commit(lambda: sync_p3_losers_for_event(match.event))
-        if match.stage == Match.Stage.F:
-            _event = match.event
-            def _try_close_winner(ev=_event):
-                from live.admin_views import close_event
-                try:
-                    close_event(ev)
-                except ValueError:
-                    pass
-            transaction.on_commit(_try_close_winner)
+        return JsonResponse({"ok": True})
 
+    if action == "forfait":
+        winner = data.get("winner")
+        if winner not in ("A", "B"):
+            return JsonResponse({"ok": False, "error": "winner doit être 'A' ou 'B'"}, status=400)
+        try:
+            forfait_match(match, winner)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+        return JsonResponse({"ok": True})
+
+    if action == "annuler":
+        try:
+            cancel_match(match)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
         return JsonResponse({"ok": True})
 
     if action == "reopen":

@@ -33,6 +33,53 @@ interface FinishCandidate {
   isLeading: boolean
 }
 const finishModal = ref(false)
+const retirement = ref(false)
+
+// Modal de forfait — désigner le joueur présent (SCHEDULED uniquement)
+const forfaitModal = ref(false)
+
+async function confirmForfait(winner: 'A' | 'B') {
+  const ok = await sendAction('forfait', { winner })
+  if (ok) forfaitModal.value = false
+}
+
+// Tiroir « Corrections » — jeux±, sets±, serveur, inversion d'affichage
+const correctionsOpen = ref(false)
+
+// Affichage swap — état local, en lock-step avec le flag de session back (voir plan #283)
+const swapped = ref(false)
+
+function sideAt(pos: 'left' | 'right'): 'A' | 'B' {
+  const base: 'A' | 'B' = pos === 'left' ? 'A' : 'B'
+  if (!swapped.value) return base
+  return base === 'A' ? 'B' : 'A'
+}
+const leftModelSide = computed(() => sideAt('left'))
+const rightModelSide = computed(() => sideAt('right'))
+
+function playerName(side: 'A' | 'B'): string {
+  if (!match.value) return side === 'A' ? 'Joueur A' : 'Joueur B'
+  return side === 'A'
+    ? (match.value.sideA?.player?.fullName ?? match.value.sideALabel ?? 'Joueur A')
+    : (match.value.sideB?.player?.fullName ?? match.value.sideBLabel ?? 'Joueur B')
+}
+function sideSets(side: 'A' | 'B'): number {
+  return side === 'A' ? (match.value?.setsA ?? 0) : (match.value?.setsB ?? 0)
+}
+function sideGames(side: 'A' | 'B'): number {
+  return side === 'A' ? (match.value?.gamesA ?? 0) : (match.value?.gamesB ?? 0)
+}
+function sidePoints(side: 'A' | 'B'): number {
+  return side === 'A' ? (match.value?.pointsA ?? 0) : (match.value?.pointsB ?? 0)
+}
+function sideTbPoints(side: 'A' | 'B'): number {
+  return side === 'A' ? (match.value?.tbPointsA ?? 0) : (match.value?.tbPointsB ?? 0)
+}
+
+async function handleSwap() {
+  const ok = await sendAction('swap')
+  if (ok) swapped.value = !swapped.value
+}
 
 // Toast d'erreur (action refusée par le moteur de score → message JSON renvoyé)
 const error = ref('')
@@ -54,14 +101,16 @@ function extractError(e: unknown): string {
   return 'Action impossible.'
 }
 
-async function sendAction(action: string, extra: Record<string, unknown> = {}) {
+async function sendAction(action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
     await post(`/arbitre/match/${props.matchId}/action/`, { action, ...extra })
     // Le moteur renvoie {ok:true} sans l'état → on rafraîchit tout de suite
     // (sans attendre le tick de polling) pour un retour immédiat.
     await live.fetchMatch(props.matchId)
+    return true
   } catch (e) {
     showError(extractError(e))
+    return false
   }
 }
 
@@ -74,18 +123,14 @@ function handleUndo() {
   sendAction('reset_points')
 }
 
-function handleToggleServer() {
-  sendAction('toggle_service')
-}
-
 function askConfirm(action: string, label: string) {
   confirmModal.value = { action, label }
 }
 
 async function confirm() {
   if (!confirmModal.value) return
-  await sendAction(confirmModal.value.action)
-  confirmModal.value = null
+  const ok = await sendAction(confirmModal.value.action)
+  if (ok) confirmModal.value = null
 }
 
 function cancel() {
@@ -94,11 +139,17 @@ function cancel() {
 
 // Fin de match — vainqueur explicite
 function openFinishModal() {
+  retirement.value = false
   finishModal.value = true
 }
 
 async function confirmFinish(winner: 'A' | 'B') {
-  await sendAction('finish_winner', { winner })
+  const ok = await sendAction('finish_winner', { winner, retirement: retirement.value })
+  if (ok) finishModal.value = false
+}
+
+function closeFinishModal() {
+  retirement.value = false
   finishModal.value = false
 }
 
@@ -128,14 +179,21 @@ function pointDisplay(n: number, inTb: boolean): string {
 const statusLabel = computed(() => {
   if (!match.value) return ''
   if (match.value.status === 'SCHEDULED') return 'PRÉVU'
+  if (match.value.status === 'CANCELED') return 'ANNULÉ'
   if (match.value.tbActive) return 'JEU DÉCISIF'
-  if (match.value.status === 'FINISHED') return 'TERMINÉ'
+  if (match.value.status === 'FINISHED') {
+    if (match.value.endReason === 'WALKOVER') return 'TERMINÉ · FORFAIT'
+    if (match.value.endReason === 'RETIREMENT') return 'TERMINÉ · ABANDON'
+    return 'TERMINÉ'
+  }
   return 'EN COURS'
 })
 
 const isFinished = computed(() => match.value?.status === 'FINISHED')
 const isScheduled = computed(() => match.value?.status === 'SCHEDULED')
 const isLive = computed(() => match.value?.status === 'LIVE')
+const isCanceled = computed(() => match.value?.status === 'CANCELED')
+const isReadOnly = computed(() => isFinished.value || isCanceled.value)
 
 async function handleStart() {
   try {
@@ -171,7 +229,7 @@ async function handleStart() {
         <div class="arb-header-center">
           <span class="arb-category">{{ match?.stageLabel ?? '—' }}</span>
           <span v-if="match?.formatLabel" class="arb-format">{{ match.formatLabel }}</span>
-          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled }">
+          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled, canceled: isCanceled }">
             {{ statusLabel }}
           </span>
         </div>
@@ -180,13 +238,13 @@ async function handleStart() {
 
       <!-- Bloc score -->
       <div class="arb-score-block">
-        <!-- Joueur A -->
+        <!-- Joueur (côté gauche affiché) -->
         <div class="arb-score-player">
-          <span class="arb-player-label">{{ match?.sideA?.player?.fullName ?? match?.sideALabel ?? 'Joueur A' }}</span>
+          <span class="arb-player-label">{{ playerName(leftModelSide) }}</span>
           <div class="arb-player-meta">
-            <span>SETS {{ match?.setsA ?? 0 }}</span>
-            <span>JEUX {{ match?.gamesA ?? 0 }}</span>
-            <span v-if="match?.server === 'A'" class="serve-indicator">●</span>
+            <span>SETS {{ sideSets(leftModelSide) }}</span>
+            <span>JEUX {{ sideGames(leftModelSide) }}</span>
+            <span v-if="match?.server === leftModelSide" class="serve-indicator">●</span>
           </div>
         </div>
 
@@ -195,22 +253,22 @@ async function handleStart() {
           <span class="score-label">{{ match?.tbActive ? 'JEU DÉCISIF' : 'POINT' }}</span>
           <div class="score-nums tab">
             <span class="score-a">
-              {{ match ? (match.tbActive ? match.tbPointsA : pointDisplay(match.pointsA, false)) : '0' }}
+              {{ match ? (match.tbActive ? sideTbPoints(leftModelSide) : pointDisplay(sidePoints(leftModelSide), false)) : '0' }}
             </span>
             <span class="score-sep">·</span>
             <span class="score-b">
-              {{ match ? (match.tbActive ? match.tbPointsB : pointDisplay(match.pointsB, false)) : '0' }}
+              {{ match ? (match.tbActive ? sideTbPoints(rightModelSide) : pointDisplay(sidePoints(rightModelSide), false)) : '0' }}
             </span>
           </div>
         </div>
 
-        <!-- Joueur B -->
+        <!-- Joueur (côté droit affiché) -->
         <div class="arb-score-player arb-score-player--right">
-          <span class="arb-player-label">{{ match?.sideB?.player?.fullName ?? match?.sideBLabel ?? 'Joueur B' }}</span>
+          <span class="arb-player-label">{{ playerName(rightModelSide) }}</span>
           <div class="arb-player-meta">
-            <span v-if="match?.server === 'B'" class="serve-indicator">●</span>
-            <span>SETS {{ match?.setsB ?? 0 }}</span>
-            <span>JEUX {{ match?.gamesB ?? 0 }}</span>
+            <span v-if="match?.server === rightModelSide" class="serve-indicator">●</span>
+            <span>SETS {{ sideSets(rightModelSide) }}</span>
+            <span>JEUX {{ sideGames(rightModelSide) }}</span>
           </div>
         </div>
       </div>
@@ -218,12 +276,12 @@ async function handleStart() {
       <!-- Zones de tap -->
       <div class="arb-tap-area" :class="{ disabled: !isLive }">
         <button class="tap-zone tap-zone--a" :disabled="!isLive" @click="handleTap('left')">
-          <span class="tap-player-name">{{ match?.sideA?.player?.fullName ?? 'A' }}</span>
+          <span class="tap-player-name">{{ playerName(leftModelSide) }}</span>
           <span class="tap-cta">+ POINT</span>
           <span class="tap-hint">TAP ICI</span>
         </button>
         <button class="tap-zone tap-zone--b" :disabled="!isLive" @click="handleTap('right')">
-          <span class="tap-player-name">{{ match?.sideB?.player?.fullName ?? 'B' }}</span>
+          <span class="tap-player-name">{{ playerName(rightModelSide) }}</span>
           <span class="tap-cta">+ POINT</span>
           <span class="tap-hint">TAP ICI</span>
         </button>
@@ -241,18 +299,30 @@ async function handleStart() {
             <span class="action-icon">▶</span>
             <span class="action-label">Démarrer le match</span>
           </button>
+          <button class="action-btn" title="Déclarer forfait" @click="forfaitModal = true">
+            <span class="action-icon">⚑</span>
+            <span class="action-label">Forfait</span>
+          </button>
+          <button
+            class="action-btn action-btn--danger-ghost"
+            title="Annuler le match"
+            @click="askConfirm('annuler', 'Annuler le match ?')"
+          >
+            <span class="action-icon">✕</span>
+            <span class="action-label">Annuler</span>
+          </button>
         </template>
         <template v-else>
-          <button class="action-btn" title="Remettre les points à 0-0" :disabled="isFinished" @click="handleUndo">
+          <button class="action-btn" title="Remettre les points à 0-0" :disabled="isReadOnly" @click="handleUndo">
             <span class="action-icon">↩</span>
             <span class="action-label">0 pts</span>
           </button>
-          <button class="action-btn" title="Changer serveur" :disabled="isFinished" @click="handleToggleServer">
-            <span class="action-icon">⇄</span>
-            <span class="action-label">Serveur</span>
+          <button class="action-btn" title="Corrections" :disabled="isReadOnly" @click="correctionsOpen = true">
+            <span class="action-icon">✎</span>
+            <span class="action-label">Corrections</span>
           </button>
           <button
-            v-if="!isFinished"
+            v-if="!isReadOnly"
             class="action-btn action-btn--danger"
             title="Terminer le match"
             @click="openFinishModal"
@@ -263,7 +333,7 @@ async function handleStart() {
           <button
             class="action-btn action-btn--danger-ghost"
             title="Réinitialiser"
-            :disabled="isFinished"
+            :disabled="isReadOnly"
             @click="askConfirm('reset_all', 'Réinitialiser le match ?')"
           >
             <span class="action-icon">↺</span>
@@ -299,11 +369,16 @@ async function handleStart() {
 
     <!-- Modal de fin de match — sélection du vainqueur -->
     <Teleport to="body">
-      <div v-if="finishModal" class="modal-backdrop" @click.self="finishModal = false">
+      <div v-if="finishModal" class="modal-backdrop" @click.self="closeFinishModal">
         <div class="modal-card">
           <div class="modal-icon modal-icon--trophy">🏆</div>
           <h3 class="modal-title">Déclarer vainqueur</h3>
           <p class="modal-body">Choisissez le vainqueur du match. Cette action est irréversible.</p>
+
+          <label class="finish-retirement-toggle">
+            <input v-model="retirement" type="checkbox" />
+            <span>Abandon adverse</span>
+          </label>
 
           <div class="modal-actions modal-actions--vertical">
             <button
@@ -324,7 +399,84 @@ async function handleStart() {
               <span v-if="finishCandidates?.b.isLeading" class="leading-badge">Mène</span>
             </button>
 
-            <button class="btn-secondary" @click="finishModal = false">Annuler</button>
+            <button class="btn-secondary" @click="closeFinishModal">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Modal de forfait — désigner le joueur présent -->
+    <Teleport to="body">
+      <div v-if="forfaitModal" class="modal-backdrop" @click.self="forfaitModal = false">
+        <div class="modal-card">
+          <div class="modal-icon">⚑</div>
+          <h3 class="modal-title">Déclarer forfait</h3>
+          <p class="modal-body">Qui est présent ? Le joueur choisi est déclaré vainqueur.</p>
+
+          <div class="modal-actions modal-actions--vertical">
+            <button class="btn-finish" @click="confirmForfait('A')">
+              <span>{{ playerName('A') }}</span>
+            </button>
+            <button class="btn-finish" @click="confirmForfait('B')">
+              <span>{{ playerName('B') }}</span>
+            </button>
+            <button class="btn-secondary" @click="forfaitModal = false">Annuler</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Tiroir « Corrections » — jeux±, sets±, serveur, inversion d'affichage -->
+    <Teleport to="body">
+      <div v-if="correctionsOpen" class="modal-backdrop" @click.self="correctionsOpen = false">
+        <div class="modal-card corrections-card">
+          <h3 class="modal-title">Corrections</h3>
+          <p class="modal-body">Format : {{ match?.formatLabel ?? '—' }} (lecture seule)</p>
+
+          <div class="corrections-group">
+            <span class="corrections-group-label">Jeux</span>
+            <div class="corrections-row">
+              <span class="corrections-row-name">{{ playerName(leftModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('game_left_minus')">−</button>
+              <span class="corrections-val tab">{{ sideGames(leftModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('game_left_plus')">+</button>
+            </div>
+            <div class="corrections-row">
+              <span class="corrections-row-name">{{ playerName(rightModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('game_right_minus')">−</button>
+              <span class="corrections-val tab">{{ sideGames(rightModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('game_right_plus')">+</button>
+            </div>
+          </div>
+
+          <div class="corrections-group">
+            <span class="corrections-group-label">Sets</span>
+            <div class="corrections-row">
+              <span class="corrections-row-name">{{ playerName(leftModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('set_left_minus')">−</button>
+              <span class="corrections-val tab">{{ sideSets(leftModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('set_left_plus')">+</button>
+            </div>
+            <div class="corrections-row">
+              <span class="corrections-row-name">{{ playerName(rightModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('set_right_minus')">−</button>
+              <span class="corrections-val tab">{{ sideSets(rightModelSide) }}</span>
+              <button class="corrections-btn" @click="sendAction('set_right_plus')">+</button>
+            </div>
+          </div>
+
+          <div class="corrections-group">
+            <span class="corrections-group-label">Service</span>
+            <button class="btn-secondary" @click="sendAction('toggle_service')">Changer le serveur</button>
+          </div>
+
+          <div class="corrections-group">
+            <span class="corrections-group-label">Affichage</span>
+            <button class="btn-secondary" @click="handleSwap">Inverser les côtés</button>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-secondary" @click="correctionsOpen = false">Fermer</button>
           </div>
         </div>
       </div>
@@ -416,6 +568,11 @@ async function handleStart() {
 }
 
 .arb-status-badge.scheduled {
+  background: var(--bg-4);
+  color: var(--ink-3);
+}
+
+.arb-status-badge.canceled {
   background: var(--bg-4);
   color: var(--ink-3);
 }
@@ -779,5 +936,88 @@ async function handleStart() {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   opacity: 0.7;
+}
+
+.finish-retirement-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-1);
+  cursor: pointer;
+}
+
+.finish-retirement-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* ── Tiroir Corrections ──────────────────────────────────────────────── */
+.corrections-card {
+  align-items: stretch;
+  max-width: 420px;
+}
+
+.corrections-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+}
+
+.corrections-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.corrections-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.corrections-row-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.corrections-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--bg-4);
+  border: 1px solid var(--line-2);
+  color: var(--ink-0);
+  font-size: 18px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.corrections-btn:hover {
+  filter: brightness(1.2);
+}
+
+.corrections-val {
+  min-width: 24px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-0);
 }
 </style>

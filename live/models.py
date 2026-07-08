@@ -141,6 +141,18 @@ class Match(models.Model):
     winner_side = models.CharField(max_length=1, choices=WinnerSide.choices, null=True, blank=True)
     is_walkover = models.BooleanField(default=False)
 
+    class EndReason(models.TextChoices):
+        NORMAL = "NORMAL", "Normale"
+        WALKOVER = "WALKOVER", "Forfait"
+        RETIREMENT = "RETIREMENT", "Abandon"
+
+    end_reason = models.CharField(
+        max_length=10,
+        choices=EndReason.choices,
+        null=True,
+        blank=True,
+    )
+
     def __str__(self) -> str:
         return f"{self.event}: {self.side_a} vs {self.side_b}"
 
@@ -158,6 +170,7 @@ class Match(models.Model):
 
     def mark_finished(self):
         self.status = Match.Status.FINISHED
+        self.end_reason = Match.EndReason.NORMAL
         if not self.finished_at:
             self.finished_at = timezone.now()
 

@@ -60,8 +60,9 @@ Le grand fond n'est plus vide : il accueille l'**enjeu du match**
 dans un panneau semi-transparent (l'affiche reste lisible derrière) :
 
 - **Match de poule** → le **classement de la poule** des deux joueurs
-  (standings : rang, nom, V/D, points, badge Q), les deux joueurs du match mis
-  en évidence. Le public voit ce que le match peut changer.
+  (standings : rang, nom, V/D, points, badge Q — affiché seulement si la poule
+  est **terminée**, voir [[cycle-de-vie-epreuve]]), les deux joueurs du match
+  mis en évidence. Le public voit ce que le match peut changer.
 - **Match de tableau** (QF/SF/F/P3) → le **mini-tableau** de l'épreuve, le
   match en cours mis en évidence (le chemin vers la finale).
 - Données fournies par [[tv-state]] (`stake`) ; si l'enjeu n'est pas
@@ -90,6 +91,15 @@ Au-dessus de la bande de score, **uniquement s'il existe un next** (défini par
 - Rotation automatique : **~8 s par slide**, fondu. Une slide **sans contenu
   est sautée** (décision 5). Les pastilles reflètent les slides réellement
   affichables.
+- **Pastille de progression** : la pastille de la slide courante se **remplit
+  progressivement** sur la durée de la slide — le public voit le temps restant
+  avant la suivante. Elle repart de zéro à chaque changement de slide.
+- **Rotation stable** : un rafraîchissement des données (poll `tv/idle`) ne
+  réinitialise **jamais** la rotation et ne change **jamais** la slide affichée
+  en cours de lecture. Un changement de composition (slide devenant vide ou
+  redevenant affichable) prend effet au **prochain** tick de rotation — la
+  slide courante est identifiée par sa **nature** (et son épreuve pour
+  Poules/Tableau), pas par sa position dans la liste.
 
 ### Slides (dans cet ordre)
 
@@ -97,7 +107,7 @@ Au-dessus de la bande de score, **uniquement s'il existe un next** (défini par
 |---|---|---|
 | **Tournoi** | Stats agrégées de l'édition : matchs joués / total, inscrits, épreuves — et le statut (« EN ATTENTE DU PROCHAIN MATCH »). | jamais (slide par défaut) |
 | **Derniers résultats** | Les **5 derniers matchs terminés** de l'édition (ordre `finished_at` décroissant — pas l'ordre calendaire), toutes épreuves : étape, joueurs (vainqueur en évidence), score par sets. | aucun match terminé |
-| **Poules** | Les poules d'**une épreuve** (lettre, standings V/D/Pts, badge Q) — **rotation par épreuve** : au passage suivant de la slide, l'épreuve suivante qui a des poules (décision 6). L'épreuve est nommée dans le titre. | aucune poule composée |
+| **Poules** | Les poules d'**une épreuve** (lettre, standings V/D/Pts, badge Q — seulement sur poule **terminée**, [[cycle-de-vie-epreuve]]) — **rotation par épreuve** : au passage suivant de la slide, l'épreuve suivante qui a des poules (décision 6). L'épreuve est nommée dans le titre. | aucune poule composée |
 | **Tableau** | Le tableau final d'**une épreuve** (QF→SF→F, + 3e place si l'épreuve l'active), étiquettes de provenance sur les places vides — même rotation par épreuve. | aucun tableau créé |
 | **Programme** | Les **N prochains matchs planifiés** (N ≈ 4–6) à partir du *next*, dans l'ordre de la séquence : ~heure, joueurs, étiquette de poule ; le premier marqué « bientôt ». Pied : « Horaires estimés — susceptibles de bouger ». **Journée courante épuisée** → titre « Programme de demain » et matchs de la journée suivante ; plus aucune journée → « Programme terminé » (slide affichée une fois puis sautée). | aucun match planifié restant |
 | **Annonces** | Les annonces **actives** de l'édition (voir [[tv-state]], modèle `Announcement`), en texte grand format. | aucune annonce active |

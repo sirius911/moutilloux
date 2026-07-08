@@ -176,6 +176,7 @@ export interface Match {
   setScores: SetResult[]
   winnerSide: MatchSide | null
   isWalkover?: boolean
+  endReason?: 'NORMAL' | 'WALKOVER' | 'RETIREMENT' | null
 
   // Points affichage tennis (retournés par le backend)
   displayPointA: string     // "0", "15", "30", "40", "AV"

@@ -14,10 +14,14 @@ fichiers:
 
 ## Rôle de l'écran
 
-L'écran Poules (`/admin/events/:eventId/groups`) compose les poules de l'**épreuve active** :
-répartition automatique des inscrits, ajustements manuels par glisser-déposer.
-La composition est libre **tant que l'épreuve n'est pas débutée** ; elle est
-ensuite verrouillée.
+L'écran Poules (`/admin/events/:eventId/groups`) a **deux visages selon le statut de
+l'épreuve** ([[cycle-de-vie-epreuve]]) :
+
+- **`INSCRIPTION` — composition** : répartition automatique des inscrits,
+  ajustements manuels par glisser-déposer, création/suppression de poules.
+- **`EN_COURS` / `TERMINÉE` — suivi** : la composition est verrouillée et chaque
+  poule affiche son **classement** et les **résultats de ses matchs** — c'est la
+  vue « où en est cette poule » de l'admin.
 
 Ni la génération des matchs ni le verrouillage ne se déclenchent ici : ils sont
 l'effet de **« Débuter l'épreuve »** sur l'écran Tournoi (voir
@@ -54,22 +58,40 @@ ponctuels** (forfait, remplacement, ajout tardif, retrait) restent possibles.
 
 Une carte par poule :
 - En-tête : lettre de la poule sur pastille accent, « Poule {X} », nombre de
-  joueurs.
+  joueurs, et (en `INSCRIPTION`) l'action **Supprimer la poule** (voir Flux).
 - Liste des membres en pastilles déplaçables ; un badge **Q** marque les
-  participants qualifiés (selon les classements une fois les résultats connus).
+  participants **qualifiés** — affiché **seulement une fois la poule terminée**
+  (aucun Q sur classement partiel, voir [[cycle-de-vie-epreuve]]), avec un
+  libellé au survol : « Qualifié pour le tableau final ».
 - Bouton ✕ par pastille : retire le joueur de la poule (équivalent au dépôt sur
   « Non assignés »).
 - Zone de dépôt vide : « Glissez un joueur ici ».
 
+### Suivi de poule (épreuve débutée)
+
+Dès que l'épreuve est `EN_COURS`, chaque carte de poule s'enrichit — mêmes
+données que la slide Poules de la TV ([[tv-live]]) plus le détail des matchs :
+
+- **Classement** : tableau rang / participant / V-D / points (source :
+  [[classement-poule]]), badge **Q** sur les qualifiés une fois la poule
+  terminée.
+- **Matchs de la poule** : chaque rencontre avec son état — score final et
+  vainqueur en évidence (`FINISHED`, libellé « Forfait » si walkover), « en
+  cours » (`LIVE`, score courant), « à venir » (`SCHEDULED`, ~heure estimée si
+  planifié), « annulé » (`CANCELED`, atténué).
+- Une **légende** en pied de grille rappelle le sens du badge Q et des états.
+
 ### Bandeau de verrouillage
 
 Dès que l'**épreuve est débutée** (`status = EN_COURS`, voir
-[[cycle-de-vie-epreuve]]), l'écran passe en lecture seule :
+[[cycle-de-vie-epreuve]]), la composition passe en lecture seule et l'écran
+bascule en mode **suivi** (voir « Suivi de poule ») :
 - un bandeau explique : « L'épreuve est débutée — la composition des poules est
   verrouillée », avec un lien vers l'écran Calendrier ;
 - le glisser-déposer de **recomposition** est désactivé (pastilles non déplaçables,
   ✕ masqués) ;
-- « Remplir automatiquement » est désactivé ;
+- « Remplir automatiquement », « + Nouvelle poule » et « Supprimer la poule »
+  sont désactivés ;
 - restent accessibles les **ajustements ponctuels** de [[cycle-de-vie-epreuve]]
   (déclarer un forfait, remplacer ou retirer un joueur, ajouter un inscrit tardif
   dans une poule sous l'effectif).
@@ -114,6 +136,20 @@ Titre « Remplir les poules automatiquement ».
    génération de matchs ni verrouillage n'est déclenché : la composition reste
    libre jusqu'à « Débuter l'épreuve » (écran Tournoi).
 
+## Flux : supprimer une poule
+
+1. Tant que l'épreuve est en `INSCRIPTION`, chaque carte de poule porte une
+   action **Supprimer la poule**.
+2. Poule **vide** : suppression immédiate après confirmation simple. Poule
+   **avec membres** : la confirmation précise que les joueurs seront renvoyés
+   vers « Non assignés » (aucune inscription n'est supprimée).
+3. À la confirmation : la poule disparaît, ses membres réapparaissent dans
+   « Non assignés ». Pas de renumérotation des autres poules — la lettre
+   libérée sera réutilisée par la prochaine création (« première lettre
+   libre », voir Flux : créer une poule à la main).
+4. Règle serveur : suppression **refusée** dès que l'épreuve est débutée
+   (`EN_COURS`) — le message d'erreur est affiché en bandeau.
+
 ## Flux : déplacement manuel
 
 1. L'admin saisit une pastille (depuis « Non assignés » ou une poule) et la
@@ -153,4 +189,7 @@ Titre « Remplir les poules automatiquement ».
   [[routing-context]]). Recharger conserve l'épreuve.
 - Inscrits et poules chargés au montage et au changement d'épreuve active,
   rechargés après chaque mutation. L'état de verrouillage est déduit du **statut de
-  l'épreuve** (`EN_COURS`, voir [[cycle-de-vie-epreuve]]). Pas de polling.
+  l'épreuve** (`EN_COURS`, voir [[cycle-de-vie-epreuve]]).
+- Pas de polling en mode composition. En mode **suivi** (épreuve `EN_COURS`),
+  rafraîchissement périodique (~5 s, `usePolling`) pour suivre scores et
+  classements en direct.

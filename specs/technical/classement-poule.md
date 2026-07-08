@@ -33,6 +33,12 @@ Le classement est recalculé poule par poule. `recalc_event_groups(event_id)`
 (`standings.py:83-97`) trouve tous les groupes d'une édition ayant au moins un
 match de poule `FINISHED` et rappelle `recalc_one_group` pour chacun.
 
+> **Classement ≠ qualification.** Les rangs produits ici existent dès le
+> **premier** match terminé de la poule (classement intermédiaire). Le statut
+> de **qualifié** (badge Q, placement dans le tableau final), lui, n'est défini
+> que lorsque la poule est **terminée** — plus aucun match `SCHEDULED`/`LIVE`.
+> Règle cible et surfaces concernées : [[cycle-de-vie-epreuve]].
+
 ## Victoire / défaite
 
 Le vainqueur d'un match est déduit de la comparaison des jeux, **pas** du champ

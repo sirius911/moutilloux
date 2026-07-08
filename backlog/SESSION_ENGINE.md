@@ -373,61 +373,65 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-07 — Session #102
-**Sprint traité :** 24 — Affiches de match — **clos cette session**
+**Dernière session :** 2026-07-07 — Session #107
+**Sprint traité :** 25 — Arbitre : fins spéciales & résilience (**clos cette
+session**)
 
-**Git :** branche `claude/sprint/24-affiches-match`, parent effectif
-`claude/sprint/23-tv-live-front` (résolu via `backlog/sprints/done/` — sprint
-23 toujours pas mergé dans `origin/main` malgré `branche-parent: main` dans
-le frontmatter du sprint, conforme à la règle « la roadmap prime sur le
-frontmatter »). Merge avec le parent déjà à jour. Working tree propre en fin
-de session, poussé.
+**Git :** branche `claude/sprint/25-arbitre-fins-speciales`, parent effectif
+toujours `claude/sprint/24-affiches-match` (sprint 24 pas mergé dans
+`origin/main`). Working tree propre en début de session, branche déjà à
+jour avec origin et avec le parent effectif (rien à merger). Aucun ticket
+implémenté cette session (0 issue ouverte sur le milestone en début de
+session) → seul le commit de clôture de sprint a été produit.
 
-**Spec review session #102 :** ✅ Conforme sur les 4 specs du sprint
-(`affiche-match.md`, `admin-joueurs.md`, `admin-matchs.md`, `tv-live.md`).
-La dérive #287 était toujours présente au moment de la revue — traitée cette
-même session (voir ci-dessous), non re-signalée comme nouvelle. Deux
-suggestions annexes hors-périmètre relevées (non ticketées, déjà couvertes
-par le TODO général 401 du CLAUDE.md) : redirection 401 non gérée sur le
-mini-fetch multipart d'`AddPlayerModal.vue`, absence de `transaction.atomic()`
-sur `select_poster_candidate`/`_purge_job` (`live/posters.py`).
+**Spec review session #107 :** `cycle-de-vie-match.md` ✅ Conforme (back
+inchangé depuis #105/#106). `arbitre-match.md` ✅ Conforme — comme prévu par
+le log de la session #106, relire la spec après la livraison complète des 8
+tickets (#279-285, #8) a fait passer le verdict de « ❌ Dérive bloquante
+(attendu) » à « ✅ Conforme » ; les 5 dérives historiques ont été vérifiées
+une à une dans le code réel (pas supposées) : forfait/annuler sur SCHEDULED
+(#282), tiroir Corrections (#283, `toggle_service` et `swap` bien séparés
+désormais), bascule Abandon adverse → `end_reason=RETIREMENT` (#285),
+libellés Forfait/Abandon en FINISHED (#284), résilience réseau — modale
+Terminer reste ouverte si l'action échoue (#8). 0 nouvelle issue créée.
 
-**Backlog engine session #102 (1 ticket — seul ticket ouvert du sprint) :**
-- **#287** ✅ Approuvé — `EditMatchPanel.vue` : `PosterSlot` étendu avec
-  `photoUrl`, `buildPosterSlots` le peuple pour Simple
-  (`side.player.photoUrl`) et Double (`side.team.player1/2.photoUrl`,
-  réutilise la résolution de #286), nouveau computed `missingPhotoNames`,
-  `generateDisabledReason` retourne désormais un message citant le(s)
-  nom(s) manquant(s) avant l'appel serveur. Fichier unique modifié, aucun
-  câblage partagé nécessaire. `npx vue-tsc --noEmit` sans erreur.
+Deux observations mineures relevées par le reviewer, non ticketées (non
+bloquantes, hors périmètre strict de la spec) : (1) `specs/screens/arbitre-match.md`
+lignes 101-103 garde un avertissement obsolète disant que `swap` n'est
+jamais branché — c'est faux depuis #283, texte de spec à nettoyer à
+l'occasion ; (2) le flag `swapped` du tiroir Corrections est un `ref(false)`
+front réinitialisé à chaque montage alors que le back le garde en session
+(`live/referee_views.py:81`) — un F5 en cours de match désynchronise
+l'affichage de la session serveur ; la spec ne traite pas de la persistance
+au rechargement donc ce n'est pas une dérive au sens du protocole.
 
-**Nouveau ticket créé :** aucun.
+**Backlog engine session #107 :** aucun ticket — 0 issue ouverte sur le
+milestone `sprint-25` en début de session (les 8 tickets étaient déjà clos
+depuis la session #106).
 
-**Sprint 24 clôturé cette session :** les deux conditions étaient réunies
-(spec review ✅ Conforme sur les 4 specs + 0 issue ouverte hors `en-attente`
-sur le milestone). Milestone « Sprint 24 — Affiches de match » (n°23) fermé
-via l'API GitHub. PR #1 (« ADD Script Generate_match_poster.py ») fermée avec
-le commentaire « Intégrée par le sprint 24 », conformément à `sprint.md`.
-Ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé vers
-`backlog/sprints/done/24-affiches-match/`.
+**Sprint 25 — clôturé cette session :** les deux conditions de l'étape 3
+étaient réunies dès l'étape 1 (spec review ✅ Conforme sur les deux specs +
+0 issue ouverte hors `en-attente`). Actions effectuées :
+- Milestone GitHub « Sprint 25 — Arbitre : fins spéciales & résilience »
+  (numéro 24) fermé (`state: closed`).
+- Ligne retirée de `backlog/sprints/roadmap.md`.
+- Dossier déplacé : `backlog/sprints/25-arbitre-fins-speciales/` →
+  `backlog/sprints/done/25-arbitre-fins-speciales/`.
 
-**Sprint suivant :** 25 — Arbitre : fins spéciales & résilience, seul sprint
-restant dans la roadmap. Sera traité à la **prochaine échéance planifiée**,
-pas démarré dans cette même session (règle du protocole — une clôture de
-sprint ne déclenche pas le suivant dans le même run).
+**Roadmap vide après ce retrait — aucun sprint suivant planifié.**
+**Désactiver la Routine manuellement sur claude.ai/code/routines.** Un
+nouveau sprint devra être planifié (skill `plan-sprint` ou action humaine)
+avant de réactiver la Routine.
 
-**Point d'attention outillage :** `npx vue-tsc --noEmit` a suffi cette
-session pour l'unique ticket traité (aucune erreur). Toujours pas de script
-`type-check` dans `package.json`.
+**Point d'attention protocole :** aucun écart cette session. Confirme
+l'analyse structurelle notée en session #106 : une session qui livre les
+derniers tickets d'un sprint ne peut pas le clôturer le jour même (l'étape 1
+voit encore la dérive avant que l'étape 2 ne la résorbe) ; c'est la session
+suivante, sans nouveau ticket à traiter, qui referme la boucle. Comportement
+attendu du protocole, pas un bug.
 
-**Point d'attention protocole :** l'étape 2a (planification) du ticket #287 a
-de nouveau été rédigée directement par l'orchestrateur plutôt que déléguée à
-un agent dédié, l'investigation ayant eu lieu en contexte pendant l'attente
-de la revue de specs. Deuxième session consécutive où ce raccourci est pris
-(déjà noté session #101) — aucun impact constaté sur la qualité (plan suivi à
-la lettre, review ✅ Approuvé sans réserve), mais le protocole prévoit
-explicitement un agent pour cette étape ; à corriger si une session future a
-la bande passante pour déléguer systématiquement.
+**Point d'attention outillage :** toujours pas de script `type-check` dans
+`package.json` — non pertinent cette session (aucune modification de code).
 
 **Sprint 19/20/21 — PRs non mergées :** toujours d'actualité
 (PR #223/#232/#239/#246/#247, chaîne empilée depuis le sprint 06 non

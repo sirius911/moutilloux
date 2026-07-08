@@ -72,7 +72,7 @@ en édition, sinon « Le joueur sera ajouté au registre. »).
 | Genre | Homme / Femme / Autre (segmenté) ; optionnel |
 | Année de naissance | Optionnelle (année seule, pas de date complète) |
 | Photo | Optionnelle — portrait (jpg/png/webp, ≤ 10 Mo), avec aperçu dans la modale. Sert d'avatar (repli : initiales) et de source aux **affiches de match** (voir [[affiche-match]]). Upload en multipart dédié. |
-| Attitude | Optionnelle — adjectif de mise en scène pour les affiches (« charmeuse », « furieux »…), pré-rempli à la génération d'affiche, modifiable à la volée (voir [[affiche-match]]). |
+| Attitudes | Optionnelles — **sélection multiple** parmi une **liste prédéfinie d'adjectifs** de mise en scène (« charmeuse », « furieux »…), pas de saisie libre. La liste vit dans un **fichier de constantes JSON** partagé du front (`frontend/app/src/constants/attitudes.json`). Réservoir des **affiches de match** : la génération **pioche au hasard** parmi les attitudes du joueur, sauf choix explicite dans l'onglet Affiche (voir [[affiche-match]]). |
 
 **Section Contact**
 

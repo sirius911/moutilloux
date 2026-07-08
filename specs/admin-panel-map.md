@@ -187,6 +187,42 @@ création de catégorie inline (Tournoi), et la modale de confirmation commune
     consommées indépendamment par `live/api_views.py`. `create_final_bracket_for_event`
     (divergente de `live/bracket.py`) et le code mort commenté associé
     (`_pick`, `build_final_bracket_for_event`) sont retirés avec elles.
+26. **Annonces TV éditables** (revue produit du 2026-07-07) : le message d'une
+    annonce se modifie **inline** depuis la carte Annonces de l'écran Tournoi
+    (l'endpoint `edit` existait, seule l'UI manquait). [[admin-tournoi]].
+27. **Attitudes joueur : liste prédéfinie, multi-sélection.** Plus de texte
+    libre : adjectifs choisis dans un fichier de constantes JSON du front ; la
+    génération d'affiche **pioche au hasard** parmi les attitudes du joueur,
+    sauf choix explicite. `Player.attitude` (CharField) devient
+    `Player.attitudes` (JSON, liste) — pas de migration de données (pas de
+    données de prod). [[admin-joueurs]], [[affiche-match]].
+28. **Inscription par sélection.** Les cases à cocher (+ « Tout cocher » sur la
+    liste filtrée) **remplacent** « Inscrire les N affichés » : le bouton de
+    masse devient « Inscrire la sélection (N) ». [[admin-inscriptions]].
+29. **L'écran Poules devient un écran de suivi en phase de jeu** : dès
+    `EN_COURS`, chaque poule affiche classement (V/D/Pts) et résultats de ses
+    matchs. En `INSCRIPTION`, les poules sont **supprimables** (membres renvoyés
+    en « Non assignés »). Le badge Q est légendé. [[admin-poules]].
+30. **Qualification à la poule terminée.** Une poule ne produit ses qualifiés
+    (badge Q, panneau « Qualifiés disponibles », placement automatique dans le
+    tableau) que lorsque **tous ses matchs sont joués** — jamais sur classement
+    partiel. Le fil de l'eau reste **par poule** (on n'attend pas les autres
+    poules de l'épreuve). [[cycle-de-vie-epreuve]], [[admin-tableau-final]],
+    [[tv-state]].
+31. **Journées générables depuis les dates de l'édition** (plage par défaut
+    9:00 → 20:00, aperçu avant création, jours manquants seulement) ; l'heure de
+    **début de journée** est éditable en place depuis l'en-tête de journée du
+    calendrier. La décision 18 (heures dérivées, pas saisies) est **réaffirmée** :
+    décaler le premier match = décaler le début de journée. [[admin-matchs]],
+    [[planning]].
+32. **Indicateur de ponctualité et curseur d'ETA monotone.** Lignes du
+    calendrier teintées rouge (en retard, pas démarré) / orange (démarré en
+    retard ou qui s'éternise) / vert (en cours, à l'heure), tolérance 5 min.
+    L'algorithme d'ETA est reformulé avec un **curseur monotone** : un match
+    fini en avance ne tire jamais l'aval (la marge devient pause), un match en
+    retard pousse tout l'aval — corrige la contradiction entre l'ancien algo
+    (`t = finished_at`) et la propriété « jamais d'avance surprise ».
+    [[planning]], [[admin-matchs]].
 
 ## API de référence (état : tout est exposé)
 

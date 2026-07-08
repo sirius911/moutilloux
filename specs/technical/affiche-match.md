@@ -41,7 +41,7 @@ fichiers:
 | Champ / modèle | Type | Rôle |
 |---|---|---|
 | `Player.photo` | ImageField (optionnel, `media/players/`) | portrait du joueur, source des affiches (et de l'avatar admin) |
-| `Player.attitude` | CharField (optionnel) | adjectif d'attitude par défaut (« charmeuse », « furieux »…), pré-rempli à la génération |
+| `Player.attitudes` | JSONField (liste de chaînes, défaut `[]`) | adjectifs d'attitude du joueur, choisis parmi la **liste prédéfinie** (constantes front `frontend/app/src/constants/attitudes.json`, voir [[admin-joueurs]]) ; le serveur stocke les valeurs sans les re-valider contre la liste. Pas de migration de données (aucune donnée de prod) — migration de schéma simple depuis l'ancien `attitude` CharField. |
 | `Match.poster` | ImageField (optionnel, `media/match_posters/`) | l'affiche **retenue** du match |
 | `PosterJob` | modèle | une génération en cours/finie pour un match |
 
@@ -60,8 +60,11 @@ avant choix → nouveau lot de 2, l'ancien est purgé. **Retirer l'affiche** →
 ## Pipeline de génération (asynchrone + polling)
 
 1. `POST /api/matches/<id>/poster/generate/` (superuser) — body
-   `{attitudes: {A: "...", B: "..."} }` (pré-remplies depuis `Player.attitude`,
-   modifiables). **Gardes** : les deux sides résolus, photo présente sur
+   `{attitudes: {A: "...", B: "..."} }` (un adjectif par side). Le formulaire de
+   l'onglet Affiche pré-remplit chaque champ par **tirage au sort** parmi les
+   `Player.attitudes` du joueur (vide s'il n'en a aucune) ; l'admin peut
+   remplacer ce tirage par un choix explicite (sélecteur parmi les attitudes du
+   joueur, ou la liste prédéfinie complète) avant de lancer. **Gardes** : les deux sides résolus, photo présente sur
    **chaque** joueur concerné (en Double : les 4), clé API configurée, pas de
    job déjà `RUNNING`. Refus 400 avec message explicite sinon.
 2. Le serveur crée le `PosterJob` (`PENDING`) et lance la génération **dans un

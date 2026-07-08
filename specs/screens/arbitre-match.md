@@ -38,11 +38,14 @@ L'écran a **trois modes**, dictés par `status` :
 | `LIVE` (EN DIRECT) | **actives** (+ point) | saisie point par point | Annuler point, Corrections, Terminer |
 | `FINISHED` (TERMINÉ) | inactives | — (retour) | *aucune* (ré-ouverture = admin seul) |
 
-- **Démarrer** : envoie `démarrer` → le match passe `LIVE`, prend la mise en avant
-  TV. Si **un autre match est déjà en cours**, une **confirmation** l'annonce (« Un
-  autre match est en cours — le démarrer le mettra en pause »), voir
-  [[cycle-de-vie-match]]. Tant que le match est `SCHEDULED`, taper une zone de score
-  ne fait rien (pas de scoring implicite : le match doit être démarré d'abord).
+- **Démarrer** : ouvre le **modal de démarrage** (voir Flux : démarrer un match) —
+  la première décision est **« Qui sert en premier ? »**, obligatoire avant que le
+  match ne passe `LIVE`. À la confirmation, le match passe `LIVE` avec le serveur
+  choisi et prend la mise en avant TV. Si **un autre match est déjà en cours**, le
+  même modal l'annonce (« Un autre match est en cours — le démarrer le mettra en
+  pause »), voir [[cycle-de-vie-match]]. Tant que le match est `SCHEDULED`, taper
+  une zone de score ne fait rien (pas de scoring implicite : le match doit être
+  démarré d'abord).
 - **FINISHED** : l'écran est en **lecture seule**. Il montre le résultat (vainqueur,
   et le libellé « Forfait » / « Abandon » selon `end_reason`). L'arbitre **ne peut pas
   rouvrir** — s'il y a une erreur, il la signale à l'admin ([[cycle-de-vie-match]]).
@@ -98,15 +101,35 @@ Panneau repliable regroupant les ajustements manuels (toutes les actions back
   coller à la position physique de l'arbitre face au court. **N'affecte pas** le
   score ni qui sert — c'est un confort d'affichage (stocké en session).
 
-> **`swap` ≠ `toggle_service`** : deux besoins distincts, deux boutons distincts.
-> *(⚠ Aujourd'hui le seul bouton « Serveur » du front appelle `toggle_service` et le
-> `swap` n'est jamais branché — à corriger.)*
+> **`swap` ≠ `toggle_service`** : deux besoins distincts, deux boutons distincts
+> (branchés séparément depuis le sprint 25, issue #283).
 
 Le **format** du match est **affiché en lecture seule** dans ce tiroir ; le changer
 appartient à l'admin (onglet Format, verrouillé quand le match est `LIVE` —
 [[admin-matchs]]).
 
 ---
+
+## Flux : démarrer un match (avec choix du premier serveur)
+
+Ouvert par « Démarrer le match » (match `SCHEDULED`). Modal **« Démarrer le
+match »** :
+
+1. **« Qui sert en premier ? »** : deux boutons, un par joueur — **aucun n'est
+   présélectionné** (la question doit être posée sur le court, pas héritée du
+   format). Le bouton de confirmation reste désactivé tant qu'aucun serveur
+   n'est choisi.
+2. Si un **autre match est déjà `LIVE`**, le même modal porte l'avertissement
+   « Un autre match est en cours — le démarrer le mettra en pause »
+   ([[cycle-de-vie-match]]) : un seul geste, pas deux modales enchaînées.
+3. **Confirmer** → `démarrer` avec le serveur choisi (contrat : l'action de
+   démarrage porte un paramètre `server` A/B ; repère modèle, indépendant du
+   `swap`). Le match passe `LIVE`, les zones de tap s'activent.
+4. « Annuler » referme sans rien changer, le match reste `SCHEDULED`.
+
+> **Cas hors parcours** : un match passé `LIVE` sans ce modal (mise en avant
+> depuis l'admin, [[admin-matchs]]) garde le serveur de son format ; l'arbitre
+> le corrige à 0-0 via le tiroir Corrections (`toggle_service`).
 
 ## Flux : Terminer (fin manuelle / abandon)
 
@@ -146,9 +169,10 @@ match à zéro (`SCHEDULED`, score effacé). À réserver aux vrais faux départ
 
 ## Modales & retours
 
-- **Modal de confirmation générique** (reset, démarrage sur un autre match en cours,
-  annulation) : titre, corps « action irréversible » le cas échéant, « Annuler » /
-  « Confirmer ».
+- **Modal de confirmation générique** (reset, annulation) : titre, corps « action
+  irréversible » le cas échéant, « Annuler » / « Confirmer ».
+- **Modal de démarrage** : choix obligatoire du premier serveur + avertissement
+  si un autre match est en cours (voir Flux : démarrer un match).
 - **Modal de fin** : sélection du vainqueur (voir Flux) + bascule abandon.
 - **Toast d'erreur** : toute action **refusée par le moteur** renvoie une **erreur
   JSON** (`{ ok:false, error }`) que l'écran **affiche en toast** ~4 s. Exemples :

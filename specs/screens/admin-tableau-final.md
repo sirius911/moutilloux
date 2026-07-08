@@ -73,21 +73,25 @@ recours :
 
 ### Panneau « Qualifiés disponibles »
 
-- Liste des qualifiés des poules : les participants classés dans les
-  `qualified_per_group` premières places de chaque poule (au fil des résultats).
+- Liste des qualifiés des **poules terminées** : les participants classés dans
+  les `qualified_per_group` premières places de chaque poule dont tous les
+  matchs sont joués (définition de « poule terminée » :
+  [[cycle-de-vie-epreuve]]). Une poule encore en jeu ne produit **aucun**
+  qualifié, même si son classement intermédiaire existe.
 - Chaque entrée : pastille de provenance (« A1 », « B2 »…), nom, poignée de
   déplacement.
 - Un qualifié **déjà placé** dans le tableau est affiché grisé avec la mention
   de sa place, et ne peut plus être déposé.
-- État vide : « Aucun qualifié encore » (tant que les poules n'ont pas produit
-  de classement).
+- État vide : « Aucune poule terminée » (tant qu'aucune poule n'a fini tous ses
+  matchs).
 
 ---
 
 ## Flux : placement automatique et correction
 
-1. **Automatique (au fil de l'eau)** : dès qu'une poule est classée, ses qualifiés
-   sont **placés automatiquement** dans les slots selon le seeding positionnel à
+1. **Automatique (au fil de l'eau)** : dès qu'une poule est **terminée** (tous
+   ses matchs joués — jamais sur classement partiel), ses qualifiés sont
+   **placés automatiquement** dans les slots selon le seeding positionnel à
    séparation maximale (voir [[cycle-de-vie-epreuve]]). L'écran reflète ces
    placements sans action de l'admin.
 2. **Correction manuelle** : l'admin peut glisser un qualifié du panneau vers une
@@ -128,7 +132,7 @@ recours :
 | Situation | Comportement |
 |---|---|
 | Aucune épreuve active | État vide avec lien vers Tournoi. |
-| Poules non terminées | Le squelette existe (posé au Débuter) et est pré-étiqueté ; qualifiés et slots se remplissent au fil des résultats. |
+| Poules non terminées | Le squelette existe (posé au Débuter) et est pré-étiqueté ; qualifiés et slots se remplissent **poule par poule, à mesure que chacune se termine** — jamais sur classement partiel. |
 | Tableau partiellement rempli | Les matchs incomplets restent « Prévus » ; ils ne peuvent pas être joués tant que leurs deux places ne sont pas assignées. |
 
 ## Données
