@@ -373,42 +373,54 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #120
-**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (2ᵉ session du sprint)
+**Dernière session :** 2026-07-08 — Session #121
+**Sprint traité :** 30 — Planning : journées, ETA monotone & ponctualité (3ᵉ session du sprint)
 
 **Git :** branche `claude/sprint/30-planning-journees-eta-ponctualite`,
 parent effectif `claude/sprint/29-joueurs-attitudes-predefinies` (déjà à
-jour, rien à fusionner). Piège upstream déjà corrigé en session #119 (voir
-mémoire `project_git_upstream_piege`) — `git branch --set-upstream-to` fait,
-push nu `git push` fonctionne normalement cette session.
+jour, rien à fusionner).
 
-**Spec review session #120 :** `planning.md`/`admin-matchs.md` ❌ Dérive
-bloquante attendue (2 tickets restants en entrée de session), 0 nouvelle
-dérive.
+**Anomalie de démarrage (résolue seule, aucune action destructive) :** au
+lancement de cette session, la branche avait un working tree sale (4
+fichiers modifiés non commités) correspondant exactement au travail de la
+session #120 (déjà fermé sur GitHub — #303/#304 avec verdicts ✅), et HEAD
+était en retrait de 2 commits par rapport à `91424ec` (commit de clôture
+#120, déjà présent sur `origin`). L'historique était intact via
+`reflog`/`fsck`. Pendant l'investigation, le dépôt s'est resynchronisé seul
+sur `91424ec` — vraisemblablement un chevauchement entre la fin d'exécution
+de la session #120 et le déclenchement de cette session #121, pas une
+véritable interruption. Rien à corriger, juste à attendre.
 
-**Backlog engine session #120 :** 2 tickets traités (limite de la session,
-en parallèle car fichiers disjoints) — **#303** (front, `PlayDayModal.vue` :
-bouton « Générer depuis l'édition », aperçu des dates manquantes calculé
-100% côté client, garde-fou 1000 itérations) et **#304** (front,
-`AdminMatches.vue` : réécriture de `computedETAs` — curseur strictement
-monotone sur les 4 branches FINISHED/LIVE/SCHEDULED/pause, suppression de la
-Map mémoire `lastAnnouncedEta` devenue inutile, heure affichée = `startedAt`
-réel pour FINISHED/LIVE au lieu d'une estimation ou de `finishedAt`).
-Golden paths vérifiés numériquement par le reviewer. Les deux `✅ Approuvé`,
-fermés sur GitHub. `npx vue-tsc -b --force` : 0 nouvelle erreur.
+**Spec review session #121 :** `planning.md`/`admin-matchs.md` ❌ Dérive
+bloquante attendue (2 tickets restants en entrée de session : #305, #306),
+0 nouvelle dérive — `computedETAs` (#304) et `PlayDayModal.vue` (#303)
+reconfirmés conformes, aucune régression.
 
-**Fichiers partagés câblés par l'orchestrateur :** `stores/event.ts` (action
-`generatePlayDays(editionId, {startTime, targetEndTime})`, même convention
-que `createPlayDay`, #303).
+**Backlog engine session #121 :** 2 tickets traités séquentiellement (même
+SFC `AdminMatches.vue`) — **#305** (teinte de ponctualité rouge/orange/vert,
+tolérance 5 min, restreinte à `isToday(day.date)` comme le moteur ETA ;
+refactor de `computedETAs` en `etaEngine` pour exposer l'ETA planifiée par
+match sans changer le comportement d'affichage existant ; légende à jour)
+et **#306** (heure de début de journée éditable en place — bouton cliquable
+→ `<input type="time">` inline, Entrée/blur valide, Échap annule, réutilise
+`eventStore.updatePlayDay` déjà existant). Les deux `✅ Approuvé`, fermés sur
+GitHub. `npx vue-tsc -b --force` : 0 nouvelle erreur (9 erreurs préexistantes
+stables, hors périmètre : `useApi.ts` ×1, `event.ts` ×1, `AdminBracket.vue`
+×7).
 
-**Sprint 30 — non clôturé cette session :** 2 issues `sprint-30` restantes
-(#305 teinte de ponctualité, #306 heure de début éditable) — toutes deux
-séquentielles sur `AdminMatches.vue`, #305 consommant désormais les ETA
-correctes livrées par #304. Sera repris à la **prochaine échéance
-planifiée** — plausiblement la session de clôture du sprint (2 tickets
-restants, à confirmer si aucune dérive supplémentaire n'apparaît).
+**Fichiers partagés câblés par l'orchestrateur :** aucun — les deux tickets
+réutilisaient des actions de store déjà existantes.
 
-**Point d'attention outillage :** confirmation supplémentaire (3ᵉ session de
+**Sprint 30 — non clôturé cette session malgré 0 issue `sprint-30`
+ouverte :** la spec review *de cette session* a été menée **avant**
+l'implémentation de #305/#306 et a donc rendu ❌, pas ✅ — condition stricte
+de l'étape 3 du protocole non remplie. La **prochaine session** devra mener
+une spec review propre (aucune dérive connue restante cette fois) ; si elle
+rend ✅ Conforme sur `planning.md` et `admin-matchs.md`, elle pourra fermer
+le milestone, retirer la ligne du sprint dans `roadmap.md` et archiver le
+dossier dans `backlog/sprints/done/`.
+
+**Point d'attention outillage :** confirmation supplémentaire (4ᵉ session de
 suite) que `npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit` seul
 ne type-check aucun fichier `.vue` dans cet environnement. Toujours pas de
 script `type-check` dans `package.json`, toujours pas de `.claude/launch.json`
