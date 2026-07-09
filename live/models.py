@@ -93,6 +93,8 @@ class Match(models.Model):
     tb_points_b = models.PositiveIntegerField(default=0)
 
     started_at = models.DateTimeField(null=True, blank=True)
+    warmup_started_at = models.DateTimeField(null=True, blank=True)
+    play_started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 
     updated_at = models.DateTimeField(auto_now=True)
@@ -166,7 +168,11 @@ class Match(models.Model):
 
             if not self.started_at:
                 self.started_at = timezone.now()
-            self.save(update_fields=["status", "started_at"])
+
+            if not self.play_started_at and not self.warmup_started_at:
+                self.warmup_started_at = timezone.now()
+
+            self.save(update_fields=["status", "started_at", "warmup_started_at"])
 
     def mark_finished(self):
         self.status = Match.Status.FINISHED

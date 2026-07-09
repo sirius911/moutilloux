@@ -186,6 +186,8 @@ export interface Match {
   // Planning
   scheduledTime: string | null
   startedAt: string | null
+  warmupStartedAt: string | null
+  playStartedAt: string | null
   finishedAt: string | null
   updatedAt: string
 
