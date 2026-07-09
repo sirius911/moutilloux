@@ -603,8 +603,8 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
 /* Slide Résultats / Classement / Bracket */
 .tv-rotate {
   width: 100%;
-  max-width: 1600px;
-  padding: 0 56px;
+  max-width: 1760px;
+  padding: 0 40px;
 }
 
 .tv-rotate-title {
