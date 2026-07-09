@@ -373,7 +373,21 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #141
+**Dernière session :** 2026-07-09 — Session #142
+**Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
+de sprint, vidée à la session #141). Conformément au protocole (étape 0), la
+session s'est arrêtée sans exécuter les étapes 1 à 3. Aucun changement de
+code, aucun commit de code.
+
+**Roadmap toujours vide depuis la session #141** (sprint 37 clos, dernier de
+la série, milestone fermé). **Désactiver la Routine manuellement sur
+claude.ai/code/routines**, ou planifier un nouveau sprint (`/plan-sprint`)
+avant la prochaine échéance — sinon la Routine continuera de se déclencher
+pour rien.
+
+---
+
+**Historique — session #141 :**
 **Sprint traité :** 37 — Mobile : arbitre & régie (3ᵉ et dernière session du
 sprint — **clos cette session**, 6/6 tickets clos).
 
