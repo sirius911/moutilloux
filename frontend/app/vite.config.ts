@@ -12,9 +12,6 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:8000',
-      '/arbitre': 'http://localhost:8000',
-      '/panel': 'http://localhost:8000',
-      '/accounts': 'http://localhost:8000',
       '/media': 'http://localhost:8000',
     },
   },

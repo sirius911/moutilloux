@@ -26,8 +26,10 @@ sont encore spéculatifs** (mauvaises routes/champs) et seront recâblés vers l
 au fil des phases. La source de vérité des contrats reste `live/admin_views.py`, pas le front.
 
 **Lancement (dev).** Deux serveurs : `python manage.py runserver` (:8000) et, dans `frontend/app/`,
-`npm run dev`. Le proxy Vite renvoie `/api`, `/arbitre`, `/panel`, `/accounts` vers :8000
-(même origine → cookie de session + CSRF OK).
+`npm run dev`. Le proxy Vite renvoie `/api` et `/media` vers :8000
+(même origine → cookie de session + CSRF OK). La SPA est l'unique surface arbitre
+(vues template legacy `/arbitre/` supprimées, sprint 38) ; l'authentification passe
+uniquement par `/api/auth/…`.
 
 ## 2. Stack et décisions (validées, non négociables)
 
