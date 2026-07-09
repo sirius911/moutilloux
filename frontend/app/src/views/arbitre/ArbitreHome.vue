@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePolling } from '@/composables/usePolling'
 import { useApi } from '@/composables/useApi'
+import { useViewport } from '@/composables/useViewport'
 import type { ArbitreProgramme, Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local (fusion match + pause, lecture seule) ─────────────────
@@ -14,6 +15,7 @@ type DayItem =
 const router = useRouter()
 const authStore = useAuthStore()
 const { get } = useApi()
+const { isMobile } = useViewport()
 
 const programme = ref<ArbitreProgramme>({ playDays: [], next: null })
 const syncTime = ref('')
@@ -173,7 +175,7 @@ function matchTimeLabel(m: Match): string {
 </script>
 
 <template>
-  <div class="arh">
+  <div class="arh" :class="{ 'arh--mobile': isMobile }">
     <div class="arh-bg" />
 
     <!-- Header -->
@@ -686,5 +688,101 @@ function matchTimeLabel(m: Match): string {
   border-radius: 50%;
   background: var(--success);
   display: inline-block;
+}
+
+/* ── Variante mobile (< 600px, cf. useViewport) — resserrement CSS ────────── */
+/* Aucune restructuration : uniquement padding/font-size/gap. */
+
+.arh--mobile .arh-header {
+  padding: 20px 18px 16px;
+}
+
+.arh--mobile .arh-greeting-hi {
+  font-size: 18px;
+}
+
+.arh--mobile .arh-greeting-sub {
+  font-size: 12px;
+}
+
+.arh--mobile .arh-hero {
+  padding: 14px 18px 4px;
+}
+
+.arh--mobile .arh-hero-card {
+  padding: 16px 18px;
+  gap: 10px;
+}
+
+.arh--mobile .arh-hero-players {
+  font-size: 22px;
+  gap: 10px;
+}
+
+.arh--mobile .arh-hero-meta {
+  gap: 8px;
+  font-size: 12px;
+}
+
+.arh--mobile .arh-hero-action {
+  padding: 10px 18px;
+  font-size: 13px;
+}
+
+.arh--mobile .arh-days {
+  padding: 14px 18px;
+  gap: 12px;
+}
+
+.arh--mobile .arh-day-header {
+  padding: 12px 14px;
+  gap: 8px;
+}
+
+.arh--mobile .arh-day-header-left {
+  gap: 8px;
+}
+
+.arh--mobile .arh-day-header-right {
+  gap: 8px;
+  font-size: 11px;
+}
+
+.arh--mobile .arh-day-date {
+  font-size: 13px;
+}
+
+.arh--mobile .arh-day-body {
+  padding: 12px 14px;
+  gap: 8px;
+}
+
+.arh--mobile .arh-match-body {
+  padding: 12px 14px;
+  gap: 6px;
+}
+
+.arh--mobile .arh-match-top {
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.arh--mobile .arh-match-status {
+  font-size: 9px;
+  padding: 3px 8px;
+}
+
+.arh--mobile .arh-match-players {
+  font-size: 17px;
+  gap: 8px;
+}
+
+.arh--mobile .arh-match-bottom {
+  gap: 8px;
+  font-size: 11px;
+}
+
+.arh--mobile .arh-foot {
+  padding: 12px 18px;
 }
 </style>
