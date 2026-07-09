@@ -67,6 +67,23 @@ function toggleDay(dayId: number) {
   collapsedDays.value[dayId] = !collapsedDays.value[dayId]
 }
 
+// ── Dépliage au survol pendant un drag (journée repliée = cible masquée) ──
+// Objet non réactif : simples handles de timer, pas d'affichage lié.
+const collapsedHoverTimers: Record<number, ReturnType<typeof setTimeout>> = {}
+
+function onHeaderMouseEnter(dayId: number) {
+  if (!dragging.value || !collapsedDays.value[dayId]) return
+  clearTimeout(collapsedHoverTimers[dayId])
+  collapsedHoverTimers[dayId] = setTimeout(() => {
+    collapsedDays.value[dayId] = false
+  }, 600)
+}
+
+function onHeaderMouseLeave(dayId: number) {
+  clearTimeout(collapsedHoverTimers[dayId])
+  delete collapsedHoverTimers[dayId]
+}
+
 function playedCount(day: CalendarDay): number {
   return day.matches.filter((m) => m.status === 'FINISHED').length
 }
@@ -611,6 +628,10 @@ function buildReorderPayload(): CalendarReorderPayload {
 }
 
 async function onDragEnd() {
+  for (const id of Object.keys(collapsedHoverTimers)) {
+    clearTimeout(collapsedHoverTimers[Number(id)])
+    delete collapsedHoverTimers[Number(id)]
+  }
   if (reorderPending) return
   reorderPending = true
   const editionId = eventStore.activeEdition?.id
@@ -798,6 +819,8 @@ async function onDragEnd() {
             :aria-expanded="!collapsedDays[day.id]"
             @click="toggleDay(day.id)"
             @keydown.enter="toggleDay(day.id)"
+            @mouseenter="onHeaderMouseEnter(day.id)"
+            @mouseleave="onHeaderMouseLeave(day.id)"
           >
             <span
               class="pd-chevron"
