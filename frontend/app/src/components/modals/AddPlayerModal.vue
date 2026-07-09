@@ -2,6 +2,7 @@
 import { ref, computed, onUnmounted } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
+import CameraCaptureModal from '@/components/modals/CameraCaptureModal.vue'
 import { useApi } from '@/composables/useApi'
 import { useViewport } from '@/composables/useViewport'
 import { useEventStore } from '@/stores/event'
@@ -37,6 +38,7 @@ const photoFile = ref<File | null>(null)
 const photoRemoved = ref(false)
 const photoPreviewUrl = ref<string | null>(props.editing?.photoUrl ?? null)
 const photoError = ref('')
+const showCameraModal = ref(false)
 
 function initials(name: string): string {
   return name.split(' ').map((p) => p[0]).join('').toUpperCase().slice(0, 2)
@@ -59,9 +61,7 @@ function revokePreviewIfBlob() {
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE = 10 * 1024 * 1024
 
-function onPhotoSelected(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
+function applyPhotoFile(file: File) {
   if (!ACCEPTED_TYPES.includes(file.type) || file.size > MAX_SIZE) {
     photoError.value = 'Format non supporté (jpg, png, webp) ou fichier trop volumineux (max 10 Mo).'
     return
@@ -71,6 +71,12 @@ function onPhotoSelected(e: Event) {
   photoRemoved.value = false
   revokePreviewIfBlob()
   photoPreviewUrl.value = URL.createObjectURL(file)
+}
+
+function onPhotoSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  applyPhotoFile(file)
 }
 
 function clearPhoto() {
@@ -269,6 +275,14 @@ onUnmounted(() => {
                 Prendre une photo
               </button>
               <button
+                v-else
+                class="adm-btn"
+                type="button"
+                @click="showCameraModal = true"
+              >
+                Prendre une photo
+              </button>
+              <button
                 v-if="photoPreviewUrl"
                 class="adm-btn"
                 type="button"
@@ -330,6 +344,12 @@ onUnmounted(() => {
       </button>
     </template>
   </ModalShell>
+
+  <CameraCaptureModal
+    v-if="showCameraModal"
+    @close="showCameraModal = false"
+    @captured="applyPhotoFile($event); showCameraModal = false"
+  />
 </template>
 
 <style scoped>
