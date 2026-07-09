@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db import transaction
 from competition.standings import recalc_one_group
-from live.admin_views import start_match, reopen_match, forfait_match, cancel_match, finish_match_manual
+from live.admin_views import start_match, launch_match, reopen_match, forfait_match, cancel_match, finish_match_manual
 
 
 def is_referee(user):
@@ -151,6 +151,11 @@ def referee_action(request, match_id: int):
     if action in SCORING_ACTIONS and match.status != Match.Status.LIVE:
         return JsonResponse(
             {"ok": False, "error": "Le match doit être en cours (LIVE) pour cette action."},
+            status=400,
+        )
+    if action in SCORING_ACTIONS and match.play_started_at is None:
+        return JsonResponse(
+            {"ok": False, "error": "Le match n'est pas lancé — choisissez le serveur"},
             status=400,
         )
 
@@ -608,9 +613,16 @@ def referee_action(request, match_id: int):
 
     # --- Démarrer / finir / réouvrir ---
     if action == "start":
-        server = data.get("server") or None
         try:
-            start_match(match, server=server)
+            start_match(match)
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+        return JsonResponse({"ok": True})
+
+    if action == "launch":
+        server = data.get("server")
+        try:
+            launch_match(match, server)
         except ValueError as exc:
             return JsonResponse({"ok": False, "error": str(exc)}, status=400)
         return JsonResponse({"ok": True})

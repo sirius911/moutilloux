@@ -511,23 +511,16 @@ def finalize_match_edit(match, was_live: bool = False, was_finished: bool = Fals
     return match
 
 
-def start_match(match, server=None):
+def start_match(match):
     """
     Service : démarre un match (SCHEDULED -> LIVE), le met en avant TV.
     Réutilisé par referee_action('start') et par l'API admin.
     Idempotent : si le match est déjà LIVE, no-op (pas de re-déclenchement de la
-    rétrogradation des autres matchs ni du featured, ni de `server` : un match déjà
-    LIVE ignore un `server` fourni en repassant par 'start').
-
-    `server` : repère modèle du premier serveur ("A"/"B"), optionnel — posé par le
-    modal de démarrage arbitre (specs/screens/arbitre-match.md, « Flux : démarrer un
-    match »). Si None/absent/"" : comportement legacy inchangé, le serveur reste celui
-    du format (mise en avant admin, cf. specs/technical/cycle-de-vie-match.md, « cas
-    hors parcours »). Toute autre valeur lève ValueError (action invalide).
+    rétrogradation des autres matchs ni du featured).
 
     Retire is_featured des autres matchs de l'edition, met is_featured=True,
-    applique `server` si fourni, puis mark_live() (status=LIVE + started_at si
-    besoin). Ne touche jamais order_index (persistance calendrier — sprint 15 / #159).
+    puis mark_live() (status=LIVE + started_at si besoin). Ne touche jamais
+    order_index (persistance calendrier — sprint 15 / #159).
     Retourne le match.
     """
     if match.status == Match.Status.LIVE:
@@ -536,15 +529,35 @@ def start_match(match, server=None):
     if match.side_a_id is None or match.side_b_id is None:
         raise ValueError("Les deux joueurs doivent être connus avant de démarrer le match.")
 
-    if server:
-        if server not in (Match.Server.A, Match.Server.B):
-            raise ValueError("server invalide : valeurs acceptées 'A' ou 'B'.")
-        match.server = server
-
     Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
     match.is_featured = True
     match.mark_live()  # met status=LIVE + started_at si besoin
     match.save()
+    return match
+
+
+def launch_match(match, server):
+    """
+    Service : lance le jeu (choix du premier serveur), échauffement -> jeu.
+    Réutilisé par referee_action('launch') (et par l'admin le cas échéant,
+    même service — cf. specs/technical/cycle-de-vie-match.md, « Lancer le jeu »).
+
+    Garde : refuse (ValueError) si le match n'est pas LIVE, ou si le jeu est
+    déjà lancé (play_started_at déjà posé) — pas de relance après coup.
+
+    Pose `server` (A/B, repère modèle, indépendant du swap) et `play_started_at`.
+    Retourne le match.
+    """
+    if match.status != Match.Status.LIVE:
+        raise ValueError("Le match doit être en cours (LIVE, en échauffement) pour lancer le jeu.")
+    if match.play_started_at is not None:
+        raise ValueError("Le jeu est déjà lancé.")
+    if server not in (Match.Server.A, Match.Server.B):
+        raise ValueError("server invalide : valeurs acceptées 'A' ou 'B'.")
+
+    match.server = server
+    match.play_started_at = timezone.now()
+    match.save(update_fields=["server", "play_started_at"])
     return match
 
 
