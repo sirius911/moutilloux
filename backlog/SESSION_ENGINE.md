@@ -373,7 +373,89 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #150
+**Dernière session :** 2026-07-09 — Session #151
+**Sprint traité :** 40 — Planning : journées repliables
+(1ère et dernière session du sprint — **clos cette session**, 2/2 tickets clos).
+
+**Git :** branche `claude/sprint/40-planning-journees-repliables` (nouvelle
+branche cette session), parent effectif
+`claude/sprint/39-tv-echauffement-score-carrousel` (sprint 39 toujours non
+mergé dans `main`, déduit depuis `backlog/sprints/done/`). 3 commits de code
+cette session (2 tickets + clôture de sprint).
+
+**Spec review session #151 :** `admin-matchs.md` (§Journées, §Flux
+glisser-déposer) — ⚠️ Dérive mineure en début de session (2 dérives : aucune
+notion de repli/dépli sur les cartes de journée ; pas de dépliage au survol
+pendant un drag) → **✅ Conforme** après implémentation des deux tickets du
+sprint cette session. Les deux dérives correspondaient exactement aux issues
+déjà ouvertes `#355`/`#356` — 0 nouvelle issue créée.
+
+**Backlog engine session #151 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (même fichier, strictement séquentiel) :
+- **#355** (majeure) — front : `AdminMatches.vue` — état local
+  `collapsedDays` (par `playDayId`), fonction pure `isDayFullyPlayed(day)`
+  (aucun match `SCHEDULED`/`LIVE` dans `day.matches`, journée non vide),
+  initialisation **une fois par journée** via un `watch` gardé par `!(day.id
+  in collapsedDays.value)` (ne réécrase jamais un repli/dépli manuel fait
+  pendant la session, y compris au fil du polling ~2s). En-tête cliquable
+  avec chevron, deux rendus (`v-if`) : replié → résumé riche (nom+date,
+  compteur joués/total, plage horaire avec tilde conditionnel selon
+  `isDayFullyPlayed`, pastille de capacité réutilisée telle quelle) ; déplié
+  → rendu antérieur strictement inchangé (édition d'heure en place
+  préservée via `@click.stop` ajoutés). Corps de carte (lignes + zone de
+  dépôt + bouton pause) retiré du DOM en `v-if` à l'état replié — prépare
+  aussi le terrain pour #356. Verdict reviewer : ✅ Approuvé (suggestion
+  mineure non bloquante : imbrication a11y bouton-dans-en-tête-cliquable,
+  neutralisée fonctionnellement par les `@click.stop`, hors périmètre du
+  ticket).
+- **#356** (majeure) — front : `AdminMatches.vue` — timers de survol non
+  réactifs (`collapsedHoverTimers`), `onHeaderMouseEnter`/`onHeaderMouseLeave`
+  (no-op hors drag actif ou si la journée est déjà dépliée ; sinon arme un
+  `setTimeout` de 600ms qui déplie), nettoyage défensif de tous les timers en
+  tête de `onDragEnd`. Aucune modification de la zone de dépôt elle-même :
+  déjà absente du DOM à l'état replié depuis #355, donc structurellement non
+  ciblable par SortableJS — satisfait déjà « pas de dépôt direct sur l'en-tête
+  replié » sans code supplémentaire. Verdict reviewer : ✅ Approuvé, aucune
+  réserve.
+
+**Sprint 40 clos cette session :** les deux conditions étaient réunies (spec
+`admin-matchs.md` conforme après les deux tickets + 0 issue ouverte sur le
+milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/40-planning-journees-repliables/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 1 sprint restant (41 — Joueurs : photo caméra). Sera
+traité à la **prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(chacun a confirmé explicitement dans son rapport n'avoir fait aucune
+écriture, vérifié via `git status`/`gh issue view` après chaque invocation) —
+pattern désormais stable sur au moins 12 sessions consécutives (#140-#151)
+depuis l'incident initial de la session #139.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable pour
+les deux tickets (aucune nouvelle erreur, seul fichier touché
+`AdminMatches.vue`). Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée). Aucune maquette `.jsx` de référence pour
+`#355`/`#356` (retours produit récents, pas dans `frontend/design/`) — les
+agents `vue-screen` ont construit directement depuis la description texte de
+la spec, #356 s'appuyant explicitement sur l'état posé par #355 dans le même
+fichier.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #150 :**
 **Sprint traité :** 39 — TV : échauffement, score au tableau & carrousel
 (2ᵉ et dernière session du sprint — **clos cette session**, 4/4 tickets clos).
 
