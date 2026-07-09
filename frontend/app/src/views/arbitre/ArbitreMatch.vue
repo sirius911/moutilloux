@@ -6,6 +6,7 @@ import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
 import { useApi } from '@/composables/useApi'
 import { useViewport } from '@/composables/useViewport'
+import { useWakeLock } from '@/composables/useWakeLock'
 import type { ArbitreProgramme } from '@/types'
 
 const props = defineProps<{ matchId: number }>()
@@ -241,6 +242,9 @@ const isWarmup = computed(() => match.value?.status === 'LIVE' && !match.value?.
 const isPlaying = computed(() => match.value?.status === 'LIVE' && !!match.value?.playStartedAt)
 const isCanceled = computed(() => match.value?.status === 'CANCELED')
 const isReadOnly = computed(() => isFinished.value || isCanceled.value)
+
+// Écran non verrouillé pendant un match LIVE (specs/transverse/mobile.md § Wake-lock)
+useWakeLock(computed(() => match.value?.status === 'LIVE'))
 
 const WARMUP_DURATION_MS = 5 * 60 * 1000 // 5 min, constante indicative (cycle-de-vie-match.md)
 
