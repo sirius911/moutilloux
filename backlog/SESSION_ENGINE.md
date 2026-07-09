@@ -373,7 +373,89 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #147
+**Dernière session :** 2026-07-09 — Session #148
+**Sprint traité :** 38 — Arbitre : purge legacy & action API (2ᵉ et dernière
+session du sprint — **clos cette session**, 4/4 tickets clos).
+
+**Git :** branche `claude/sprint/38-purge-legacy-arbitre`, parent effectif
+`claude/sprint/37-mobile-arbitre-regie` (sprint 37 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #148 :** `cycle-de-vie-match.md` et
+`auth-matrice-acces.md` — ⚠️ Dérive mineure en début de session (vues
+template legacy `referee_home`/`referee_match`/`home.html` encore présentes,
+proxy Vite `/arbitre`+`/panel` non nettoyé) → **✅ Conforme** après
+implémentation des deux derniers tickets du sprint cette session. Les deux
+dérives correspondaient exactement aux issues déjà ouvertes `#349`/`#350` —
+0 nouvelle issue créée.
+
+**Backlog engine session #148 :** 2 tickets traités séquentiellement (chaîne
+plan → agent → `reviewer` par ticket) :
+- **#349** (majeure, label `infra`) — back : `live/referee_views.py`
+  (suppression de `referee_home`/`referee_match`/`RefSelectForm`, imports
+  morts nettoyés, moteur de score `referee_action` + tous ses helpers
+  intacts) + `live/views.py` (suppression de `home`, `get_hero_match`/
+  `build_event_group_tables` intacts) + suppression `live/arbitre_urls.py`
+  et 3 templates (`referee_home.html`, `referee_match.html`, `home.html`).
+  Effet de bord détecté par l'agent de planification et validé par
+  l'orchestrateur comme faisant partie du même ticket (pas un dérapage de
+  périmètre) : `live/auth_views.py::get_success_url` faisait
+  `reverse("referee_home")`/`reverse("home")`, deux noms de route
+  supprimés — remplacés par un retour littéral `"/"`, sinon `NoReverseMatch`
+  au login pour tout Arbitre/non-superuser. Fichiers partagés câblés par
+  l'orchestrateur : `live/urls.py` (retrait route `""`/`views.home` + import
+  mort) et `moutilloux/urls.py` (retrait `include("live.arbitre_urls")`).
+  Golden path vérifié en shell Django : `/arbitre/` → 404,
+  `/api/matches/<id>/action/` intact. Verdict reviewer : ✅ Approuvé.
+- **#350** (mineure, label `infra`) — ticket entièrement dans le périmètre
+  des fichiers partagés (`frontend/app/vite.config.ts`, `CLAUDE.md`) :
+  traité directement par l'orchestrateur (pattern `#337`/`#341`), pas
+  d'agent `vue-screen` (aucun écran concerné). `vite.config.ts` :
+  `server.proxy` réduit à `/api`+`/media` (retrait `/arbitre`, `/panel`,
+  `/accounts`) ; `CLAUDE.md` §1 mis à jour (docs follow code). Vérifié par
+  grep : aucun appel front ne dépend du proxy retiré (`useApi.ts:38` est un
+  test de chaîne sur `res.url`, pas un appel réseau ; `LoginView.vue` poste
+  sur `/api/auth/login/` uniquement) ; routes Vue Router `/arbitre/*`
+  (SPA côté client) non affectées. Verdict reviewer : ✅ Approuvé.
+
+**Sprint 38 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation des deux derniers tickets + 0 issue
+ouverte sur le milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/38-purge-legacy-arbitre/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 3 sprints restants (39 — TV : échauffement/score/
+carrousel, 40 — Planning : journées repliables, 41 — Joueurs : photo
+caméra). Le sprint 39 sera traité à la **prochaine échéance planifiée**, pas
+démarré dans cette session.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(vérifié via `git status` après chaque invocation) — pattern désormais
+stable sur au moins 9 sessions consécutives (#140-#148) depuis l'incident
+initial de la session #139, voir `feedback_reviewer_agent_overreach`.
+
+**Point d'attention outillage :** `manage.py check` (avec
+`source .venv/bin/activate` — le `python` du PATH n'est pas résolu
+directement dans cet environnement, seul `python3`/le venv le sont) fiable
+pour la vérification back de `#349` (aucune erreur, seul le `RuntimeWarning`
+préexistant lié à `AppConfig.ready()`). `npx vue-tsc --noEmit` toujours
+fiable pour `#350`. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée).
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #147 :**
 **Sprint traité :** 38 — Arbitre : purge legacy & action API (1ère session du
 sprint, roadmap regarnie avant cette session par la planification des sprints
 38-41 sur les retours du 2026-07-09). 2/4 tickets clos — `#349` et `#350`
