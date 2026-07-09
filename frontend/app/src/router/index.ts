@@ -82,6 +82,14 @@ const router = createRouter({
       ],
     },
 
+    // ── Admin : régie mobile (route dédiée, pas nichée sous AdminLayout — écran
+    // téléphone à part entière, pas une adaptation de l'admin desktop) ───────
+    {
+      path: '/admin/regie',
+      component: () => import('@/views/admin/AdminRegie.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+
     // ── Catch-all ──────────────────────────────────────────────────────────
     { path: '/:pathMatch(.*)*', redirect: '/tv/live' },
   ],
