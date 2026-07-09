@@ -373,7 +373,65 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #136
+**Dernière session :** 2026-07-09 — Session #137
+**Sprint traité :** 36 — Échauffement (1ère session du sprint, 2/4 tickets clos —
+`#335` et `#336` restants).
+
+**Git :** branche `claude/sprint/36-echauffement`, parent effectif
+`claude/sprint/35-tv-scene-live-fin-de-match` (sprint 35 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette session.
+
+**Spec review session #137 :** `cycle-de-vie-match.md` (§ Les deux phases de
+LIVE), `arbitre-match.md` (modes + flux), `tv-live.md` (état ÉCHAUFFEMENT) et
+`tv-state.md` (§ Front) — ⚠️ Dérive mineure en début de session (sprint tout
+juste planifié, aucun ticket encore implémenté) → dérive partiellement résorbée
+côté back par les deux tickets de cette session (`#333`/`#334`), le reste
+attendu pour `#335`/`#336` (front). Toutes les dérives relevées correspondaient
+exactement aux issues déjà ouvertes lors de la planification — 0 nouvelle
+issue créée.
+
+**Backlog engine session #137 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `django-api` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (les deux back, `#333` débloquant tout) :
+- **#333** (majeure) — back : `live/models.py` (nouveaux champs
+  `warmup_started_at`/`play_started_at`, migration `0023_...`, `mark_live()`
+  pose `warmup_started_at` sur la condition unique `not play_started_at and not
+  warmup_started_at` — couvre démarrage, mise à l'antenne admin et reprise sans
+  ré-échauffement en un seul test) + `live/api_views.py` (`_pack_match` expose
+  `warmupStartedAt`/`playStartedAt`). Fichier partagé câblé par l'orchestrateur
+  dans la foulée : `frontend/app/src/types/index.ts` (`Match` +=
+  `warmupStartedAt`/`playStartedAt`), débloquant les tickets front `#335`/`#336`
+  pour la session suivante. Verdict reviewer : ✅ Approuvé.
+- **#334** (majeure, label `infra`) — back : `live/admin_views.py`
+  (`start_match()` perd le paramètre `server` ; nouvelle fonction service
+  `launch_match(match, server)` avec gardes `status != LIVE` /
+  `play_started_at déjà posé` / `server` invalide, pose `play_started_at` +
+  `server`) + `live/referee_views.py` (action `"start"` simplifiée, nouvelle
+  action `"launch"`, second gate anti-scoring réutilisant l'ensemble
+  `SCORING_ACTIONS` existant quand `play_started_at` est nul — couvre « toute
+  action de scoring » comme demandé par la spec). Aucune nouvelle route :
+  canal `POST /arbitre/match/<id>/action/` réutilisé (`live/urls.py`
+  inchangé). Verdict reviewer : ✅ Approuvé.
+
+**Sprint 36 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#335` — ArbitreMatch mode échauffement, `#336` — TvScoreboard
+scène échauffement), toutes deux front, dépendant des deux tickets back livrés
+cette session. Sprint 36 reste actif, sera repris à la **prochaine échéance
+planifiée**.
+
+**Roadmap non vide** — 1 autre sprint en attente après le 36 (37 — Mobile :
+arbitre & régie).
+
+**Point d'attention outillage :** aucune suite de tests dédiée à `live/`
+(`live/tests.py` = squelette Django par défaut, 0 test) — `manage.py check`
+utilisé pour la vérification back cette session, fiable, aucune erreur sur les
+deux tickets. Toujours pas de script `type-check` dans `package.json`,
+toujours pas de `.claude/launch.json` côté front (non pertinent cette session,
+aucun ticket front traité).
+
+---
+
+**Historique — session #136 :**
 **Sprint traité :** 35 — TV : scène live & fin de match (2ᵉ et dernière
 session du sprint — **clos cette session**, 4/4 tickets clos).
 
