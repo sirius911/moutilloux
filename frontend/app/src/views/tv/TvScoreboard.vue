@@ -9,23 +9,70 @@ usePolling(() => live.fetchTvState(), 2000)
 function initials(name: string): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
 }
+
+function winnerName(): string {
+  const m = live.finishedHero
+  if (!m) return ''
+  return m.winnerSide === 'A'
+    ? (m.sideA?.player?.fullName ?? m.sideALabel ?? '—')
+    : (m.sideB?.player?.fullName ?? m.sideBLabel ?? '—')
+}
+
+function loserName(): string {
+  const m = live.finishedHero
+  if (!m) return ''
+  return m.winnerSide === 'A'
+    ? (m.sideB?.player?.fullName ?? m.sideBLabel ?? '—')
+    : (m.sideA?.player?.fullName ?? m.sideALabel ?? '—')
+}
 </script>
 
 <template>
   <div class="scoreboard">
-    <!-- Fond de scène : affiche du match si disponible, sinon fond de court CSS -->
-    <div
-      v-if="live.hero?.posterUrl"
-      class="hero-poster-bg"
-      :style="{ backgroundImage: `url(${live.hero.posterUrl})` }"
-    />
-    <div v-else class="court-bg" />
+    <!-- ── Photo finish : fin de match, priorité absolue (~30 s, cf. store live.finishedHero) ── -->
+    <template v-if="live.finishedHero">
+      <div
+        v-if="live.finishedHero.posterUrl"
+        class="hero-poster-bg"
+        :style="{ backgroundImage: `url(${live.finishedHero.posterUrl})` }"
+      />
+      <div v-else class="court-bg" />
+
+      <div class="tv-finish">
+        <span class="tv-finish-lbl">VICTOIRE</span>
+        <div class="tv-finish-winner">{{ winnerName() }}</div>
+        <div class="tv-finish-vs">bat {{ loserName() }}</div>
+
+        <div class="tv-finish-sets">
+          <span
+            v-for="(s, i) in live.finishedHero.setScores"
+            :key="i"
+            class="tv-finish-set tab"
+          >{{ s.a }}–{{ s.b }}</span>
+        </div>
+
+        <div class="tv-finish-meta">
+          <span v-if="live.finishedHero.clock">DURÉE · {{ live.finishedHero.clock }}</span>
+          <span v-if="live.finishedHero.endReason === 'RETIREMENT'" class="tv-finish-retirement">ABANDON</span>
+        </div>
+      </div>
+    </template>
 
     <!-- ── État vide → carrousel TvIdle ─────────────────────────────────── -->
-    <TvIdle v-if="!live.hero" />
+    <template v-else-if="!live.hero">
+      <div class="court-bg" />
+      <TvIdle />
+    </template>
 
     <!-- ── Match en cours ────────────────────────────────────────────────── -->
     <template v-else>
+      <!-- Fond de scène : affiche du match si disponible, sinon fond de court CSS -->
+      <div
+        v-if="live.hero?.posterUrl"
+        class="hero-poster-bg"
+        :style="{ backgroundImage: `url(${live.hero.posterUrl})` }"
+      />
+      <div v-else class="court-bg" />
       <!-- Zone d'enjeu (centre de l'écran) — classement de poule ou mini-tableau -->
       <div v-if="live.stake" class="stake-panel">
         <!-- Enjeu : poule -->
@@ -751,6 +798,74 @@ function initials(name: string): string {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ── Photo finish (fin de match, ~30 s) ───────────────────────────────── */
+.tv-finish {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.tv-finish-lbl {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-shadow: 0 0 24px var(--accent-glow);
+}
+
+.tv-finish-winner {
+  font-size: 320px;
+  line-height: 0.85;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink-0);
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  max-width: 1700px;
+}
+
+.tv-finish-vs {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+}
+
+.tv-finish-sets {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  margin-top: 12px;
+}
+
+.tv-finish-set {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--ink-1);
+}
+
+.tv-finish-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.tv-finish-retirement {
+  color: var(--danger);
+  font-weight: 700;
 }
 
 /* ── Pied discret ────────────────────────────────────────────────────── */

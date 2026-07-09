@@ -13,6 +13,34 @@ export const useLiveStore = defineStore('live', () => {
   const editionYear = ref<number | null>(null)
   const stake = ref<TvStake | null>(null)
 
+  // Fenêtre « fin de match » (~30 s, tenue côté front — spec tv-state.md § Front)
+  const finishedHero = ref<Match | null>(null)
+  let finishedHeroTimer: ReturnType<typeof setTimeout> | null = null
+
+  function clearFinishedHero() {
+    if (finishedHeroTimer) {
+      clearTimeout(finishedHeroTimer)
+      finishedHeroTimer = null
+    }
+    finishedHero.value = null
+  }
+
+  async function showFinishedHero(matchId: number) {
+    try {
+      const data = await get<{ match: Match }>(`/api/matches/${matchId}/`)
+      const m = data.match
+      if (m.status === 'FINISHED' && m.winnerSide && !m.isWalkover) {
+        finishedHero.value = m
+        finishedHeroTimer = setTimeout(() => {
+          finishedHero.value = null
+          finishedHeroTimer = null
+        }, 30000)
+      }
+    } catch {
+      // Fin de match : fetch one-shot en échec → pas de scène, jamais d'erreur visible du public
+    }
+  }
+
   // Contenu froid du carousel (GET /api/tv/idle/)
   const stats = ref<TvStats | null>(null)
   const recentResults = ref<Match[]>([])
@@ -24,12 +52,19 @@ export const useLiveStore = defineStore('live', () => {
   const match = ref<Match | null>(null)
 
   async function fetchTvState() {
+    const previousHeroId = hero.value?.id ?? null
     const data = await get<TvState>('/api/tv/state/')
     hero.value = data.hero
     next.value = data.next
     now.value = data.now
     editionYear.value = data.editionYear
     stake.value = data.stake
+
+    if (data.hero) {
+      clearFinishedHero()
+    } else if (previousHeroId != null) {
+      await showFinishedHero(previousHeroId)
+    }
   }
 
   async function fetchTvIdle() {
@@ -47,7 +82,7 @@ export const useLiveStore = defineStore('live', () => {
   }
 
   return {
-    hero, next, now, editionYear, stake,
+    hero, next, now, editionYear, stake, finishedHero,
     stats, recentResults, events, programme, announcements,
     match, fetchTvState, fetchTvIdle, fetchMatch,
   }
