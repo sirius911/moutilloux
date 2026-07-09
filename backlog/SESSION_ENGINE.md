@@ -373,7 +373,73 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #138
+**Dernière session :** 2026-07-09 — Session #139
+**Sprint traité :** 37 — Mobile : arbitre & régie (1ère session du sprint,
+2/6 tickets clos — `#339`, `#340`, `#341`, `#342` restants).
+
+**Git :** branche `claude/sprint/37-mobile-arbitre-regie` (nouvelle branche
+cette session), parent effectif `claude/sprint/36-echauffement` (sprint 36
+toujours non mergé dans `main`, déduit depuis `backlog/sprints/done/`).
+2 commits de code cette session.
+
+**Spec review session #139 :** `mobile.md`, `admin-regie-mobile.md` et
+`arbitre-match.md` (§ Variante mobile) — ⚠️ Dérive mineure en début de
+session (sprint tout juste planifié, aucun ticket encore implémenté) →
+dérive partiellement résorbée par les deux tickets de cette session
+(`#337`/`#338`), le reste attendu pour `#339`-`#342`. Toutes les dérives
+relevées correspondaient exactement aux issues déjà ouvertes lors de la
+planification (session #not-tracked, 2026-07-08) — 0 nouvelle issue créée.
+
+**Backlog engine session #139 :** 2 tickets traités séquentiellement (chaîne
+plan → agent → `reviewer` par ticket), conformément à l'ordre suggéré par
+`sprint.md` (#337 en tête car il débloque tout) :
+- **#337** (majeure, label `infra`) — ticket orchestrateur (fichiers
+  partagés router/composables, CLAUDE.md §3) : implémenté directement par
+  l'orchestrateur, pas par un agent `vue-screen`. Nouveau composable
+  `useViewport.ts` (`isMobile` réactif, seuil 600px) + nouvelle route
+  `/admin/regie` dans `router/index.ts` + stub minimal `AdminRegie.vue`
+  (nécessaire pour ne pas casser le lazy-import avant que #340, ticket
+  distinct, ne livre l'écran complet). Un édit externe (linter/formatter)
+  a ensuite déplacé la route hors des enfants d'`AdminLayout` vers une route
+  top-level indépendante — changement accepté car plus conforme à la spec
+  (« route dédiée […] pas une adaptation des écrans admin existants »),
+  re-vérifié avant commit. Verdict reviewer : ✅ Approuvé.
+- **#338** (majeure) — front : `ArbitreMatch.vue` — seconde scène fixe
+  portrait (~390×844) via `useViewport()`+`useScale`, zones de tap empilées
+  haut/bas (mêmes actions `handleTap` re-mappées), verrou anti-tap
+  (déverrouillage par appui long ~600ms, timer annulé si relâchement
+  prématuré), actions secondaires repliées dans une feuille Teleport,
+  scène iPad strictement inchangée (aucune maquette `.jsx` de référence
+  pour cette scène neuve, construite depuis la spec texte). Toutes les
+  fonctions/modals existants réutilisés tels quels, aucune logique
+  dupliquée. Verdict reviewer : ✅ Approuvé (suggestion mineure non
+  bloquante : une règle CSS `.arb-stage--mobile { flex-direction: column }`
+  redondante avec la règle de base).
+
+**Sprint 37 non clos cette session :** 4 issues encore ouvertes sur le
+milestone (`#339` — ArbitreHome variante mobile, `#340` — AdminRegie écran
+complet, `#341` — PWA minimale, `#342` — wake-lock), dont `#340` dépend
+indirectement du stub posé par `#337`. Sprint 37 reste actif, sera repris à
+la **prochaine échéance planifiée**.
+
+**Roadmap non vide** — sprint 37 est l'unique sprint restant dans
+`backlog/sprints/roadmap.md` ; aucun sprint suivant planifié à ce jour.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (10 erreurs préexistantes ailleurs dans
+le projet — `useApi.ts`, `stores/event.ts`, `AdminBracket.vue` — identiques
+avant/après les deux tickets de cette session, aucune nouvelle imputable).
+Toujours pas de script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée). Aucune
+maquette `.jsx` de référence n'existe pour les écrans mobile/régie de ce
+sprint (sujet neuf, specs écrites le 2026-07-08 sans mock React) — les
+agents `vue-screen` construisent directement depuis la description texte des
+specs, point à garder en tête pour `#339`/`#340`.
+
+---
+
+**Historique — session #138 :**
 **Sprint traité :** 36 — Échauffement (2ᵉ et dernière session du sprint —
 **clos cette session**, 4/4 tickets clos).
 
