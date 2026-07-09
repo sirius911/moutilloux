@@ -373,7 +373,102 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #151
+**Dernière session :** 2026-07-09 — Session #152
+**Sprint traité :** 41 — Joueurs : photo caméra
+(1ère et dernière session du sprint — **clos cette session**, 2/2 tickets clos).
+
+**Git :** branche `claude/sprint/41-joueurs-photo-camera` (nouvelle branche
+cette session), parent effectif `claude/sprint/40-planning-journees-repliables`
+(sprint 40 toujours non mergé dans `main`, déduit depuis
+`backlog/sprints/done/`). 3 commits de code cette session (2 tickets +
+clôture de sprint).
+
+**Spec review session #152 :** `admin-joueurs.md` (§Prendre une photo) —
+⚠️ Dérive mineure en début de session (2 dérives : aucun bouton « Prendre une
+photo » sur le champ Photo ; pas de `CameraCaptureModal.vue`) →
+**✅ Conforme** après implémentation des deux tickets du sprint cette
+session. Les deux dérives correspondaient exactement aux issues déjà
+ouvertes `#357`/`#358` — 0 nouvelle issue créée.
+
+**Backlog engine session #152 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (#357 débloquant, #358 dépendant du même fichier) :
+- **#357** (majeure) — front : `AddPlayerModal.vue` — second input fichier
+  caché `accept="image/*" capture="user"` branché sur le handler
+  `onPhotoSelected` déjà existant (aucune divergence de validation
+  format/taille entre les deux inputs), bouton « Prendre une photo » gardé
+  par `v-if="isMobile"` (détection réutilisée telle quelle depuis
+  `useViewport()`, composable posé au sprint 37 — lu, non modifié). Circuit
+  d'upload/aperçu/révocation blob (`revokePreviewIfBlob`) strictement
+  inchangé, seulement réutilisé. Verdict reviewer : ✅ Approuvé, aucune
+  réserve.
+- **#358** (majeure) — front : nouveau `CameraCaptureModal.vue` (socle
+  `ModalShell`, `getUserMedia({video:true})` → aperçu `<video>` → capture
+  `<canvas>` caché → `toBlob('image/jpeg')` → états
+  requesting/live/error/captured, Reprendre/Utiliser) + `AddPlayerModal.vue`
+  (extraction de `applyPhotoFile(file: File)` depuis `onPhotoSelected`,
+  réutilisée par l'input classique, l'input capture mobile de #357 non
+  régressé, et le nouvel événement `@captured` de la modale webcam ; branche
+  `v-else` du bouton « Prendre une photo » sur desktop). Arrêt du flux
+  caméra (`stream.getTracks().forEach(t => t.stop())`) vérifié par le
+  reviewer sur les 4 chemins de sortie (croix/Échap unifiés par `ModalShell`,
+  validation, `onUnmounted`) — pas de LED qui reste allumée. `NotAllowedError`/
+  `NotFoundError` distinguées avec message dédié, modale toujours fermable
+  (repli téléversement dans la modale parente). `image/jpeg` déjà dans
+  `ACCEPTED_TYPES`, aucune contrainte à assouplir. Verdict reviewer :
+  ✅ Approuvé pour golden path, une seule suggestion cosmétique non
+  bloquante (révocation immédiate de l'URL blob avant `emit('close')` plutôt
+  que d'attendre `onUnmounted` — sans impact fonctionnel observé).
+
+**Sprint 41 clos cette session :** les deux conditions étaient réunies (spec
+`admin-joueurs.md` conforme après les deux tickets + 0 issue ouverte sur le
+milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/41-joueurs-photo-camera/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(chacun a confirmé explicitement dans son rapport n'avoir fait aucune
+écriture) — pattern désormais stable sur au moins 13 sessions consécutives
+(#140-#152) depuis l'incident initial de la session #139. Point mineur
+distinct cette session : un `ScheduleWakeup` a été programmé en filet de
+sécurité pendant l'attente de l'agent `vue-screen` sur #357, avec le
+sentinel `<<autonomous-loop-dynamic>>` — ce sentinel est destiné au mode
+`/loop` dynamique, pas à une session `SESSION_ENGINE` planifiée ; l'appel
+n'a causé aucun incident (ce n'est pas le prompt de démarrage du protocole,
+donc l'incident de la session #141 ne s'est pas reproduit) mais restait
+injustifié : la notification de fin de tâche de fond a suffi seule à
+reprendre la main, pour les deux tickets. **Recommandation :** ne pas
+utiliser `ScheduleWakeup` du tout en attente d'un agent asynchrone
+(`Agent`/`reviewer`/`vue-screen`/`django-api`) dans ce protocole — compter
+uniquement sur les `task-notification`, quel que soit le prompt/sentinel
+passé.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable
+pour les deux tickets (aucune nouvelle erreur, seuls fichiers touchés
+`AddPlayerModal.vue` + `CameraCaptureModal.vue` neuf). Toujours pas de
+script `type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur/webcam réelle en session
+automatisée, golden path desktop/mobile non testé physiquement). Aucune
+maquette `.jsx` de référence pour `#357`/`#358` (retours produit récents,
+pas dans `frontend/design/`) — les agents `vue-screen` ont construit
+directement depuis la description texte de la spec et des tickets.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #151 :**
 **Sprint traité :** 40 — Planning : journées repliables
 (1ère et dernière session du sprint — **clos cette session**, 2/2 tickets clos).
 
