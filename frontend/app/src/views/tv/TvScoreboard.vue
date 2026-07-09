@@ -133,13 +133,6 @@ function loserName(): string {
 
       <!-- ── Scène ÉCHAUFFEMENT ──────────────────────────────────────────── -->
       <template v-if="isWarmupScene">
-        <!-- Composition typographique si pas d'affiche (spec : « Match en échauffement sans affiche ») -->
-        <div v-if="!live.hero.posterUrl" class="tv-warmup-typo">
-          <span class="tv-warmup-typo-name">{{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}</span>
-          <span class="tv-warmup-typo-vs">VS</span>
-          <span class="tv-warmup-typo-name">{{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}</span>
-        </div>
-
         <div class="tv-warmup">
           <span class="tv-warmup-lbl">ÉCHAUFFEMENT</span>
           <div class="tv-warmup-countdown">{{ warmupCountdown ?? 'Le match va commencer' }}</div>
@@ -923,30 +916,6 @@ function loserName(): string {
 }
 
 /* ── Scène ÉCHAUFFEMENT ────────────────────────────────────────────────── */
-.tv-warmup-typo {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 40px;
-}
-
-.tv-warmup-typo-name {
-  font-size: 140px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--ink-0);
-  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
-}
-
-.tv-warmup-typo-vs {
-  font-size: 40px;
-  font-weight: 600;
-  color: var(--ink-3);
-}
-
 .tv-warmup {
   position: absolute;
   inset: 0;
