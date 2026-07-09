@@ -31,8 +31,15 @@ Un match est piloté depuis **deux surfaces** qui partagent la **même logique**
 
 Règle d'architecture (CLAUDE.md §5) : chaque transition est **une fonction de
 service unique** dans le back (`démarrer`, `terminer`, `forfait`, `annuler`,
-`rouvrir`), appelée aussi bien par l'endpoint arbitre (`POST /arbitre/match/<id>/action/`)
+`rouvrir`), appelée aussi bien par l'endpoint d'action arbitre
+(`POST /api/matches/<id>/action/`, garde Arbitre — voir [[auth-matrice-acces]])
 que par l'écran admin. **Une seule vérité, deux écrans** — jamais deux implémentations.
+
+> **Migration (retours 2026-07-09)** : cet endpoint remplace l'historique
+> `POST /arbitre/match/<id>/action/`. Les **vues template legacy** de l'espace
+> arbitre (`referee_home`, `referee_match`, gabarits associés) sont
+> **supprimées** — la SPA est la seule surface arbitre ; seul le moteur de
+> score (fonctions de service) survit, exposé sous `/api/`.
 
 ---
 
@@ -130,7 +137,8 @@ statut supplémentaire :
 
 - **Qui** : arbitre (saisie point par point). L'admin ne score pas ; il **corrige**
   (voir ci-dessous).
-- Le moteur de score (`referee_action`) gère automatiquement points → jeux → sets →
+- Le moteur de score (service `referee_action`, exposé par
+  `POST /api/matches/<id>/action/`) gère automatiquement points → jeux → sets →
   tie-break selon le format du match. Décrit côté UI dans [[arbitre-match]].
 
 ### Terminer (normal) — `LIVE → FINISHED`
@@ -251,3 +259,4 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 | Forfait / abandon / annulation **scopés au match** | services neufs (le walkover d'entry existe côté épreuve) |
 | `reopen` **conservant `set_scores`** et repassant `LIVE` | correction de bug |
 | `order_index` **persistant** à travers `LIVE`/`FINISHED` | correction (sprint 15) |
+| Endpoint d'action migré sous `/api/` (`POST /api/matches/<id>/action/`) + suppression des vues template legacy (`referee_home`/`referee_match`, `admin_views` non routées, `home.html`) et des entrées proxy Vite mortes | migration de route + purge (retours 2026-07-09) |

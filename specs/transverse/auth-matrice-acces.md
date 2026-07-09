@@ -38,6 +38,7 @@ fichiers:
 | `GET /api/matches/<id>/` | `api_match_detail` | Public | Lecture TV (scoreboard) |
 | `GET /api/events/<id>/bracket/` | `api_event_bracket` | Public | Lecture TV (tableau final) |
 | `GET /api/arbitre/matches/` | `api_arbitre_matches` | Arbitre | `@referee_required` |
+| `POST /api/matches/<id>/action/` | `api_match_action` | Arbitre | Moteur de score (points, corrections, transitions) — remplace `POST /arbitre/match/<id>/action/` après suppression des vues template arbitre (retours 2026-07-09). Consommé par la SPA arbitre **et** la régie mobile admin (le niveau Arbitre inclut le superuser). |
 | `GET /api/players/` | `api_players` | **Superuser** (après fix) | Était `@login_required` — corrigé par ce ticket |
 | `POST /api/players/create/` | `api_player_create` | **Superuser** (après fix) | Était `@login_required` — corrigé par ce ticket |
 | `GET /api/me/` | `api_me` | Public | Doit rester accessible non connecté (retourne 401 JSON attendu, géré par le front) |

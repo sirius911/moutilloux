@@ -100,14 +100,27 @@ des poules. Le calendrier n'est donc disponible que pour une épreuve
 ### Journées
 
 Empilées verticalement (pas d'onglets), dans la **zone scrollable** de l'écran.
-Les cartes de journée **ne clippent pas leur contenu** — pas d'`overflow:
-hidden` sur la carte (`.play-day`) : il casse le défilement et tout
-positionnement `sticky` interne (l'arrondi des coins est porté par l'en-tête
-et le pied de carte, pas par un clip). Une section par journée de jeu
-(`PlayDay`) :
-- En-tête : nom + date, nombre de matchs ; sous-ligne « Court central · début HH:MM
-  · fin estimée ~HH:MM ». L'**heure de début est éditable en place** : cliquer
-  « début HH:MM » ouvre un sélecteur d'heure inline (même mutation que
+Une section par journée de jeu (`PlayDay`), **repliable / dépliable** au clic
+sur son en-tête (chevron d'état) :
+
+- **État par défaut au chargement** : les journées **entièrement jouées**
+  (plus aucun match `SCHEDULED` ni `LIVE` dans leur séquence) arrivent
+  **repliées** ; la journée courante et les journées à venir arrivent
+  **dépliées**. L'état plié/déplié n'est pas persisté : la règle est
+  réappliquée à chaque chargement de la page (le repli manuel vaut pour la
+  session d'écran en cours).
+- **Repliée**, la carte se réduit à son en-tête, qui porte un **résumé
+  riche** : nom + date, **compteur de matchs** (joués / total), **plage
+  horaire** (« début HH:MM → fin estimée ~HH:MM », heure de fin réelle sans
+  tilde si la journée est finie) et la **pastille de capacité** — l'alerte
+  « Dépasse HH:MM » reste donc visible sans déplier.
+- **Dépliée**, la carte **ne clippe pas son contenu** — pas d'`overflow:
+  hidden` sur la carte (`.play-day`) : il casse le défilement et tout
+  positionnement `sticky` interne (l'arrondi des coins est porté par l'en-tête
+  et le pied de carte, pas par un clip).
+- En-tête (déplié) : nom + date, nombre de matchs ; sous-ligne « Court central ·
+  début HH:MM · fin estimée ~HH:MM ». L'**heure de début est éditable en place** :
+  cliquer « début HH:MM » ouvre un sélecteur d'heure inline (même mutation que
   « Modifier » dans la modale Gérer les journées) — c'est le moyen rapide de
   décaler le premier match de la journée, les heures restant dérivées
   (décision 18, [[planning]]).
@@ -171,6 +184,10 @@ venu. Les matchs créés arrivent dans la **pile « À planifier »**.
 1. L'admin glisse une carte de la pile vers une journée (à la position voulue), ou
    réordonne une ligne dans une journée / entre journées, ou renvoie une ligne vers
    la pile.
+   - Une journée **repliée** n'est pas une zone de dépôt : pendant un drag,
+     **survoler son en-tête ~600 ms la déplie** (elle reste dépliée après le
+     drop), ce qui permet de poser la carte à la position exacte voulue. Pas de
+     dépôt direct sur l'en-tête replié.
 2. La **séquence complète** est envoyée au serveur ; les positions `order_index`
    sont (ré)attribuées (`POST …/matches/reorder/`). Un match renvoyé à la pile perd
    sa position et sa journée.
