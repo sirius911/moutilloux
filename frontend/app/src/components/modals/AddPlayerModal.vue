@@ -3,6 +3,7 @@ import { ref, computed, onUnmounted } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import { useApi } from '@/composables/useApi'
+import { useViewport } from '@/composables/useViewport'
 import { useEventStore } from '@/stores/event'
 import type { Player } from '@/types'
 import ATTITUDES from '@/constants/attitudes.json'
@@ -15,6 +16,7 @@ const emit = defineEmits<{ close: []; saved: [] }>()
 
 const { post } = useApi()
 const eventStore = useEventStore()
+const { isMobile } = useViewport()
 
 const firstName = ref(props.editing?.firstName ?? '')
 const lastName = ref(props.editing?.lastName ?? '')
@@ -30,6 +32,7 @@ const fieldErrors = ref<Record<string, string[]>>({})
 
 // Photo
 const fileInput = ref<HTMLInputElement | null>(null)
+const captureInput = ref<HTMLInputElement | null>(null)
 const photoFile = ref<File | null>(null)
 const photoRemoved = ref(false)
 const photoPreviewUrl = ref<string | null>(props.editing?.photoUrl ?? null)
@@ -248,6 +251,22 @@ onUnmounted(() => {
               />
               <button class="adm-btn" type="button" @click="fileInput?.click()">
                 {{ photoPreviewUrl ? 'Changer la photo' : 'Choisir une photo' }}
+              </button>
+              <input
+                ref="captureInput"
+                type="file"
+                accept="image/*"
+                capture="user"
+                class="photo-input-hidden"
+                @change="onPhotoSelected"
+              />
+              <button
+                v-if="isMobile"
+                class="adm-btn"
+                type="button"
+                @click="captureInput?.click()"
+              >
+                Prendre une photo
               </button>
               <button
                 v-if="photoPreviewUrl"
