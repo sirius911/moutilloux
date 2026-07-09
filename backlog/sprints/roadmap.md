@@ -10,6 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 39 — TV : échauffement, score au tableau & carrousel | `backlog/sprints/39-tv-echauffement-score-carrousel/sprint.md` |
-| 2 | 40 — Planning : journées repliables | `backlog/sprints/40-planning-journees-repliables/sprint.md` |
-| 3 | 41 — Joueurs : photo caméra | `backlog/sprints/41-joueurs-photo-camera/sprint.md` |
+| 1 | 40 — Planning : journées repliables | `backlog/sprints/40-planning-journees-repliables/sprint.md` |
+| 2 | 41 — Joueurs : photo caméra | `backlog/sprints/41-joueurs-photo-camera/sprint.md` |

@@ -373,7 +373,76 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #149
+**Dernière session :** 2026-07-09 — Session #150
+**Sprint traité :** 39 — TV : échauffement, score au tableau & carrousel
+(2ᵉ et dernière session du sprint — **clos cette session**, 4/4 tickets clos).
+
+**Git :** branche `claude/sprint/39-tv-echauffement-score-carrousel`, parent
+effectif `claude/sprint/38-purge-legacy-arbitre` (sprint 38 toujours non
+mergé dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de code
+cette session.
+
+**Spec review session #150 :** `tv-live.md` et `admin-tableau-final.md` —
+⚠️ Dérive mineure en début de session (2 dérives restantes : AdminBracket sans
+score par sets ; slides du carrousel encore à 1600px au lieu de ~1760px) →
+**✅ Conforme** après implémentation des deux derniers tickets du sprint cette
+session. Les deux dérives correspondaient exactement aux issues déjà ouvertes
+`#353`/`#354` — 0 nouvelle issue créée.
+
+**Backlog engine session #150 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), dans l'ordre de sévérité
+(majeure puis mineure) :
+- **#353** (majeure) — front : `AdminBracket.vue` — nouvelle fonction pure
+  `sideSetScore(m, side)`, reprise à l'identique de celle posée dans
+  `TvIdle.vue` au ticket #352 (sets clos via `setScores` + set en cours si
+  `status === 'LIVE' && playStartedAt`), insérée dans les 8 emplacements
+  (QF/SF/F/P3 × A/B, uniquement en mode affichage normal, jamais dans le mode
+  édition des étiquettes) + règle CSS `.slot-score` (police mono, alignée à
+  droite). Bouton ✕, drag & drop et édition des étiquettes inchangés. Aucun
+  nouvel endpoint. Verdict reviewer : ✅ Approuvé, aucune réserve.
+- **#354** (mineure) — front : `TvIdle.vue` — une seule règle CSS changée
+  (`.tv-rotate` : `max-width` 1600→1760px, `padding` 0 56px→0 40px). En-tête
+  et pied laissés strictement inchangés (conformément à la spec) ; enfants de
+  `.tv-rotate` (Résultats/Poules/Tableau/Programme/Annonces) tous fluides,
+  aucun débordement identifié au nouveau plafond. Verdict reviewer :
+  ✅ Approuvé, aucune réserve.
+
+**Sprint 39 clos cette session :** les deux conditions étaient réunies (specs
+`tv-live.md` et `admin-tableau-final.md` conformes après les deux derniers
+tickets + 0 issue ouverte sur le milestone). Milestone GitHub fermé, dossier
+déplacé vers `backlog/sprints/done/39-tv-echauffement-score-carrousel/`,
+ligne retirée de `backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 2 sprints restants (40 — Planning : journées
+repliables, 41 — Joueurs : photo caméra). Le sprint 40 sera traité à la
+**prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(vérifié via `git status`/`gh issue view` après chaque invocation) — pattern
+désormais stable sur au moins 11 sessions consécutives (#140-#150) depuis
+l'incident initial de la session #139.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable pour
+les deux tickets (aucune nouvelle erreur). Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée). Aucune
+maquette `.jsx` de référence pour `#353`/`#354` (retours produit récents,
+pas dans `frontend/design/`) — les agents `vue-screen` ont construit
+directement depuis la description texte des specs, en reprenant la logique
+déjà posée par `#352` pour la cohérence de présentation.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #149 :**
 **Sprint traité :** 39 — TV : échauffement, score au tableau & carrousel
 (1ère session du sprint, 2/4 tickets clos — `#353`, `#354` restants).
 
