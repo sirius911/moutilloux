@@ -183,7 +183,7 @@ function extractError(e: unknown): string {
 
 async function refereeAction(matchId: number, action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
-    await post(`/arbitre/match/${matchId}/action/`, { action, ...extra })
+    await post(`/api/matches/${matchId}/action/`, { action, ...extra })
     await refreshCalendar()
     return true
   } catch (e) {
