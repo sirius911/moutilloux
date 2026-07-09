@@ -373,27 +373,88 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #146
-**Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
+**Dernière session :** 2026-07-09 — Session #147
+**Sprint traité :** 38 — Arbitre : purge legacy & action API (1ère session du
+sprint, roadmap regarnie avant cette session par la planification des sprints
+38-41 sur les retours du 2026-07-09). 2/4 tickets clos — `#349` et `#350`
+restants.
+
+**Git :** branche `claude/sprint/38-purge-legacy-arbitre` (nouvelle branche
+cette session), parent effectif `claude/sprint/37-mobile-arbitre-regie`
+(sprint 37 toujours non mergé dans `main`, déduit depuis
+`backlog/sprints/done/`). 2 commits de code cette session.
+
+**Spec review session #147 :** `cycle-de-vie-match.md` et
+`auth-matrice-acces.md` — ⚠️ Dérive mineure en début de session (endpoint
+`/api/matches/<id>/action/` absent, vues legacy `/arbitre/` encore présentes
+— exactement le cœur du sprint) → dérive partiellement résorbée par les deux
+tickets de cette session (`#347`/`#348`), le reste attendu pour `#349`
+(purge des vues legacy) avant `✅ Conforme`. Toutes les dérives relevées
+correspondaient exactement aux issues déjà ouvertes lors de la planification
+— 0 nouvelle issue créée.
+
+**Backlog engine session #147 :** 2 tickets traités séquentiellement (chaîne
+plan → agent → `reviewer` par ticket), conformément à l'ordre suggéré par
+`sprint.md` (chaîne de dépendances stricte, #347 débloquant tout) :
+- **#347** (majeure, label `infra`) — back : `live/api_views.py` (agent
+  `django-api` : nouvelle fonction `api_match_action`, wrapper d'une ligne
+  délégant intégralement à `referee_action` — `live/referee_views.py:104`,
+  déjà décorée `@login_required @referee_required @require_POST
+  @transaction.atomic`, déjà JSON-native — zéro logique dupliquée, aucun
+  décorateur redondant ajouté) + `live/urls.py` (fichier partagé, câblé par
+  l'orchestrateur : route `POST /api/matches/<id>/action/`). Verdict
+  reviewer : ✅ Approuvé (aucune réserve).
+- **#348** (majeure) — front : `ArbitreMatch.vue:154` et
+  `AdminRegie.vue:186` (agent `vue-screen` : changement de chaîne de
+  caractères uniquement, `/arbitre/match/<id>/action/` →
+  `/api/matches/<id>/action/`, payload/gestion d'erreur/re-fetch inchangés).
+  Verdict reviewer : ✅ Approuvé — le reviewer a d'abord soulevé un faux
+  positif (pensait l'ancien chemin disparu du routeur en ne grep-ant que
+  `live/urls.py`) puis a lui-même vérifié que la route legacy vit dans
+  `live/arbitre_urls.py` (module distinct, non touché par ce ticket, purge
+  prévue en `#349`) — clarification consignée dans le log de session,
+  aucune action corrective nécessaire.
+
+**Sprint 38 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#349` — suppression des vues template legacy, `#350` —
+nettoyage du proxy Vite), toutes deux dépendantes de `#348` (clos cette
+session). Spec review encore ⚠️ (pas `✅ Conforme` tant que `#349` n'est pas
+fait). Sprint reste actif, sera repris à la **prochaine échéance planifiée**.
+
+**Roadmap non vide** — 3 autres sprints en attente après le 38 (39 — TV :
+échauffement/score/carrousel, 40 — Planning : journées repliables, 41 —
+Joueurs : photo caméra).
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(vérifié via `git status` après chaque invocation) — pattern désormais
+stable sur au moins 8 sessions consécutives (#140-#147) depuis l'incident
+initial de la session #139, voir `feedback_reviewer_agent_overreach`.
+
+**Point d'attention outillage :** `manage.py check` fiable pour la
+vérification back de `#347` (aucune erreur, seul un `RuntimeWarning`
+préexistant lié à `AppConfig.ready()` s'affiche, sans rapport). `npx vue-tsc
+--noEmit` toujours fiable pour `#348`. Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée).
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs au
+sprint 38 actif). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #146 :**
+**Sprint traité :** aucun — `backlog/sprints/roadmap.md` était vide (0 ligne
 de sprint, vidée à la session #141, reconfirmée vide aux sessions #142,
 #143, #144, #145 et #146). Conformément au protocole (étape 0), la session
 s'est arrêtée sans exécuter les étapes 1 à 3. Aucun changement de code,
-aucun commit de code.
-
-**Roadmap toujours vide depuis la session #141** (sprint 37 clos, dernier de
-la série, milestone fermé) — **6ᵉ session consécutive à vide (#141 clôture,
-#142, #143, #144, #145, #146)**. **Désactiver la Routine manuellement sur
-claude.ai/code/routines**, ou planifier un nouveau sprint (`/plan-sprint`)
-avant la prochaine échéance — sinon la Routine continuera de se déclencher
-pour rien.
-
-**Observation annexe (signalée session #144, toujours non actionnée) :**
-deux dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors
-de `done/` et non référencés par `roadmap.md` : `04-admin-panel-map/` et
-`10-contexte-url/` (numéros très inférieurs au sprint 37, dernier clos).
-Hors du mandat de l'étape 0 (roadmap vide → arrêt immédiat). À investiguer
-lors d'une prochaine session ou par l'utilisateur avant de les considérer
-comme travail réellement en attente ou comme reliquats à archiver.
+aucun commit de code. Roadmap regarnie avant la session #147 (planification
+des sprints 38-41 sur les retours du 2026-07-09).
 
 ---
 
