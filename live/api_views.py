@@ -82,7 +82,7 @@ from live.admin_views import (
     update_announcement,
     delete_announcement,
 )
-from live.referee_views import referee_required
+from live.referee_views import referee_required, referee_action
 
 
 # ── CSRF ─────────────────────────────────────────────────────────────────────
@@ -686,6 +686,18 @@ def api_arbitre_matches(request):
         "playDays": packed_play_days,
         "next": _pack_match(next_match),
     })
+
+
+def api_match_action(request, match_id: int):
+    """
+    POST /api/matches/<id>/action/
+    Moteur de score (arbitre) exposé sous /api/ — délègue intégralement à
+    referee_action (live/referee_views.py), qui porte déjà les gardes (login,
+    rôle Arbitre, POST, transaction atomique) et gère nativement un corps
+    JSON. Remplace POST /arbitre/match/<id>/action/ (retours 2026-07-09) ;
+    consommé par la SPA arbitre et la régie mobile admin (#348).
+    """
+    return referee_action(request, match_id)
 
 
 @require_GET

@@ -40,6 +40,7 @@ urlpatterns = [
     path("api/matches/<int:match_id>/edit/", api_views.api_match_edit, name="api_match_edit"),
     path("api/matches/<int:match_id>/feature/", api_views.api_match_feature, name="api_match_feature"),
     path("api/matches/<int:match_id>/start/", api_views.api_match_start, name="api_match_start"),
+    path("api/matches/<int:match_id>/action/", api_views.api_match_action, name="api_match_action"),
 
     # ── API JSON — Sprint 24 (affiches de match) ───────────────────────
     path("api/matches/<int:match_id>/poster/", api_views.api_match_poster_status, name="api_match_poster_status"),
