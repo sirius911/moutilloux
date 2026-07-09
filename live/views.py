@@ -1,12 +1,7 @@
 from collections import defaultdict
-from django.shortcuts import render
 from competition.models import GroupStanding, GroupMembership
 from live.models import Match
 from live.bracket import group_is_finished
-
-
-def home(request):
-    return render(request, "live/home.html")
 
 
 def get_hero_match(edition):

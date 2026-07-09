@@ -1,11 +1,8 @@
 from django.urls import path
-from . import views
 from . import api_views
 
 
 urlpatterns = [
-    path("", views.home, name="home"),
-
     # ── API JSON (SPA Vue.js) ──────────────────────────────────────────
     path("api/csrf/", api_views.api_csrf, name="api_csrf"),
     path("api/auth/login/", api_views.api_login, name="api_login"),
