@@ -373,14 +373,14 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #154
+**Dernière session :** 2026-07-10 — Session #155
 **Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
 (sprint 41 clos à la session #152). Conformément à l'étape 0 du protocole,
 la session s'est arrêtée sans exécuter les étapes 1 à 3. Working tree propre
 au démarrage, aucun changement de code, aucun commit.
 
-**2ᵉ session à vide consécutive depuis la clôture du sprint 41 (après la
-#153).** Désactiver la Routine manuellement sur claude.ai/code/routines, ou
+**3ᵉ session à vide consécutive depuis la clôture du sprint 41 (après les
+#153 et #154).** Désactiver la Routine manuellement sur claude.ai/code/routines, ou
 planifier un nouveau sprint (`/plan-sprint`) avant la prochaine échéance.
 
 **Observation annexe (signalée depuis la session #144, toujours non
@@ -390,7 +390,7 @@ actionnée) :** deux dossiers de sprint orphelins subsistent dans
 avant de les considérer comme travail réellement en attente ou comme
 reliquats à archiver.
 
-Log complet : `backlog/logs/session_2026-07-09_154.md`.
+Log complet : `backlog/logs/session_2026-07-10_155.md`.
 
 ---
 
