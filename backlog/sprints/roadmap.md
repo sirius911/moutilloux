@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |

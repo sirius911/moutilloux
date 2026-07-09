@@ -373,7 +373,92 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #140
+**Dernière session :** 2026-07-09 — Session #141
+**Sprint traité :** 37 — Mobile : arbitre & régie (3ᵉ et dernière session du
+sprint — **clos cette session**, 6/6 tickets clos).
+
+**Git :** branche `claude/sprint/37-mobile-arbitre-regie`, parent effectif
+`claude/sprint/36-echauffement` (sprint 36 toujours non mergé dans `main`,
+déduit depuis `backlog/sprints/done/`). 2 commits de code cette session.
+
+**Spec review session #141 :** `mobile.md` — ⚠️ Dérive mineure en début de
+session (2 dérives : PWA absente, wake-lock absent) → **✅ Conforme** après
+implémentation des deux derniers tickets du sprint cette session.
+`admin-regie-mobile.md` et `arbitre-match.md` (§ Variante mobile) —
+✅ Conforme (déjà résorbées sessions #139/#140). Les deux dérives
+correspondaient exactement aux issues déjà ouvertes `#341`/`#342` — 0
+nouvelle issue créée.
+
+**Backlog engine session #141 :** 2 tickets traités séquentiellement, tous
+deux des tickets infra sans maquette `.jsx` de référence, traités
+directement par l'orchestrateur (pattern `#337` en session #139), suivis
+chacun d'un agent `reviewer` :
+- **#341** (mineure) — front : `frontend/app/index.html` +
+  `frontend/app/public/manifest.webmanifest` (nouveau) +
+  `frontend/app/public/icon-192.png`/`icon-512.png` (nouveaux, PNG carrés
+  générés via `sips` depuis `favicon.svg`, fond `--bg-1`) — manifest complet
+  (nom, icônes 192/512, `display: standalone`, `orientation: portrait`),
+  liens `<link rel="manifest">`/`apple-touch-icon`/`theme-color` dans
+  `index.html`. Pas de service worker (conforme au scope « v1 en ligne » de
+  la spec). Verdict reviewer : ✅ Approuvé, aucune réserve.
+- **#342** (mineure, `infra`) — nouveau composable
+  `frontend/app/src/composables/useWakeLock.ts` (`useWakeLock(active:
+  Ref<boolean>)` — Screen Wake Lock API, ré-acquisition sur
+  `visibilitychange`, échec silencieux) branché dans `ArbitreMatch.vue` sur
+  `match.value?.status === 'LIVE'` (même base que les computed
+  `isWarmup`/`isPlaying` existants). Verdict reviewer : ✅ Approuvé — réserve
+  mineure non bloquante (fenêtre de race théorique si `active` bascule très
+  rapidement plusieurs fois, sans impact pratique sur ce cas d'usage).
+
+**Sprint 37 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation des deux derniers tickets + 0 issue
+ouverte sur le milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/37-mobile-arbitre-regie/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+**Point d'attention protocole (nouveau, cette session) — `ScheduleWakeup`
+mal utilisé pendant l'attente d'un agent `reviewer` asynchrone :** en
+patientant sur la revue de `#341`, j'ai appelé `ScheduleWakeup` en repassant
+le prompt de démarrage complet du protocole comme prompt de réveil. Un de
+ces réveils a ré-exécuté l'Étape 0 (dont la règle « working tree sale ») et
+auto-commité mes changements `#341` en cours avec le message générique
+`sprint-37 🚧 Session précédente interrompue — état sauvegardé` avant que je
+ne clôture le ticket moi-même. Contenu correct (fichiers de `#341`
+uniquement), mais message erroné — corrigé par `git commit --amend` local
+(commit jamais poussé). Pour `#342`, j'ai attendu uniquement la notification
+automatique de fin de tâche de fond, sans `ScheduleWakeup` : aucun incident.
+**Recommandation ferme pour les sessions futures :** ne jamais utiliser
+`ScheduleWakeup` avec le prompt de démarrage de `SESSION_ENGINE.md` pendant
+qu'une session est déjà en cours d'exécution — compter uniquement sur les
+notifications de fin de tâche de fond (`task-notification`) pour reprendre
+la main après un agent asynchrone (`Agent`/`reviewer`).
+
+Par ailleurs, les deux agents `reviewer` de cette session ont de nouveau
+strictement respecté leur mandat de lecture seule (vérifié via
+`git status`/`gh issue view` après chaque invocation) — voir
+`feedback_reviewer_agent_overreach` pour l'historique de l'incident initial
+(session #139), pattern désormais confirmé stable sur 3 sessions
+consécutives (#140, #141).
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (9-10 erreurs préexistantes ailleurs
+dans le projet — `useApi.ts`, `stores/event.ts`, `AdminBracket.vue` —
+identiques avant/après les deux tickets de cette session, aucune nouvelle
+imputable). Toujours pas de script `type-check`/`lint` dans `package.json`,
+toujours pas de `.claude/launch.json` côté front — vérification par
+type-check + revue de code uniquement (pas de QA navigateur en session
+automatisée). Nouveauté : pas d'outil de rastérisation SVG→PNG standard
+(`rsvg-convert`/`imagemagick`) disponible dans l'environnement — `sips`
+(macOS) utilisé à la place pour générer les icônes PWA depuis `favicon.svg`,
+fonctionne correctement pour ce besoin ponctuel.
+
+---
+
+**Historique — session #140 :**
 **Sprint traité :** 37 — Mobile : arbitre & régie (2ᵉ session du sprint,
 4/6 tickets clos — `#341`, `#342` restants).
 
