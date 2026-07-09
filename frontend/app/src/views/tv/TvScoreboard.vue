@@ -1,10 +1,36 @@
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import TvIdle from './TvIdle.vue'
 
 const live = useLiveStore()
 usePolling(() => live.fetchTvState(), 2000)
+
+const isWarmupScene = computed(() => live.hero?.status === 'LIVE' && !live.hero?.playStartedAt)
+
+const WARMUP_DURATION_MS = 5 * 60 * 1000 // 5 min, constante indicative (cycle-de-vie-match.md)
+
+const nowTick = ref(Date.now())
+let tickTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  tickTimer = setInterval(() => { nowTick.value = Date.now() }, 1000)
+})
+onUnmounted(() => {
+  if (tickTimer) clearInterval(tickTimer)
+})
+
+const warmupCountdown = computed(() => {
+  const startedAt = live.hero?.warmupStartedAt
+  if (!startedAt) return '5:00'
+  const elapsed = nowTick.value - new Date(startedAt).getTime()
+  const remainingMs = Math.max(0, WARMUP_DURATION_MS - elapsed)
+  if (remainingMs <= 0) return null // → bascule sur le libellé d'imminence dans le template
+  const totalSeconds = Math.ceil(remainingMs / 1000)
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+})
 
 function initials(name: string): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
@@ -66,13 +92,71 @@ function loserName(): string {
 
     <!-- ── Match en cours ────────────────────────────────────────────────── -->
     <template v-else>
-      <!-- Fond de scène : affiche du match si disponible, sinon fond de court CSS -->
+      <!-- Fond de scène partagé : affiche du match si disponible, sinon fond de court -->
       <div
         v-if="live.hero?.posterUrl"
         class="hero-poster-bg"
         :style="{ backgroundImage: `url(${live.hero.posterUrl})` }"
       />
       <div v-else class="court-bg" />
+
+      <!-- Carte « À préparer » (PrepPanel) — partagée entre échauffement et scoreboard -->
+      <div v-if="live.next" class="tv-prep">
+        <i class="tv-prep-bar" />
+        <div class="tv-prep-head">
+          <span class="tv-prep-lbl">À PRÉPARER · ~{{ live.next.scheduledTime }}</span>
+          <span class="tv-prep-stage">{{ live.next.stageLabel }}</span>
+        </div>
+        <div class="tv-prep-players">
+          <div class="tv-prep-player">
+            <div class="tv-prep-avatar tv-prep-avatar-a">
+              {{ initials(live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?') }}
+            </div>
+            <span class="tv-prep-name">{{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?' }}</span>
+          </div>
+          <em class="tv-prep-vs">vs</em>
+          <div class="tv-prep-player">
+            <div class="tv-prep-avatar">
+              {{ initials(live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?') }}
+            </div>
+            <span class="tv-prep-name">{{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?' }}</span>
+          </div>
+        </div>
+        <div class="tv-prep-foot">
+          <span class="tv-prep-court">{{ live.next.court }}</span>
+          <span class="tv-prep-call">
+            <i class="tv-prep-call-dot" />
+            Présentez-vous au juge-arbitre
+          </span>
+        </div>
+      </div>
+
+      <!-- ── Scène ÉCHAUFFEMENT ──────────────────────────────────────────── -->
+      <template v-if="isWarmupScene">
+        <!-- Composition typographique si pas d'affiche (spec : « Match en échauffement sans affiche ») -->
+        <div v-if="!live.hero.posterUrl" class="tv-warmup-typo">
+          <span class="tv-warmup-typo-name">{{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}</span>
+          <span class="tv-warmup-typo-vs">VS</span>
+          <span class="tv-warmup-typo-name">{{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}</span>
+        </div>
+
+        <div class="tv-warmup">
+          <span class="tv-warmup-lbl">ÉCHAUFFEMENT</span>
+          <div class="tv-warmup-countdown">{{ warmupCountdown ?? 'Le match va commencer' }}</div>
+          <div class="tv-warmup-players">
+            {{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}
+            <em>vs</em>
+            {{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}
+          </div>
+          <div class="tv-warmup-meta">
+            <span v-if="live.hero.stageLabel">{{ live.hero.stageLabel }}</span>
+            <span v-if="live.hero.court">COURT · {{ live.hero.court }}</span>
+          </div>
+        </div>
+      </template>
+
+      <!-- ── Scène SCOREBOARD (match lancé) ──────────────────────────────── -->
+      <template v-else>
       <!-- Zone d'enjeu (centre de l'écran) — classement de poule ou mini-tableau -->
       <div v-if="live.stake" class="stake-panel">
         <!-- Enjeu : poule -->
@@ -202,37 +286,6 @@ function loserName(): string {
         </div>
       </header>
 
-      <!-- Carte « À préparer » (PrepPanel) — flottante en haut à droite -->
-      <div v-if="live.next" class="tv-prep">
-        <i class="tv-prep-bar" />
-        <div class="tv-prep-head">
-          <span class="tv-prep-lbl">À PRÉPARER · ~{{ live.next.scheduledTime }}</span>
-          <span class="tv-prep-stage">{{ live.next.stageLabel }}</span>
-        </div>
-        <div class="tv-prep-players">
-          <div class="tv-prep-player">
-            <div class="tv-prep-avatar tv-prep-avatar-a">
-              {{ initials(live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?') }}
-            </div>
-            <span class="tv-prep-name">{{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?' }}</span>
-          </div>
-          <em class="tv-prep-vs">vs</em>
-          <div class="tv-prep-player">
-            <div class="tv-prep-avatar">
-              {{ initials(live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?') }}
-            </div>
-            <span class="tv-prep-name">{{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?' }}</span>
-          </div>
-        </div>
-        <div class="tv-prep-foot">
-          <span class="tv-prep-court">{{ live.next.court }}</span>
-          <span class="tv-prep-call">
-            <i class="tv-prep-call-dot" />
-            Présentez-vous au juge-arbitre
-          </span>
-        </div>
-      </div>
-
       <!-- Centre editorial : jeux du set en cours en très grand -->
       <div class="sb-ed-numbers">
         <div class="sb-ed-num tab accent-text">{{ live.hero.gamesA }}</div>
@@ -295,6 +348,7 @@ function loserName(): string {
         <span v-if="live.hero.clock">DURÉE · {{ live.hero.clock }}</span>
         <span>{{ live.now }}</span>
       </div>
+      </template>
     </template>
   </div>
 </template>
@@ -866,6 +920,84 @@ function loserName(): string {
 .tv-finish-retirement {
   color: var(--danger);
   font-weight: 700;
+}
+
+/* ── Scène ÉCHAUFFEMENT ────────────────────────────────────────────────── */
+.tv-warmup-typo {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+.tv-warmup-typo-name {
+  font-size: 140px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-0);
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+}
+
+.tv-warmup-typo-vs {
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.tv-warmup {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.tv-warmup-lbl {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-shadow: 0 0 24px var(--accent-glow);
+}
+
+.tv-warmup-countdown {
+  font-size: 160px;
+  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-0);
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+}
+
+.tv-warmup-players {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink-1);
+}
+
+.tv-warmup-players em {
+  font-style: normal;
+  color: var(--ink-3);
+  margin: 0 12px;
+}
+
+.tv-warmup-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--ink-3);
+  text-transform: uppercase;
 }
 
 /* ── Pied discret ────────────────────────────────────────────────────── */
