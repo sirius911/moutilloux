@@ -56,6 +56,21 @@ const unscheduledByGroupDnd = ref<Record<string, DayItem[]>>({})
 // Journées : items unifiés (matchs + pauses) ordonnés par playDayId
 const dayItemsDnd = ref<Record<number, DayItem[]>>({})
 
+// ── Repli des journées (défaut jouées repliées, état non persisté) ────────
+const collapsedDays = ref<Record<number, boolean>>({})
+
+function isDayFullyPlayed(day: CalendarDay): boolean {
+  return day.matches.length > 0 && day.matches.every((m) => m.status !== 'SCHEDULED' && m.status !== 'LIVE')
+}
+
+function toggleDay(dayId: number) {
+  collapsedDays.value[dayId] = !collapsedDays.value[dayId]
+}
+
+function playedCount(day: CalendarDay): number {
+  return day.matches.filter((m) => m.status === 'FINISHED').length
+}
+
 function syncFromStore() {
   if (dragging.value) return
   const cal = eventStore.calendar
@@ -105,6 +120,18 @@ const calendarDays = computed<CalendarDay[]>(() => {
 
 const unscheduledTotal = computed(() =>
   Object.values(unscheduledByGroupDnd.value).reduce((s, arr) => s + arr.length, 0),
+)
+
+// Initialisation du repli une fois par journée (jamais re-forcée sur un
+// repli/dépli manuel en cours de session, même au fil du polling).
+watch(
+  calendarDays,
+  (days) => {
+    for (const day of days) {
+      if (!(day.id in collapsedDays.value)) collapsedDays.value[day.id] = isDayFullyPlayed(day)
+    }
+  },
+  { immediate: true },
 )
 
 // ── Groupage épreuve + poule (pile et annulés) ─────────────────────────────
@@ -763,50 +790,87 @@ async function onDragEnd() {
           :key="day.id"
           class="play-day"
         >
-          <!-- En-tête de journée -->
-          <header class="pd-header">
-            <div class="pd-header-left">
-              <span class="pd-date">{{ formatDate(day.date) }}</span>
-              <span class="pd-match-count">{{ day.matches.length }} match{{ day.matches.length !== 1 ? 's' : '' }}</span>
-            </div>
-            <div class="pd-header-right">
-              <span class="pd-times">
-                Court central ·
-                <button
-                  v-if="editingStartDayId !== day.id"
-                  type="button"
-                  class="pd-start-trigger"
-                  @click="openStartEdit(day)"
-                >début {{ day.startTime }}</button>
-                <span v-else class="pd-start-edit">
-                  début
-                  <input
-                    v-model="editingStartValue"
-                    type="time"
-                    class="pd-input pd-start-input"
-                    :disabled="savingStart[day.id]"
-                    autofocus
-                    @keydown.enter="confirmStartEdit(day)"
-                    @keydown.esc="cancelStartEdit"
-                    @blur="confirmStartEdit(day)"
-                  />
+          <!-- En-tête de journée (repliable — clic sur l'en-tête entier) -->
+          <header
+            class="pd-header"
+            role="button"
+            tabindex="0"
+            :aria-expanded="!collapsedDays[day.id]"
+            @click="toggleDay(day.id)"
+            @keydown.enter="toggleDay(day.id)"
+          >
+            <span
+              class="pd-chevron"
+              :class="{ 'pd-chevron--collapsed': collapsedDays[day.id] }"
+            >▾</span>
+
+            <!-- Repliée : résumé riche (joués/total, plage horaire) -->
+            <template v-if="collapsedDays[day.id]">
+              <div class="pd-header-left">
+                <span class="pd-date">{{ formatDate(day.date) }}</span>
+                <span class="pd-match-count">{{ playedCount(day) }}/{{ day.matches.length }} matchs</span>
+              </div>
+              <div class="pd-header-right">
+                <span class="pd-times">
+                  début {{ day.startTime }} → {{ isDayFullyPlayed(day) ? '' : '~' }}{{ dayEndEstimate(day) ?? '—' }}
                 </span>
-                · fin estimée ~{{ dayEndEstimate(day) ?? '—' }}
-              </span>
-              <span v-if="startError[day.id]" class="pd-start-error">{{ startError[day.id] }}</span>
-              <span
-                v-if="dayEndEstimate(day)"
-                :class="['pd-capacity', capacityOver(day) ? 'over' : '']"
-              >
-                {{ capacityOver(day)
-                  ? `Dépasse ${dayEndEstimate(day)}`
-                  : `Cible ${day.targetEndTime}` }}
-              </span>
-            </div>
+                <span
+                  v-if="dayEndEstimate(day)"
+                  :class="['pd-capacity', capacityOver(day) ? 'over' : '']"
+                >
+                  {{ capacityOver(day)
+                    ? `Dépasse ${dayEndEstimate(day)}`
+                    : `Cible ${day.targetEndTime}` }}
+                </span>
+              </div>
+            </template>
+
+            <!-- Dépliée : rendu actuel, inchangé -->
+            <template v-else>
+              <div class="pd-header-left">
+                <span class="pd-date">{{ formatDate(day.date) }}</span>
+                <span class="pd-match-count">{{ day.matches.length }} match{{ day.matches.length !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="pd-header-right">
+                <span class="pd-times">
+                  Court central ·
+                  <button
+                    v-if="editingStartDayId !== day.id"
+                    type="button"
+                    class="pd-start-trigger"
+                    @click.stop="openStartEdit(day)"
+                  >début {{ day.startTime }}</button>
+                  <span v-else class="pd-start-edit" @click.stop>
+                    début
+                    <input
+                      v-model="editingStartValue"
+                      type="time"
+                      class="pd-input pd-start-input"
+                      :disabled="savingStart[day.id]"
+                      autofocus
+                      @keydown.enter="confirmStartEdit(day)"
+                      @keydown.esc="cancelStartEdit"
+                      @blur="confirmStartEdit(day)"
+                      @click.stop
+                    />
+                  </span>
+                  · fin estimée ~{{ dayEndEstimate(day) ?? '—' }}
+                </span>
+                <span v-if="startError[day.id]" class="pd-start-error">{{ startError[day.id] }}</span>
+                <span
+                  v-if="dayEndEstimate(day)"
+                  :class="['pd-capacity', capacityOver(day) ? 'over' : '']"
+                >
+                  {{ capacityOver(day)
+                    ? `Dépasse ${dayEndEstimate(day)}`
+                    : `Cible ${day.targetEndTime}` }}
+                </span>
+              </div>
+            </template>
           </header>
 
           <!-- Lignes matchs + pauses (liste unifiée DnD ↔ pile) -->
-          <div class="pd-rows">
+          <div v-if="!collapsedDays[day.id]" class="pd-rows">
             <draggable
               v-model="dayItemsDnd[day.id]"
               class="pd-droparea"
@@ -913,6 +977,7 @@ async function onDragEnd() {
 
           <!-- Action pause -->
           <button
+            v-if="!collapsedDays[day.id]"
             class="add-pause-btn"
             type="button"
             :disabled="addingPause[day.id]"
@@ -1161,7 +1226,18 @@ async function onDragEnd() {
   border-bottom: 1px solid var(--line-1);
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   flex-wrap: wrap;
+  cursor: pointer;
 }
+
+.pd-chevron {
+  font-size: 12px;
+  color: var(--ink-3);
+  flex-shrink: 0;
+  transition: transform 150ms;
+  transform: rotate(0deg);
+}
+
+.pd-chevron--collapsed { transform: rotate(-90deg); }
 
 .pd-header-left { display: flex; align-items: center; gap: 12px; }
 
