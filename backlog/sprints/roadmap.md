@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 41 — Joueurs : photo caméra | `backlog/sprints/41-joueurs-photo-camera/sprint.md` |
