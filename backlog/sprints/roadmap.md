@@ -10,6 +10,5 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 35 — TV : scène live & fin de match | `backlog/sprints/35-tv-scene-live-fin-de-match/sprint.md` |
-| 2 | 36 — Échauffement | `backlog/sprints/36-echauffement/sprint.md` |
-| 3 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |
+| 1 | 36 — Échauffement | `backlog/sprints/36-echauffement/sprint.md` |
+| 2 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |
