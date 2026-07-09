@@ -606,27 +606,27 @@ function initials(name: string): string {
   visibility: hidden;
 }
 
-/* ── Zone d'enjeu (centre de l'écran) ───────────────────────────────── */
+/* ── Zone d'enjeu (secondaire, ancrée à gauche) ──────────────────────── */
 .stake-panel {
   position: absolute;
   top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  left: 48px;
+  transform: translateY(-50%);
   z-index: 5;
-  max-width: 1100px;
-  width: 90%;
+  width: 480px;
   max-height: 620px;
   overflow: hidden;
-  background: rgba(5, 6, 8, 0.7);
-  border: 1px solid var(--line-2);
+  background: rgba(8, 12, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--r-md);
-  padding: 28px 40px;
-  backdrop-filter: blur(4px);
+  padding: 24px 24px;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
 .stake-title {
   margin: 0 0 20px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2em;
   color: var(--ink-2);
@@ -644,12 +644,12 @@ function initials(name: string): string {
 
 .stake-group-row {
   display: grid;
-  grid-template-columns: 1fr 48px 48px 60px;
+  grid-template-columns: 1fr 32px 32px 44px;
   padding: 10px 14px;
   border-radius: var(--r-sm);
   align-items: center;
   gap: 10px;
-  font-size: 18px;
+  font-size: 16px;
   color: var(--ink-1);
 }
 
@@ -701,8 +701,9 @@ function initials(name: string): string {
 /* Enjeu : mini-tableau */
 .stake-mini-bracket {
   display: flex;
-  gap: 24px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
 }
 
 .stake-mini-col {
@@ -739,7 +740,7 @@ function initials(name: string): string {
 }
 
 .stake-mini-slot {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ink-2);
 }
 
