@@ -373,18 +373,27 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #143
+**Dernière session :** 2026-07-09 — Session #144
 **Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
-de sprint, vidée à la session #141, reconfirmée vide aux sessions #142 et
-#143). Conformément au protocole (étape 0), la session s'est arrêtée sans
+de sprint, vidée à la session #141, reconfirmée vide aux sessions #142, #143
+et #144). Conformément au protocole (étape 0), la session s'est arrêtée sans
 exécuter les étapes 1 à 3. Aucun changement de code, aucun commit de code.
 
 **Roadmap toujours vide depuis la session #141** (sprint 37 clos, dernier de
-la série, milestone fermé) — **3ᵉ session consécutive à vide (#141 clôture,
-#142, #143)**. **Désactiver la Routine manuellement sur
+la série, milestone fermé) — **4ᵉ session consécutive à vide (#141 clôture,
+#142, #143, #144)**. **Désactiver la Routine manuellement sur
 claude.ai/code/routines**, ou planifier un nouveau sprint (`/plan-sprint`)
 avant la prochaine échéance — sinon la Routine continuera de se déclencher
 pour rien.
+
+**Observation annexe (nouvelle cette session, non actionnée) :** deux
+dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors de
+`done/` et non référencés par `roadmap.md` : `04-admin-panel-map/` et
+`10-contexte-url/` (numéros très inférieurs au sprint 37, dernier clos).
+Repérés en passant en listant `backlog/sprints/`, hors du mandat de l'étape 0
+(roadmap vide → arrêt immédiat). À investiguer lors d'une prochaine session
+ou par l'utilisateur avant de les considérer comme travail réellement en
+attente ou comme reliquats à archiver.
 
 ---
 
