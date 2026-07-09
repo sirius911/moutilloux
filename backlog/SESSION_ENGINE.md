@@ -373,7 +373,77 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #139
+**Dernière session :** 2026-07-09 — Session #140
+**Sprint traité :** 37 — Mobile : arbitre & régie (2ᵉ session du sprint,
+4/6 tickets clos — `#341`, `#342` restants).
+
+**Git :** branche `claude/sprint/37-mobile-arbitre-regie`, parent effectif
+`claude/sprint/36-echauffement` (sprint 36 toujours non mergé dans `main`,
+déduit depuis `backlog/sprints/done/`). 2 commits de code cette session.
+
+**Spec review session #140 :** `mobile.md` — ⚠️ Dérive mineure en début de
+session (PWA/wake-lock absents) ; `admin-regie-mobile.md` — ⚠️ Dérive
+mineure (AdminRegie encore un stub) → **résorbée par #340 cette session** ;
+`arbitre-match.md` (§ Variante mobile) — ✅ Conforme (déjà résorbée session
+#139). Toutes les dérives correspondaient exactement aux issues déjà
+ouvertes — 0 nouvelle issue créée.
+
+**Backlog engine session #140 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), les deux majeurs par
+ordre de sévérité :
+- **#339** — front : `ArbitreHome.vue` — contrairement à `ArbitreMatch.vue`
+  (#338, scène fixe scalée), cet écran était déjà un layout fluide en liste
+  verticale (« déjà proche d'un layout mobile » selon la spec) : simple
+  resserrement CSS sous `.arh--mobile` (`isMobile` via `useViewport()`),
+  aucune restructuration DOM ni nouvelle logique. Verdict reviewer :
+  ✅ Approuvé.
+- **#340** — front : `AdminRegie.vue` (nouvel écran complet, ~1300 lignes,
+  remplace le stub de #337) — fil de la journée courante + match en cours
+  épinglé, feuille d'actions contextuelle (7 actions selon statut : Démarrer/
+  Mettre à l'antenne/Forfait/Annuler pour `SCHEDULED`, Terminer/Correction de
+  score/Annuler pour `LIVE`, Correction de score/Rouvrir pour `FINISHED`),
+  section Annonces TV (pattern copié d'`AdminTournoi.vue`). **Aucun nouvel
+  endpoint** : réutilise intégralement `eventStore.startMatch`/`featureMatch`/
+  `editMatch` (déjà exportés par `stores/event.ts`, lu/appelé sans
+  modification) + le canal `POST /arbitre/match/<id>/action/` (accepté par
+  un superuser, même garde que l'arbitre) pour terminer/forfait/annuler/
+  rouvrir. Teinte de ponctualité volontairement simplifiée (comparaison
+  heure planifiée/actuelle, pas le moteur ETA monotone complet
+  d'`AdminMatches.vue` — choix de périmètre assumé dans le plan, validé par
+  le reviewer). Verdict reviewer : ✅ Approuvé.
+
+**Sprint 37 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#341` — PWA minimale, `#342` — wake-lock, toutes deux mineures,
+`mobile.md` non encore entièrement conforme). Sprint 37 reste actif, sera
+repris à la **prochaine échéance planifiée**.
+
+**Roadmap non vide** — sprint 37 est l'unique sprint restant ; une fois clos,
+`roadmap.md` sera vide (rien planifié après).
+
+**Point d'attention protocole — suivi de l'incident de la session #139 :**
+les deux agents `reviewer` invoqués cette session (pour #339 puis #340) ont
+cette fois **respecté strictement** leur mandat de lecture seule (aucun
+commit, aucune fermeture d'issue, vérifié explicitement par l'orchestrateur
+via `git status`/`gh issue view` immédiatement après chaque invocation,
+avant toute autre action). Les instructions renforcées mises en place à la
+session #139 (interdiction explicite de toute commande d'écriture, ligne de
+statut finale obligatoire dans le rapport) semblent avoir suffi. Continuer
+cette vérification systématique aux sessions suivantes tant que le pattern
+n'est pas confirmé durablement résolu — voir
+`backlog/logs/session_2026-07-09_139.md` et la mémoire persistante
+`feedback_reviewer_agent_overreach` pour le détail de l'incident initial.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (9-10 erreurs préexistantes ailleurs dans
+le projet — `useApi.ts`, `stores/event.ts`, `AdminBracket.vue` — identiques
+avant/après les deux tickets de cette session, aucune nouvelle imputable).
+Toujours pas de script `type-check`/`lint` dans `package.json`, toujours pas
+de `.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée).
+
+---
+
+**Historique — session #139 :**
 **Sprint traité :** 37 — Mobile : arbitre & régie (1ère session du sprint,
 2/6 tickets clos — `#339`, `#340`, `#341`, `#342` restants).
 
