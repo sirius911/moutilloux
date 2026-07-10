@@ -267,9 +267,12 @@ export interface TvStakeStanding {
   qualified: boolean
 }
 
-export type TvStake =
-  | { kind: 'group'; groupName: string; eventName: string; standings: TvStakeStanding[] }
-  | { kind: 'bracket'; eventName: string; bracket: Bracket }
+export interface TvStake {
+  kind: 'group'
+  groupName: string
+  eventName: string
+  standings: TvStakeStanding[]
+}
 
 export interface TvState {
   editionYear: number | null
