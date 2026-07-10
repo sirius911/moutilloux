@@ -373,7 +373,31 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-10 — Session #159
+**Dernière session :** 2026-07-10 — Session #160
+**Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
+(sprint 42 clos à la session #159). Conformément à l'étape 0 du protocole,
+la session s'est arrêtée sans exécuter les étapes 1 à 4. Working tree propre
+au démarrage, aucun changement de code, aucun commit de code.
+
+**5ᵉ session à vide consécutive depuis la clôture du sprint 42.** Aucun
+sprint suivant planifié depuis.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+**Roadmap vide.** Aucun sprint en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+Log complet : `backlog/logs/session_2026-07-10_160.md`.
+
+---
+
+**Historique — session #159 :**
 **Sprint traité :** 42 — TV : score broadcast et phase en grand
 (3ᵉ session du sprint — **clos cette session**, 5/5 tickets clos).
 
