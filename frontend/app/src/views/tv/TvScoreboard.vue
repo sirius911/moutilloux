@@ -150,10 +150,9 @@ function loserName(): string {
 
       <!-- ── Scène SCOREBOARD (match lancé) ──────────────────────────────── -->
       <template v-else>
-      <!-- Zone d'enjeu (centre de l'écran) — classement de poule ou mini-tableau -->
-      <div v-if="live.stake" class="stake-panel">
-        <!-- Enjeu : poule -->
-        <div v-if="live.stake.kind === 'group'" class="stake-group">
+      <!-- Zone d'enjeu (centre de l'écran) — classement de poule, sinon phase en grand -->
+      <div v-if="live.stake?.kind === 'group'" class="stake-panel">
+        <div class="stake-group">
           <h2 class="stake-title">
             POULE {{ live.stake.groupName }}
             <span class="stake-title-sep">·</span>
@@ -182,77 +181,11 @@ function loserName(): string {
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Enjeu : tableau -->
-        <div v-else-if="live.stake.kind === 'bracket'" class="stake-bracket">
-          <h2 class="stake-title">
-            TABLEAU
-            <span class="stake-title-sep">·</span>
-            {{ live.stake.eventName }}
-          </h2>
-          <div class="stake-mini-bracket">
-            <div class="stake-mini-col">
-              <div class="stake-mini-col-head">QUARTS</div>
-              <div
-                v-for="slot in live.stake.bracket.qf"
-                :key="slot.slot"
-                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="stake-mini-col">
-              <div class="stake-mini-col-head">DEMIES</div>
-              <div
-                v-for="slot in live.stake.bracket.sf"
-                :key="slot.slot"
-                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="stake-mini-col">
-              <div class="stake-mini-col-head">FINALE</div>
-              <div
-                v-for="slot in live.stake.bracket.f"
-                :key="slot.slot"
-                :class="['stake-mini-match', 'final', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-            <div v-if="live.stake.bracket.p3?.length" class="stake-mini-col">
-              <div class="stake-mini-col-head">3E PLACE</div>
-              <div
-                v-for="slot in live.stake.bracket.p3"
-                :key="slot.slot"
-                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Phase du match en grand (tableau : QF/SF/F/P3) — pas de panneau d'enjeu -->
+      <div v-else-if="live.hero.stage !== 'GROUP'" class="stage-banner">
+        {{ live.hero.stageLabel }}
       </div>
 
       <!-- Bandeau haut (fin) -->
@@ -789,59 +722,20 @@ function loserName(): string {
 
 .stake-group-pts { color: var(--accent); font-weight: 700; }
 
-/* Enjeu : mini-tableau */
-.stake-mini-bracket {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: stretch;
-}
-
-.stake-mini-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.stake-mini-col-head {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--ink-3);
+/* ── Phase du match en grand (tableau : QF/SF/F/P3) ───────────────────── */
+.stage-banner {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 5;
+  text-align: center;
+  font-size: 88px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.stake-mini-match {
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stake-mini-match.final { border-color: var(--accent-soft); }
-
-.stake-mini-match.current {
-  border-color: var(--accent);
-  background: rgba(255,200,61,0.1);
-}
-
-.stake-mini-slot {
-  font-size: 12px;
-  color: var(--ink-2);
-}
-
-.stake-mini-slot.win { color: var(--ink-0); font-weight: 700; }
-
-.stake-mini-name {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--ink-0);
 }
 
 /* ── Photo finish (fin de match, ~30 s) ───────────────────────────────── */
