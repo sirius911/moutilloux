@@ -633,13 +633,15 @@ function loserName(): string {
 /* ── Zone d'enjeu (secondaire, ancrée à gauche) ──────────────────────── */
 .stake-panel {
   position: absolute;
-  top: 50%;
+  top: 140px;
+  bottom: 460px;
   left: 48px;
-  transform: translateY(-50%);
   z-index: 5;
   width: 480px;
-  max-height: 620px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
   background: rgba(8, 12, 16, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--r-md);
@@ -725,11 +727,14 @@ function loserName(): string {
 /* ── Phase du match en grand (tableau : QF/SF/F/P3) ───────────────────── */
 .stage-banner {
   position: absolute;
-  top: 50%;
+  top: 140px;
+  bottom: 460px;
   left: 0;
   right: 0;
-  transform: translateY(-50%);
   z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-size: 88px;
   font-weight: 800;
