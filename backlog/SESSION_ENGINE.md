@@ -373,15 +373,123 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-10 — Session #156
+**Dernière session :** 2026-07-10 — Session #157
+**Sprint traité :** 42 — TV : score broadcast et phase en grand
+(1ère session du sprint, roadmap regarnie juste avant cette session par la
+planification du sprint 42 sur les retours TV du 2026-07-10). 2/5 tickets
+clos — `#362`, `#364`, `#365` restants.
+
+**Git :** branche `claude/sprint/42-tv-score-broadcast` (nouvelle branche
+cette session), parent effectif `claude/sprint/41-joueurs-photo-camera`
+(sprint 41 toujours non mergé dans `main`, déduit depuis
+`backlog/sprints/done/`). 3 commits de code cette session (1 commit de
+rattrapage de working tree sale + 2 tickets).
+
+**Point d'attention protocole — working tree sale au démarrage, sur
+l'ancienne branche :** au démarrage de la session, la branche encore
+checked-out localement était `claude/sprint/41-joueurs-photo-camera`
+(sprint déjà clos et archivé depuis la session #152), avec 2 fichiers
+modifiés non commités et d'origine inconnue (aucun rapport avec le sprint
+41 ni le sprint 42) : `frontend/app/src/components/modals/AddPlayerModal.vue`
+(un refetch du registre après upload photo en édition) et
+`live/api_views.py` (sérialisation JSON de `attitudes` dans
+`api_player_edit`, contournement d'un piège `forms.JSONField` sur liste
+vide). Traité conformément au protocole (étape 0, working tree sale) :
+commit `🚧 Session précédente interrompue` **après** le checkout de la
+nouvelle branche 42 (les modifications ont donc été portées sur la branche
+42 avant le premier ticket) — ces deux correctifs seront inclus dans la PR
+du sprint 42, bien qu'étrangers à son périmètre. À signaler à l'utilisateur.
+
+**Spec review session #157 :** `tv-live.md` et `tv-state.md` — ⚠️ Dérive
+mineure en début de session (3 dérives : bande de score encore
+centrée/une-seule-ligne au lieu de deux lignes par joueur ; `stake-panel`
+conserve la variante mini-tableau `kind: 'bracket'` en template ;
+`_pack_tv_stake` renvoie toujours cette variante bracket) → dérive
+partiellement résorbée par les deux tickets de cette session
+(`#361`/`#363`), le reste (retrait front du mini-tableau et de son type)
+attendu pour `#362`/`#364` avant `✅ Conforme`. Les 3 dérives relevées
+correspondaient exactement aux issues déjà ouvertes lors de la
+planification du sprint — 0 nouvelle issue créée.
+
+**Backlog engine session #157 :** 2 tickets traités séquentiellement
+(chaîne plan → agent → `reviewer` par ticket), conformément à l'ordre de
+sévérité (les deux majeures disjointes en fichiers, traitées l'une après
+l'autre malgré leur parallélisabilité suggérée par `sprint.md`, car
+`SESSION_ENGINE.md` §2 impose un traitement séquentiel strict — prévaut ici
+sur la règle de fan-out front∥back plus générale de `CLAUDE.md` §3) :
+- **#361** (majeure) — front : `TvScoreboard.vue` (agent `vue-screen`) —
+  fusion du bloc de jeux géants centré (`.sb-ed-numbers`/`.sb-ed-label`)
+  avec les deux lignes joueur (`.sb-ed-bottom`) : nouvelle colonne
+  `.sb-ed-games` par ligne (160px, alimentée par `gamesA`/`gamesB` tels
+  quels), en-tête de colonnes commun « SETS / JEUX · SET {n} / POINTS »,
+  retrait de l'`accent-text` systématique côté A (accent réservé à « AV »
+  et à la balle de service). Aucune donnée recalculée côté front. Verdict
+  reviewer : ✅ Approuvé, `npx vue-tsc --noEmit` vérifié indépendamment par
+  le reviewer (0 erreur), suggestion cosmétique non bloquante (harmoniser
+  un `gap` CSS entre deux règles voisines).
+- **#363** (majeure) — back : `live/api_views.py` (agent `django-api`) —
+  retrait de la branche `kind: "bracket"` de `_pack_tv_stake` (3 lignes
+  restantes : `kind: "group"` ou `None`), `_pack_event_bracket` non touchée
+  (toujours utilisée par `GET /api/events/<id>/bracket/` et `tv/idle`).
+  `manage.py check` vérifié indépendamment par le reviewer (0 erreur).
+  Incohérence front temporaire relevée par les deux agents (types/index.ts
+  et TvScoreboard.vue référencent encore `kind: 'bracket'`) confirmée
+  inoffensive (code mort, `live.stake` vaudra `null` pour un match de
+  tableau) et déjà couverte par #362/#364 — aucune nouvelle issue créée.
+  Verdict reviewer : ✅ Approuvé.
+
+**Sprint 42 non clos cette session :** 3 issues encore ouvertes sur le
+milestone (`#362` — retrait du mini-tableau front, dépend de `#361` déjà
+clos ; `#364` — infra, retrait de la variante bracket du type `TvStake`,
+après `#362` ; `#365` — le panneau d'enjeu ne recouvre jamais la bande,
+après `#361` déjà clos). Spec review encore ⚠️ (pas `✅ Conforme` tant que
+`#362` n'est pas fait). Sprint reste actif, sera repris à la **prochaine
+échéance planifiée**.
+
+**Roadmap** — sprint 42 est le seul actif, aucun autre sprint en attente
+après.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `manage.py
+check` fiables pour les deux tickets (aucune nouvelle erreur), chacun
+vérifié indépendamment par l'agent `reviewer` en plus de l'agent
+d'implémentation. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur TV réelle en session automatisée). Aucune maquette `.jsx` de
+référence pour `#361`/`#363` (retours produit récents, pas dans
+`frontend/design/`) — les agents ont construit directement depuis la
+description texte des specs, la référence `scoreboard.jsx`/`scoreboard.css`
+n'étant citée dans la spec que pour la matière typographique générale (la
+structure en deux lignes prime dessus).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session ont de nouveau strictement respecté leur mandat de
+lecture seule (chacun a confirmé explicitement dans son rapport n'avoir
+fait aucune écriture, vérifié via `git status`/`git diff` après chaque
+invocation) — pattern désormais stable sur au moins 14 sessions consécutives
+(#140-#157, sessions à vide comprises) depuis l'incident initial de la
+session #139.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-10_157.md`.
+
+---
+
+**Historique — session #156 :**
 **Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
 (sprint 41 clos à la session #152). Conformément à l'étape 0 du protocole,
 la session s'est arrêtée sans exécuter les étapes 1 à 3. Working tree propre
 au démarrage, aucun changement de code, aucun commit de code.
 
 **4ᵉ session à vide consécutive depuis la clôture du sprint 41 (après les
-#153, #154 et #155).** Désactiver la Routine manuellement sur claude.ai/code/routines, ou
-planifier un nouveau sprint (`/plan-sprint`) avant la prochaine échéance.
+#153, #154 et #155).** Roadmap regarnie juste après cette session par la
+planification du sprint 42 sur les retours TV du 2026-07-10.
 
 **Observation annexe (signalée depuis la session #144, toujours non
 actionnée) :** deux dossiers de sprint orphelins subsistent dans
