@@ -373,7 +373,106 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-10 — Session #157
+**Dernière session :** 2026-07-10 — Session #159
+**Sprint traité :** 42 — TV : score broadcast et phase en grand
+(3ᵉ session du sprint — **clos cette session**, 5/5 tickets clos).
+
+**Git :** branche `claude/sprint/42-tv-score-broadcast`, parent effectif
+`claude/sprint/41-joueurs-photo-camera` (inchangé depuis la session #157).
+2 commits de code cette session.
+
+**Point d'attention protocole — session #158 interrompue avant sa clôture,
+découverte au démarrage :** au démarrage de cette session, le working tree
+était propre et la branche déjà la bonne (pas de checkout à faire — étape 0
+en apparence triviale), mais `gh issue list` a révélé que le ticket `#362`
+était déjà fermé et `git log` a montré un commit `9bab571` non poussé
+(« 42-362 ✅ … ») que ni `backlog/logs/` ni la section 6 de ce fichier ne
+documentaient encore. Contrairement au pattern habituel (session #65,
+`feedback_interrupted_session_log`), **aucun fichier de log n'existait même
+à l'état de brouillon non suivi** — l'interruption a eu lieu avant l'étape 4
+tout entière. Reconstitué a posteriori comme session #158
+(`backlog/logs/session_2026-07-10_158.md`) à partir de l'historique git et
+du commentaire de clôture GitHub de `#362`, puis poursuite normale du
+protocole (spec review fraîche, pas de présomption que le travail de fond
+restant était fait). Aucune perte de travail : le code utile était déjà
+committé et l'issue déjà fermée avant la coupure.
+
+**Spec review session #159 :** `tv-live.md` et `tv-state.md` — ⚠️ Dérive
+mineure en début de session (2 dérives restantes : `types/index.ts`
+conservait la variante `kind: 'bracket'` morte dans `TvStake` ;
+`.stake-panel`/`.stage-banner` centrés verticalement sans borne liée à la
+bande de score réelle, chevauchement possible pour une poule à standings
+nombreux) → **✅ Conforme** après implémentation des deux derniers tickets
+du sprint cette session. Les deux dérives correspondaient exactement aux
+issues déjà ouvertes `#364`/`#365` — 0 nouvelle issue créée.
+
+**Backlog engine session #159 :** 2 tickets traités séquentiellement :
+- **#364** (mineure, `infra`) — fichier partagé `frontend/app/src/types/index.ts`,
+  traité **directement par l'orchestrateur** (pattern `#337`/`#341`/`#350` —
+  aucun écran concerné, pas d'agent `vue-screen`) : union `TvStake` réduite
+  à la seule variante `{ kind: 'group'; groupName; eventName; standings }`.
+  `Bracket` reste utilisé ailleurs dans le fichier (`AdminBracketData`),
+  aucune référence orpheline. `npx vue-tsc --noEmit` : 0 erreur.
+- **#365** (mineure) — front : `TvScoreboard.vue` (agent `vue-screen`) —
+  `.stake-panel` et `.stage-banner` étaient centrés verticalement
+  (`top: 50%` + `translateY(-50%)`) sans borne liée à la position réelle de
+  la bande de score broadcast (`.sb-ed-bottom`, bord haut réel calculé
+  ≈643px) ; `.stake-panel` avait `max-height: 620px`, permettant à son bord
+  bas de descendre jusqu'à ≈850px pour une poule à standings nombreux —
+  recouvrement des lignes joueurs, la dérive documentée par le ticket depuis
+  les retours du 2026-07-10 (jamais corrigée sur le panneau de poule
+  lui-même, seulement sur l'ex-variante bracket par `#361`/`#362`). Fix :
+  ancrage borné `top: 140px` / `bottom: 460px` sur les deux règles, flex de
+  centrage interne, `max-height` retiré (remplacé par la borne `bottom`),
+  `overflow-y: auto` en garde-fou. Reviewer : géométrie recalculée
+  indépendamment (marge ≈23px avec `.sb-ed-bottom`, non nulle ; aucun
+  chevauchement horizontal avec `.tv-prep` ; poule à 6 joueurs ≈364px de
+  contenu, tient sans scroll dans la zone bornée de 480px), template non
+  touché, `npx vue-tsc --noEmit` 0 erreur. Verdict : ✅ Approuvé, deux
+  remarques cosmétiques non bloquantes (marge de clearance volontairement
+  fine ; piège flexbox `overflow-y:auto`+`justify-content:center` théorique
+  mais non déclenchable avec le nombre réaliste de joueurs par poule).
+
+**Sprint 42 clos cette session :** les deux conditions étaient réunies (specs
+`tv-live.md`/`tv-state.md` conformes sur les sections ciblées par le sprint +
+0 issue ouverte sur le milestone). Milestone GitHub (numéro 41) fermé,
+dossier déplacé vers `backlog/sprints/done/42-tv-score-broadcast/`, ligne
+retirée de `backlog/sprints/roadmap.md`.
+
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable
+pour les deux tickets (aucune nouvelle erreur). Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur TV réelle en session automatisée, la
+géométrie CSS de `#365` a été vérifiée par calcul analytique sur les
+propriétés CSS réelles, pas par rendu). Aucune maquette `.jsx` de référence
+pour `#364`/`#365` (retours produit récents, pas dans `frontend/design/`).
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` invoqué cette
+session a de nouveau strictement respecté son mandat de lecture seule
+(confirmation explicite dans son rapport, vérifié via `git status`/`git diff`
+avant/après invocation) — pattern désormais stable sur au moins 15 sessions
+consécutives (#140-#159, sessions à vide comprises) depuis l'incident initial
+de la session #139.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md`
+(désormais vide par ailleurs) : `04-admin-panel-map/` et `10-contexte-url/`.
+À investiguer par l'utilisateur avant de les considérer comme travail
+réellement en attente ou comme reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-10_159.md` (voir aussi
+`backlog/logs/session_2026-07-10_158.md`, reconstitué a posteriori pour la
+session interrompue).
+
+---
+
+**Historique — session #157 :**
 **Sprint traité :** 42 — TV : score broadcast et phase en grand
 (1ère session du sprint, roadmap regarnie juste avant cette session par la
 planification du sprint 42 sur les retours TV du 2026-07-10). 2/5 tickets

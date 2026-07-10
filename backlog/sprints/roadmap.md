@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 42 — TV : score broadcast et phase en grand | `backlog/sprints/42-tv-score-broadcast/sprint.md` |
