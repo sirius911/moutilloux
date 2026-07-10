@@ -279,15 +279,14 @@ function loserName(): string {
         </div>
       </header>
 
-      <!-- Centre editorial : jeux du set en cours en très grand -->
-      <div class="sb-ed-numbers">
-        <div class="sb-ed-num tab accent-text">{{ live.hero.gamesA }}</div>
-        <div class="sb-ed-num-sep">—</div>
-        <div class="sb-ed-num tab">{{ live.hero.gamesB }}</div>
-      </div>
-      <div class="sb-ed-label">JEUX · SET {{ live.hero.setScores.length + 1 }}</div>
-
+      <!-- Bande basse broadcast : deux lignes joueur, jeux géants rattachés à leur ligne -->
       <div class="sb-ed-bottom">
+        <div class="sb-ed-cols-head">
+          <span class="sb-ed-col-head sb-ed-col-head-sets">SETS</span>
+          <span class="sb-ed-col-head sb-ed-col-head-games">JEUX · SET {{ live.hero.setScores.length + 1 }}</span>
+          <span class="sb-ed-col-head sb-ed-col-head-pts">POINTS</span>
+        </div>
+
         <!-- Côté A -->
         <div class="sb-ed-line">
           <span v-if="live.hero.server === 'A'" class="serve-ball">
@@ -302,13 +301,14 @@ function loserName(): string {
           </span>
           <span v-if="live.hero.sideA?.seedHint" class="sb-ed-seed">[{{ live.hero.sideA.seedHint }}]</span>
           <span class="sb-ed-rule" />
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
+          <span class="sb-ed-games tab">{{ live.hero.gamesA }}</span>
           <span
             class="sb-ed-pts tab"
             :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointA === 'AV' }"
           >
             {{ live.hero.tbActive ? live.hero.tbPointsA : live.hero.displayPointA }}
           </span>
-          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
         </div>
 
         <!-- Côté B -->
@@ -325,13 +325,14 @@ function loserName(): string {
           </span>
           <span v-if="live.hero.sideB?.seedHint" class="sb-ed-seed">[{{ live.hero.sideB.seedHint }}]</span>
           <span class="sb-ed-rule" />
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
+          <span class="sb-ed-games tab">{{ live.hero.gamesB }}</span>
           <span
             class="sb-ed-pts tab"
             :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointB === 'AV' }"
           >
             {{ live.hero.tbActive ? live.hero.tbPointsB : live.hero.displayPointB }}
           </span>
-          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
         </div>
       </div>
 
@@ -583,46 +584,7 @@ function loserName(): string {
   font-size: 10px;
 }
 
-/* ── Centre editorial (porté depuis scoreboard.css .sb-ed-*) ─────────── */
-.sb-ed-numbers {
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  gap: 80px;
-  font-feature-settings: "tnum";
-  z-index: 4;
-}
-
-.sb-ed-num {
-  font-size: 320px;
-  line-height: 0.85;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--ink-0);
-  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
-}
-
-.sb-ed-num-sep {
-  font-size: 200px;
-  color: var(--ink-3);
-  font-weight: 200;
-  line-height: 0.85;
-}
-
-.sb-ed-label {
-  position: absolute;
-  left: 50%;
-  top: calc(42% + 170px);
-  transform: translateX(-50%);
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  color: var(--ink-3);
-  z-index: 4;
-}
-
+/* ── Bande basse broadcast (porté depuis scoreboard.css .sb-ed-*) ─────── */
 .sb-ed-bottom {
   position: absolute;
   left: 64px;
@@ -632,7 +594,29 @@ function loserName(): string {
   flex-direction: column;
   gap: 18px;
   z-index: 4;
+  font-feature-settings: "tnum";
 }
+
+.sb-ed-cols-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 32px;
+  padding: 0 0 4px;
+}
+
+.sb-ed-col-head {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.sb-ed-col-head-sets { min-width: 90px; }
+.sb-ed-col-head-games { min-width: 160px; }
+.sb-ed-col-head-pts { min-width: 130px; }
 
 .sb-ed-line {
   display: flex;
@@ -664,6 +648,32 @@ function loserName(): string {
   align-self: center;
 }
 
+.sb-ed-mini {
+  font-size: 14px;
+  color: var(--ink-3);
+  letter-spacing: 0.18em;
+  min-width: 90px;
+  text-align: right;
+}
+
+.sb-ed-mini b {
+  color: var(--ink-0);
+  font-weight: 700;
+  font-size: 20px;
+  margin-left: 4px;
+}
+
+.sb-ed-games {
+  font-size: 160px;
+  line-height: 0.85;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink-0);
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  min-width: 160px;
+  text-align: right;
+}
+
 .sb-ed-pts {
   font-size: 80px;
   font-weight: 800;
@@ -672,19 +682,6 @@ function loserName(): string {
   letter-spacing: -0.02em;
   min-width: 130px;
   text-align: right;
-}
-
-.sb-ed-mini {
-  font-size: 14px;
-  color: var(--ink-3);
-  letter-spacing: 0.18em;
-}
-
-.sb-ed-mini b {
-  color: var(--ink-0);
-  font-weight: 700;
-  font-size: 20px;
-  margin-left: 4px;
 }
 
 .accent-text { color: var(--accent); }
