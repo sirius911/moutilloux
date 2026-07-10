@@ -805,6 +805,12 @@ def api_player_edit(request, player_id):
         provided.pop("attitudes")
     merged.update(provided)
 
+    # `forms.JSONField` traite une liste vide comme une valeur vide (`[]` est
+    # dans EMPTY_VALUES de Django) et la nettoie en None -> viole le NOT NULL
+    # de core_player.attitudes. On sérialise en chaîne JSON, ce qu'un vrai
+    # formulaire HTML soumettrait : "[]" est reparsé en [] sans être vidé.
+    merged["attitudes"] = json.dumps(merged["attitudes"])
+
     form = PlayerForm(merged, instance=player)
     if not form.is_valid():
         return JsonResponse({"error": "Données invalides", "fields": form.errors}, status=400)

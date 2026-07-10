@@ -152,6 +152,9 @@ async function save() {
           emit('saved')
           return
         }
+        // editPlayer() a déjà rechargé la liste, mais AVANT l'upload photo :
+        // on refetch ici pour que la nouvelle photo apparaisse dans le registre.
+        await eventStore.fetchAllPlayers()
       }
     } else {
       const res = await post<{ ok: boolean; playerId: number }>('/api/players/create/', {
