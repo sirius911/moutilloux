@@ -62,17 +62,12 @@ Lecture publique. Tout match est packé par `_pack_match`.
   "now": "15h42",                 // horloge serveur locale
   "hero": { …_pack_match… },      // le match LIVE, ou null
   "next": { …_pack_match… },      // le next (définition ci-dessus), ou null
-  "stake": {                      // l'enjeu du hero, ou null
-    // hero en poule :
+  "stake": {                      // l'enjeu du hero (match de poule), ou null
     "kind": "group",
     "groupName": "A",
     "eventName": "Simple Homme",
     "standings": [ { "rank", "name", "wins", "losses", "points",
-                     "qualified", "entryId" } ],
-    // OU hero en tableau :
-    "kind": "bracket",
-    "eventName": "Simple Homme",
-    "bracket": { …même format que GET /api/events/<id>/bracket/… }
+                     "qualified", "entryId" } ]
   }
 }
 ```
@@ -84,9 +79,14 @@ Lecture publique. Tout match est packé par `_pack_match`.
   `playStartedAt`, la TV en dérive la scène (échauffement ⇄ scoreboard,
   [[tv-live]]). Un match `FINISHED` n'est **jamais** hero : la fenêtre
   « fin de match » (~30 s) est tenue **côté front** (voir Front).
-- `stake` est **dérivé du hero** (sa poule ou le tableau de son épreuve) ;
-  `null` si non résolvable. Les deux entries du hero sont identifiables dans
-  les standings via `entryId`.
+- `stake` est **dérivé du hero** : le classement de sa poule, `null` si le
+  hero n'est pas un match de poule ou si la poule n'est pas résolvable. Les
+  deux entries du hero sont identifiables dans les standings via `entryId`.
+  Pour un match de **tableau**, il n'y a **pas de stake** : la TV affiche la
+  **phase en grand** (`stageLabel`, déjà porté par `_pack_match`) — le
+  mini-tableau est retiré (retours 2026-07-10, décision 13 de [[tv-map]]), ce
+  qui supprime au passage le pack du bracket complet de l'épreuve à chaque
+  poll de ~2 s.
 - `qualified` n'est vrai que si la **poule est terminée** (plus aucun match
   `SCHEDULED`/`LIVE` dans la poule) — jamais sur classement partiel (voir
   [[cycle-de-vie-epreuve]]). Même règle pour les standings de `tv/idle`.

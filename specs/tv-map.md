@@ -73,7 +73,8 @@ Contrat de données, définition du *next*, annonces et cadences :
 4. **Pendant LIVE : scoreboard + enjeu.** Le score domine (bande basse), et la
    zone centrale montre le **classement de la poule du match en cours** (pour
    un match de tableau : le mini-tableau avec le chemin vers la finale). Le
-   bandeau « À suivre » est conservé.
+   bandeau « À suivre » est conservé. *(Le volet mini-tableau est retiré par
+   la décision 13.)*
 5. **Carousel idle à 6 slides** : Tournoi (stats agrégées — absorbe l'ancienne
    slide « attente »), Derniers résultats, Poules, Tableau, Programme,
    Annonces. Une slide **sans contenu est sautée** par la rotation.
@@ -108,6 +109,18 @@ Contrat de données, définition du *next*, annonces et cadences :
     Corrige l'inconsistance observée (l'index de rotation pointait dans une
     liste recalculée à chaque poll). Le badge Q des standings TV suit la règle
     « poule terminée » (décision 30 d'[[admin-panel-map]]). [[tv-live]].
+13. **Score broadcast + phase en grand** (retours du 2026-07-10) : la bande de
+    score passe en **deux lignes, une par joueur** — nom, sets, jeux du set en
+    cours (dominants) et points vivent sur la ligne du joueur, en colonnes
+    étiquetées : l'association joueur ↔ score est **structurelle**, plus
+    jamais positionnelle ; l'accent n'est jamais décoratif (réservé aux
+    signaux : service, AV, jeu décisif). L'enjeu latéral ne subsiste que pour
+    les **matchs de poule** (classement) ; pour un match de **tableau**, le
+    mini-tableau est **retiré** au profit de la **phase en grand** (« Quart de
+    finale », « Demi-finale », « Finale », « 3e place ») au-dessus du score —
+    il masquait un nom de joueur, s'affichait tronqué et restait illisible à
+    distance ; le tableau complet demeure en slide du carousel. Amende la
+    décision 4. [[tv-live]].
 
 ## API de référence (cible)
 

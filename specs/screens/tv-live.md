@@ -38,11 +38,14 @@ manuelle. La scène est fixée à 1920×1080 et mise à l'échelle sur l'écran 
 
 ## État SCOREBOARD (un match est en jeu)
 
-Scène **composée** : le score au centre (l'élément dominant de l'écran), la
-carte « À préparer » à droite, l'enjeu à gauche, l'affiche en fond. Référence
-design : la variante **« editorial »** du mock (`frontend/design/scoreboard.jsx`,
-`ScoreboardEditorial`) pour le centre, et le **`PrepPanel`** du même mock pour
-la carte de droite.
+Scène **composée** : le score en **bande basse** (l'élément dominant de
+l'écran), la carte « À préparer » à droite, l'enjeu au-dessus de la bande
+(panneau de poule à gauche, ou phase de tableau en grand), l'affiche en fond.
+Référence design : la variante **« editorial »** du mock
+(`frontend/design/scoreboard.jsx`, `ScoreboardEditorial`) pour la matière
+typographique (chiffres géants, hiérarchie), et le **`PrepPanel`** du même mock
+pour la carte de droite — mais la **structure en deux lignes** de la bande de
+score, décrite ci-dessous, prime sur le mock (retours 2026-07-10).
 
 ### Bandeau haut (fin)
 
@@ -50,21 +53,32 @@ la carte de droite.
   l'étape (`stageLabel`), pastille « EN DIRECT », badge « JEU DÉCISIF » si
   tie-break en cours.
 
-### Centre : le score « editorial » (l'élément dominant)
+### Bande basse : le score broadcast (l'élément dominant)
 
-- Les **jeux du set en cours en très grand** (`5 — 3`), surmontés du label
-  explicite **« JEUX · SET {n} »** — c'est le contraste de taille **et**
-  l'étiquette qui lèvent l'ambiguïté points/jeux pour un spectateur qui arrive
-  en cours de match.
-- En dessous, **une ligne par joueur** : balle de service côté serveur, nom
-  (nom d'équipe en Double), tête de série, **points du jeu en cours** et
-  **sets gagnés**.
+Bloc unique ancré en bas de scène, **deux lignes, une par joueur** — comme les
+bandeaux des retransmissions TV : **chaque donnée vit sur la ligne de son
+joueur**, l'association joueur ↔ score est **structurelle**. Aucun chiffre
+« flottant » rattaché par une convention de position (retours 2026-07-10 :
+les jeux géants centrés, détachés des noms, étaient inattribuables).
+
+- Chaque ligne, de gauche à droite : balle de service côté serveur, nom
+  (nom d'équipe en Double), tête de série, puis les colonnes de score alignées
+  à droite : **sets gagnés**, **jeux du set en cours en très grand**
+  (l'élément dominant de la scène), **points du jeu en cours**.
+- Les colonnes sont surmontées d'en-têtes explicites — **« SETS »,
+  « JEUX · SET {n} », « POINTS »** : l'étiquette lève l'ambiguïté points/jeux
+  pour un spectateur qui arrive en cours de match, l'alignement en colonnes
+  lève l'ambiguïté joueur/score.
 - Les points affichent **`displayPointA/B`** de `_pack_match`
   (`0/15/30/40/AV`, égalité `40/40`, points bruts en tie-break) — le front ne
   recalcule **jamais** le libellé depuis les points bruts.
 - **Signal broadcast sur l'avantage** : le « AV » du côté avantagé passe en
   **accent**, le « 40 » d'en face reste blanc — l'œil voit qui a la balle de
-  jeu. Le point qui vient de tomber peut marquer une brève pulsation.
+  jeu.
+- **L'accent est réservé aux signaux porteurs de sens** (balle de service,
+  « AV », badge « JEU DÉCISIF ») — jamais décoratif : pas de couleur d'accent
+  systématique sur un côté, un chiffre coloré d'un seul côté suggère un sens
+  (serveur ? meneur ?) qu'il n'a pas (retours 2026-07-10).
 
 ### Pied discret
 
@@ -73,24 +87,31 @@ la carte de droite.
 ### Fond de scène : l'affiche du match
 
 Si le match a une **affiche générée** (`hero.posterUrl`, voir
-[[affiche-match]]), elle remplace le fond de court sur toute la scène — le
-score « editorial » se compose par-dessus. Sans affiche, le fond de court
+[[affiche-match]]), elle remplace le fond de court sur toute la scène — la
+bande de score se compose par-dessus. Sans affiche, le fond de court
 demeure.
 
-### Gauche : le panneau d'enjeu (réduit)
+### L'enjeu du match (au-dessus de la bande de score)
 
-L'**enjeu du match** (décision 4 de [[tv-map]]) est **latéralisé** : panneau
-semi-transparent d'environ **480 px**, ancré à gauche, contraste adouci — il
-informe sans concurrencer le score :
+L'**enjeu du match** (décision 4 de [[tv-map]], amendée par la décision 13)
+dépend de la phase du hero :
 
-- **Match de poule** → le **classement de la poule** des deux joueurs
-  (standings : rang, nom, V/D, points, badge Q — affiché seulement si la poule
-  est **terminée**, voir [[cycle-de-vie-epreuve]]), les deux joueurs du match
-  mis en évidence. Le public voit ce que le match peut changer.
-- **Match de tableau** (QF/SF/F/P3) → le **mini-tableau** de l'épreuve
-  (condensé au format colonne), le match en cours mis en évidence.
-- Données fournies par [[tv-state]] (`stake`) ; si l'enjeu n'est pas
+- **Match de poule** → le **classement de la poule** des deux joueurs, en
+  panneau semi-transparent d'environ **480 px**, ancré à gauche, contraste
+  adouci (standings : rang, nom, V/D, points, badge Q — affiché seulement si
+  la poule est **terminée**, voir [[cycle-de-vie-epreuve]]), les deux joueurs
+  du match mis en évidence. Le public voit ce que le match peut changer.
+  Données fournies par [[tv-state]] (`stake`) ; si l'enjeu n'est pas
   disponible, le panneau est masqué — jamais d'erreur visible.
+- **Match de tableau** (QF/SF/F/P3) → **pas de panneau** : la **phase du
+  match en grand** (`stageLabel` : « Quart de finale », « Demi-finale »,
+  « Finale », « 3e place »), centrée au-dessus de la bande de score. Le
+  mini-tableau est **retiré** (retours 2026-07-10 : tronqué par sa hauteur
+  bornée, illisible à distance de TV, et il recouvrait le nom d'un joueur) —
+  le tableau complet reste visible en slide du carousel entre les matchs.
+- **Contrainte de composition** : panneau de poule et libellé de phase vivent
+  entièrement dans la **zone libre au-dessus de la bande de score** — ils ne
+  recouvrent jamais les lignes joueurs ni la carte « À préparer ».
 
 ### Droite : la carte « À préparer » (PrepPanel)
 
@@ -223,7 +244,7 @@ d'[[admin-panel-map]] / [[planning]]).
 |---|---|
 | Aucune édition active | Carousel réduit à la slide Tournoi avec la marque et l'horloge (état neutre). |
 | Édition active sans aucun match | Slide Tournoi seule (les autres sont sautées). |
-| Match LIVE sans poule ni tableau résolus | Scoreboard sans panneau d'enjeu (masqué). |
+| Match de poule LIVE sans classement résolu | Scoreboard sans panneau d'enjeu (masqué). Un match de tableau affiche toujours sa phase (dérivée de `stage`, jamais indisponible). |
 | Match en échauffement sans affiche | Fond de court + bloc central seul (ÉCHAUFFEMENT, compte à rebours, joueurs, étape/court) — pas de noms en très grand. |
 | Fin de match : le fetch one-shot échoue | Pas de scène vainqueur, carousel direct (jamais d'erreur visible). |
 | Deux matchs LIVE (état anormal) | Le serveur choisit le hero (featured puis plus récent, voir [[tv-state]]) ; la TV n'affiche jamais deux scores. |
