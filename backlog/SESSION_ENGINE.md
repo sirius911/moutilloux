@@ -373,7 +373,137 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #134
+**Dernière session :** 2026-07-09 — Session #136
+**Sprint traité :** 35 — TV : scène live & fin de match (2ᵉ et dernière
+session du sprint — **clos cette session**, 4/4 tickets clos).
+
+**Git :** branche `claude/sprint/35-tv-scene-live-fin-de-match`, parent
+effectif `claude/sprint/34-tableau-final-calendrier` (sprint 34 toujours non
+mergé dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de code
+cette session.
+
+**Spec review session #136 :** `tv-live.md` (états SCOREBOARD et FIN DE
+MATCH) et `tv-state.md` (§ Front) — ⚠️ Dérive mineure en début de session (2
+dérives : enjeu toujours en overlay centré `.stake-panel` au lieu de
+latéralisé ~480px gauche, aucune scène fin de match) → **✅ Conforme** après
+implémentation des deux derniers tickets du sprint cette session. Toutes les
+dérives relevées correspondaient exactement aux issues déjà ouvertes
+`#331`/`#332` lors de la planification du sprint — 0 nouvelle issue créée.
+
+**Backlog engine session #136 :** 2 tickets traités séquentiellement (chaîne
+plan → agent → `reviewer` par ticket) :
+- **#331** (majeure) — front : `TvScoreboard.vue` — panneau d'enjeu
+  (`.stake-panel`) repositionné de centré/1100px vers ancré à gauche
+  (`left:48px`), largeur 480px, contraste adouci (fond `rgba(8,12,16,0.55)`,
+  bordure discrète, blur réduit à 3px), classement de poule resserré
+  (colonnes `1fr 32px 32px 44px`), mini-tableau passé en empilement vertical
+  (`flex-direction:column`) au lieu de colonnes côte à côte. Diff strictement
+  CSS, aucun changement de template/logique. Verdict reviewer :
+  ⚠️ Approuvé avec réserves — chevauchement vertical possible avec
+  `.sb-ed-bottom` dans le cas le plus chargé (mini-tableau + petite finale
+  P3 active, 4 sections empilées, `max-height:620px` potentiellement
+  atteint) : à vérifier visuellement sur écran 1080p réel, piste réduire
+  `max-height` (~480-500px) ou remonter le panneau (`top:44%`) ; pas de
+  nouvelle issue créée (raffinement du même ticket, pas un défaut distinct).
+- **#332** (majeure, label `infra`) — store `live.ts` (câblé par
+  l'orchestrateur, fichier partagé CLAUDE.md §3) + front `TvScoreboard.vue`
+  (agent `vue-screen`) — fenêtre « fin de match » ~30s tenue côté front :
+  nouvelle ref `finishedHero`, fetch one-shot `GET /api/matches/:id/` sur
+  transition `hero` non-nul → nul (`previousHeroId` capturé avant écrasement
+  pour détecter la transition), gate `FINISHED` + `winnerSide` non nul +
+  `!isWalkover`, timer 30s, préemption immédiate (`clearFinishedHero()`) dès
+  qu'un nouveau `hero` apparaît (y compris réouverture du même match par
+  l'admin). Scène « photo finish » en tête d'une structure
+  `v-if/v-else-if/v-else` à trois branches (priorité absolue sur
+  scoreboard/carousel) : VICTOIRE, nom du vainqueur en très grand
+  (~320px, cohérent avec `.sb-ed-num`), score par sets, durée, mention
+  « Abandon » si `endReason='RETIREMENT'`. Verdict reviewer : ✅ Approuvé.
+
+**Sprint 35 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation des deux derniers tickets + 0 issue
+ouverte sur le milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/35-tv-scene-live-fin-de-match/`, ligne retirée de
+`backlog/sprints/roadmap.md`. Pas de nouvelle PR créée (condition non remplie
+puisque le sprint n'est plus dans `roadmap.md` en fin de session) — la PR
+existante (#343, ouverte) accumule simplement les commits de cette session.
+
+**Roadmap non vide** — 2 sprints restants (36 — Échauffement, 37 — Mobile :
+arbitre & régie). Le sprint 36 sera traité à la **prochaine échéance
+planifiée**, pas démarré dans cette session.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (10 erreurs préexistantes ailleurs dans
+le projet — `useApi.ts`, `stores/event.ts`, `AdminBracket.vue` — identiques
+avant/après les deux tickets de cette session, aucune nouvelle imputable).
+Toujours pas de script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée).
+
+---
+
+**Historique — session #135 :**
+**Sprint traité :** 35 — TV : scène live & fin de match (1ère session du
+sprint, 2/4 tickets clos — `#331` et `#332` restants).
+
+**Git :** branche `claude/sprint/35-tv-scene-live-fin-de-match`, parent
+effectif `claude/sprint/34-tableau-final-calendrier` (sprint 34 toujours non
+mergé dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de code
+cette session.
+
+**Spec review session #135 :** `tv-live.md` (état SCOREBOARD) et
+`tv-state.md` (§ Front) — ⚠️ Dérive mineure en début de session (4 dérives :
+score en bandeau bas plein-largeur au lieu d'editorial centré, pas de
+PrepPanel, enjeu en overlay centré au lieu de latéralisé gauche, aucune
+scène fin de match) → toutes correspondaient exactement aux issues déjà
+ouvertes `#329`-`#332` lors de la planification du sprint — 0 nouvelle issue
+créée. Dérive partiellement résorbée par `#329`/`#330` cette session, le
+reste attendu pour `#331`/`#332`.
+
+**Backlog engine session #135 :** 2 tickets traités séquentiellement (chaîne
+plan → `vue-screen` → `reviewer` par ticket), tous deux dans
+`TvScoreboard.vue`, conformément à l'ordre suggéré par `sprint.md` :
+- **#329** (majeure) — front : `TvScoreboard.vue` — centre « editorial »
+  porté depuis `scoreboard.jsx:233` (`ScoreboardEditorial`) + `.sb-ed-*` de
+  `scoreboard.css` : jeux du set en très grand + label « JEUX · SET {n} »
+  (`n = setScores.length + 1`), lignes joueurs (service, nom, seed, points
+  via `displayPointA/B`/`tbPointsA/B` avec accent « AV » repris à l'identique
+  de l'ancien code, sets gagnés via `setScores.filter`). Bandeau haut enrichi
+  (étape, EN DIRECT, badge JEU DÉCISIF), pied discret (court/durée/horloge).
+  Ancienne bande basse pleine largeur (`.sb-band`) supprimée. `stake-panel`
+  et `.sb-next-band` volontairement laissés inchangés (chevauchement
+  transitoire accepté, résolu par les tickets suivants). Verdict reviewer :
+  ✅ Approuvé.
+- **#330** (majeure) — front : `TvScoreboard.vue` — carte « À préparer »
+  (`PrepPanel`, `scoreboard.jsx:50` + `.tv-prep-*` de `scoreboard.css:4-94`)
+  flottante en haut à droite, affichée seulement si `live.next` non nul
+  (label `~heure`, étape, avatars en initiales — fonction locale `initials()`,
+  même pattern dupliqué qu'ailleurs dans le projet, appel juge-arbitre).
+  Ancien bandeau pleine largeur `.sb-next-band` et son CSS entièrement
+  retirés. Remarque non bloquante du reviewer : l'accent visuel est fixé sur
+  le côté A plutôt que sur le premier élément d'un tableau générique comme
+  dans le mock React — adaptation correcte pour des données typées `Match`.
+  Verdict reviewer : ✅ Approuvé.
+
+**Sprint 35 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#331` — panneau d'enjeu latéralisé, `#332` — scène fin de match
+~30s, `infra` car store partagé), toutes deux dans `TvScoreboard.vue`
+(+ `live.ts` pour `#332`), séquentielles par construction. Sprint 35 reste
+actif, sera repris à la **prochaine échéance planifiée**.
+
+**Roadmap non vide** — 2 autres sprints en attente après le 35
+(36 — Échauffement, 37 — Mobile : arbitre & régie).
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (10 erreurs préexistantes ailleurs dans
+le projet — `useApi.ts`, `stores/event.ts`, `AdminBracket.vue` — identiques
+avant/après les deux tickets de cette session, aucune nouvelle imputable).
+Toujours pas de script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée).
+
+---
+
+**Historique — session #134 :**
 **Sprint traité :** 34 — Tableau final au calendrier (3ᵉ et dernière session
 du sprint — **clos cette session**, 6/6 tickets clos).
 
