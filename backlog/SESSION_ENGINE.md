@@ -373,25 +373,228 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-08 — Session #130
-**Sprint traité :** aucun — `backlog/sprints/roadmap.md` est vide (0 ligne
-de sprint). Conformément au protocole (étape 0), la session s'est arrêtée
-sans exécuter les étapes 1 à 3. Aucun changement de code, aucun commit.
+**Dernière session :** 2026-07-09 — Session #134
+**Sprint traité :** 34 — Tableau final au calendrier (3ᵉ et dernière session
+du sprint — **clos cette session**, 6/6 tickets clos).
 
-**Roadmap toujours vide depuis la session #125** (sprint 32 clos, milestone
-fermé) — confirmé à nouveau aux sessions #126, #127, #128, #129 et #130
-(6 sessions consécutives), aucun sprint planifié entre-temps. **Désactiver
-la Routine manuellement sur claude.ai/code/routines**, ou planifier un
-nouveau sprint (`/plan-sprint`) avant la prochaine échéance — sinon la
-Routine continuera de se déclencher pour rien.
+**Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
+`claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 4 commits cette session (2 de
+code + 2 de clôture de sprint).
 
-**Nouveau point d'attention (session #128) :** deux dossiers de sprint
-orphelins à la racine de `backlog/sprints/` en plus de leur copie dans
-`backlog/sprints/done/` : `04-admin-panel-map/` et `10-contexte-url/`.
-Les deux sprints sont bien clos (présents dans `done/`, absents de
-`roadmap.md`) — reliquats jamais supprimés lors de l'archivage à l'époque.
-Sans impact sur le protocole, mais à nettoyer côté humain
-(`git rm -r backlog/sprints/04-admin-panel-map backlog/sprints/10-contexte-url`).
+**Spec review session #134 :** `planning.md`, `cycle-de-vie-match.md` et
+`cycle-de-vie-epreuve.md` — ✅ Conforme. `admin-matchs.md` — ⚠️ Dérive mineure
+en début de session (l'unique dérive relevée correspondait exactement au
+ticket déjà ouvert `#328`) → **✅ Conforme** après implémentation du ticket
+cette session — 0 nouvelle issue créée.
+
+**Backlog engine session #134 :** 2 tickets traités séquentiellement (chaîne
+plan → `vue-screen` → `reviewer` par ticket), tous deux dans
+`AdminMatches.vue`, conformément à l'ordre suggéré par `sprint.md` :
+- **#327** (mineure) — front : `AdminMatches.vue`, `restWarnings` — analyse
+  du plan confirmée par la review : le chaînage optionnel (`?.`) combiné au
+  test `!= null` avant tout `currIds.add(...)` blindait déjà intrinsèquement
+  la fonction contre les sides nuls (matchs de tableau non résolus) — aucun
+  faux ⚠, aucun crash possible, réévaluation déjà automatique via le
+  `computed` + le polling existant. Aucun changement de logique nécessaire ;
+  seul le commentaire au-dessus de la fonction a été enrichi pour documenter
+  explicitement ce comportement best-effort. Verdict reviewer : ✅ Approuvé.
+- **#328** (mineure, résidu #307) — front : `AdminMatches.vue`, CSS —
+  retrait de `overflow: hidden` sur `.play-day`, arrondi reporté sur les
+  enfants (`.pd-header` coins hauts, `.add-pause-btn` coins bas) pour que les
+  fonds ne débordent pas du radius malgré la disparition du clip. Review
+  confirmée : `.pd-rows` (bloc intermédiaire, contenu drag-and-drop) n'a
+  aucun fond propre, donc aucun risque de débordement visuel. Verdict
+  reviewer : ✅ Approuvé.
+
+**Sprint 34 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation des deux derniers tickets + 0 issue
+ouverte sur le milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/34-tableau-final-calendrier/`, ligne retirée de
+`backlog/sprints/roadmap.md`. Pas de nouvelle PR créée (condition non remplie
+puisque le sprint n'est plus dans `roadmap.md` en fin de session) — la PR
+existante (#343, ouverte) accumule simplement les commits de cette session.
+
+**Roadmap non vide** — 3 sprints restants (35 — TV : scène live & fin de
+match, 36 — Échauffement, 37 — Mobile : arbitre & régie). Le sprint 35 sera
+traité à la **prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc --noEmit` passe sans erreur sur les deux tickets de cette
+session. Toujours pas de script `type-check` dans `package.json`, toujours
+pas de `.claude/launch.json` côté front — vérification par type-check +
+revue de code uniquement (pas de QA navigateur en session automatisée).
+
+---
+
+**Historique — session #133 :**
+**Sprint traité :** 34 — Tableau final au calendrier (2ᵉ session du sprint,
+4/6 tickets clos — `#327` et `#328` restants).
+
+**Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
+`claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #133 :** `planning.md` et `admin-matchs.md` —
+⚠️ Dérive mineure (4 dérives, toutes correspondant exactement aux issues déjà
+ouvertes `#325`/`#326`/`#327`/`#328`) → 0 nouvelle issue créée. `cycle-de-vie-match.md`
+et `cycle-de-vie-epreuve.md` — ✅ Conforme (les deux tickets back du sprint,
+`#323`/`#324`, confirmés conformes).
+
+**Backlog engine session #133 :** 2 tickets traités séquentiellement (chaîne
+`vue-screen` puis `reviewer` par ticket), tous deux dans `AdminMatches.vue`,
+conformément à l'ordre suggéré par `sprint.md` :
+- **#325** (majeure) — front : `AdminMatches.vue` — pile groupée par épreuve
+  puis poule/groupe « Tableau » (nouvelle fonction `pileGroupLetter()`, tri
+  `groupSortKey` qui place « Tableau » après toutes les poules), pastille
+  d'étape via `stagePillLabel()` (lettre de poule ou `bracketSlot`, fallback
+  sur `stage` si `bracketSlot` est `null`). Le fallback de nom
+  `sideALabel`/`sideBLabel` (`playerLabel()`) était déjà conforme, aucun
+  changement nécessaire. Verdict reviewer : ✅ Approuvé.
+- **#326** (mineure) — front : `AdminMatches.vue` — moteur ETA à durée par
+  étape : nouvelle fonction `durFor(match)` (constantes locales
+  `ETA_DUR_QF_SF_MIN = 35`, `ETA_DUR_FINAL_MIN = 45`, calibrées sur
+  `live/bracket.py::_fmt_for_stage` — QF/SF en un set, F/P3 en BO3),
+  appliquée dans `etaEngine` **et** dans `punctualityByMatchId` (correction
+  de cohérence non demandée explicitement par le ticket mais nécessaire :
+  sans elle une finale BO3 aurait été taguée « en retard » avec un seuil de
+  30 min). Golden path vérifié : journée 2 poules + finale → ETA finale
+  repoussée de 10:30 à 10:45. Verdict reviewer : ✅ Approuvé.
+
+**Sprint 34 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#327` — règle de repos best-effort, `#328` — résidu `.play-day`
+`overflow:hidden`), toutes deux dans `AdminMatches.vue`, séquentielles par
+construction. Sprint 34 reste actif, sera repris à la **prochaine échéance
+planifiée**.
+
+**Roadmap non vide** — 3 autres sprints en attente après le 34 (35 — TV :
+scène live & fin de match, 36 — Échauffement, 37 — Mobile : arbitre &
+régie).
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (10 erreurs préexistantes ailleurs dans
+le projet, identiques avant/après les deux tickets, aucune nouvelle
+imputable à cette session). Toujours pas de script `type-check` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée).
+
+---
+
+**Historique — session #132 :**
+**Sprint traité :** 34 — Tableau final au calendrier (1ère session du sprint,
+2/6 tickets clos — `#325` à `#328` restants à l'époque).
+
+**Git :** branche `claude/sprint/34-tableau-final-calendrier`, parent effectif
+`claude/sprint/33-affichage-avantage` (sprint 33 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #132 :** `planning.md`, `admin-matchs.md` et
+`cycle-de-vie-match.md` — ⚠️ Dérive mineure en début de session (sprint tout
+juste planifié, aucun ticket encore implémenté) → dérives partiellement
+résorbées pour `#323`/`#324` traités cette session, le reste attendu pour
+`#325`-`#328`. `cycle-de-vie-epreuve.md` — ✅ Conforme. Toutes les dérives
+relevées correspondaient exactement aux tickets déjà ouverts lors de la
+planification (session précédente) — 0 nouvelle issue créée cette session.
+
+**Backlog engine session #132 :** 2 tickets traités séquentiellement (chaîne
+`django-api` puis `reviewer` par ticket), conformément à l'ordre suggéré par
+`sprint.md` (les deux back, indépendants, débloquant le front) :
+- **#323** (majeure) — back : `live/api_views.py`, `api_edition_calendar` —
+  retrait du filtre `stage=GROUP` sur la pile « à planifier » et la colonne
+  Annulés (les deux ne couvraient que les poules) ; tri stable ajouté via
+  annotation `Case`/`When` (poules avant QF avant SF avant F/P3). Vérifié :
+  `reorder_calendar` et `_pack_match` gèrent déjà des sides nuls, aucune
+  régression sur les autres usages du filtre `stage=GROUP` (génération de
+  poules, `auto_arrange_matches`, classements). Verdict reviewer :
+  ✅ Approuvé.
+- **#324** (majeure, label `infra`) — back : `live/api_views.py`,
+  `api_match_feature` — ajout d'un `try/except ValueError` autour de
+  `feature_match(match)`, même pattern que `api_match_start`. La garde
+  métier « slot non résolu refuse démarrer » existait déjà dans le service
+  partagé `start_match` (dont `feature_match` est un alias direct,
+  `live/admin_views.py:554`) et était déjà catchée côté arbitre
+  (`referee_views.py`, action `start`) et `api_match_start` — seul le
+  chemin « mettre à l'antenne » laissait fuiter un 500 non géré. **Aucun
+  câblage de fichier partagé nécessaire** malgré le label `infra` posé lors
+  de la planification (signalé par le reviewer, sans impact protocole).
+  Verdict reviewer : ✅ Approuvé.
+
+**Point d'attention outillage :** `.venv/bin/python manage.py check` utilisé
+pour la vérification back cette session (pas de suite de tests dédiée
+identifiée) — fiable, aucune erreur. Toujours pas de script `type-check`
+dans `package.json`, toujours pas de `.claude/launch.json` côté front (non
+pertinent cette session, aucun ticket front traité).
+
+---
+
+**Historique — session #131 :**
+**Sprint traité :** 33 — Avantage (AV) affiché (seule et unique session du
+sprint — **clos cette session**, 2/2 tickets clos).
+
+**Roadmap re-remplie depuis la session #130** (5 sprints planifiés le
+2026-07-08 : 33 à 37, retours produit TV) — fin de la série de 6 sessions à
+vide (#125 à #130). Sprint 33 traité et clos dès la première occasion.
+
+**Git :** branche `claude/sprint/33-affichage-avantage`, parent effectif
+`main` (déduit depuis `backlog/sprints/done/` — aucun sprint < 33 avec une
+branche encore non mergée dans `main`). 3 commits de code cette session.
+
+**Spec review session #131 :** `tv-live.md` (section score) et
+`arbitre-match.md` (section Bloc score) — ⚠️ Dérive mineure en début de
+session (mapping local plafonné à « 40 », dupliqué dans les deux SFC,
+l'avantage post 40-40 ne s'affichait jamais) → **✅ Conforme** après
+implémentation des tickets #321/#322 de cette session. Les deux dérives
+étaient déjà ticketées lors de la planification du sprint (session #130) —
+0 nouvelle issue créée cette session.
+
+**Backlog engine session #131 :** 2 tickets traités séquentiellement (chaîne
+`vue-screen` puis `reviewer` par ticket), malgré le fait que `sprint.md`
+suggérait un traitement parallélisable (fichiers disjoints) — le protocole de
+l'étape 2 impose le séquentiel :
+- **#321** (majeure) — front : `TvScoreboard.vue` — suppression de
+  `pointLabel` (mapping local plafonné), affichage direct de
+  `live.hero.displayPointA/B` (packer backend, déjà correct), signal
+  broadcast `accent-text` symétrisé sur les deux côtés (l'ancien code posait
+  la classe en dur côté A uniquement — asymétrie corrigée au passage).
+  Verdict reviewer : ✅ Approuvé.
+- **#322** (majeure) — front : `ArbitreMatch.vue` — suppression de
+  `pointDisplay`/`sidePoints`, ajout de `sideDisplayPoint(side)` lisant
+  `match.value.displayPointA/B`, écran resté sobre (pas de mise en accent,
+  contrairement à la TV — décision produit). Compatibilité `swap` vérifiée
+  (côté modèle `leftModelSide`/`rightModelSide` inchangé). Verdict reviewer :
+  ✅ Approuvé.
+
+**Sprint 33 clos cette session :** les deux conditions étaient réunies
+(specs conformes après implémentation + 0 issue ouverte sur le milestone).
+Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/33-affichage-avantage/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 4 sprints restants (34 — Tableau final au calendrier,
+35 — TV : scène live & fin de match, 36 — Échauffement, 37 — Mobile :
+arbitre & régie). Le sprint 34 sera traité à la **prochaine échéance
+planifiée**, pas démarré dans cette session.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable, `npx vue-tsc --noEmit` seul ne
+type-check aucun fichier `.vue` dans cet environnement. Toujours pas de
+script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` — vérification par type-check + revue de code
+uniquement (pas de QA navigateur en session automatisée).
+
+**Nouveau point d'attention (session #128, non revérifié depuis) :** deux
+dossiers de sprint orphelins à la racine de `backlog/sprints/` en plus de
+leur copie dans `backlog/sprints/done/` : `04-admin-panel-map/` et
+`10-contexte-url/`. Sans impact sur le protocole, mais à nettoyer côté
+humain (`git rm -r backlog/sprints/04-admin-panel-map backlog/sprints/10-contexte-url`).
+
+**Sprint 19/20/21 — PRs non mergées :** point non revérifié cette session
+(hors périmètre du protocole) — dernier état connu (session #125) : 25 PRs
+ouvertes empilées depuis le sprint 06, aucune fusionnée dans `main`. À
+traiter côté humain.
 
 ---
 

@@ -9,7 +9,7 @@ from datetime import datetime, time
 from django.core.files.storage import default_storage
 from django.http import JsonResponse
 from django.db import transaction, IntegrityError
-from django.db.models import Count
+from django.db.models import Count, Case, When, Value, IntegerField
 from django.contrib.auth import authenticate, login, logout as auth_logout
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.views.decorators.http import require_GET, require_POST
@@ -1219,9 +1219,15 @@ def api_match_feature(request, match_id):
     Met le match en avant (source : admin_views.feature_match). Aucun payload.
     Effet : is_featured=True, mark_live() → statut LIVE ; order_index inchangé ;
     devient le hero de /api/tv/state/.
+    Garde : refuse (400, {"error": ...}) si un slot du match n'est pas résolu
+    (side_a ou side_b nul) — on ne met pas à l'antenne un match sans ses deux
+    joueurs.
     """
     match = get_object_or_404(Match, pk=match_id)
-    feature_match(match)
+    try:
+        feature_match(match)
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     return JsonResponse({"match": _pack_match(match)})
 
 
@@ -1945,31 +1951,43 @@ def api_edition_calendar(request, edition_id):
     """
     GET /api/editions/<id>/calendar/
     Retourne les journées avec leurs matchs ordonnés + la pile des matchs
-    à planifier (SCHEDULED, sans order_index, poules uniquement — MVP).
+    à planifier (SCHEDULED, sans order_index — tous stades, poules et
+    tableau, cf. spec « Matchs de tableau au calendrier »).
     """
     edition = get_object_or_404(TournamentEdition, pk=edition_id)
 
     packed_play_days = _pack_calendar_play_days(edition)
 
-    # Pile à planifier : SCHEDULED, order_index IS NULL, poules uniquement (MVP)
-    unscheduled = (
-        Match.objects
-        .filter(edition=edition, status=Match.Status.SCHEDULED,
-                order_index__isnull=True, stage=Match.Stage.GROUP)
-        .select_related("court", "group", "event",
-                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
-                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
-        .order_by("event_id", "id")
+    # Ordre stable pour le groupement front : poules avant le tableau, puis
+    # dans l'ordre du cycle de vie du tableau (QF → SF → F/P3 à rang égal).
+    stage_order = Case(
+        When(stage=Match.Stage.GROUP, then=Value(0)),
+        When(stage=Match.Stage.QF, then=Value(1)),
+        When(stage=Match.Stage.SF, then=Value(2)),
+        When(stage__in=[Match.Stage.F, Match.Stage.P3], then=Value(3)),
+        output_field=IntegerField(),
     )
 
-    # Matchs annulés (quittent la séquence, poules uniquement — cohérent avec unscheduled)
-    canceled = (
+    # Pile à planifier : SCHEDULED, order_index IS NULL, tous stades (poules + tableau)
+    unscheduled = (
         Match.objects
-        .filter(edition=edition, status=Match.Status.CANCELED, stage=Match.Stage.GROUP)
+        .filter(edition=edition, status=Match.Status.SCHEDULED, order_index__isnull=True)
         .select_related("court", "group", "event",
                         "side_a__player", "side_a__team__player1", "side_a__team__player2",
                         "side_b__player", "side_b__team__player1", "side_b__team__player2")
-        .order_by("event_id", "id")
+        .annotate(_stage_order=stage_order)
+        .order_by("event_id", "_stage_order", "id")
+    )
+
+    # Matchs annulés (quittent la séquence, tous stades — cohérent avec unscheduled)
+    canceled = (
+        Match.objects
+        .filter(edition=edition, status=Match.Status.CANCELED)
+        .select_related("court", "group", "event",
+                        "side_a__player", "side_a__team__player1", "side_a__team__player2",
+                        "side_b__player", "side_b__team__player1", "side_b__team__player2")
+        .annotate(_stage_order=stage_order)
+        .order_by("event_id", "_stage_order", "id")
     )
 
     return JsonResponse({

@@ -5,12 +5,6 @@ import TvIdle from './TvIdle.vue'
 
 const live = useLiveStore()
 usePolling(() => live.fetchTvState(), 2000)
-
-function pointLabel(n: number, inTb: boolean): string {
-  if (inTb) return String(n)
-  const map: Record<number, string> = { 0: '0', 1: '15', 2: '30', 3: '40' }
-  return map[n] ?? '40'
-}
 </script>
 
 <template>
@@ -201,8 +195,11 @@ function pointLabel(n: number, inTb: boolean): string {
                 <span v-for="set in live.hero.setScores" :key="set.a + '-' + set.b" class="set-box">{{ set.a }}</span>
               </div>
               <span class="score-games tab">{{ live.hero.gamesA }}</span>
-              <span class="score-points tab accent-text">
-                {{ live.hero.tbActive ? live.hero.tbPointsA : pointLabel(live.hero.pointsA, false) }}
+              <span
+                class="score-points tab"
+                :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointA === 'AV' }"
+              >
+                {{ live.hero.tbActive ? live.hero.tbPointsA : live.hero.displayPointA }}
               </span>
             </div>
           </div>
@@ -213,8 +210,11 @@ function pointLabel(n: number, inTb: boolean): string {
           <!-- Côté B -->
           <div class="sb-player sb-player--right" :class="{ serving: live.hero.server === 'B' }">
             <div class="player-scores player-scores--right">
-              <span class="score-points tab">
-                {{ live.hero.tbActive ? live.hero.tbPointsB : pointLabel(live.hero.pointsB, false) }}
+              <span
+                class="score-points tab"
+                :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointB === 'AV' }"
+              >
+                {{ live.hero.tbActive ? live.hero.tbPointsB : live.hero.displayPointB }}
               </span>
               <span class="score-games tab">{{ live.hero.gamesB }}</span>
               <div class="score-sets">
