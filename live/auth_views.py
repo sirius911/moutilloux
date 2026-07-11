@@ -10,5 +10,5 @@ class CustomLoginView(LoginView):
         if user.is_superuser:
             return reverse("admin:index")
         if user.groups.filter(name="Arbitre").exists():
-            return reverse("referee_home")
-        return reverse("home")
+            return "/"
+        return "/"

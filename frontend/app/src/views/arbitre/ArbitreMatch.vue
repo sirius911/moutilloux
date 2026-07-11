@@ -151,7 +151,7 @@ function extractError(e: unknown): string {
 
 async function sendAction(action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
-    await post(`/arbitre/match/${props.matchId}/action/`, { action, ...extra })
+    await post(`/api/matches/${props.matchId}/action/`, { action, ...extra })
     // Le moteur renvoie {ok:true} sans l'état → on rafraîchit tout de suite
     // (sans attendre le tick de polling) pour un retour immédiat.
     await live.fetchMatch(props.matchId)

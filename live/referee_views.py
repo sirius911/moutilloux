@@ -1,10 +1,7 @@
 import json
 
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.shortcuts import render, redirect, get_object_or_404
-from django import forms
-from core.models import TournamentEdition
-from competition.models import Event
+from django.shortcuts import get_object_or_404
 from .models import Match
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -21,80 +18,6 @@ referee_required = user_passes_test(
     is_referee,
     login_url="/accounts/login/",
     )
-
-
-class RefSelectForm(forms.Form):
-    edition = forms.ModelChoiceField(queryset=TournamentEdition.objects.order_by("-year"),
-                                     required=False, label="Édition")
-    event = forms.ModelChoiceField(queryset=Event.objects.none(), required=True, label="Épreuve")
-    match = forms.ModelChoiceField(queryset=Match.objects.none(), required=True, label="Match")
-
-    def __init__(self, *args, **kwargs):
-        edition = kwargs.pop("edition", None)
-        event = kwargs.pop("event", None)
-        super().__init__(*args, **kwargs)
-
-        if edition:
-            self.fields["event"].queryset = Event.objects.filter(edition=edition).order_by("category__name")
-        if event:
-            # on propose : match en cours + matchs ordonnés + matchs non finis
-            qs = Match.objects.filter(event=event).exclude(status=Match.Status.FINISHED)
-            qs = qs.order_by("-is_featured", "order_index", "id")
-            self.fields["match"].queryset = qs
-
-
-@login_required
-@referee_required
-def referee_home(request):
-    edition_default = TournamentEdition.objects.filter(is_active=True).order_by("-year").first()
-
-    # valeurs courantes (GET prioritaire, sinon POST)
-    edition_id = request.GET.get("edition") or request.POST.get("edition")
-    event_id = request.GET.get("event") or request.POST.get("event")
-
-    edition = TournamentEdition.objects.filter(id=edition_id).first() if edition_id else edition_default
-    event = Event.objects.filter(id=event_id).first() if event_id else None
-
-    form = RefSelectForm(
-        request.POST if request.method == "POST" else None,
-        edition=edition,
-        event=event,
-        initial={"edition": edition, "event": event}
-    )
-
-    if request.method == "POST" and form.is_valid():
-        m = form.cleaned_data["match"]
-        return redirect("referee_match", match_id=m.id)
-
-    return render(request, "live/referee_home.html", {
-        "form": form,
-        "edition": edition,
-        "event": event,
-    })
-
-
-@login_required
-@referee_required
-def referee_match(request, match_id: int):
-    match = get_object_or_404(Match.objects.select_related("event", "side_a", "side_b"), id=match_id)
-
-    swap = bool(request.session.get(f"swap_match_{match.id}", False))
-
-    left = match.side_b if swap else match.side_a
-    right = match.side_a if swap else match.side_b
-
-    # service côté affichage
-    # server stocké en BDD = "A" ou "B"
-    serving_side = match.side_a if match.server == "A" else match.side_b
-    serving_display = (match.side_b if serving_side == match.side_a else match.side_a) if swap else serving_side
-
-    return render(request, "live/referee_match.html", {
-        "match": match,
-        "left": left,
-        "right": right,
-        "swap": swap,
-        "serving_display": serving_display,
-    })
 
 
 @login_required
