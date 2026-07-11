@@ -287,6 +287,8 @@ def _pack_match(m):
         "endReason": m.end_reason,
         "scheduledTime": scheduled_str,
         "startedAt": m.started_at.isoformat() if m.started_at else None,
+        "warmupStartedAt": m.warmup_started_at.isoformat() if m.warmup_started_at else None,
+        "playStartedAt": m.play_started_at.isoformat() if m.play_started_at else None,
         "finishedAt": m.finished_at.isoformat() if m.finished_at else None,
         "updatedAt": m.updated_at.isoformat(),
         "clock": clock,

@@ -373,7 +373,126 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #136
+**Dernière session :** 2026-07-09 — Session #138
+**Sprint traité :** 36 — Échauffement (2ᵉ et dernière session du sprint —
+**clos cette session**, 4/4 tickets clos).
+
+**Git :** branche `claude/sprint/36-echauffement`, parent effectif
+`claude/sprint/35-tv-scene-live-fin-de-match` (sprint 35 toujours non mergé
+dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #138 :** `cycle-de-vie-match.md`, `arbitre-match.md`,
+`tv-live.md` et `tv-state.md` — ⚠️ Dérive mineure en début de session (2
+dérives : mode échauffement absent côté `ArbitreMatch`, scène échauffement
+absente côté `TvScoreboard` — le back était déjà conforme depuis la session
+précédente) → **✅ Conforme** après implémentation des deux derniers tickets
+du sprint cette session. Les deux dérives correspondaient exactement aux
+issues déjà ouvertes `#335`/`#336` — 0 nouvelle issue créée.
+
+**Backlog engine session #138 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), malgré le fait que
+`sprint.md` suggérait un traitement parallélisable (deux SFC disjointes) — le
+protocole de l'étape 2 impose le séquentiel :
+- **#335** (majeure, label `infra`) — front : `ArbitreMatch.vue` — 4 modes
+  (SCHEDULED / LIVE-échauffement / LIVE-jeu / FINISHED) via deux nouveaux
+  computed `isWarmup`/`isPlaying` (remplacent l'ancien `isLive`), compte à
+  rebours local 5 min (ticker `setInterval` 1s, `nowTick`, cleanup
+  `onUnmounted`), badge d'état « ÉCHAUFFEMENT · m:ss », `handleStart()`
+  simplifié (ne pose plus le serveur, confirmation générique réutilisée si un
+  autre match est en cours), nouveau flux `launchModal`/`handleLaunch`/
+  `confirmLaunch` → action `"launch"` (réutilise le contenu visuel de l'ancien
+  modal de démarrage), nouvelle branche de footer dédiée à l'échauffement
+  (Lancer le match / Annuler / Reset). Verdict reviewer : ✅ Approuvé.
+- **#336** (majeure) — front : `TvScoreboard.vue` — nouvelle scène
+  ÉCHAUFFEMENT (`isWarmupScene`, même mécanique de compte à rebours local que
+  #335) : affiche plein écran ou composition typographique des deux noms sans
+  affiche, libellé + compte à rebours (→ « Le match va commencer » à 0:00),
+  joueurs/étape/court. Fond de scène et carte « À préparer » (PrepPanel)
+  remontés au niveau partagé de la branche « hero présent » (plus de
+  duplication) ; contenu scoreboard (`stake-panel`/`sb-header`/`sb-ed-*`/
+  `sb-foot-discreet`) strictement inchangé, simplement déplacé sous un
+  `v-else` interne — diff vérifié caractère pour caractère par le reviewer.
+  Verdict reviewer : ✅ Approuvé.
+
+**Sprint 36 clos cette session :** les deux conditions étaient réunies (specs
+conformes après implémentation des deux derniers tickets + 0 issue ouverte
+sur le milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/36-echauffement/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 1 sprint restant (37 — Mobile : arbitre & régie). Sera
+traité à la **prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention outillage :** confirmation supplémentaire que
+`npx vue-tsc -b --force` est fiable (9-10 erreurs préexistantes ailleurs dans
+le projet — `useApi.ts`, `stores/event.ts`, `AdminBracket.vue` — identiques
+avant/après les deux tickets de cette session, aucune nouvelle imputable).
+Toujours pas de script `type-check` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée).
+
+---
+
+**Historique — session #137 :**
+**Sprint traité :** 36 — Échauffement (1ère session du sprint, 2/4 tickets clos —
+`#335` et `#336` restants).
+
+**Git :** branche `claude/sprint/36-echauffement`, parent effectif
+`claude/sprint/35-tv-scene-live-fin-de-match` (sprint 35 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette session.
+
+**Spec review session #137 :** `cycle-de-vie-match.md` (§ Les deux phases de
+LIVE), `arbitre-match.md` (modes + flux), `tv-live.md` (état ÉCHAUFFEMENT) et
+`tv-state.md` (§ Front) — ⚠️ Dérive mineure en début de session (sprint tout
+juste planifié, aucun ticket encore implémenté) → dérive partiellement résorbée
+côté back par les deux tickets de cette session (`#333`/`#334`), le reste
+attendu pour `#335`/`#336` (front). Toutes les dérives relevées correspondaient
+exactement aux issues déjà ouvertes lors de la planification — 0 nouvelle
+issue créée.
+
+**Backlog engine session #137 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `django-api` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (les deux back, `#333` débloquant tout) :
+- **#333** (majeure) — back : `live/models.py` (nouveaux champs
+  `warmup_started_at`/`play_started_at`, migration `0023_...`, `mark_live()`
+  pose `warmup_started_at` sur la condition unique `not play_started_at and not
+  warmup_started_at` — couvre démarrage, mise à l'antenne admin et reprise sans
+  ré-échauffement en un seul test) + `live/api_views.py` (`_pack_match` expose
+  `warmupStartedAt`/`playStartedAt`). Fichier partagé câblé par l'orchestrateur
+  dans la foulée : `frontend/app/src/types/index.ts` (`Match` +=
+  `warmupStartedAt`/`playStartedAt`), débloquant les tickets front `#335`/`#336`
+  pour la session suivante. Verdict reviewer : ✅ Approuvé.
+- **#334** (majeure, label `infra`) — back : `live/admin_views.py`
+  (`start_match()` perd le paramètre `server` ; nouvelle fonction service
+  `launch_match(match, server)` avec gardes `status != LIVE` /
+  `play_started_at déjà posé` / `server` invalide, pose `play_started_at` +
+  `server`) + `live/referee_views.py` (action `"start"` simplifiée, nouvelle
+  action `"launch"`, second gate anti-scoring réutilisant l'ensemble
+  `SCORING_ACTIONS` existant quand `play_started_at` est nul — couvre « toute
+  action de scoring » comme demandé par la spec). Aucune nouvelle route :
+  canal `POST /arbitre/match/<id>/action/` réutilisé (`live/urls.py`
+  inchangé). Verdict reviewer : ✅ Approuvé.
+
+**Sprint 36 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#335` — ArbitreMatch mode échauffement, `#336` — TvScoreboard
+scène échauffement), toutes deux front, dépendant des deux tickets back livrés
+cette session. Sprint 36 reste actif, sera repris à la **prochaine échéance
+planifiée**.
+
+**Roadmap non vide** — 1 autre sprint en attente après le 36 (37 — Mobile :
+arbitre & régie).
+
+**Point d'attention outillage :** aucune suite de tests dédiée à `live/`
+(`live/tests.py` = squelette Django par défaut, 0 test) — `manage.py check`
+utilisé pour la vérification back cette session, fiable, aucune erreur sur les
+deux tickets. Toujours pas de script `type-check` dans `package.json`,
+toujours pas de `.claude/launch.json` côté front (non pertinent cette session,
+aucun ticket front traité).
+
+---
+
+**Historique — session #136 :**
 **Sprint traité :** 35 — TV : scène live & fin de match (2ᵉ et dernière
 session du sprint — **clos cette session**, 4/4 tickets clos).
 

@@ -10,5 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 36 — Échauffement | `backlog/sprints/36-echauffement/sprint.md` |
-| 2 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |
+| 1 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |

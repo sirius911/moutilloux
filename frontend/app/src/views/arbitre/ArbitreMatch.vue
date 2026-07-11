@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
@@ -26,8 +26,8 @@ const { scale, offsetX, offsetY } = useScale(containerRef, TARGET_W, TARGET_H)
 // Modal de confirmation générique (reset_all, annuler)
 const confirmModal = ref<{ action: string; label: string } | null>(null)
 
-// Modal de démarrage — choix obligatoire du premier serveur
-const startModal = ref<{ anotherLive: boolean } | null>(null)
+// Modal « Lancer le jeu » — choix obligatoire du premier serveur
+const launchModal = ref(false)
 const chosenServer = ref<'A' | 'B' | null>(null)
 
 // Modal de fin de match — sélection du vainqueur
@@ -179,6 +179,7 @@ const statusLabel = computed(() => {
   if (!match.value) return ''
   if (match.value.status === 'SCHEDULED') return 'PRÉVU'
   if (match.value.status === 'CANCELED') return 'ANNULÉ'
+  if (isWarmup.value) return `ÉCHAUFFEMENT · ${warmupCountdown.value}`
   if (match.value.tbActive) return 'JEU DÉCISIF'
   if (match.value.status === 'FINISHED') {
     if (match.value.endReason === 'WALKOVER') return 'TERMINÉ · FORFAIT'
@@ -190,33 +191,62 @@ const statusLabel = computed(() => {
 
 const isFinished = computed(() => match.value?.status === 'FINISHED')
 const isScheduled = computed(() => match.value?.status === 'SCHEDULED')
-const isLive = computed(() => match.value?.status === 'LIVE')
+const isWarmup = computed(() => match.value?.status === 'LIVE' && !match.value?.playStartedAt)
+const isPlaying = computed(() => match.value?.status === 'LIVE' && !!match.value?.playStartedAt)
 const isCanceled = computed(() => match.value?.status === 'CANCELED')
 const isReadOnly = computed(() => isFinished.value || isCanceled.value)
+
+const WARMUP_DURATION_MS = 5 * 60 * 1000 // 5 min, constante indicative (cycle-de-vie-match.md)
+
+const nowTick = ref(Date.now())
+let tickTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  tickTimer = setInterval(() => { nowTick.value = Date.now() }, 1000)
+})
+onUnmounted(() => {
+  if (tickTimer) clearInterval(tickTimer)
+})
+
+const warmupCountdown = computed(() => {
+  if (!isWarmup.value || !match.value?.warmupStartedAt) return '5:00'
+  const elapsed = nowTick.value - new Date(match.value.warmupStartedAt).getTime()
+  const remainingMs = Math.max(0, WARMUP_DURATION_MS - elapsed)
+  if (remainingMs <= 0) return 'PRÊT'
+  const totalSeconds = Math.ceil(remainingMs / 1000)
+  const m = Math.floor(totalSeconds / 60)
+  const s = totalSeconds % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+})
 
 async function handleStart() {
   try {
     const programme = await get<ArbitreProgramme>('/api/arbitre/matches/')
     const allMatches = programme.playDays.flatMap((d) => d.matches)
     const anotherLive = allMatches.some((m) => m.id !== props.matchId && m.status === 'LIVE')
-    chosenServer.value = null
-    startModal.value = { anotherLive }
+    if (anotherLive) {
+      askConfirm('start', 'Un autre match est en cours — le démarrer le mettra en pause ?')
+    } else {
+      await sendAction('start')
+    }
   } catch {
-    // Si la vérification échoue (réseau), on ouvre quand même le modal : le choix du
-    // serveur reste obligatoire, seul l'avertissement "autre match en cours" est sauté.
-    chosenServer.value = null
-    startModal.value = { anotherLive: false }
+    // Si la vérification échoue (réseau), on démarre quand même directement.
+    await sendAction('start')
   }
 }
 
-function cancelStart() {
-  startModal.value = null
+function handleLaunch() {
+  chosenServer.value = null
+  launchModal.value = true
 }
 
-async function confirmStart() {
-  if (!startModal.value || !chosenServer.value) return
-  const ok = await sendAction('start', { server: chosenServer.value })
-  if (ok) startModal.value = null
+function cancelLaunch() {
+  launchModal.value = false
+}
+
+async function confirmLaunch() {
+  if (!chosenServer.value) return
+  const ok = await sendAction('launch', { server: chosenServer.value })
+  if (ok) launchModal.value = false
 }
 </script>
 
@@ -237,7 +267,7 @@ async function confirmStart() {
         <div class="arb-header-center">
           <span class="arb-category">{{ match?.stageLabel ?? '—' }}</span>
           <span v-if="match?.formatLabel" class="arb-format">{{ match.formatLabel }}</span>
-          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled, canceled: isCanceled }">
+          <span class="arb-status-badge" :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled, canceled: isCanceled, warmup: isWarmup }">
             {{ statusLabel }}
           </span>
         </div>
@@ -282,13 +312,13 @@ async function confirmStart() {
       </div>
 
       <!-- Zones de tap -->
-      <div class="arb-tap-area" :class="{ disabled: !isLive }">
-        <button class="tap-zone tap-zone--a" :disabled="!isLive" @click="handleTap('left')">
+      <div class="arb-tap-area" :class="{ disabled: !isPlaying }">
+        <button class="tap-zone tap-zone--a" :disabled="!isPlaying" @click="handleTap('left')">
           <span class="tap-player-name">{{ playerName(leftModelSide) }}</span>
           <span class="tap-cta">+ POINT</span>
           <span class="tap-hint">TAP ICI</span>
         </button>
-        <button class="tap-zone tap-zone--b" :disabled="!isLive" @click="handleTap('right')">
+        <button class="tap-zone tap-zone--b" :disabled="!isPlaying" @click="handleTap('right')">
           <span class="tap-player-name">{{ playerName(rightModelSide) }}</span>
           <span class="tap-cta">+ POINT</span>
           <span class="tap-hint">TAP ICI</span>
@@ -318,6 +348,32 @@ async function confirmStart() {
           >
             <span class="action-icon">✕</span>
             <span class="action-label">Annuler</span>
+          </button>
+        </template>
+        <template v-else-if="isWarmup">
+          <button
+            class="action-btn action-btn--primary"
+            title="Lancer le match"
+            @click="handleLaunch"
+          >
+            <span class="action-icon">▶</span>
+            <span class="action-label">Lancer le match</span>
+          </button>
+          <button
+            class="action-btn action-btn--danger-ghost"
+            title="Annuler le match"
+            @click="askConfirm('annuler', 'Annuler le match ?')"
+          >
+            <span class="action-icon">✕</span>
+            <span class="action-label">Annuler</span>
+          </button>
+          <button
+            class="action-btn action-btn--danger-ghost"
+            title="Réinitialiser"
+            @click="askConfirm('reset_all', 'Réinitialiser le match ?')"
+          >
+            <span class="action-icon">↺</span>
+            <span class="action-label">Reset</span>
           </button>
         </template>
         <template v-else>
@@ -371,16 +427,13 @@ async function confirmStart() {
       </div>
     </Teleport>
 
-    <!-- Modal de démarrage — choix obligatoire du premier serveur -->
+    <!-- Modal « Lancer le jeu » — choix obligatoire du premier serveur -->
     <Teleport to="body">
-      <div v-if="startModal" class="modal-backdrop" @click.self="cancelStart">
+      <div v-if="launchModal" class="modal-backdrop" @click.self="cancelLaunch">
         <div class="modal-card">
           <div class="modal-icon">▶</div>
-          <h3 class="modal-title">Démarrer le match</h3>
+          <h3 class="modal-title">Lancer le match</h3>
           <p class="modal-body">Qui sert en premier ?</p>
-          <p v-if="startModal.anotherLive" class="modal-body modal-body--warning">
-            Un autre match est en cours — le démarrer le mettra en pause.
-          </p>
 
           <div class="modal-actions modal-actions--vertical">
             <button
@@ -402,8 +455,8 @@ async function confirmStart() {
             </button>
 
             <div class="modal-actions">
-              <button class="btn-secondary" @click="cancelStart">Annuler</button>
-              <button class="btn-danger" :disabled="!chosenServer" @click="confirmStart">Confirmer</button>
+              <button class="btn-secondary" @click="cancelLaunch">Annuler</button>
+              <button class="btn-danger" :disabled="!chosenServer" @click="confirmLaunch">Confirmer</button>
             </div>
           </div>
         </div>
@@ -613,6 +666,11 @@ async function confirmStart() {
 .arb-status-badge.scheduled {
   background: var(--bg-4);
   color: var(--ink-3);
+}
+
+.arb-status-badge.warmup {
+  background: var(--bg-4);
+  color: var(--ink-1);
 }
 
 .arb-status-badge.canceled {
