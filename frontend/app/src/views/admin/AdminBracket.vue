@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
-import type { BracketSlot, Entry } from '@/types'
+import type { BracketSlot, Entry, Match } from '@/types'
 
 const eventStore = useEventStore()
 const route = useRoute()
@@ -149,6 +149,17 @@ function slotLabel(slot: BracketSlot, side: 'A' | 'B'): string {
   if (!m) return 'Vide'
   if (side === 'A') return m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner'
   return m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner'
+}
+
+// Score par sets d'un côté, chiffres dans l'ordre chronologique des sets :
+// sets clos (setScores) + set en cours si le match est encore en jeu.
+function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
+  if (!m) return ''
+  const closed = (m.setScores ?? []).map(s => String(side === 'A' ? s.a : s.b))
+  if (m.status === 'LIVE' && m.playStartedAt) {
+    closed.push(String(side === 'A' ? m.gamesA : m.gamesB))
+  }
+  return closed.join(' ')
 }
 
 // ── Reseeding — édition locale des étiquettes ─────────────────────────────
@@ -317,6 +328,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'A')" class="slot-score">{{ sideSetScore(slot.match, 'A') }}</span>
                     <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
@@ -326,6 +338,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'B')" class="slot-score">{{ sideSetScore(slot.match, 'B') }}</span>
                     <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
@@ -378,6 +391,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'A')" class="slot-score">{{ sideSetScore(slot.match, 'A') }}</span>
                     <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
@@ -387,6 +401,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'B')" class="slot-score">{{ sideSetScore(slot.match, 'B') }}</span>
                     <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
@@ -439,6 +454,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'A')" class="slot-score">{{ sideSetScore(slot.match, 'A') }}</span>
                     <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
@@ -448,6 +464,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'B')" class="slot-score">{{ sideSetScore(slot.match, 'B') }}</span>
                     <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
@@ -500,6 +517,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'A')"
                   >
                     <span>{{ slotLabel(slot, 'A') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'A')" class="slot-score">{{ sideSetScore(slot.match, 'A') }}</span>
                     <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
                   </div>
                   <div
@@ -509,6 +527,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                     @drop="onDropToSlot(slot, 'B')"
                   >
                     <span>{{ slotLabel(slot, 'B') }}</span>
+                    <span v-if="sideSetScore(slot.match, 'B')" class="slot-score">{{ sideSetScore(slot.match, 'B') }}</span>
                     <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
                   </div>
                 </template>
@@ -785,11 +804,29 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
   color: var(--ink-4);
 }
 
+.slot-side > span:first-child {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .slot-side.winner {
   font-weight: 700;
   color: var(--accent);
   background: var(--accent-soft);
 }
+
+.slot-score {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.slot-side.winner .slot-score { color: var(--accent); }
 
 .slot-clear {
   background: none;
@@ -800,6 +837,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
   cursor: pointer;
   opacity: 0;
   transition: opacity 150ms, color 150ms;
+  flex-shrink: 0;
 }
 
 .slot-side:hover .slot-clear { opacity: 1; }

@@ -373,7 +373,160 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #148
+**Dernière session :** 2026-07-09 — Session #150
+**Sprint traité :** 39 — TV : échauffement, score au tableau & carrousel
+(2ᵉ et dernière session du sprint — **clos cette session**, 4/4 tickets clos).
+
+**Git :** branche `claude/sprint/39-tv-echauffement-score-carrousel`, parent
+effectif `claude/sprint/38-purge-legacy-arbitre` (sprint 38 toujours non
+mergé dans `main`, déduit depuis `backlog/sprints/done/`). 2 commits de code
+cette session.
+
+**Spec review session #150 :** `tv-live.md` et `admin-tableau-final.md` —
+⚠️ Dérive mineure en début de session (2 dérives restantes : AdminBracket sans
+score par sets ; slides du carrousel encore à 1600px au lieu de ~1760px) →
+**✅ Conforme** après implémentation des deux derniers tickets du sprint cette
+session. Les deux dérives correspondaient exactement aux issues déjà ouvertes
+`#353`/`#354` — 0 nouvelle issue créée.
+
+**Backlog engine session #150 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), dans l'ordre de sévérité
+(majeure puis mineure) :
+- **#353** (majeure) — front : `AdminBracket.vue` — nouvelle fonction pure
+  `sideSetScore(m, side)`, reprise à l'identique de celle posée dans
+  `TvIdle.vue` au ticket #352 (sets clos via `setScores` + set en cours si
+  `status === 'LIVE' && playStartedAt`), insérée dans les 8 emplacements
+  (QF/SF/F/P3 × A/B, uniquement en mode affichage normal, jamais dans le mode
+  édition des étiquettes) + règle CSS `.slot-score` (police mono, alignée à
+  droite). Bouton ✕, drag & drop et édition des étiquettes inchangés. Aucun
+  nouvel endpoint. Verdict reviewer : ✅ Approuvé, aucune réserve.
+- **#354** (mineure) — front : `TvIdle.vue` — une seule règle CSS changée
+  (`.tv-rotate` : `max-width` 1600→1760px, `padding` 0 56px→0 40px). En-tête
+  et pied laissés strictement inchangés (conformément à la spec) ; enfants de
+  `.tv-rotate` (Résultats/Poules/Tableau/Programme/Annonces) tous fluides,
+  aucun débordement identifié au nouveau plafond. Verdict reviewer :
+  ✅ Approuvé, aucune réserve.
+
+**Sprint 39 clos cette session :** les deux conditions étaient réunies (specs
+`tv-live.md` et `admin-tableau-final.md` conformes après les deux derniers
+tickets + 0 issue ouverte sur le milestone). Milestone GitHub fermé, dossier
+déplacé vers `backlog/sprints/done/39-tv-echauffement-score-carrousel/`,
+ligne retirée de `backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 2 sprints restants (40 — Planning : journées
+repliables, 41 — Joueurs : photo caméra). Le sprint 40 sera traité à la
+**prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(vérifié via `git status`/`gh issue view` après chaque invocation) — pattern
+désormais stable sur au moins 11 sessions consécutives (#140-#150) depuis
+l'incident initial de la session #139.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable pour
+les deux tickets (aucune nouvelle erreur). Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur en session automatisée). Aucune
+maquette `.jsx` de référence pour `#353`/`#354` (retours produit récents,
+pas dans `frontend/design/`) — les agents `vue-screen` ont construit
+directement depuis la description texte des specs, en reprenant la logique
+déjà posée par `#352` pour la cohérence de présentation.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #149 :**
+**Sprint traité :** 39 — TV : échauffement, score au tableau & carrousel
+(1ère session du sprint, 2/4 tickets clos — `#353`, `#354` restants).
+
+**Git :** branche `claude/sprint/39-tv-echauffement-score-carrousel`
+(nouvelle branche cette session), parent effectif
+`claude/sprint/38-purge-legacy-arbitre` (sprint 38 toujours non mergé dans
+`main`, déduit depuis `backlog/sprints/done/`). 2 commits de code cette
+session.
+
+**Spec review session #149 :** `tv-live.md` et `admin-tableau-final.md` —
+⚠️ Dérive mineure en début de session (3 dérives : scène ÉCHAUFFEMENT sans
+affiche avec calque typographique superposé au compte à rebours ; slide
+Tableau TV sans score par sets ; AdminBracket sans score par sets) →
+2 des 3 dérives résorbées par les deux tickets de cette session
+(`#351`/`#352`), la troisième (`#353`, AdminBracket) attendue pour la
+session suivante avant `✅ Conforme`. Toutes les dérives relevées
+correspondaient exactement aux issues déjà ouvertes lors de la
+planification du sprint — 0 nouvelle issue créée.
+
+**Backlog engine session #149 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (les deux majeures en tête, `#351` indépendant,
+`#352` avant `#354` car même fichier) :
+- **#351** (majeure) — front : `TvScoreboard.vue` — suppression du bloc
+  `.tv-warmup-typo` (composition typographique des deux noms en très grand,
+  posée au sprint 36) qui se superposait exactement au bloc central
+  `.tv-warmup` (chrono + libellé ÉCHAUFFEMENT) quand le match n'a pas
+  d'affiche — bug de superposition remonté aux retours produit du
+  2026-07-09, spec déjà mise à jour en conséquence. Fix minimal (31 lignes
+  supprimées, 0 ajoutée) : 3 lignes de template + 3 règles CSS mortes,
+  script et fond de scène (`hero-poster-bg`/`court-bg`) inchangés. Verdict
+  reviewer : ✅ Approuvé, aucune réserve.
+- **#352** (majeure) — front : `TvIdle.vue` — nouvelle fonction pure
+  `sideSetScore(m, side)` (sets clos depuis `m.setScores` + set en cours
+  depuis `m.gamesA`/`gamesB` si `status === 'LIVE' && playStartedAt`, ce qui
+  exclut correctement la phase échauffement où games vaudraient 0-0) +
+  8 emplacements `.tv-mini-score` dans les 4 sections QF/SF/F/P3 de la
+  slide Tableau du carrousel + règle CSS (alignement à droite gratuit via le
+  `flex: 1` déjà posé sur `.tv-mini-name`). Aucun nouveau endpoint : données
+  déjà dans `_pack_match`. Le reviewer a vérifié la logique de garde contre
+  `live/referee_views.py` (clôture de set append à `set_scores`, pas de
+  reset de `games_a`/`games_b` en fin de match — mais la garde `status ===
+  'LIVE'` empêche le doublon car le statut passe à `FINISHED`). Verdict
+  reviewer : ✅ Approuvé, aucune réserve.
+
+**Sprint 39 non clos cette session :** 2 issues encore ouvertes sur le
+milestone (`#353` — même ajout de score par sets mais sur `AdminBracket.vue`,
+présentation à faire converger avec `#352` ; `#354` — élargissement des
+slides du carrousel, dépend de `#352` déjà clos car même fichier). Spec
+review encore ⚠️ (`admin-tableau-final.md` pas encore `✅ Conforme` tant que
+`#353` n'est pas fait). Sprint reste actif, sera repris à la **prochaine
+échéance planifiée**.
+
+**Roadmap non vide** — 2 autres sprints en attente après le 39 (40 —
+Planning : journées repliables, 41 — Joueurs : photo caméra).
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(vérifié via `git status`/`gh issue view` après chaque invocation) — pattern
+désormais stable sur au moins 10 sessions consécutives (#140-#149) depuis
+l'incident initial de la session #139, voir
+`feedback_reviewer_agent_overreach`.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable
+pour les deux tickets (aucune nouvelle erreur, projet déjà propre côté
+type-check à ce jour). Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée). Aucune maquette `.jsx` de référence
+pour `#351`/`#352` (retours produit récents, pas dans `frontend/design/`) —
+les agents `vue-screen` ont construit directement depuis la description
+texte des specs, comme pour les sprints 36/37/39-en-cours ; même situation
+attendue pour `#353`/`#354`.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #148 :**
 **Sprint traité :** 38 — Arbitre : purge legacy & action API (2ᵉ et dernière
 session du sprint — **clos cette session**, 4/4 tickets clos).
 
