@@ -70,6 +70,11 @@ recours :
   priorité : le nom du participant assigné → l'étiquette de provenance
   (« A1 », « D2 »…) → « À désigner ».
 - Le côté vainqueur d'un match terminé est mis en évidence.
+- Chaque place d'un match **terminé ou en direct** porte son **score par
+  sets**, en chiffres alignés à droite de la ligne (sets acquis ; pour un match
+  en direct, le set en cours affiche ses jeux et se rafraîchit avec l'écran).
+  Données déjà présentes dans le payload (`setScores` de `_pack_match`) ; même
+  présentation que la slide Tableau de la TV ([[tv-live]]).
 - Une place occupée par un participant assignable porte un bouton ✕ pour la
   vider.
 - Les étiquettes de provenance (« A1 », « C2 »…) sont **posées automatiquement**

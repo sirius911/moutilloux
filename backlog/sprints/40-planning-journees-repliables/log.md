@@ -1,5 +1,5 @@
-# Log — Sprint 37 : Mobile : arbitre & régie
+# Log — Sprint 40 : Planning : journées repliables
 
 | # | Date | Verdict spec | Dérives | Nouvelles issues | Issues sprint restantes |
 |---|------|-------------|---------|-----------------|------------------------|
-| — | 2026-07-08 | — | Sprint planifié | #337, #338, #339, #340, #341, #342 | 6 |
+| — | 2026-07-09 | — | Sprint planifié | #355, #356 | 2 |

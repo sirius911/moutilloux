@@ -10,4 +10,7 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 37 — Mobile : arbitre & régie | `backlog/sprints/37-mobile-arbitre-regie/sprint.md` |
+| 1 | 38 — Arbitre : purge legacy & action API | `backlog/sprints/38-purge-legacy-arbitre/sprint.md` |
+| 2 | 39 — TV : échauffement, score au tableau & carrousel | `backlog/sprints/39-tv-echauffement-score-carrousel/sprint.md` |
+| 3 | 40 — Planning : journées repliables | `backlog/sprints/40-planning-journees-repliables/sprint.md` |
+| 4 | 41 — Joueurs : photo caméra | `backlog/sprints/41-joueurs-photo-camera/sprint.md` |

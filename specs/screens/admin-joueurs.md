@@ -71,8 +71,25 @@ en édition, sinon « Le joueur sera ajouté au registre. »).
 | Nom | Requis |
 | Genre | Homme / Femme / Autre (segmenté) ; optionnel |
 | Année de naissance | Optionnelle (année seule, pas de date complète) |
-| Photo | Optionnelle — portrait (jpg/png/webp, ≤ 10 Mo), avec aperçu dans la modale. Sert d'avatar (repli : initiales) et de source aux **affiches de match** (voir [[affiche-match]]). Upload en multipart dédié. |
+| Photo | Optionnelle — portrait (jpg/png/webp, ≤ 10 Mo), avec aperçu dans la modale ; **téléversement ou capture caméra** (voir « Prendre une photo » ci-dessous). Sert d'avatar (repli : initiales) et de source aux **affiches de match** (voir [[affiche-match]]). Upload en multipart dédié. |
 | Attitudes | Optionnelles — **sélection multiple** parmi une **liste prédéfinie d'adjectifs** de mise en scène (« charmeuse », « furieux »…), pas de saisie libre. La liste vit dans un **fichier de constantes JSON** partagé du front (`frontend/app/src/constants/attitudes.json`). Réservoir des **affiches de match** : la génération **pioche au hasard** parmi les attitudes du joueur, sauf choix explicite dans l'onglet Affiche (voir [[affiche-match]]). |
+
+**Prendre une photo**
+
+Le champ Photo offre, en plus du téléversement, un bouton **« Prendre une
+photo »**, dont le comportement dépend de l'appareil :
+
+- **Téléphone / tablette** : ouvre l'**appli photo native** (attribut `capture`
+  sur l'input fichier) — aucun flux caméra dans la page, fonctionne donc aussi
+  sur origine non sécurisée (accès en HTTP par IP locale).
+- **Desktop** : ouvre une **modale webcam in-app** (`getUserMedia`) — aperçu
+  live, déclencheur, « Reprendre » avant validation. Nécessite une origine
+  sécurisée (localhost en dev, acquis). Permission caméra refusée ou aucune
+  caméra disponible : message explicite dans la modale, le téléversement reste
+  le repli.
+- Dans les deux cas, la photo capturée rejoint le **circuit standard** du champ
+  Photo : aperçu dans la modale, mêmes contraintes (format, ≤ 10 Mo), même
+  upload multipart — aucun endpoint nouveau.
 
 **Section Contact**
 

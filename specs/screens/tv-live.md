@@ -111,13 +111,15 @@ Actif quand le `hero` est `LIVE` avec `playStartedAt` nul (l'arbitre a démarré
 le match, le serveur n'est pas encore choisi — voir [[cycle-de-vie-match]]) :
 
 - **L'affiche du match en plein écran** (sans bande de score) — c'est le moment
-  de mise en avant du dispositif [[affiche-match]]. Sans affiche : fond de
-  court + composition typographique des deux noms.
-- Libellé **« ÉCHAUFFEMENT »** + **compte à rebours** (5 min, constante),
-  dérivé de `warmupStartedAt` — même source que la tablette arbitre, donc
-  synchronisé. À 0:00, le compte à rebours laisse place à un libellé
-  d'imminence (« Le match va commencer ») — rien d'automatique.
-- Joueurs (« {A} vs {B} »), étape, court.
+  de mise en avant du dispositif [[affiche-match]]. Sans affiche : **fond de
+  court seul**, le bloc central porte toute la scène. Il n'y a **pas** de
+  composition typographique des noms en très grand : elle entrait en collision
+  avec le compte à rebours central (retours 2026-07-09).
+- **Bloc central unique** : libellé **« ÉCHAUFFEMENT »** + **compte à rebours**
+  (5 min, constante), dérivé de `warmupStartedAt` — même source que la tablette
+  arbitre, donc synchronisé. À 0:00, le compte à rebours laisse place à un
+  libellé d'imminence (« Le match va commencer ») — rien d'automatique.
+- Sous le compte à rebours : joueurs (« {A} vs {B} »), étape, court.
 - La carte « À préparer » reste affichée s'il existe un next.
 - La scène bascule sur le SCOREBOARD au poll où `playStartedAt` se remplit.
 
@@ -161,6 +163,10 @@ Règles :
 - Pied : barre « PROCHAIN MATCH » (~heure, joueurs, à partir du *next* — masquée
   s'il n'y a pas de next, remplacée par « Programme du tournoi en cours de
   préparation ») + pastilles de pagination des slides.
+- **Emprise des slides** : l'en-tête et le pied sont conservés tels quels, mais
+  le corps des slides exploite la largeur de la scène 1920×1080 au plus près —
+  plafond ~1760 px utiles, marges latérales réduites (retours 2026-07-09 :
+  « l'espace du carrousel légèrement agrandi »).
 - Rotation automatique : **~8 s par slide**, fondu. Une slide **sans contenu
   est sautée** (décision 5). Les pastilles reflètent les slides réellement
   affichables.
@@ -181,7 +187,7 @@ Règles :
 | **Tournoi** | Stats agrégées de l'édition : matchs joués / total, inscrits, épreuves — et le statut (« EN ATTENTE DU PROCHAIN MATCH »). | jamais (slide par défaut) |
 | **Derniers résultats** | Les **5 derniers matchs terminés** de l'édition (ordre `finished_at` décroissant — pas l'ordre calendaire), toutes épreuves : étape, joueurs (vainqueur en évidence), score par sets. | aucun match terminé |
 | **Poules** | Les poules d'**une épreuve** (lettre, standings V/D/Pts, badge Q — seulement sur poule **terminée**, [[cycle-de-vie-epreuve]]) — **rotation par épreuve** : au passage suivant de la slide, l'épreuve suivante qui a des poules (décision 6). L'épreuve est nommée dans le titre. | aucune poule composée |
-| **Tableau** | Le tableau final d'**une épreuve** (QF→SF→F, + 3e place si l'épreuve l'active), étiquettes de provenance sur les places vides — même rotation par épreuve. | aucun tableau créé |
+| **Tableau** | Le tableau final d'**une épreuve** (QF→SF→F, + 3e place si l'épreuve l'active), étiquettes de provenance sur les places vides — même rotation par épreuve. **Score par sets sur chaque ligne joueur** (chiffres alignés à droite) pour les matchs **terminés** (`setScores`) **et en direct** (sets acquis + jeux du set en cours, rafraîchis au poll) — même présentation que l'écran admin ([[admin-tableau-final]]). | aucun tableau créé |
 | **Programme** | Les **N prochains matchs planifiés** (N ≈ 4–6) à partir du *next*, dans l'ordre de la séquence : ~heure, joueurs, étiquette de poule ; le premier marqué « bientôt ». Pied : « Horaires estimés — susceptibles de bouger ». **Journée courante épuisée** → titre « Programme de demain » et matchs de la journée suivante ; plus aucune journée → « Programme terminé » (slide affichée une fois puis sautée). | aucun match planifié restant |
 | **Annonces** | Les annonces **actives** de l'édition (voir [[tv-state]], modèle `Announcement`), en texte grand format. | aucune annonce active |
 | **Affiche** | L'**affiche du prochain match** (`posterUrl` du next, voir [[affiche-match]]) en grand, avec ~heure et joueurs — effet « à l'affiche ». | le next n'a pas d'affiche |
@@ -218,7 +224,7 @@ d'[[admin-panel-map]] / [[planning]]).
 | Aucune édition active | Carousel réduit à la slide Tournoi avec la marque et l'horloge (état neutre). |
 | Édition active sans aucun match | Slide Tournoi seule (les autres sont sautées). |
 | Match LIVE sans poule ni tableau résolus | Scoreboard sans panneau d'enjeu (masqué). |
-| Match en échauffement sans affiche | Scène échauffement en composition typographique (fond de court, noms en grand). |
+| Match en échauffement sans affiche | Fond de court + bloc central seul (ÉCHAUFFEMENT, compte à rebours, joueurs, étape/court) — pas de noms en très grand. |
 | Fin de match : le fetch one-shot échoue | Pas de scène vainqueur, carousel direct (jamais d'erreur visible). |
 | Deux matchs LIVE (état anormal) | Le serveur choisit le hero (featured puis plus récent, voir [[tv-state]]) ; la TV n'affiche jamais deux scores. |
 

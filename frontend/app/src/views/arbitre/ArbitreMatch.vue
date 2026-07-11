@@ -5,6 +5,8 @@ import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
 import { useApi } from '@/composables/useApi'
+import { useViewport } from '@/composables/useViewport'
+import { useWakeLock } from '@/composables/useWakeLock'
 import type { ArbitreProgramme } from '@/types'
 
 const props = defineProps<{ matchId: number }>()
@@ -17,11 +19,56 @@ usePolling(() => live.fetchMatch(props.matchId), 2000)
 
 const match = computed(() => live.match)
 
+const { isMobile } = useViewport()
+
+// Scène iPad (existante)
 const TARGET_W = 834
 const TARGET_H = 1112
 
+// Scène mobile portrait (specs/screens/arbitre-match.md « Variante mobile »)
+const MOBILE_TARGET_W = 390
+const MOBILE_TARGET_H = 844
+
 const containerRef = ref<HTMLElement | null>(null)
-const { scale, offsetX, offsetY } = useScale(containerRef, TARGET_W, TARGET_H)
+const { scale: scaleIpad, offsetX: offsetXIpad, offsetY: offsetYIpad } = useScale(containerRef, TARGET_W, TARGET_H)
+const { scale: scaleMobile, offsetX: offsetXMobile, offsetY: offsetYMobile } = useScale(containerRef, MOBILE_TARGET_W, MOBILE_TARGET_H)
+
+const scale = computed(() => (isMobile.value ? scaleMobile.value : scaleIpad.value))
+const offsetX = computed(() => (isMobile.value ? offsetXMobile.value : offsetXIpad.value))
+const offsetY = computed(() => (isMobile.value ? offsetYMobile.value : offsetYIpad.value))
+const stageW = computed(() => (isMobile.value ? MOBILE_TARGET_W : TARGET_W))
+const stageH = computed(() => (isMobile.value ? MOBILE_TARGET_H : TARGET_H))
+
+// Verrou anti-tap (scène mobile) — local à l'écran, pas de persistance
+// (specs/transverse/mobile.md « Verrou anti-tap »)
+const locked = ref(false)
+let unlockTimer: ReturnType<typeof setTimeout> | null = null
+const UNLOCK_HOLD_MS = 600
+
+function startUnlockHold() {
+  if (!locked.value) return
+  if (unlockTimer) clearTimeout(unlockTimer)
+  unlockTimer = setTimeout(() => {
+    locked.value = false
+    unlockTimer = null
+  }, UNLOCK_HOLD_MS)
+}
+
+function cancelUnlockHold() {
+  if (unlockTimer) {
+    clearTimeout(unlockTimer)
+    unlockTimer = null
+  }
+}
+
+function toggleLock() {
+  // Le cadenas verrouille en un tap simple ; le déverrouillage se fait par
+  // appui long (voir startUnlockHold/cancelUnlockHold branchés sur le bouton).
+  if (!locked.value) locked.value = true
+}
+
+// Menu mobile — actions secondaires repliées (Corrections, Terminer, Forfait, Reset, Annuler)
+const mobileMenuOpen = ref(false)
 
 // Modal de confirmation générique (reset_all, annuler)
 const confirmModal = ref<{ action: string; label: string } | null>(null)
@@ -196,6 +243,9 @@ const isPlaying = computed(() => match.value?.status === 'LIVE' && !!match.value
 const isCanceled = computed(() => match.value?.status === 'CANCELED')
 const isReadOnly = computed(() => isFinished.value || isCanceled.value)
 
+// Écran non verrouillé pendant un match LIVE (specs/transverse/mobile.md § Wake-lock)
+useWakeLock(computed(() => match.value?.status === 'LIVE'))
+
 const WARMUP_DURATION_MS = 5 * 60 * 1000 // 5 min, constante indicative (cycle-de-vie-match.md)
 
 const nowTick = ref(Date.now())
@@ -254,13 +304,112 @@ async function confirmLaunch() {
   <div ref="containerRef" class="arb-container">
     <div
       class="arb-stage"
+      :class="{ 'arb-stage--mobile': isMobile }"
       :style="{
-        width: `${TARGET_W}px`,
-        height: `${TARGET_H}px`,
+        width: `${stageW}px`,
+        height: `${stageH}px`,
         transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
         transformOrigin: 'top left',
       }"
     >
+      <!-- ═══════════════ Scène mobile portrait (390×844) ═══════════════ -->
+      <template v-if="isMobile">
+        <!-- En-tête compact -->
+        <header class="arb-mobile-header">
+          <button class="btn-back arb-mobile-back" @click="router.push('/arbitre')">←</button>
+          <div class="arb-mobile-header-center">
+            <span class="arb-mobile-stage">{{ match?.stageLabel ?? '—' }}</span>
+            <span
+              class="arb-status-badge"
+              :class="{ tb: match?.tbActive, finished: isFinished, scheduled: isScheduled, canceled: isCanceled, warmup: isWarmup }"
+            >
+              {{ statusLabel }}
+            </span>
+          </div>
+          <button class="arb-mobile-menu-btn" title="Menu" @click="mobileMenuOpen = true">☰</button>
+        </header>
+
+        <!-- Zone de tap du haut (joueur B) -->
+        <button
+          class="arb-mobile-tap arb-mobile-tap--top"
+          :disabled="!isPlaying || locked"
+          :class="{ locked: !isPlaying || locked }"
+          @click="handleTap('right')"
+        >
+          <span class="arb-mobile-tap-name">{{ playerName(rightModelSide) }}</span>
+          <span v-if="match?.server === rightModelSide" class="serve-indicator">●</span>
+          <span class="tap-cta">+ POINT</span>
+        </button>
+
+        <!-- Score central -->
+        <div class="arb-mobile-score">
+          <div class="arb-mobile-score-row">
+            <span class="arb-mobile-score-meta">SETS {{ sideSets(leftModelSide) }} · JEUX {{ sideGames(leftModelSide) }}</span>
+            <span class="arb-mobile-score-meta">SETS {{ sideSets(rightModelSide) }} · JEUX {{ sideGames(rightModelSide) }}</span>
+          </div>
+          <div class="score-nums tab arb-mobile-score-nums">
+            <span class="score-a">
+              {{ match ? (match.tbActive ? sideTbPoints(leftModelSide) : sideDisplayPoint(leftModelSide)) : '0' }}
+            </span>
+            <span class="score-sep">·</span>
+            <span class="score-b">
+              {{ match ? (match.tbActive ? sideTbPoints(rightModelSide) : sideDisplayPoint(rightModelSide)) : '0' }}
+            </span>
+          </div>
+          <span class="score-label">{{ match?.tbActive ? 'JEU DÉCISIF' : (isWarmup ? warmupCountdown : 'POINT') }}</span>
+
+          <!-- Cadenas anti-tap -->
+          <button
+            class="arb-mobile-lock"
+            :class="{ 'arb-mobile-lock--locked': locked }"
+            :title="locked ? 'Appui long pour déverrouiller' : 'Verrouiller les zones de tap'"
+            @click="toggleLock"
+            @touchstart.prevent="startUnlockHold"
+            @touchend="cancelUnlockHold"
+            @mousedown="startUnlockHold"
+            @mouseup="cancelUnlockHold"
+            @mouseleave="cancelUnlockHold"
+          >
+            {{ locked ? '🔒' : '🔓' }}
+          </button>
+        </div>
+
+        <!-- Zone de tap du bas (joueur A) -->
+        <button
+          class="arb-mobile-tap arb-mobile-tap--bottom"
+          :disabled="!isPlaying || locked"
+          :class="{ locked: !isPlaying || locked }"
+          @click="handleTap('left')"
+        >
+          <span class="tap-cta">+ POINT</span>
+          <span v-if="match?.server === leftModelSide" class="serve-indicator">●</span>
+          <span class="arb-mobile-tap-name">{{ playerName(leftModelSide) }}</span>
+        </button>
+
+        <!-- Action principale en pied (Démarrer / Lancer) -->
+        <footer v-if="isScheduled || isWarmup" class="arb-mobile-footer">
+          <button
+            v-if="isScheduled"
+            class="action-btn action-btn--primary arb-mobile-primary"
+            :disabled="!match?.sideA || !match?.sideB"
+            @click="handleStart"
+          >
+            <span class="action-icon">▶</span>
+            <span class="action-label">Démarrer le match</span>
+          </button>
+          <button
+            v-else-if="isWarmup"
+            class="action-btn action-btn--primary arb-mobile-primary"
+            @click="handleLaunch"
+          >
+            <span class="action-icon">▶</span>
+            <span class="action-label">Lancer le match</span>
+          </button>
+        </footer>
+      </template>
+
+      <!-- ═══════════════ Scène iPad (834×1112, inchangée) ═══════════════ -->
+      <template v-else>
       <!-- Header -->
       <header class="arb-header">
         <button class="btn-back" @click="router.push('/arbitre')">←</button>
@@ -405,6 +554,7 @@ async function confirmLaunch() {
           </button>
         </template>
       </footer>
+      </template>
     </div>
 
     <!-- Toast d'erreur -->
@@ -574,6 +724,88 @@ async function confirmLaunch() {
           <div class="modal-actions">
             <button class="btn-secondary" @click="correctionsOpen = false">Fermer</button>
           </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Feuille d'actions mobile — actions secondaires repliées (scène mobile uniquement) -->
+    <Teleport to="body">
+      <div v-if="isMobile && mobileMenuOpen" class="modal-backdrop arb-mobile-sheet-backdrop" @click.self="mobileMenuOpen = false">
+        <div class="arb-mobile-sheet">
+          <div class="arb-mobile-sheet-handle" />
+          <h3 class="modal-title">Actions</h3>
+
+          <template v-if="isScheduled">
+            <button
+              class="action-btn action-btn--primary arb-mobile-sheet-btn"
+              :disabled="!match?.sideA || !match?.sideB"
+              @click="mobileMenuOpen = false; handleStart()"
+            >
+              <span class="action-icon">▶</span>
+              <span class="action-label">Démarrer le match</span>
+            </button>
+            <button class="action-btn arb-mobile-sheet-btn" @click="mobileMenuOpen = false; forfaitModal = true">
+              <span class="action-icon">⚑</span>
+              <span class="action-label">Forfait</span>
+            </button>
+            <button
+              class="action-btn action-btn--danger-ghost arb-mobile-sheet-btn"
+              @click="mobileMenuOpen = false; askConfirm('annuler', 'Annuler le match ?')"
+            >
+              <span class="action-icon">✕</span>
+              <span class="action-label">Annuler</span>
+            </button>
+          </template>
+
+          <template v-else-if="isWarmup">
+            <button class="action-btn action-btn--primary arb-mobile-sheet-btn" @click="mobileMenuOpen = false; handleLaunch()">
+              <span class="action-icon">▶</span>
+              <span class="action-label">Lancer le match</span>
+            </button>
+            <button
+              class="action-btn action-btn--danger-ghost arb-mobile-sheet-btn"
+              @click="mobileMenuOpen = false; askConfirm('annuler', 'Annuler le match ?')"
+            >
+              <span class="action-icon">✕</span>
+              <span class="action-label">Annuler</span>
+            </button>
+            <button
+              class="action-btn action-btn--danger-ghost arb-mobile-sheet-btn"
+              @click="mobileMenuOpen = false; askConfirm('reset_all', 'Réinitialiser le match ?')"
+            >
+              <span class="action-icon">↺</span>
+              <span class="action-label">Reset</span>
+            </button>
+          </template>
+
+          <template v-else>
+            <button class="action-btn arb-mobile-sheet-btn" :disabled="isReadOnly" @click="mobileMenuOpen = false; handleUndo()">
+              <span class="action-icon">↩</span>
+              <span class="action-label">0 pts</span>
+            </button>
+            <button class="action-btn arb-mobile-sheet-btn" :disabled="isReadOnly" @click="mobileMenuOpen = false; correctionsOpen = true">
+              <span class="action-icon">✎</span>
+              <span class="action-label">Corrections</span>
+            </button>
+            <button
+              v-if="!isReadOnly"
+              class="action-btn action-btn--danger arb-mobile-sheet-btn"
+              @click="mobileMenuOpen = false; openFinishModal()"
+            >
+              <span class="action-icon">■</span>
+              <span class="action-label">Terminer</span>
+            </button>
+            <button
+              class="action-btn action-btn--danger-ghost arb-mobile-sheet-btn"
+              :disabled="isReadOnly"
+              @click="mobileMenuOpen = false; askConfirm('reset_all', 'Réinitialiser le match ?')"
+            >
+              <span class="action-icon">↺</span>
+              <span class="action-label">Reset</span>
+            </button>
+          </template>
+
+          <button class="btn-secondary arb-mobile-sheet-close" @click="mobileMenuOpen = false">Fermer</button>
         </div>
       </div>
     </Teleport>
@@ -1130,5 +1362,215 @@ async function confirmLaunch() {
   font-size: 16px;
   font-weight: 700;
   color: var(--ink-0);
+}
+
+/* ── Scène mobile (390×844) ──────────────────────────────────────────── */
+.arb-stage--mobile {
+  flex-direction: column;
+}
+
+/* En-tête compact */
+.arb-mobile-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+}
+
+.arb-mobile-back {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+}
+
+.arb-mobile-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.arb-mobile-stage {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-1);
+  letter-spacing: 0.04em;
+}
+
+.arb-mobile-menu-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  color: var(--ink-1);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Zones de tap empilées haut/bas */
+.arb-mobile-tap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  cursor: pointer;
+  transition: filter 150ms;
+  padding: 16px;
+}
+
+.arb-mobile-tap:active {
+  filter: brightness(1.3);
+}
+
+.arb-mobile-tap.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.arb-mobile-tap--top {
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.arb-mobile-tap--bottom {
+  background: var(--accent);
+}
+
+.arb-mobile-tap--top .arb-mobile-tap-name {
+  color: var(--ink-0);
+}
+
+.arb-mobile-tap--bottom .arb-mobile-tap-name,
+.arb-mobile-tap--bottom .tap-cta {
+  color: #000;
+}
+
+.arb-mobile-tap--top .tap-cta {
+  color: var(--ink-2);
+}
+
+.arb-mobile-tap-name {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* Score central */
+.arb-mobile-score {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line-1);
+  border-bottom: 1px solid var(--line-1);
+  flex-shrink: 0;
+}
+
+.arb-mobile-score-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.arb-mobile-score-nums {
+  gap: 6px;
+}
+
+.arb-mobile-score-nums .score-a,
+.arb-mobile-score-nums .score-b {
+  font-size: 56px;
+}
+
+.arb-mobile-score-nums .score-sep {
+  font-size: 24px;
+}
+
+/* Cadenas anti-tap */
+.arb-mobile-lock {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 1px solid var(--line-2);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arb-mobile-lock--locked {
+  background: var(--danger-soft);
+  border-color: rgba(255, 48, 82, 0.3);
+}
+
+/* Pied — action principale (Démarrer / Lancer) */
+.arb-mobile-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--line-1);
+  flex-shrink: 0;
+}
+
+.arb-mobile-primary {
+  width: 100%;
+  flex-direction: row;
+  justify-content: center;
+}
+
+/* Feuille d'actions (menu mobile) */
+.arb-mobile-sheet-backdrop {
+  align-items: flex-end;
+}
+
+.arb-mobile-sheet {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 12px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.arb-mobile-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--line-2);
+  align-self: center;
+  margin-bottom: 4px;
+}
+
+.arb-mobile-sheet-btn {
+  width: 100%;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.arb-mobile-sheet-close {
+  margin-top: 4px;
 }
 </style>
