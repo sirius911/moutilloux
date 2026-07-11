@@ -32,7 +32,7 @@ heure n'est saisie à la main.
 | Champ | Rôle dans le calendrier |
 |---|---|
 | `order_index` | rang dans la séquence (déjà **unique par édition**). **Persiste à travers `LIVE`/`FINISHED`** — un match joué garde sa place. `NULL` = **hors séquence** : jamais placé (pile « À planifier ») ou annulé. |
-| `scheduled_time` | **porte la journée** : sa *date* = le jour d'affectation. Sa valeur = l'ETA calculée, écrite par le serveur (dérivée, jamais saisie). |
+| `scheduled_time` | **porte la journée** : sa *date* = le jour d'affectation (l'heure stockée n'est qu'un placeholder posé à l'affectation). L'**ETA affichée est calculée à la lecture, côté serveur** (voir « Où vit le calcul ») — jamais saisie, jamais persistée (arbitrage 2026-07-11). |
 | `court` | mono-court : « Central » seedé, attribué trivialement à l'entrée en séquence. Non discriminant. |
 | `status` | `SCHEDULED` / `LIVE` / `FINISHED` / `CANCELED`. Décide si la ligne est **déplaçable** (`SCHEDULED`) ou **verrouillée** (`LIVE`/`FINISHED`) — **pas** sa présence dans la séquence (portée par `order_index`). |
 | `is_featured` | match « à l'antenne » TV (hero), pilotable manuellement. |
@@ -140,6 +140,16 @@ Propriétés garanties :
   bougé.
 - **Journées indépendantes** : chaque journée part de son propre `start_time` ; un
   débordement de la veille ne décale pas le lendemain.
+
+**Où vit le calcul (arbitrage 2026-07-11).** L'algorithme est implémenté **une
+seule fois, côté serveur**, en fonction de service, et appliqué **à la
+lecture** : les packers renvoient dans `scheduledTime` l'ETA du moment pour
+les matchs `SCHEDULED` planifiés (heure réelle de début pour `LIVE` /
+`FINISHED`). Toutes les surfaces (calendrier admin, `tv/state`, `tv/idle`,
+programme arbitre) affichent ainsi des heures recalées en continu par l'heure
+courante, sans écriture en base. Le moteur front d'[[admin-matchs]] ne sert
+plus qu'à la **préview locale pendant un drag** ; l'affichage au repos vient
+du serveur.
 
 Les heures publiques sont affichées **approximatives** (préfixe `~`), voir
 [[tv-live]].
@@ -250,7 +260,7 @@ toucher à ce qui est déjà placé :
 | `POST /api/editions/<id>/play-days/generate/` | **génération des journées depuis les dates de l'édition** : crée une `PlayDay` par jour entre `start_date` et `end_date` de l'édition (bornes incluses), en **sautant** les dates portant déjà une journée. Plage horaire commune passée dans le body (défaut proposé par l'UI : **9:00 → 20:00**), modifiable journée par journée ensuite (CRUD). Refusée si l'édition n'a pas ses deux dates. Surface UI : modale « Gérer les journées » de [[admin-matchs]]. *(Endpoint à créer — service d'abord, convention CLAUDE.md §5.)* |
 | CRUD `PlayDay` | gérer les journées de jeu (date, début, fin cible). Surface UI : modale **« Gérer les journées »** de [[admin-matchs]]. **Suppression refusée** si la journée porte encore des pauses, ou des matchs `SCHEDULED`/`LIVE` (ces derniers sont **actionnables** : renvoyer d'abord les matchs vers la pile « à planifier » puis réessayer). Si la journée porte au moins un match `FINISHED`, le refus est **définitif** : la journée est conservée comme **archive** et ne redevient jamais supprimable (`live/urls.py:86-89` ; `api_play_days_list:1541`, `api_play_day_create:1551`, `api_play_day_edit:1576`, `api_play_day_delete:1611`). |
 | CRUD `Break` | insérer / déplacer / retirer une pause dans une journée (déjà branché côté Calendrier) (`live/urls.py:91-94` ; `api_breaks_list:1623`, `api_break_create:1633`, `api_break_edit:1659`, `api_break_delete:1691`). |
-| Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA peuvent être calculées côté front. **La pile et la colonne Annulés couvrent tous les stages** (le filtre `stage=GROUP` du MVP est retiré — voir « Matchs de tableau au calendrier »). |
+| Packer « calendrier » (lecture) | matchs regroupés par journée + ordonnés + la pile à planifier ; réutilise `_pack_match` (`api_views.py:97`) (`live/urls.py:96`, `api_edition_calendar` — `api_views.py:1702`). Les ETA sont renvoyées par le serveur (calcul à la lecture, voir « Où vit le calcul ») ; le front ne garde qu'une préview de drag. **La pile et la colonne Annulés couvrent tous les stages** (le filtre `stage=GROUP` du MVP est retiré — voir « Matchs de tableau au calendrier »). |
 | Enrichissement de l'état TV | exposer les **N prochains matchs planifiés** + le **next** pour [[tv-live]] (`live/urls.py:100`, `api_tv_upcoming` — `api_views.py:1817`). |
 
 > **Retrait.** L'ancien endpoint kanban `POST /api/events/<id>/matches/reorder/`

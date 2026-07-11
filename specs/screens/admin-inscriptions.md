@@ -78,6 +78,12 @@ Titre « Créer une équipe », sous-titre rappelant l'épreuve.
   avec recherche parmi les joueurs du registre.
 - Les deux joueurs doivent être **différents** : un joueur choisi dans un
   emplacement est exclu de la liste de l'autre.
+- **Un joueur n'appartient qu'à une seule équipe de l'épreuve** : les
+  sélecteurs excluent les joueurs déjà engagés dans une équipe inscrite à
+  l'épreuve active, et le serveur refuse la création le cas échéant
+  (« {joueur} est déjà inscrit dans une équipe de cette épreuve »). La règle
+  vaut **par épreuve** : jouer en Double dans deux épreuves différentes reste
+  permis (retours 2026-07-11).
 
 **Identification**
 - Nom d'équipe optionnel (indication : « affiché sur la TV et l'écran arbitre ») ;
@@ -88,8 +94,8 @@ Titre « Créer une équipe », sous-titre rappelant l'épreuve.
   choisis, et pendant la soumission.
 - La création de l'équipe **inscrit automatiquement** l'équipe à l'épreuve
   active : à la fermeture, elle apparaît dans la carte Inscrits.
-- Erreur serveur (épreuve non Double, joueurs identiques…) : message dans la
-  modale, saisie conservée.
+- Erreur serveur (épreuve non Double, joueurs identiques, joueur déjà dans une
+  équipe de l'épreuve…) : message dans la modale, saisie conservée.
 
 ---
 
