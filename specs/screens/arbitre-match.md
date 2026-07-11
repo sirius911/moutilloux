@@ -74,7 +74,10 @@ L'écran a **quatre modes**, dictés par `status` et la phase du match
 ### Bloc score
 
 - **Joueur A** (gauche) et **Joueur B** (droite) : nom, **SETS n**, **JEUX n**, et un
-  **indicateur de service** (●) du côté du serveur courant.
+  **indicateur de service imposant** du côté du serveur courant : une **balle
+  de tennis grand format** (même motif SVG que la TV, animée), doublée du
+  **nom du serveur mis en avant** (accent) — qui sert doit se voir d'un coup
+  d'œil (retours 2026-07-11). Valable sur les deux scènes (iPad et mobile).
 - **Score central** : le point du jeu en cours — `0 / 15 / 30 / 40 / AV` hors
   tie-break (égalité affichée `40 / 40`), **valeur numérique** en tie-break (avec
   le libellé « JEU DÉCISIF »). L'affichage vient de **`displayPointA/B`** de
@@ -215,6 +218,10 @@ match à zéro (`SCHEDULED`, score effacé). À réserver aux vrais faux départ
   retour instantané, sans attendre le tick suivant.
 - **Pause onglet caché** : le polling se suspend onglet non visible (`usePolling`,
   `visibilitychange`).
+- **Étanchéité du polling** : l'écran n'affiche que le match de l'URL — une
+  réponse tardive d'un autre match (navigation récente) est ignorée, et aucun
+  timer de polling ne survit au démontage de l'écran (pas d'empilement
+  d'intervalles ni de requêtes qui se chevauchent).
 - **Connectivité** : mode **en ligne** (v1). Si un tap échoue (réseau), l'action est
   **perdue** et l'erreur s'affiche — pas de file d'attente optimiste. Le prochain tick
   resynchronise l'état réel depuis le serveur. *(Une saisie hors-ligne avec rejeu est

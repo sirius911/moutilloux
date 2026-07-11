@@ -805,6 +805,12 @@ def api_player_edit(request, player_id):
         provided.pop("attitudes")
     merged.update(provided)
 
+    # `forms.JSONField` traite une liste vide comme une valeur vide (`[]` est
+    # dans EMPTY_VALUES de Django) et la nettoie en None -> viole le NOT NULL
+    # de core_player.attitudes. On sérialise en chaîne JSON, ce qu'un vrai
+    # formulaire HTML soumettrait : "[]" est reparsé en [] sans être vidé.
+    merged["attitudes"] = json.dumps(merged["attitudes"])
+
     form = PlayerForm(merged, instance=player)
     if not form.is_valid():
         return JsonResponse({"error": "Données invalides", "fields": form.errors}, status=400)
@@ -2099,9 +2105,9 @@ def get_tv_next(edition):
 
 
 def _pack_tv_stake(hero):
-    """Dérive l'enjeu (« stake ») du match hero : sa poule, ou le tableau de
-    son épreuve. `None` si le hero est `None` ou si l'enjeu n'est pas
-    résolvable (pas de groupe ni stage de tableau)."""
+    """Dérive l'enjeu (« stake ») du match hero : sa poule. `None` si le hero
+    est `None`, si le hero n'est pas en stage de poule, ou si l'enjeu n'est
+    pas résolvable (pas de groupe)."""
     if hero is None:
         return None
 
@@ -2129,13 +2135,6 @@ def _pack_tv_stake(hero):
             "groupName": hero.group.name,
             "eventName": hero.event.category.name,
             "standings": standings,
-        }
-
-    if hero.stage in (Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3) and hero.event_id:
-        return {
-            "kind": "bracket",
-            "eventName": hero.event.category.name,
-            "bracket": _pack_event_bracket(hero.event),
         }
 
     return None

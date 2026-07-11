@@ -10,5 +10,4 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 40 — Planning : journées repliables | `backlog/sprints/40-planning-journees-repliables/sprint.md` |
-| 2 | 41 — Joueurs : photo caméra | `backlog/sprints/41-joueurs-photo-camera/sprint.md` |
+| 1 | 43 — Correctifs retours du 11 juillet | `backlog/sprints/43-retours-11-juillet/sprint.md` |

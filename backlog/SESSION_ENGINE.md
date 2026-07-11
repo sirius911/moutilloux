@@ -373,7 +373,436 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-09 — Session #150
+**Dernière session :** 2026-07-10 — Session #160
+**Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
+(sprint 42 clos à la session #159). Conformément à l'étape 0 du protocole,
+la session s'est arrêtée sans exécuter les étapes 1 à 4. Working tree propre
+au démarrage, aucun changement de code, aucun commit de code.
+
+**5ᵉ session à vide consécutive depuis la clôture du sprint 42.** Aucun
+sprint suivant planifié depuis.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+**Roadmap vide.** Aucun sprint en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+Log complet : `backlog/logs/session_2026-07-10_160.md`.
+
+---
+
+**Historique — session #159 :**
+**Sprint traité :** 42 — TV : score broadcast et phase en grand
+(3ᵉ session du sprint — **clos cette session**, 5/5 tickets clos).
+
+**Git :** branche `claude/sprint/42-tv-score-broadcast`, parent effectif
+`claude/sprint/41-joueurs-photo-camera` (inchangé depuis la session #157).
+2 commits de code cette session.
+
+**Point d'attention protocole — session #158 interrompue avant sa clôture,
+découverte au démarrage :** au démarrage de cette session, le working tree
+était propre et la branche déjà la bonne (pas de checkout à faire — étape 0
+en apparence triviale), mais `gh issue list` a révélé que le ticket `#362`
+était déjà fermé et `git log` a montré un commit `9bab571` non poussé
+(« 42-362 ✅ … ») que ni `backlog/logs/` ni la section 6 de ce fichier ne
+documentaient encore. Contrairement au pattern habituel (session #65,
+`feedback_interrupted_session_log`), **aucun fichier de log n'existait même
+à l'état de brouillon non suivi** — l'interruption a eu lieu avant l'étape 4
+tout entière. Reconstitué a posteriori comme session #158
+(`backlog/logs/session_2026-07-10_158.md`) à partir de l'historique git et
+du commentaire de clôture GitHub de `#362`, puis poursuite normale du
+protocole (spec review fraîche, pas de présomption que le travail de fond
+restant était fait). Aucune perte de travail : le code utile était déjà
+committé et l'issue déjà fermée avant la coupure.
+
+**Spec review session #159 :** `tv-live.md` et `tv-state.md` — ⚠️ Dérive
+mineure en début de session (2 dérives restantes : `types/index.ts`
+conservait la variante `kind: 'bracket'` morte dans `TvStake` ;
+`.stake-panel`/`.stage-banner` centrés verticalement sans borne liée à la
+bande de score réelle, chevauchement possible pour une poule à standings
+nombreux) → **✅ Conforme** après implémentation des deux derniers tickets
+du sprint cette session. Les deux dérives correspondaient exactement aux
+issues déjà ouvertes `#364`/`#365` — 0 nouvelle issue créée.
+
+**Backlog engine session #159 :** 2 tickets traités séquentiellement :
+- **#364** (mineure, `infra`) — fichier partagé `frontend/app/src/types/index.ts`,
+  traité **directement par l'orchestrateur** (pattern `#337`/`#341`/`#350` —
+  aucun écran concerné, pas d'agent `vue-screen`) : union `TvStake` réduite
+  à la seule variante `{ kind: 'group'; groupName; eventName; standings }`.
+  `Bracket` reste utilisé ailleurs dans le fichier (`AdminBracketData`),
+  aucune référence orpheline. `npx vue-tsc --noEmit` : 0 erreur.
+- **#365** (mineure) — front : `TvScoreboard.vue` (agent `vue-screen`) —
+  `.stake-panel` et `.stage-banner` étaient centrés verticalement
+  (`top: 50%` + `translateY(-50%)`) sans borne liée à la position réelle de
+  la bande de score broadcast (`.sb-ed-bottom`, bord haut réel calculé
+  ≈643px) ; `.stake-panel` avait `max-height: 620px`, permettant à son bord
+  bas de descendre jusqu'à ≈850px pour une poule à standings nombreux —
+  recouvrement des lignes joueurs, la dérive documentée par le ticket depuis
+  les retours du 2026-07-10 (jamais corrigée sur le panneau de poule
+  lui-même, seulement sur l'ex-variante bracket par `#361`/`#362`). Fix :
+  ancrage borné `top: 140px` / `bottom: 460px` sur les deux règles, flex de
+  centrage interne, `max-height` retiré (remplacé par la borne `bottom`),
+  `overflow-y: auto` en garde-fou. Reviewer : géométrie recalculée
+  indépendamment (marge ≈23px avec `.sb-ed-bottom`, non nulle ; aucun
+  chevauchement horizontal avec `.tv-prep` ; poule à 6 joueurs ≈364px de
+  contenu, tient sans scroll dans la zone bornée de 480px), template non
+  touché, `npx vue-tsc --noEmit` 0 erreur. Verdict : ✅ Approuvé, deux
+  remarques cosmétiques non bloquantes (marge de clearance volontairement
+  fine ; piège flexbox `overflow-y:auto`+`justify-content:center` théorique
+  mais non déclenchable avec le nombre réaliste de joueurs par poule).
+
+**Sprint 42 clos cette session :** les deux conditions étaient réunies (specs
+`tv-live.md`/`tv-state.md` conformes sur les sections ciblées par le sprint +
+0 issue ouverte sur le milestone). Milestone GitHub (numéro 41) fermé,
+dossier déplacé vers `backlog/sprints/done/42-tv-score-broadcast/`, ligne
+retirée de `backlog/sprints/roadmap.md`.
+
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable
+pour les deux tickets (aucune nouvelle erreur). Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur TV réelle en session automatisée, la
+géométrie CSS de `#365` a été vérifiée par calcul analytique sur les
+propriétés CSS réelles, pas par rendu). Aucune maquette `.jsx` de référence
+pour `#364`/`#365` (retours produit récents, pas dans `frontend/design/`).
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` invoqué cette
+session a de nouveau strictement respecté son mandat de lecture seule
+(confirmation explicite dans son rapport, vérifié via `git status`/`git diff`
+avant/après invocation) — pattern désormais stable sur au moins 15 sessions
+consécutives (#140-#159, sessions à vide comprises) depuis l'incident initial
+de la session #139.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md`
+(désormais vide par ailleurs) : `04-admin-panel-map/` et `10-contexte-url/`.
+À investiguer par l'utilisateur avant de les considérer comme travail
+réellement en attente ou comme reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-10_159.md` (voir aussi
+`backlog/logs/session_2026-07-10_158.md`, reconstitué a posteriori pour la
+session interrompue).
+
+---
+
+**Historique — session #157 :**
+**Sprint traité :** 42 — TV : score broadcast et phase en grand
+(1ère session du sprint, roadmap regarnie juste avant cette session par la
+planification du sprint 42 sur les retours TV du 2026-07-10). 2/5 tickets
+clos — `#362`, `#364`, `#365` restants.
+
+**Git :** branche `claude/sprint/42-tv-score-broadcast` (nouvelle branche
+cette session), parent effectif `claude/sprint/41-joueurs-photo-camera`
+(sprint 41 toujours non mergé dans `main`, déduit depuis
+`backlog/sprints/done/`). 3 commits de code cette session (1 commit de
+rattrapage de working tree sale + 2 tickets).
+
+**Point d'attention protocole — working tree sale au démarrage, sur
+l'ancienne branche :** au démarrage de la session, la branche encore
+checked-out localement était `claude/sprint/41-joueurs-photo-camera`
+(sprint déjà clos et archivé depuis la session #152), avec 2 fichiers
+modifiés non commités et d'origine inconnue (aucun rapport avec le sprint
+41 ni le sprint 42) : `frontend/app/src/components/modals/AddPlayerModal.vue`
+(un refetch du registre après upload photo en édition) et
+`live/api_views.py` (sérialisation JSON de `attitudes` dans
+`api_player_edit`, contournement d'un piège `forms.JSONField` sur liste
+vide). Traité conformément au protocole (étape 0, working tree sale) :
+commit `🚧 Session précédente interrompue` **après** le checkout de la
+nouvelle branche 42 (les modifications ont donc été portées sur la branche
+42 avant le premier ticket) — ces deux correctifs seront inclus dans la PR
+du sprint 42, bien qu'étrangers à son périmètre. À signaler à l'utilisateur.
+
+**Spec review session #157 :** `tv-live.md` et `tv-state.md` — ⚠️ Dérive
+mineure en début de session (3 dérives : bande de score encore
+centrée/une-seule-ligne au lieu de deux lignes par joueur ; `stake-panel`
+conserve la variante mini-tableau `kind: 'bracket'` en template ;
+`_pack_tv_stake` renvoie toujours cette variante bracket) → dérive
+partiellement résorbée par les deux tickets de cette session
+(`#361`/`#363`), le reste (retrait front du mini-tableau et de son type)
+attendu pour `#362`/`#364` avant `✅ Conforme`. Les 3 dérives relevées
+correspondaient exactement aux issues déjà ouvertes lors de la
+planification du sprint — 0 nouvelle issue créée.
+
+**Backlog engine session #157 :** 2 tickets traités séquentiellement
+(chaîne plan → agent → `reviewer` par ticket), conformément à l'ordre de
+sévérité (les deux majeures disjointes en fichiers, traitées l'une après
+l'autre malgré leur parallélisabilité suggérée par `sprint.md`, car
+`SESSION_ENGINE.md` §2 impose un traitement séquentiel strict — prévaut ici
+sur la règle de fan-out front∥back plus générale de `CLAUDE.md` §3) :
+- **#361** (majeure) — front : `TvScoreboard.vue` (agent `vue-screen`) —
+  fusion du bloc de jeux géants centré (`.sb-ed-numbers`/`.sb-ed-label`)
+  avec les deux lignes joueur (`.sb-ed-bottom`) : nouvelle colonne
+  `.sb-ed-games` par ligne (160px, alimentée par `gamesA`/`gamesB` tels
+  quels), en-tête de colonnes commun « SETS / JEUX · SET {n} / POINTS »,
+  retrait de l'`accent-text` systématique côté A (accent réservé à « AV »
+  et à la balle de service). Aucune donnée recalculée côté front. Verdict
+  reviewer : ✅ Approuvé, `npx vue-tsc --noEmit` vérifié indépendamment par
+  le reviewer (0 erreur), suggestion cosmétique non bloquante (harmoniser
+  un `gap` CSS entre deux règles voisines).
+- **#363** (majeure) — back : `live/api_views.py` (agent `django-api`) —
+  retrait de la branche `kind: "bracket"` de `_pack_tv_stake` (3 lignes
+  restantes : `kind: "group"` ou `None`), `_pack_event_bracket` non touchée
+  (toujours utilisée par `GET /api/events/<id>/bracket/` et `tv/idle`).
+  `manage.py check` vérifié indépendamment par le reviewer (0 erreur).
+  Incohérence front temporaire relevée par les deux agents (types/index.ts
+  et TvScoreboard.vue référencent encore `kind: 'bracket'`) confirmée
+  inoffensive (code mort, `live.stake` vaudra `null` pour un match de
+  tableau) et déjà couverte par #362/#364 — aucune nouvelle issue créée.
+  Verdict reviewer : ✅ Approuvé.
+
+**Sprint 42 non clos cette session :** 3 issues encore ouvertes sur le
+milestone (`#362` — retrait du mini-tableau front, dépend de `#361` déjà
+clos ; `#364` — infra, retrait de la variante bracket du type `TvStake`,
+après `#362` ; `#365` — le panneau d'enjeu ne recouvre jamais la bande,
+après `#361` déjà clos). Spec review encore ⚠️ (pas `✅ Conforme` tant que
+`#362` n'est pas fait). Sprint reste actif, sera repris à la **prochaine
+échéance planifiée**.
+
+**Roadmap** — sprint 42 est le seul actif, aucun autre sprint en attente
+après.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `manage.py
+check` fiables pour les deux tickets (aucune nouvelle erreur), chacun
+vérifié indépendamment par l'agent `reviewer` en plus de l'agent
+d'implémentation. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur TV réelle en session automatisée). Aucune maquette `.jsx` de
+référence pour `#361`/`#363` (retours produit récents, pas dans
+`frontend/design/`) — les agents ont construit directement depuis la
+description texte des specs, la référence `scoreboard.jsx`/`scoreboard.css`
+n'étant citée dans la spec que pour la matière typographique générale (la
+structure en deux lignes prime dessus).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session ont de nouveau strictement respecté leur mandat de
+lecture seule (chacun a confirmé explicitement dans son rapport n'avoir
+fait aucune écriture, vérifié via `git status`/`git diff` après chaque
+invocation) — pattern désormais stable sur au moins 14 sessions consécutives
+(#140-#157, sessions à vide comprises) depuis l'incident initial de la
+session #139.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-10_157.md`.
+
+---
+
+**Historique — session #156 :**
+**Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
+(sprint 41 clos à la session #152). Conformément à l'étape 0 du protocole,
+la session s'est arrêtée sans exécuter les étapes 1 à 3. Working tree propre
+au démarrage, aucun changement de code, aucun commit de code.
+
+**4ᵉ session à vide consécutive depuis la clôture du sprint 41 (après les
+#153, #154 et #155).** Roadmap regarnie juste après cette session par la
+planification du sprint 42 sur les retours TV du 2026-07-10.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-10_155.md`.
+
+---
+
+**Historique — session #152 :**
+**Sprint traité :** 41 — Joueurs : photo caméra
+(1ère et dernière session du sprint — **clos cette session**, 2/2 tickets clos).
+
+**Git :** branche `claude/sprint/41-joueurs-photo-camera` (nouvelle branche
+cette session), parent effectif `claude/sprint/40-planning-journees-repliables`
+(sprint 40 toujours non mergé dans `main`, déduit depuis
+`backlog/sprints/done/`). 3 commits de code cette session (2 tickets +
+clôture de sprint).
+
+**Spec review session #152 :** `admin-joueurs.md` (§Prendre une photo) —
+⚠️ Dérive mineure en début de session (2 dérives : aucun bouton « Prendre une
+photo » sur le champ Photo ; pas de `CameraCaptureModal.vue`) →
+**✅ Conforme** après implémentation des deux tickets du sprint cette
+session. Les deux dérives correspondaient exactement aux issues déjà
+ouvertes `#357`/`#358` — 0 nouvelle issue créée.
+
+**Backlog engine session #152 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (#357 débloquant, #358 dépendant du même fichier) :
+- **#357** (majeure) — front : `AddPlayerModal.vue` — second input fichier
+  caché `accept="image/*" capture="user"` branché sur le handler
+  `onPhotoSelected` déjà existant (aucune divergence de validation
+  format/taille entre les deux inputs), bouton « Prendre une photo » gardé
+  par `v-if="isMobile"` (détection réutilisée telle quelle depuis
+  `useViewport()`, composable posé au sprint 37 — lu, non modifié). Circuit
+  d'upload/aperçu/révocation blob (`revokePreviewIfBlob`) strictement
+  inchangé, seulement réutilisé. Verdict reviewer : ✅ Approuvé, aucune
+  réserve.
+- **#358** (majeure) — front : nouveau `CameraCaptureModal.vue` (socle
+  `ModalShell`, `getUserMedia({video:true})` → aperçu `<video>` → capture
+  `<canvas>` caché → `toBlob('image/jpeg')` → états
+  requesting/live/error/captured, Reprendre/Utiliser) + `AddPlayerModal.vue`
+  (extraction de `applyPhotoFile(file: File)` depuis `onPhotoSelected`,
+  réutilisée par l'input classique, l'input capture mobile de #357 non
+  régressé, et le nouvel événement `@captured` de la modale webcam ; branche
+  `v-else` du bouton « Prendre une photo » sur desktop). Arrêt du flux
+  caméra (`stream.getTracks().forEach(t => t.stop())`) vérifié par le
+  reviewer sur les 4 chemins de sortie (croix/Échap unifiés par `ModalShell`,
+  validation, `onUnmounted`) — pas de LED qui reste allumée. `NotAllowedError`/
+  `NotFoundError` distinguées avec message dédié, modale toujours fermable
+  (repli téléversement dans la modale parente). `image/jpeg` déjà dans
+  `ACCEPTED_TYPES`, aucune contrainte à assouplir. Verdict reviewer :
+  ✅ Approuvé pour golden path, une seule suggestion cosmétique non
+  bloquante (révocation immédiate de l'URL blob avant `emit('close')` plutôt
+  que d'attendre `onUnmounted` — sans impact fonctionnel observé).
+
+**Sprint 41 clos cette session :** les deux conditions étaient réunies (spec
+`admin-joueurs.md` conforme après les deux tickets + 0 issue ouverte sur le
+milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/41-joueurs-photo-camera/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap vide.** Aucun sprint suivant en attente — **désactiver la Routine
+manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
+(`/plan-sprint`) avant la prochaine échéance.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(chacun a confirmé explicitement dans son rapport n'avoir fait aucune
+écriture) — pattern désormais stable sur au moins 13 sessions consécutives
+(#140-#152) depuis l'incident initial de la session #139. Point mineur
+distinct cette session : un `ScheduleWakeup` a été programmé en filet de
+sécurité pendant l'attente de l'agent `vue-screen` sur #357, avec le
+sentinel `<<autonomous-loop-dynamic>>` — ce sentinel est destiné au mode
+`/loop` dynamique, pas à une session `SESSION_ENGINE` planifiée ; l'appel
+n'a causé aucun incident (ce n'est pas le prompt de démarrage du protocole,
+donc l'incident de la session #141 ne s'est pas reproduit) mais restait
+injustifié : la notification de fin de tâche de fond a suffi seule à
+reprendre la main, pour les deux tickets. **Recommandation :** ne pas
+utiliser `ScheduleWakeup` du tout en attente d'un agent asynchrone
+(`Agent`/`reviewer`/`vue-screen`/`django-api`) dans ce protocole — compter
+uniquement sur les `task-notification`, quel que soit le prompt/sentinel
+passé.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable
+pour les deux tickets (aucune nouvelle erreur, seuls fichiers touchés
+`AddPlayerModal.vue` + `CameraCaptureModal.vue` neuf). Toujours pas de
+script `type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur/webcam réelle en session
+automatisée, golden path desktop/mobile non testé physiquement). Aucune
+maquette `.jsx` de référence pour `#357`/`#358` (retours produit récents,
+pas dans `frontend/design/`) — les agents `vue-screen` ont construit
+directement depuis la description texte de la spec et des tickets.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #151 :**
+**Sprint traité :** 40 — Planning : journées repliables
+(1ère et dernière session du sprint — **clos cette session**, 2/2 tickets clos).
+
+**Git :** branche `claude/sprint/40-planning-journees-repliables` (nouvelle
+branche cette session), parent effectif
+`claude/sprint/39-tv-echauffement-score-carrousel` (sprint 39 toujours non
+mergé dans `main`, déduit depuis `backlog/sprints/done/`). 3 commits de code
+cette session (2 tickets + clôture de sprint).
+
+**Spec review session #151 :** `admin-matchs.md` (§Journées, §Flux
+glisser-déposer) — ⚠️ Dérive mineure en début de session (2 dérives : aucune
+notion de repli/dépli sur les cartes de journée ; pas de dépliage au survol
+pendant un drag) → **✅ Conforme** après implémentation des deux tickets du
+sprint cette session. Les deux dérives correspondaient exactement aux issues
+déjà ouvertes `#355`/`#356` — 0 nouvelle issue créée.
+
+**Backlog engine session #151 :** 2 tickets traités séquentiellement (chaîne
+plan → agent `vue-screen` → `reviewer` par ticket), conformément à l'ordre
+suggéré par `sprint.md` (même fichier, strictement séquentiel) :
+- **#355** (majeure) — front : `AdminMatches.vue` — état local
+  `collapsedDays` (par `playDayId`), fonction pure `isDayFullyPlayed(day)`
+  (aucun match `SCHEDULED`/`LIVE` dans `day.matches`, journée non vide),
+  initialisation **une fois par journée** via un `watch` gardé par `!(day.id
+  in collapsedDays.value)` (ne réécrase jamais un repli/dépli manuel fait
+  pendant la session, y compris au fil du polling ~2s). En-tête cliquable
+  avec chevron, deux rendus (`v-if`) : replié → résumé riche (nom+date,
+  compteur joués/total, plage horaire avec tilde conditionnel selon
+  `isDayFullyPlayed`, pastille de capacité réutilisée telle quelle) ; déplié
+  → rendu antérieur strictement inchangé (édition d'heure en place
+  préservée via `@click.stop` ajoutés). Corps de carte (lignes + zone de
+  dépôt + bouton pause) retiré du DOM en `v-if` à l'état replié — prépare
+  aussi le terrain pour #356. Verdict reviewer : ✅ Approuvé (suggestion
+  mineure non bloquante : imbrication a11y bouton-dans-en-tête-cliquable,
+  neutralisée fonctionnellement par les `@click.stop`, hors périmètre du
+  ticket).
+- **#356** (majeure) — front : `AdminMatches.vue` — timers de survol non
+  réactifs (`collapsedHoverTimers`), `onHeaderMouseEnter`/`onHeaderMouseLeave`
+  (no-op hors drag actif ou si la journée est déjà dépliée ; sinon arme un
+  `setTimeout` de 600ms qui déplie), nettoyage défensif de tous les timers en
+  tête de `onDragEnd`. Aucune modification de la zone de dépôt elle-même :
+  déjà absente du DOM à l'état replié depuis #355, donc structurellement non
+  ciblable par SortableJS — satisfait déjà « pas de dépôt direct sur l'en-tête
+  replié » sans code supplémentaire. Verdict reviewer : ✅ Approuvé, aucune
+  réserve.
+
+**Sprint 40 clos cette session :** les deux conditions étaient réunies (spec
+`admin-matchs.md` conforme après les deux tickets + 0 issue ouverte sur le
+milestone). Milestone GitHub fermé, dossier déplacé vers
+`backlog/sprints/done/40-planning-journees-repliables/`, ligne retirée de
+`backlog/sprints/roadmap.md`.
+
+**Roadmap non vide** — 1 sprint restant (41 — Joueurs : photo caméra). Sera
+traité à la **prochaine échéance planifiée**, pas démarré dans cette session.
+
+**Point d'attention protocole :** les deux agents `reviewer` invoqués cette
+session ont de nouveau strictement respecté leur mandat de lecture seule
+(chacun a confirmé explicitement dans son rapport n'avoir fait aucune
+écriture, vérifié via `git status`/`gh issue view` après chaque invocation) —
+pattern désormais stable sur au moins 12 sessions consécutives (#140-#151)
+depuis l'incident initial de la session #139.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` toujours fiable pour
+les deux tickets (aucune nouvelle erreur, seul fichier touché
+`AdminMatches.vue`). Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur en session automatisée). Aucune maquette `.jsx` de référence pour
+`#355`/`#356` (retours produit récents, pas dans `frontend/design/`) — les
+agents `vue-screen` ont construit directement depuis la description texte de
+la spec, #356 s'appuyant explicitement sur l'état posé par #355 dans le même
+fichier.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/` (numéros très inférieurs aux
+sprints actifs). À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+---
+
+**Historique — session #150 :**
 **Sprint traité :** 39 — TV : échauffement, score au tableau & carrousel
 (2ᵉ et dernière session du sprint — **clos cette session**, 4/4 tickets clos).
 

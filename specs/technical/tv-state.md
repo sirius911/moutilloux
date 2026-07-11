@@ -62,17 +62,12 @@ Lecture publique. Tout match est packé par `_pack_match`.
   "now": "15h42",                 // horloge serveur locale
   "hero": { …_pack_match… },      // le match LIVE, ou null
   "next": { …_pack_match… },      // le next (définition ci-dessus), ou null
-  "stake": {                      // l'enjeu du hero, ou null
-    // hero en poule :
+  "stake": {                      // l'enjeu du hero (match de poule), ou null
     "kind": "group",
     "groupName": "A",
     "eventName": "Simple Homme",
     "standings": [ { "rank", "name", "wins", "losses", "points",
-                     "qualified", "entryId" } ],
-    // OU hero en tableau :
-    "kind": "bracket",
-    "eventName": "Simple Homme",
-    "bracket": { …même format que GET /api/events/<id>/bracket/… }
+                     "qualified", "entryId" } ]
   }
 }
 ```
@@ -84,12 +79,20 @@ Lecture publique. Tout match est packé par `_pack_match`.
   `playStartedAt`, la TV en dérive la scène (échauffement ⇄ scoreboard,
   [[tv-live]]). Un match `FINISHED` n'est **jamais** hero : la fenêtre
   « fin de match » (~30 s) est tenue **côté front** (voir Front).
-- `stake` est **dérivé du hero** (sa poule ou le tableau de son épreuve) ;
-  `null` si non résolvable. Les deux entries du hero sont identifiables dans
-  les standings via `entryId`.
+- `stake` est **dérivé du hero** : le classement de sa poule, `null` si le
+  hero n'est pas un match de poule ou si la poule n'est pas résolvable. Les
+  deux entries du hero sont identifiables dans les standings via `entryId`.
+  Pour un match de **tableau**, il n'y a **pas de stake** : la TV affiche la
+  **phase en grand** (`stageLabel`, déjà porté par `_pack_match`) — le
+  mini-tableau est retiré (retours 2026-07-10, décision 13 de [[tv-map]]), ce
+  qui supprime au passage le pack du bracket complet de l'épreuve à chaque
+  poll de ~2 s.
 - `qualified` n'est vrai que si la **poule est terminée** (plus aucun match
   `SCHEDULED`/`LIVE` dans la poule) — jamais sur classement partiel (voir
   [[cycle-de-vie-epreuve]]). Même règle pour les standings de `tv/idle`.
+- Les `scheduledTime` des matchs packés (`next`, programme, calendrier — les
+  deux endpoints) portent l'**ETA calculée à la lecture** côté serveur (voir
+  [[planning]], arbitrage 2026-07-11) — jamais la valeur brute stockée.
 
 ## `GET /api/tv/idle/` — le contenu froid (pollé ~10 s)
 
@@ -100,8 +103,9 @@ Lecture publique. Alimente les slides du carousel ([[tv-live]]) :
   "stats": { "matchesFinished", "matchesTotal", "entriesCount",
              "eventsCount" },                       // slide Tournoi
   "recentResults": [ …_pack_match… ],               // 5 FINISHED, finished_at desc
-  "events": [                                       // rotation par épreuve
-    { "id", "name",
+  "events": [                                       // rotation par épreuve + palmarès
+    { "id", "name", "status",                       // status: INSCRIPTION | EN_COURS | TERMINEE
+
       "groups": [ { "id", "name", "standings": [...] } ],   // vide si aucune
       "bracket": { …format bracket… } | null }              // null si aucun
   ],
@@ -119,6 +123,13 @@ Lecture publique. Alimente les slides du carousel ([[tv-live]]) :
   `finished` sinon (`upcoming` vide).
 - `events` ne contient que les épreuves de l'édition active ; les slides
   sautent celles sans contenu (champ vide/null).
+- `events[].status` permet à la TV de dériver l'état **PALMARÈS** de
+  [[tv-live]] (au moins une épreuve et toutes `TERMINEE`) — aucun endpoint
+  dédié (retours 2026-07-11).
+- Le poll `tv/idle` (~10 s) tourne **en continu**, match en cours compris : il
+  alimente la banderole d'information du SCOREBOARD et le palmarès. Le timer
+  est porté par l'**écran TV**, pas par le composant carousel (démonté pendant
+  un match).
 - Coût maîtrisé : cet endpoint remplace le polling TV de `GET /api/editions/`
   (dont les agrégats `_pack_edition` sont chers) — la TV ne consomme plus
   aucun endpoint admin.
@@ -171,7 +182,7 @@ Lecture publique. Alimente les slides du carousel ([[tv-live]]) :
 | Quoi | Endpoint | Cadence |
 |---|---|---|
 | Score / bascule d'état | `GET /api/tv/state/` | ~2 s |
-| Slides du carousel | `GET /api/tv/idle/` | ~10 s |
+| Slides du carousel + banderole + palmarès (contenu froid) | `GET /api/tv/idle/` | ~10 s (en continu, match compris) |
 | Rotation des slides | — (front) | ~8 s |
 
 Les timers passent par `usePolling` (convention unique, pause onglet caché).

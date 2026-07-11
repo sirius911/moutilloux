@@ -150,10 +150,9 @@ function loserName(): string {
 
       <!-- ── Scène SCOREBOARD (match lancé) ──────────────────────────────── -->
       <template v-else>
-      <!-- Zone d'enjeu (centre de l'écran) — classement de poule ou mini-tableau -->
-      <div v-if="live.stake" class="stake-panel">
-        <!-- Enjeu : poule -->
-        <div v-if="live.stake.kind === 'group'" class="stake-group">
+      <!-- Zone d'enjeu (centre de l'écran) — classement de poule, sinon phase en grand -->
+      <div v-if="live.stake?.kind === 'group'" class="stake-panel">
+        <div class="stake-group">
           <h2 class="stake-title">
             POULE {{ live.stake.groupName }}
             <span class="stake-title-sep">·</span>
@@ -182,77 +181,11 @@ function loserName(): string {
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Enjeu : tableau -->
-        <div v-else-if="live.stake.kind === 'bracket'" class="stake-bracket">
-          <h2 class="stake-title">
-            TABLEAU
-            <span class="stake-title-sep">·</span>
-            {{ live.stake.eventName }}
-          </h2>
-          <div class="stake-mini-bracket">
-            <div class="stake-mini-col">
-              <div class="stake-mini-col-head">QUARTS</div>
-              <div
-                v-for="slot in live.stake.bracket.qf"
-                :key="slot.slot"
-                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="stake-mini-col">
-              <div class="stake-mini-col-head">DEMIES</div>
-              <div
-                v-for="slot in live.stake.bracket.sf"
-                :key="slot.slot"
-                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="stake-mini-col">
-              <div class="stake-mini-col-head">FINALE</div>
-              <div
-                v-for="slot in live.stake.bracket.f"
-                :key="slot.slot"
-                :class="['stake-mini-match', 'final', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-            <div v-if="live.stake.bracket.p3?.length" class="stake-mini-col">
-              <div class="stake-mini-col-head">3E PLACE</div>
-              <div
-                v-for="slot in live.stake.bracket.p3"
-                :key="slot.slot"
-                :class="['stake-mini-match', { current: slot.match?.id === live.hero.id }]"
-              >
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                </div>
-                <div :class="['stake-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="stake-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <!-- Phase du match en grand (tableau : QF/SF/F/P3) — pas de panneau d'enjeu -->
+      <div v-else-if="live.hero.stage !== 'GROUP'" class="stage-banner">
+        {{ live.hero.stageLabel }}
       </div>
 
       <!-- Bandeau haut (fin) -->
@@ -279,15 +212,14 @@ function loserName(): string {
         </div>
       </header>
 
-      <!-- Centre editorial : jeux du set en cours en très grand -->
-      <div class="sb-ed-numbers">
-        <div class="sb-ed-num tab accent-text">{{ live.hero.gamesA }}</div>
-        <div class="sb-ed-num-sep">—</div>
-        <div class="sb-ed-num tab">{{ live.hero.gamesB }}</div>
-      </div>
-      <div class="sb-ed-label">JEUX · SET {{ live.hero.setScores.length + 1 }}</div>
-
+      <!-- Bande basse broadcast : deux lignes joueur, jeux géants rattachés à leur ligne -->
       <div class="sb-ed-bottom">
+        <div class="sb-ed-cols-head">
+          <span class="sb-ed-col-head sb-ed-col-head-sets">SETS</span>
+          <span class="sb-ed-col-head sb-ed-col-head-games">JEUX · SET {{ live.hero.setScores.length + 1 }}</span>
+          <span class="sb-ed-col-head sb-ed-col-head-pts">POINTS</span>
+        </div>
+
         <!-- Côté A -->
         <div class="sb-ed-line">
           <span v-if="live.hero.server === 'A'" class="serve-ball">
@@ -302,13 +234,14 @@ function loserName(): string {
           </span>
           <span v-if="live.hero.sideA?.seedHint" class="sb-ed-seed">[{{ live.hero.sideA.seedHint }}]</span>
           <span class="sb-ed-rule" />
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
+          <span class="sb-ed-games tab">{{ live.hero.gamesA }}</span>
           <span
             class="sb-ed-pts tab"
             :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointA === 'AV' }"
           >
             {{ live.hero.tbActive ? live.hero.tbPointsA : live.hero.displayPointA }}
           </span>
-          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
         </div>
 
         <!-- Côté B -->
@@ -325,13 +258,14 @@ function loserName(): string {
           </span>
           <span v-if="live.hero.sideB?.seedHint" class="sb-ed-seed">[{{ live.hero.sideB.seedHint }}]</span>
           <span class="sb-ed-rule" />
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
+          <span class="sb-ed-games tab">{{ live.hero.gamesB }}</span>
           <span
             class="sb-ed-pts tab"
             :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointB === 'AV' }"
           >
             {{ live.hero.tbActive ? live.hero.tbPointsB : live.hero.displayPointB }}
           </span>
-          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
         </div>
       </div>
 
@@ -583,46 +517,7 @@ function loserName(): string {
   font-size: 10px;
 }
 
-/* ── Centre editorial (porté depuis scoreboard.css .sb-ed-*) ─────────── */
-.sb-ed-numbers {
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  gap: 80px;
-  font-feature-settings: "tnum";
-  z-index: 4;
-}
-
-.sb-ed-num {
-  font-size: 320px;
-  line-height: 0.85;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: var(--ink-0);
-  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
-}
-
-.sb-ed-num-sep {
-  font-size: 200px;
-  color: var(--ink-3);
-  font-weight: 200;
-  line-height: 0.85;
-}
-
-.sb-ed-label {
-  position: absolute;
-  left: 50%;
-  top: calc(42% + 170px);
-  transform: translateX(-50%);
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  color: var(--ink-3);
-  z-index: 4;
-}
-
+/* ── Bande basse broadcast (porté depuis scoreboard.css .sb-ed-*) ─────── */
 .sb-ed-bottom {
   position: absolute;
   left: 64px;
@@ -632,7 +527,29 @@ function loserName(): string {
   flex-direction: column;
   gap: 18px;
   z-index: 4;
+  font-feature-settings: "tnum";
 }
+
+.sb-ed-cols-head {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 32px;
+  padding: 0 0 4px;
+}
+
+.sb-ed-col-head {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.sb-ed-col-head-sets { min-width: 90px; }
+.sb-ed-col-head-games { min-width: 160px; }
+.sb-ed-col-head-pts { min-width: 130px; }
 
 .sb-ed-line {
   display: flex;
@@ -664,6 +581,32 @@ function loserName(): string {
   align-self: center;
 }
 
+.sb-ed-mini {
+  font-size: 14px;
+  color: var(--ink-3);
+  letter-spacing: 0.18em;
+  min-width: 90px;
+  text-align: right;
+}
+
+.sb-ed-mini b {
+  color: var(--ink-0);
+  font-weight: 700;
+  font-size: 20px;
+  margin-left: 4px;
+}
+
+.sb-ed-games {
+  font-size: 160px;
+  line-height: 0.85;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--ink-0);
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  min-width: 160px;
+  text-align: right;
+}
+
 .sb-ed-pts {
   font-size: 80px;
   font-weight: 800;
@@ -672,19 +615,6 @@ function loserName(): string {
   letter-spacing: -0.02em;
   min-width: 130px;
   text-align: right;
-}
-
-.sb-ed-mini {
-  font-size: 14px;
-  color: var(--ink-3);
-  letter-spacing: 0.18em;
-}
-
-.sb-ed-mini b {
-  color: var(--ink-0);
-  font-weight: 700;
-  font-size: 20px;
-  margin-left: 4px;
 }
 
 .accent-text { color: var(--accent); }
@@ -703,13 +633,15 @@ function loserName(): string {
 /* ── Zone d'enjeu (secondaire, ancrée à gauche) ──────────────────────── */
 .stake-panel {
   position: absolute;
-  top: 50%;
+  top: 140px;
+  bottom: 460px;
   left: 48px;
-  transform: translateY(-50%);
   z-index: 5;
   width: 480px;
-  max-height: 620px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
   background: rgba(8, 12, 16, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--r-md);
@@ -792,59 +724,23 @@ function loserName(): string {
 
 .stake-group-pts { color: var(--accent); font-weight: 700; }
 
-/* Enjeu : mini-tableau */
-.stake-mini-bracket {
+/* ── Phase du match en grand (tableau : QF/SF/F/P3) ───────────────────── */
+.stage-banner {
+  position: absolute;
+  top: 140px;
+  bottom: 460px;
+  left: 0;
+  right: 0;
+  z-index: 5;
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  align-items: stretch;
-}
-
-.stake-mini-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.stake-mini-col-head {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--ink-3);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 88px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin-bottom: 6px;
-}
-
-.stake-mini-match {
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--r-sm);
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stake-mini-match.final { border-color: var(--accent-soft); }
-
-.stake-mini-match.current {
-  border-color: var(--accent);
-  background: rgba(255,200,61,0.1);
-}
-
-.stake-mini-slot {
-  font-size: 12px;
-  color: var(--ink-2);
-}
-
-.stake-mini-slot.win { color: var(--ink-0); font-weight: 700; }
-
-.stake-mini-name {
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--ink-0);
 }
 
 /* ── Photo finish (fin de match, ~30 s) ───────────────────────────────── */
