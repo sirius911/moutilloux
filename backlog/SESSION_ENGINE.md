@@ -373,7 +373,121 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #166
+**Dernière session :** 2026-07-12 — Session #167
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(7ᵉ session du sprint). 14/17 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
+#163), `#377`, `#372` (session #164), `#374`, `#376` (session #165), `#375`,
+`#378` (session #166), `#382`, `#379` (cette session) ; 1 seul restant
+(`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge-base
+--is-ancestor origin/main HEAD` positif d'emblée, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #167 :** les 5 specs ciblées — confiée à un agent
+`reviewer` dédié (lecture seule), en début de session : `tv-state.md` et
+`admin-inscriptions.md` ✅ Conforme ; `tv-live.md`, `arbitre-match.md`
+(sévérité 🔴 majeure sur le fond) et `planning.md` restent ⚠️ — les 3
+dérives relevées correspondent exactement aux 3 issues déjà ouvertes
+(`#379`, `#380`, `#382`), 0 dérive additionnelle surprenante, 0 nouvelle
+issue créée. Point d'attention non tranché signalé par le reviewer (non
+ticketé) : `TvPalmares.vue` (`eventIndex` local) partage la même faiblesse
+architecturale que `TvIdle.vue`/`#379` (pas de persistance de la rotation
+par épreuve au remontage) mais n'est couvert explicitement ni par la spec
+ni par une issue — laissé à l'appréciation humaine.
+
+**Backlog engine session #167 :** 2 tickets traités séquentiellement, tous
+deux implémentés directement en session (aucun agent `vue-screen`/
+`django-api` — portée trop réduite et trop couplée entre fichiers back/front
+ou entre fichiers réservés à l'orchestrateur pour justifier une délégation,
+même choix que les tickets de plomberie des sessions #162-#164), review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#382** (majeure) — `live/api_views.py` (`_pack_match` gagne un
+  paramètre `swap=False` rétrocompatible + `"swap": bool(swap)` dans le
+  dict retourné ; `api_match_detail` relit
+  `request.session.get(f"swap_match_{match_id}", False)` — même clé que
+  `referee_action` — et le transmet) + `frontend/app/src/types/index.ts`
+  (`swap: boolean` sur `Match`) + `ArbitreMatch.vue` (`swapped` passe d'un
+  ref local réinitialisé à chaque montage à
+  `computed(() => !!match.value?.swap)`, `handleSwap()` simplifié — plus de
+  flip optimiste dupliqué, le `fetchMatch` qui suit déjà le POST suffit).
+  Corrige la désynchronisation d'affichage gauche/droite après un
+  rechargement de page en cours de match swappé. Reviewer : golden path
+  flip→lecture retracé, reload en cours de match confirmé sans état
+  intermédiaire incohérent (`match.value` null → `sideAt()` retombe sur la
+  position non-swappée par défaut, pas de crash), rétrocompatibilité des
+  ~15 appelants existants de `_pack_match` confirmée par grep (paramètre
+  optionnel, jamais de 3e argument positionnel préexistant), format de clé
+  de session identique aux deux endroits, aucune régression TV (champ
+  simplement ignoré), `npx vue-tsc --noEmit` et `manage.py check` vérifiés
+  indépendamment (0 erreur chacun). Verdict : ✅ Approuvé — réserves non
+  bloquantes notées (pas de test automatisé ajouté ; scope de session du
+  swap par navigateur, comportement pré-existant hors périmètre).
+- **#379** (mineure) — `frontend/app/src/stores/live.ts` (5 nouveaux refs
+  de rotation du carousel — `idleDisplayedKind`, `idlePagerTick`,
+  `idleGroupsEventIndex`, `idleBracketEventIndex`,
+  `idleProgrammeFinishedShown` — hissés du composant vers le store Pinia
+  singleton) + `frontend/app/src/types/index.ts` (type exporté
+  `TvIdleSlideKind`, extrait de l'ancien type local `SlideKind`) +
+  `TvIdle.vue` (les 5 refs locales supprimées, tous les usages redirigés
+  vers le store). Même schéma que le hissage du polling `tv/idle` de
+  `#371` : un état qui doit survivre au démontage/remontage de `TvIdle.vue`
+  (démonté pendant un match) ne peut pas vivre dans un `ref()` local au
+  `<script setup>`. Reviewer : survie de l'état confirmée (store Pinia
+  singleton, aucun `$reset()` ni ré-instanciation trouvés par grep),
+  auto-unwrapping Pinia lecture/écriture vérifié sur un setup store,
+  aucune régression sur le timer de polling 8s (local au composant,
+  comportement voulu — seul l'état de rotation persiste, pas le timer),
+  aucun résidu de l'ancien type/refs, aucun fichier réservé à
+  l'orchestrateur touché par erreur (`git diff --stat` limité aux 3
+  fichiers attendus), `npx vue-tsc --noEmit` vérifié indépendamment (0
+  erreur). Verdict : ✅ Approuvé, aucune réserve bloquante (remarque hors
+  scope : `usePolling` déclenche un `advance()` immédiat au montage,
+  comportement préexistant non introduit par ce fix).
+
+**Sprint 43 non clos cette session :** 1 seule issue encore ouverte sur le
+milestone (`#380`). Spec review encore ⚠️ sur 3 des 5 specs — attendu,
+`#380` (ETA affichées côté `AdminMatches.vue`) reste la seule dérive
+`planning.md` ouverte ; `tv-live.md` et `arbitre-match.md` basculeront à
+✅ au prochain passage de spec review une fois les tickets fermés cette
+session confirmés sans régression. Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Un seul ticket restant : `#380` (après
+`#375`, désormais clos — `AdminMatches.vue` peut consommer directement le
+`scheduledTime` serveur au lieu du moteur ETA local, qui ne doit plus
+servir qu'à la preview de drag).
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `manage.py
+check` fiables pour les deux tickets, chacun vérifié indépendamment par
+l'agent `reviewer`. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur TV/arbitre réelle en session automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 21 sessions consécutives (#140-#167, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé pour patienter en boucle sur les agents
+asynchrones : uniquement des `ScheduleWakeup` de repli à échéance longue
+(20 min) posés une seule fois par attente, en complément de la
+task-notification normale (conforme à `feedback_schedulewakeup_reentry` —
+pas de reprogrammation du prompt de démarrage du protocole).
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_167.md`.
+
+---
+
+**Historique — session #166 :**
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (6ᵉ session du sprint). 12/17 tickets clos au total (le sprint est passé de
 14 à 17 tickets au fil des sessions, une nouvelle dérive ticketée par
