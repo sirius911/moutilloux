@@ -373,7 +373,122 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #165
+**Dernière session :** 2026-07-12 — Session #166
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(6ᵉ session du sprint). 12/17 tickets clos au total (le sprint est passé de
+14 à 17 tickets au fil des sessions, une nouvelle dérive ticketée par
+session en moyenne) — `#367`, `#368` (session #161), `#369`, `#370`
+(session #162), `#371`, `#373` (session #163), `#377`, `#372` (session
+#164), `#374`, `#376` (session #165), `#375`, `#378` (cette session) ; 3
+restants (`#379`, `#380`, `#382`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge-base
+--is-ancestor origin/main HEAD` positif d'emblée, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session (+ ce commit de log).
+
+**Spec review session #166 :** les 5 specs ciblées — confiée à un agent
+`reviewer` dédié (lecture seule), en début de session : `tv-live.md`,
+`tv-state.md` et `planning.md` désormais ✅ Conforme (dérives résiduelles
+correspondant exactement à `#375`/`#379`/`#380`, déjà ouvertes) ;
+`arbitre-match.md` et `admin-inscriptions.md` restent ⚠️ Dérive mineure. Une
+dérive **nouvelle et surprenante** trouvée sur `arbitre-match.md` : le flag
+`swap` (inversion des côtés) n'est stocké qu'en session Django
+(`live/referee_views.py:57-58`) et jamais exposé au front —
+`ArbitreMatch.vue` réinitialise son ref local `swapped` à chaque montage,
+désynchronisant l'affichage de la logique serveur de mapping gauche/droite
+après un reload en cours de match swappé. Issue créée : `#382` (majeure).
+Deux notes non ticketées, laissées à l'appréciation humaine : nom d'action
+`terminer` (spec) vs `finish_winner` (code), cosmétique ; bifurcation
+Retirer/Forfait selon le statut de l'épreuve dans `admin-inscriptions.md`,
+amélioration UX plausible mais divergente du texte de la spec. Housekeeping
+appliqué directement par l'orchestrateur : ajout de `TvPalmares.vue`
+(livré au ticket `#374`, session #165) à l'en-tête `fichiers:` de
+`tv-live.md`, qui ne le listait pas encore.
+
+**Backlog engine session #166 :** 2 tickets traités séquentiellement, review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#375** (majeure, `infra`) — `live/admin_views.py` (nouvelle fonction de
+  service `compute_day_eta_map` + helpers, purement additive) +
+  `live/api_views.py` (`_pack_match` gagne un paramètre optionnel
+  `eta_display=None` rétrocompatible, branché sur les 4 surfaces citées par
+  le ticket : `_pack_calendar_play_days` → calendrier admin + programme
+  arbitre, `api_tv_state`/next, `api_arbitre_matches`/next,
+  `_pack_tv_programme`/upcoming) — porte côté serveur, à la lecture,
+  l'algorithme ETA (curseur monotone) jusque-là seulement présent côté front
+  (`AdminMatches.vue::etaEngine`, désormais réduit à la preview de drag,
+  #380 branchera l'affichage au repos dessus). Simplification retenue (hors
+  issue, déduite à la planification) : LIVE/FINISHED avec `started_at`/
+  `finished_at` posé affichent directement l'heure réelle sans rejouer le
+  curseur — seul celui-ci s'applique aux SCHEDULED, ce qui évite de rejouer
+  toute la journée à chaque `_pack_match`. Confié à un agent `django-api`
+  d'après un plan détaillé écrit par l'orchestrateur
+  (`backlog/plan/375-eta-service-commun.md`, incluant le code exact des
+  fonctions). Reviewer : logique de curseur tracée à la main et comparée
+  ligne à ligne au moteur front (alignement exact, y compris le tri mixte
+  order_index global/local volontairement identique, non « corrigé ») ; 15
+  appels existants de `_pack_match(m)` sans le nouveau paramètre confirmés
+  non cassés ; pas de cycle d'import ; `manage.py check` 0 erreur (vérifié
+  indépendamment) ; smoke test réel sur la base de dev. Verdict : ⚠️ Approuvé
+  avec réserves — réserve purement procédurale (fichiers hors périmètre de
+  la spec review détectés dans l'arbre au moment de la review, exclus du
+  commit par un `git add` ciblé) ; suggestion non bloquante sur la
+  mémoïsation par requête, déjà anticipée par le ticket.
+- **#378** (mineure) — `frontend/app/src/components/modals/CreateTeamModal.vue`
+  — nouveau `computed` `playersInTeams` (dérivé de `eventStore.players`,
+  sans filtrer sur `withdrawn` pour rester cohérent avec le garde-fou
+  serveur `#377` qui n'en tient pas compte non plus), filtre étendu dans
+  `filteredForSlot()`. Confié à un agent `vue-screen` (modification ciblée
+  d'un composant existant, pas de portage d'écran). Reviewer : diff
+  strictement conforme au plan ; edge case joueur Simple confirmé non
+  affecté ; `AdminInscriptions.vue` confirmé inutile à modifier
+  (`eventStore.createTeam()` recharge déjà `players` après création) ;
+  message d'erreur serveur (filet) conservé ; `npx vue-tsc --noEmit` 0
+  erreur (vérifié indépendamment). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 3 issues encore ouvertes sur le
+milestone (`#379`, `#380`, `#382`). Spec review encore ⚠️ sur 2 des 5 specs
+(`arbitre-match.md` à cause de la nouvelle `#382`, `admin-inscriptions.md`
+sans dérive ouverte restante mais une note non actionnée). Sprint reste
+actif, sera repris à la **prochaine échéance planifiée**. Ordre suggéré :
+`#380` (après `#375`, désormais clos — AdminMatches peut consommer le
+`scheduledTime` serveur) ; `#379` (rotation carousel, indépendant) ; `#382`
+(nouveau, arbitre — resynchronisation du swap au reload, indépendant).
+
+**Point d'attention outillage :** `manage.py check` et `npx vue-tsc
+--noEmit` fiables pour les deux tickets, chacun vérifié indépendamment par
+l'agent `reviewer`. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur TV/arbitre/admin réelle en session automatisée).
+
+**Point d'attention protocole (reviewer) :** les quatre agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 20 sessions consécutives (#140-#166, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones (conformément à
+`feedback_schedulewakeup_reentry`). Nouveau point relevé cette session : le
+reviewer de #375 a correctement identifié et signalé des fichiers hors
+périmètre laissés non committés dans l'arbre de travail par l'étape de spec
+review précédente (`log.md`, `tv-live.md`) — l'orchestrateur les a exclus du
+commit du ticket via un `git add` ciblé plutôt qu'un `git add -A`, confirmant
+la valeur de la review indépendante même sur des aspects purement
+procéduraux.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_166.md`.
+
+---
+
+**Historique — session #165 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (5ᵉ session du sprint). 10/14 tickets clos au total — `#367`, `#368`
 (session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
