@@ -373,7 +373,102 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #162
+**Dernière session :** 2026-07-12 — Session #163
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(3ᵉ session du sprint). 6/14 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (cette
+session) ; 8 restants (`#372`, `#374`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git
+merge-base --is-ancestor origin/main HEAD` positif d'emblée, aucun merge ni
+commit de rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #163 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— ⚠️ Dérive mineure, confiée à un agent `reviewer` dédié (lecture seule) :
+toutes les dérives relevées correspondent exactement aux 10 issues qui
+étaient encore ouvertes en début de session (`#371`–`#380`), 0 dérive
+additionnelle surprenante, 0 nouvelle issue créée.
+
+**Backlog engine session #163 :** 2 tickets traités séquentiellement, tous
+deux implémentés directement en session (aucun agent `vue-screen`/
+`django-api` — portée trop réduite pour justifier une extraction de
+service ou un portage d'écran complet), review indépendante confiée à
+l'agent `reviewer` avant clôture pour chacun :
+- **#371** (majeure) — `frontend/app/src/views/tv/TvScoreboard.vue` +
+  `TvIdle.vue` — `usePolling(() => live.fetchTvIdle(), 10000)` vivait dans
+  `TvIdle.vue`, démonté dès qu'un match est en cours (`v-else-if=
+  "!live.hero"` dans `TvScoreboard.vue`) : plus aucune donnée froide
+  (annonces, résultats, programme, épreuves) rafraîchie pendant un match,
+  alors que la banderole (#372) et le palmarès (#374) en ont besoin en
+  continu. Fix : hissage du `usePolling(fetchTvIdle, 10000)` vers
+  `TvScoreboard.vue` (écran monté en continu), `TvIdle.vue` ne fait plus
+  que consommer le store — son propre `usePolling` de rotation des slides
+  (8 s) reste inchangé. Reviewer : diff conforme au plan, aucun autre
+  appelant de `fetchTvIdle` dépendant de l'ancien cycle de vie (grep sur
+  tout `frontend/app/src/`), `usePolling.ts` relu pour confirmer
+  l'indépendance des instances (closures locales `timer`/`inFlight`, pas de
+  conflit entre le poll 2 s de `fetchTvState` et le nouveau poll 10 s),
+  `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Verdict :
+  ✅ Approuvé, aucune réserve.
+- **#373** (majeure) — `live/api_views.py` (`_pack_tv_events`) +
+  `frontend/app/src/types/index.ts` — `tv/idle` n'exposait pas le statut
+  des épreuves (`Event.status`, champ stocké dans `competition/models.py`,
+  `INSCRIPTION`/`EN_COURS`/`TERMINEE`), empêchant le front de dériver le
+  déclencheur PALMARÈS (toutes les épreuves `TERMINEE`). Fix : ajout de
+  `"status": event.status` dans `_pack_tv_events` (champ scalaire direct,
+  aucune requête supplémentaire — la queryset chargeait déjà l'objet
+  `Event`), + `status: 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'` sur le type
+  front `TvEvent`. Reviewer : diff conforme, champ confirmé non calculé
+  (`competition/models.py`), aucun consommateur cassé (`_pack_tv_events` a
+  un seul appelant, `TvEvent` pas encore lu par un écran — consommation
+  réservée à #374), `manage.py check` et `npx vue-tsc --noEmit` vérifiés
+  indépendamment (0 erreur chacun). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 8 issues encore ouvertes sur le
+milestone (`#372`, `#374`–`#380`). Spec review encore ⚠️ (attendu, le reste
+du sprint n'est pas implémenté). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré par `sprint.md` pour la
+suite : `#377` (back, garde équipe Double, indépendant) ; puis `#372`
+(banderole) et `#374` (palmarès, prérequis `#371`/`#373` désormais clos) —
+deux SFC nouvelles parallélisables entre elles ∥ `#376` (arbitre) ∥ `#375`
+(ETA, gros morceau back isolé) ; finitions `#378` (après `#377`), `#379`
+(même zone que `#371`), `#380` (après `#375`) en dernier.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `.venv/bin/
+python manage.py check` (depuis la racine du repo) fiables pour les deux
+tickets, chacun vérifié indépendamment par l'agent `reviewer`. Toujours pas
+de script `type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front (pas de QA navigateur nécessaire — #371
+est un hissage de polling sans changement visuel, #373 une addition de
+champ JSON non encore consommée par un écran).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 17 sessions consécutives (#140-#163, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones. Point mineur
+sans impact relevé par le reviewer de #371 : l'entrée de spec review dans
+`backlog/sprints/43-retours-11-juillet/log.md` était rédigée avant la
+review du ticket #371 — séquence en réalité correcte (l'Étape 1 spec
+review précède toujours l'Étape 2 backlog engine dans le protocole), pas
+d'action nécessaire.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_163.md`.
+
+---
+
+**Historique — session #162 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (2ᵉ session du sprint). 4/14 tickets clos au total — `#367`, `#368` (session
 #161), `#369`, `#370` (cette session) ; 10 restants (`#371`–`#380`).
