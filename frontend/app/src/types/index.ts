@@ -300,6 +300,7 @@ export interface TvEventGroup {
 export interface TvEvent {
   id: number
   name: string
+  status: 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'
   groups: TvEventGroup[]
   bracket: Bracket | null
 }

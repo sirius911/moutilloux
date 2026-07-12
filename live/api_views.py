@@ -2361,6 +2361,7 @@ def _pack_tv_events(edition):
         result.append({
             "id": event.id,
             "name": event.category.name,
+            "status": event.status,
             "groups": groups,
             "bracket": bracket,
         })
