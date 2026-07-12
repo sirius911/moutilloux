@@ -63,12 +63,17 @@ recours :
 ### Le bracket
 
 - Colonnes d'étapes : **Quarts** (si la forme du tableau le prévoit),
-  **Demi-finales**, **Finale**, et **3e place** si l'épreuve l'active (voir
-  [[cycle-de-vie-epreuve]]) ; chaque match identifié par son slot (QF1…, SF1, SF2,
-  F1, P3).
+  **Demi-finales**, **Finale** ; chaque match identifié par son slot (QF1…, SF1,
+  SF2, F1, P3). Une étape absente de la forme du tableau (ex. Quarts d'un
+  tableau qui démarre en demies) **n'affiche pas de colonne** — même si l'API
+  renvoie ses slots vides.
+- La **petite finale** (3e place) s'affiche **sous la finale, dans la même
+  colonne** — pas de colonne dédiée — et **seulement si un match P3 existe**
+  (l'épreuve l'active, voir [[cycle-de-vie-epreuve]] ; retours 2026-07-12).
 - Chaque match expose deux **places** (côté A / côté B). Une place affiche, par
-  priorité : le nom du participant assigné → l'étiquette de provenance
-  (« A1 », « D2 »…) → « À désigner ».
+  priorité : le nom du participant assigné (`displayName`, règle
+  [[affichage-participant]]) → l'étiquette de provenance (« A1 », « D2 »…) →
+  « À désigner ».
 - Le côté vainqueur d'un match terminé est mis en évidence.
 - Chaque place d'un match **terminé ou en direct** porte son **score par
   sets**, en chiffres alignés à droite de la ligne (sets acquis ; pour un match

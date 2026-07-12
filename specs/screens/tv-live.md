@@ -67,7 +67,8 @@ joueur**, l'association joueur ↔ score est **structurelle**. Aucun chiffre
 les jeux géants centrés, détachés des noms, étaient inattribuables).
 
 - Chaque ligne, de gauche à droite : balle de service côté serveur, nom
-  (nom d'équipe en Double), tête de série, puis les colonnes de score alignées
+  (nom d'équipe en Double — règle [[affichage-participant]]), tête de série,
+  puis les colonnes de score alignées
   à droite : **sets gagnés**, **jeux du set en cours en très grand**
   (l'élément dominant de la scène), **points du jeu en cours**.
 - Les colonnes sont surmontées d'en-têtes explicites — **« SETS »,
@@ -206,9 +207,10 @@ Actif quand l'édition active a **au moins une épreuve** et que **toutes ses
 **remplace le carousel en permanence** (retours 2026-07-11).
 
 - Composition en deux volets, par épreuve : à **gauche les poules** (lettre,
-  standings V/D/Pts, badge Q), à **droite le tableau final** (QF→SF→F, +
-  3e place si l'épreuve l'active) avec le **vainqueur mis en avant** — nom en
-  grand/accent + trophée, dérivé du match de finale (`winnerSide`).
+  standings V/D/Pts, badge Q), à **droite le tableau final** (QF→SF→F ; la
+  3e place **sous la finale**, si l'épreuve l'active) avec le **vainqueur mis
+  en avant** — nom en grand/accent + trophée, dérivé du match de finale
+  (`winnerSide`).
 - **Plusieurs épreuves** : rotation par épreuve (~10 s), l'épreuve nommée en
   titre — même mécanique que les slides Poules/Tableau du carousel.
 - En-tête conservé (marque + horloge) ; pas de barre « PROCHAIN MATCH » ni de
@@ -251,7 +253,7 @@ Actif quand l'édition active a **au moins une épreuve** et que **toutes ses
 | **Tournoi** | Stats agrégées de l'édition : matchs joués / total, inscrits, épreuves — et le statut (« EN ATTENTE DU PROCHAIN MATCH »). | jamais (slide par défaut) |
 | **Derniers résultats** | Les **5 derniers matchs terminés** de l'édition (ordre `finished_at` décroissant — pas l'ordre calendaire), toutes épreuves : étape, joueurs (vainqueur en évidence), score par sets. | aucun match terminé |
 | **Poules** | Les poules d'**une épreuve** (lettre, standings V/D/Pts, badge Q — seulement sur poule **terminée**, [[cycle-de-vie-epreuve]]) — **rotation par épreuve** : au passage suivant de la slide, l'épreuve suivante qui a des poules (décision 6). L'épreuve est nommée dans le titre. | aucune poule composée |
-| **Tableau** | Le tableau final d'**une épreuve** (QF→SF→F, + 3e place si l'épreuve l'active), étiquettes de provenance sur les places vides — même rotation par épreuve. **Score par sets sur chaque ligne joueur** (chiffres alignés à droite) pour les matchs **terminés** (`setScores`) **et en direct** (sets acquis + jeux du set en cours, rafraîchis au poll) — même présentation que l'écran admin ([[admin-tableau-final]]). | aucun tableau créé |
+| **Tableau** | Le tableau final d'**une épreuve** (QF→SF→F ; la **3e place sous la finale**, dans la même colonne, **seulement si un match P3 existe** — jamais de bloc « 3e place » fantôme pour une épreuve sans petite finale), étiquettes de provenance sur les places vides (noms selon [[affichage-participant]]) — même rotation par épreuve. **Score par sets sur chaque ligne joueur** (chiffres alignés à droite) pour les matchs **terminés** (`setScores`) **et en direct** (sets acquis + jeux du set en cours, rafraîchis au poll) — même présentation que l'écran admin ([[admin-tableau-final]]). **Colonne VAINQUEUR** (trophée) : « À désigner » tant que la finale n'est pas jouée ; dès la finale `FINISHED`, le **nom du vainqueur** (`displayName` du côté `winnerSide`) mis en avant sous le trophée — sans attendre la 3e place ni la clôture de l'épreuve (retours 2026-07-12). | aucun tableau créé |
 | **Programme** | Les **N prochains matchs planifiés** (N ≈ 4–6) à partir du *next*, dans l'ordre de la séquence : ~heure, joueurs, étiquette de poule ; le premier marqué « bientôt ». Pied : « Horaires estimés — susceptibles de bouger ». **Journée courante épuisée** → titre « Programme de demain » et matchs de la journée suivante ; plus aucune journée → « Programme terminé » (slide affichée une fois puis sautée). | aucun match planifié restant |
 | **Annonces** | Les annonces **actives** de l'édition (voir [[tv-state]], modèle `Announcement`), en texte grand format. | aucune annonce active |
 | **Affiche** | L'**affiche du prochain match** (`posterUrl` du next, voir [[affiche-match]]) en grand, avec ~heure et joueurs — effet « à l'affiche ». | le next n'a pas d'affiche |

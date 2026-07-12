@@ -77,6 +77,7 @@ Décrivent des règles globales qui s'appliquent à plusieurs écrans ou composa
 | erreurs-api | [transverse/erreurs-api.md](./transverse/erreurs-api.md) | ✅ Actif |
 | auth / matrice d'accès | [transverse/auth-matrice-acces.md](./transverse/auth-matrice-acces.md) | ✅ Actif |
 | mobile | [transverse/mobile.md](./transverse/mobile.md) | ✅ Actif |
+| affichage-participant | [transverse/affichage-participant.md](./transverse/affichage-participant.md) | ✅ Actif |
 
 *Exemples à prévoir : polling (intervalles, pause onglet caché).*
 

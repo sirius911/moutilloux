@@ -318,6 +318,17 @@ forfait ou d'arbitrage. Même geste que le remplissage manuel existant
   `live/bracket.py:363-395`), en complément de la propagation des vainqueurs
   (`sync_final_winners_for_event`). Proposable uniquement quand le tableau
   a deux vraies demi-finales.
+- **Bascule tardive** (retours 2026-07-12, arbitrage : effet immédiat
+  rétroactif) : l'option reste modifiable **après « Débuter »**, et le toggle
+  agit immédiatement sur le tableau existant :
+  - **activation** → le match P3 est créé sur-le-champ (squelette étiqueté
+    « LSF1 » / « LSF2 »), et les perdants des demi-finales déjà terminées y
+    sont propagés dans la foulée (`sync_p3_losers_for_event`) ;
+  - **désactivation** → le match P3 est supprimé s'il est encore `SCHEDULED` ;
+    **refusée** (erreur JSON, message affiché dans la modale Épreuve) s'il est
+    `LIVE` ou `FINISHED`.
+  (Aujourd'hui `update_event`, `live/admin_views.py:1314`, pose le booléen sans
+  toucher au tableau — la bascule tardive est silencieusement sans effet.)
 
 ---
 
