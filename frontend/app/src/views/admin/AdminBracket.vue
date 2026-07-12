@@ -166,6 +166,10 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
 
 const editingSlot = ref<{ matchId: number; sideALabel: string; sideBLabel: string } | null>(null)
 
+function isEditingSlot(slot: BracketSlot): boolean {
+  return !!editingSlot.value && !!slot.match && editingSlot.value.matchId === slot.match.id
+}
+
 function startEdit(slot: BracketSlot) {
   if (!slot.match || slot.match.status !== 'SCHEDULED') return
   editingSlot.value = {
@@ -302,7 +306,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -365,7 +369,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -428,7 +432,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -491,7 +495,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
