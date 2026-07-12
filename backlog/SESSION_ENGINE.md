@@ -373,7 +373,67 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #168
+**Dernière session :** 2026-07-12 — Session #169
+**Sprint traité :** 43 — Correctifs retours du 11 juillet — **CLOS cette
+session** (9ᵉ et dernière session du sprint). 17/17 tickets clos au total —
+`#367`, `#368` (session #161), `#369`, `#370` (session #162), `#371`,
+`#373` (session #163), `#377`, `#372` (session #164), `#374`, `#376`
+(session #165), `#375`, `#378` (session #166), `#382`, `#379` (session
+#167), `#380` (session #168) ; **0 issue restante** sur le milestone,
+0 nouveau ticket traité cette session (pure spec review de clôture).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge-base
+--is-ancestor origin/main HEAD` positif d'emblée, aucun commit de
+rattrapage nécessaire. 1 commit cette session (housekeeping de clôture,
+aucun code applicatif touché).
+
+**Spec review session #169 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— confiée à un agent `reviewer` dédié (lecture seule) — sont désormais
+**toutes ✅ Conforme**, confirmant `#380` (clos à la session #168 :
+`AdminMatches.vue::matchTimeDisplay` conforme à `planning.md` §« Où vit le
+calcul »). Aucune dérive bloquante ni moyenne, 0 nouvelle issue créée.
+`npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Une observation
+non bloquante et non ticketée (hors du contrat écrit de la spec) :
+`TvPalmares.vue` gère la rotation d'épreuve en `ref` local plutôt que
+hissée dans le store `live` comme `TvIdle.vue`/#379 — perdrait sa position
+au remontage de l'écran ; laissé à l'appréciation humaine.
+
+**Backlog engine session #169 :** aucun ticket à traiter (0 issue ouverte
+sur le milestone au démarrage de la session).
+
+**Sprint 43 clos cette session** — les deux conditions de l'Étape 3 sont
+réunies (spec review de cette session ✅ Conforme sur les 5 specs + 0 issue
+ouverte) : milestone GitHub fermé (`gh api … state=closed`, 15 issues
+closes / 0 ouverte), ligne supprimée de `backlog/sprints/roadmap.md`,
+dossier déplacé vers `backlog/sprints/done/43-retours-11-juillet/`.
+
+**Roadmap vide après clôture.** Aucun sprint suivant en attente. Conforme
+au protocole (§3, Étape 0) : *Roadmap vide — tous les sprints terminés.
+Désactiver la Routine manuellement sur claude.ai/code/routines.* Le
+prochain sprint devra être planifié manuellement (`/plan-sprint`) avant
+toute réactivation utile de la Routine.
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` invoqué
+cette session (spec review dédiée, lecture seule) a strictement respecté
+son mandat — pattern stable sur au moins 23 sessions consécutives
+(#140-#169, sessions à vide comprises) depuis l'incident initial de la
+session #139. Aucun `ScheduleWakeup` utilisé pour patienter sur l'agent
+asynchrone.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md`
+(vide de toute façon maintenant) : `04-admin-panel-map/` et
+`10-contexte-url/`. À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_169.md`.
+
+---
+
+**Historique — session #168 :**
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (8ᵉ session du sprint). 15/17 tickets clos au total — `#367`, `#368`
 (session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
