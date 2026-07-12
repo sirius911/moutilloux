@@ -3,3 +3,4 @@
 | # | Date | Verdict spec | Dérives | Nouvelles issues | Issues sprint restantes |
 |---|------|-------------|---------|-----------------|------------------------|
 | — | 2026-07-11 | — | Sprint planifié (analyse retours + 4 arbitrages + specs mises à jour en séance) | #367–#380 | 14 |
+| #161 | 2026-07-12 | ⚠️ Dérive mineure | Toutes les dérives relevées sur les 5 specs ciblées correspondent aux 14 issues déjà ouvertes (vérifié par lecture directe du code pour `tv-state`/`planning` : `usePolling.ts` sans garde de démarrage, `finished_at` non persisté sur clôture auto — confirmé et corrigé cette session, `create_team_with_entry` sans garde équipe Double, `ArbitreMatch.vue` sans indicateur de service imposant) | 0 | 12 |

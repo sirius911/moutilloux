@@ -373,14 +373,66 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-10 — Session #160
-**Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
-(sprint 42 clos à la session #159). Conformément à l'étape 0 du protocole,
-la session s'est arrêtée sans exécuter les étapes 1 à 4. Working tree propre
-au démarrage, aucun changement de code, aucun commit de code.
+**Dernière session :** 2026-07-12 — Session #161
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(1ère session du sprint, roadmap regarnie juste avant cette session par la
+planification du sprint 43 sur les retours du 2026-07-11). 2/14 tickets
+clos — `#367`, `#368` ; 12 restants (`#369`–`#380`).
 
-**5ᵉ session à vide consécutive depuis la clôture du sprint 42.** Aucun
-sprint suivant planifié depuis.
+**Git :** branche `claude/sprint/43-retours-11-juillet` (nouvelle branche
+cette session), parent effectif `main` (le sprint 42 précédent est déjà
+fusionné dans `main` via la PR #366, confirmé par
+`git merge-base --is-ancestor` — la branche 43 est donc créée directement
+depuis `origin/main`, working tree propre au checkout, pas de commit de
+rattrapage nécessaire). 2 commits de code cette session.
+
+**Spec review session #161 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— ⚠️ Dérive mineure, vérifiée par lecture directe du code (pas d'agent
+dédié, review resserrée sur les zones touchées par les tickets du sprint) :
+toutes les dérives relevées correspondent exactement aux 14 issues déjà
+ouvertes lors de la planification — 0 nouvelle issue créée.
+
+**Backlog engine session #161 :** 2 tickets traités séquentiellement (même
+cause racine, notés « se closent ensemble » dans `sprint.md`) :
+- **#367** (majeure) — back : `live/referee_views.py` + migration de
+  backfill — diagnostic fait par lecture directe du code (pas d'agent
+  `django-api`, root cause déjà claire) : le moteur d'arbitrage clôt
+  automatiquement un match sur balle de match (`point_left`/`point_right`),
+  `Match.save()` (`live/models.py`) pose bien `finished_at` en mémoire mais
+  les `match.save(update_fields=[...])` qui suivaient omettaient
+  `"finished_at"` — Django ne persiste que les champs listés, la valeur
+  n'atteignait jamais la base. Fix : ajout du champ aux `update_fields`
+  concernés + migration `0024_backfill_finished_at.py`
+  (`finished_at := updated_at` pour les `FINISHED` à `NULL`), appliquée en
+  dev (31 matchs terminés, 0 `finished_at` NULL après coup). **Le reviewer a
+  relevé un gap non couvert par le plan initial** : le chemin manuel
+  « +jeu » (`game_left`/`game_right`) partage la même logique de clôture
+  automatique mais avait le même `update_fields` incomplet (`finished_at`
+  **et** `end_reason` absents) — corrigé dans le même commit avant clôture
+  du ticket. Bon exemple de la valeur du reviewer en lecture seule
+  indépendante. Verdict reviewer : ✅ Approuvé (après complément),
+  `manage.py check` vérifié indépendamment (0 erreur).
+- **#368** (mineure) — back : `live/admin_views.py`, `reopen_match` —
+  `finished_at` n'était jamais remis à `NULL` à la réouverture d'un match
+  terminé (même cause racine que #367, sens inverse). Fix : `finished_at =
+  None` posé avant `mark_live()`, ajouté à `update_fields`. Vérifié que
+  `mark_live()` ne touche pas `finished_at` (pas de conflit entre les deux
+  `save()` successifs). Verdict reviewer : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 12 issues encore ouvertes sur le
+milestone (`#369`–`#380`). Spec review encore ⚠️ (attendu, le reste du
+sprint n'est pas implémenté). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré par `sprint.md` pour la
+suite : `#369` (usePolling, fichier partagé — orchestrateur) puis `#370`
+(store live, idem) ∥ le reste des tickets back/front indépendants.
+
+**Point d'attention outillage :** `python` seul n'est pas sur le PATH de ce
+shell — nécessite `source .venv/bin/activate` (ou `.venv/bin/python`
+directement) avant tout `manage.py`. `manage.py check` fiable pour les deux
+tickets. Toujours pas de script `type-check`/`lint` dans `package.json`,
+toujours pas de `.claude/launch.json` côté front (sans objet cette session,
+travail 100 % back).
 
 **Observation annexe (signalée depuis la session #144, toujours non
 actionnée) :** deux dossiers de sprint orphelins subsistent dans
@@ -389,11 +441,7 @@ actionnée) :** deux dossiers de sprint orphelins subsistent dans
 avant de les considérer comme travail réellement en attente ou comme
 reliquats à archiver.
 
-**Roadmap vide.** Aucun sprint en attente — **désactiver la Routine
-manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
-(`/plan-sprint`) avant la prochaine échéance.
-
-Log complet : `backlog/logs/session_2026-07-10_160.md`.
+Log complet : `backlog/logs/session_2026-07-12_161.md`.
 
 ---
 
