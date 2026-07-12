@@ -180,17 +180,39 @@ class MatchEditForm(forms.ModelForm):
 # Actions : Players / Teams
 # -----------------------
 
+def _find_player_in_other_team_entry(event, player1, player2, exclude_entry_id=None):
+    """
+    Cherche si player1 ou player2 appartient déjà à une équipe inscrite
+    (Entry avec team) dans cet event, hors exclude_entry_id le cas échéant.
+    Retourne le joueur en conflit, ou None.
+    """
+    qs = Entry.objects.filter(event=event, team__isnull=False).filter(
+        Q(team__player1__in=[player1, player2]) | Q(team__player2__in=[player1, player2])
+    ).select_related("team")
+    if exclude_entry_id is not None:
+        qs = qs.exclude(pk=exclude_entry_id)
+    conflict = qs.first()
+    if conflict is None:
+        return None
+    return player1 if player1 in (conflict.team.player1, conflict.team.player2) else player2
+
+
 def create_team_with_entry(event, player1, player2, name=""):
     """
     Service : crée un Team (double) puis l'inscrit dans l'event (Entry).
     `player1`/`player2` sont des instances Player distinctes.
     Refuse si l'event n'est pas en DOUBLE (ValueError).
+    Refuse si l'un des deux joueurs est déjà dans une équipe inscrite à cet
+    event (règle par épreuve, ValueError).
     Retourne (team, entry).
     """
     if event.category.mode != Category.Mode.DOUBLE:
         raise ValueError("Cet event n'est pas en double.")
     if player1 == player2:
         raise ValueError("Les deux joueurs doivent être différents.")
+    conflicting_player = _find_player_in_other_team_entry(event, player1, player2)
+    if conflicting_player is not None:
+        raise ValueError(f"{conflicting_player} est déjà inscrit dans une équipe de cette épreuve.")
     team = Team.objects.create(
         name=name or "",
         player1=player1,
@@ -912,7 +934,8 @@ def add_late_entry(event, group, player=None, team=None):
     - Ré-exécute generate_group_matches_for_event (additif) → seuls les matchs
       du nouveau venu sont créés ; les matchs déjà joués ne bougent pas.
     Lève ValueError si event.status != EN_COURS, si player et team sont tous
-    les deux None, ou si le player/team est déjà inscrit dans l'event.
+    les deux None, si le player/team est déjà inscrit dans l'event, ou si
+    l'un des joueurs de la team est déjà dans une autre équipe de l'event.
     Retourne (entry, created_count, over_capacity).
     """
     if event.status != Event.Status.EN_COURS:
@@ -925,6 +948,10 @@ def add_late_entry(event, group, player=None, team=None):
         raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
     if team is not None and Entry.objects.filter(event=event, team=team).exists():
         raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+    if team is not None:
+        conflicting_player = _find_player_in_other_team_entry(event, team.player1, team.player2)
+        if conflicting_player is not None:
+            raise ValueError(f"{conflicting_player} est déjà inscrit dans une équipe de cette épreuve.")
 
     entry = Entry.objects.create(event=event, player=player, team=team)
     GroupMembership.objects.get_or_create(group=group, entry=entry)
@@ -943,8 +970,9 @@ def replace_entry_player(entry, player=None, team=None):
     Service : remplace le player/team d'une Entry existante.
     La place en poule et les résultats déjà joués sont conservés ; aucun match recréé.
     Lève ValueError si player et team sont tous les deux None, si la catégorie ne
-    correspond pas (SINGLE/DOUBLE), ou si le nouveau player/team est déjà inscrit
-    dans le même event.
+    correspond pas (SINGLE/DOUBLE), si le nouveau player/team est déjà inscrit
+    dans le même event, ou si l'un des joueurs de la team est déjà dans une
+    autre équipe de l'event.
     Retourne l'Entry mise à jour.
     """
     if player is None and team is None:
@@ -960,6 +988,12 @@ def replace_entry_player(entry, player=None, team=None):
         raise ValueError(f"{player} est déjà inscrit dans cette épreuve.")
     if team is not None and Entry.objects.filter(event=entry.event, team=team).exclude(pk=entry.pk).exists():
         raise ValueError(f"{team} est déjà inscrit dans cette épreuve.")
+    if team is not None:
+        conflicting_player = _find_player_in_other_team_entry(
+            entry.event, team.player1, team.player2, exclude_entry_id=entry.pk
+        )
+        if conflicting_player is not None:
+            raise ValueError(f"{conflicting_player} est déjà inscrit dans une équipe de cette épreuve.")
 
     entry.player = player
     entry.team = team
