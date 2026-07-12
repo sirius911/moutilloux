@@ -373,7 +373,101 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-13 — Session #173
+**Dernière session :** 2026-07-13 — Session #174
+
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (4ᵉ session du sprint).
+8/9 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
+`#383`, `#384` (session #173), `#388`, `#390` (cette session) ; 1 restant (`#391`).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au démarrage,
+working tree propre. Parent effectif `claude/sprint/43-retours-11-juillet` (résolu
+par l'algorithme de l'Étape 0 : existe sur `origin`, pas encore ancêtre
+d'`origin/main`, inchangé depuis les sessions #171-#173). `git merge origin/
+claude/sprint/43-retours-11-juillet --no-edit` : déjà à jour, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session, push en cours.
+
+**Spec review session #174 :** les 6 specs ciblées — confiée à un agent `reviewer`
+dédié (lecture seule), en tout début de session : `specs/transverse/
+affichage-participant.md` et `specs/screens/admin-matchs.md` en ⚠️ Dérive mineure
+(correspondant exactement à `#388` et `#390`, alors ouverts) ; `specs/screens/
+tv-live.md`, `specs/screens/admin-tableau-final.md`, `specs/technical/
+cycle-de-vie-epreuve.md` et `specs/screens/admin-tournoi.md` désormais
+✅ Conforme (confirment `#383`-`#387`/`#389` clos aux sessions précédentes). Une
+dérive transverse additionnelle relevée hors specs listées : le store `event.ts`
+(`fetchPlayers`/`fetchGroups`/`fetchMatches`/`fetchBracket`) n'a aucune garde
+d'identité sur l'`eventId`, contrairement à `fetchMatch` du store `live.ts` —
+correspond exactement à `#391`, déjà ouvert. 3 dérives au total, **toutes**
+correspondent aux 3 issues déjà ouvertes, 0 dérive surprise, 0 nouvelle issue créée.
+
+**Backlog engine session #174 :** 2 tickets traités séquentiellement, plans et
+implémentations produits **directement en session par l'orchestrateur** (portée
+déjà entièrement cartographiée ligne par ligne par le rapport de spec review —
+précédent : session #168, ticket #380), chacun soumis à un agent `reviewer`
+indépendant avant clôture :
+- **#388** (majeure) — fin du sweep `sideName()` sur les 9 fichiers restants
+  (`TvIdle.vue`/`TvPalmares.vue` : occurrences résiduelles non couvertes par
+  #383/#384 ; `TvTicker.vue`, `TvScoreboard.vue`, `AdminBracket.vue`,
+  `AdminMatches.vue`, `AdminRegie.vue`, `ArbitreHome.vue`, `ArbitreMatch.vue`,
+  `EditMatchPanel.vue` : premier passage). Règle appliquée (`backlog/plan/
+  388-sideName-sweep-reste.md`) : fallback terminal déjà `'À désigner'` ou
+  `'TBD'` → remplacement par un appel `sideName(side, label)` ; fallback
+  contextuel volontaire (`'Vainqueur SF1'/'SF2'`, `'Joueur A'/'Joueur B'`, `'—'`,
+  `'?'`) → seul `.player?.fullName` → `.displayName` changé, fallback préservé
+  (précédent du reviewer de session #173 sur `#384`). 2 exceptions hors périmètre
+  confirmées inchangées (liste des qualifiés d'`AdminBracket.vue`, slots
+  individuels de l'onglet Affiche d'`EditMatchPanel.vue`). Reviewer : diff
+  conforme au plan fichier par fichier, plus aucune occurrence de `'TBD'` ni de
+  `player?.fullName` hors exceptions documentées, imports `sideName` ajoutés et
+  utilisés correctement, `npx vue-tsc --noEmit` vérifié indépendamment (0
+  erreur). Verdict : ✅ Approuvé, aucune réserve.
+- **#390** (mineure) — `frontend/app/src/views/admin/AdminMatches.vue` — classe
+  conditionnelle `has-event-tag` (liée au computed `multiEvent` existant) sur
+  `.cal-row`, avec une règle CSS dédiée insérant une 7e colonne `auto` avant la
+  colonne `1fr` des noms (au lieu que la pastille `.cal-event-tag` hérite de
+  cette colonne et s'étire) ; `.cal-event-tag` reçoit `justify-self: start`. Cas
+  mono-épreuve strictement inchangé (grille de base à 6 colonnes intacte).
+  Reviewer : diff limité au seul fichier attendu (+9 lignes), `.cal-row--break`
+  confirmé non affecté, `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur).
+  Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 44 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review de cette session a précédé l'implémentation et a donc trouvé
+2 specs encore ⚠️, même si les tickets correspondants ont été clos ensuite ;
+précédent constant depuis la session #161, jamais de fermeture le jour même de
+la résorption du dernier ticket) : 1 issue encore ouverte (`#391`, mineure,
+`infra` — store `event.ts`, garde d'identité, fichier partagé réservé à
+l'orchestrateur, patron du `#370`). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée** : traitement direct de `#391` par
+l'orchestrateur (comme `participants.ts` à la session #172), puis spec review de
+confirmation qui devrait trouver les 6 specs ✅ Conforme et fermer le sprint.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment trois fois cette session (orchestrateur + 2 agents `reviewer`,
+une fois par ticket). Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front — vérification
+par type-check + revue de code uniquement (pas de QA navigateur réelle en
+session automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket) ont
+strictement respecté leur mandat de lecture seule — pattern désormais stable
+sur au moins 27 sessions consécutives (#140-#174, sessions à vide comprises)
+depuis l'incident initial de la session #139. Aucun `ScheduleWakeup` utilisé
+pour patienter sur les agents asynchrones (tous invoqués en premier plan,
+résultat direct).
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans `backlog/
+sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`, contenu strictement identique à
+leur version dans `done/`. Toujours à investiguer par l'utilisateur, non
+actionné cette session (hors mandat du backlog engine automatique).
+
+Log complet : `backlog/logs/session_2026-07-13_174.md`.
+
+---
+
+**Historique — session #173 :**
 
 **Sprint actif :** 44 — Correctifs retours du 12 juillet (3ᵉ session du sprint).
 6/9 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
