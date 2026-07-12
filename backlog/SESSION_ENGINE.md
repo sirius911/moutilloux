@@ -373,7 +373,100 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #163
+**Dernière session :** 2026-07-12 — Session #164
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(4ᵉ session du sprint). 8/14 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
+#163), `#377`, `#372` (cette session) ; 6 restants (`#374`–`#376`,
+`#378`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git
+merge-base --is-ancestor origin/main HEAD` positif d'emblée, aucun merge ni
+commit de rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #164 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— confiée à un agent `reviewer` dédié (lecture seule) : toutes les dérives
+relevées correspondent exactement aux 8 issues qui étaient encore ouvertes
+en début de session (`#372`, `#374`–`#380`), 0 dérive additionnelle
+surprenante, 0 nouvelle issue créée. `tv-state.md` bascule à ✅ Conforme
+cette session (confirme #371/#373 clos à la session #163) ; les 4 autres
+restent ⚠️ Dérive mineure (attendu, reste du sprint non implémenté).
+
+**Backlog engine session #164 :** 2 tickets traités séquentiellement, review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#377** (majeure) — `live/admin_views.py` — en Double, un joueur déjà
+  inscrit dans une équipe pouvait se réinscrire dans une autre équipe de la
+  même épreuve : `create_team_with_entry` ne vérifiait que `player1 !=
+  player2` (même lacune dans `add_late_entry` et `replace_entry_player`).
+  Traité **directement en session** (aucun agent `django-api` — portée trop
+  réduite, logique déjà dans les fonctions de service existantes). Fix :
+  nouvelle fonction utilitaire `_find_player_in_other_team_entry(event,
+  player1, player2, exclude_entry_id=None)` (requête `Entry` avec
+  `Q(team__player1__in=...) | Q(team__player2__in=...)`), appelée dans les
+  3 points d'entrée — `replace_entry_player` avec `exclude_entry_id=
+  entry.pk` pour ne pas se bloquer soi-même lors d'un remplacement partiel.
+  Reviewer : golden path retracé ligne à ligne (A/B puis A/C même épreuve →
+  400 ; A/D autre épreuve → accepté ; remplacement sans faux positif),
+  `manage.py check` vérifié indépendamment (0 erreur), rétrocompatibilité
+  des 3 appelants existants confirmée. Verdict : ✅ Approuvé, aucune
+  réserve.
+- **#372** (majeure) — `frontend/app/src/views/tv/TvTicker.vue` (nouveau) +
+  `TvScoreboard.vue` — nouvelle feature (aucune maquette `.jsx` de
+  référence) : banderole d'information ancrée en bas de la scène TV, active
+  pendant un match (SCOREBOARD **et** ÉCHAUFFEMENT — cette dernière n'avait
+  auparavant aucun pied de page), défilement continu des annonces actives,
+  derniers résultats et prochains matchs (données déjà pollées en continu
+  depuis #371), segment fixe à gauche (court/durée/horloge) remplaçant
+  l'ancien `.sb-foot-discreet`. Confié à un agent `vue-screen` (portée
+  suffisante — nouveau composant + édition étendue de `TvScoreboard.vue`).
+  Fix : piste doublée (`[...items, ...items]`) + `translateX(0 → -50%)` en
+  boucle linéaire infinie, durée d'animation proportionnelle au nombre
+  d'items (14s–60s), cas `items.length === 0` → segment fixe seul. Géométrie
+  vérifiée : bande à `bottom: 12px; height: 44px` (haut à 56px), 16px de
+  marge sous `.sb-ed-bottom` (`bottom: 72px`). Reviewer : diff conforme,
+  `.sb-foot-discreet` proprement retiré (CSS + grep global), `npx vue-tsc
+  --noEmit` vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé — champ
+  `fichiers:` de `specs/screens/tv-live.md` complété par l'orchestrateur
+  juste après (ajout de `TvTicker.vue`, contenu de spec non touché).
+
+**Sprint 43 non clos cette session :** 6 issues encore ouvertes sur le
+milestone (`#374`–`#376`, `#378`–`#380`). Spec review encore ⚠️ sur 4 des 5
+specs (attendu, le reste du sprint n'est pas implémenté). Sprint reste
+actif, sera repris à la **prochaine échéance planifiée**. Ordre suggéré par
+`sprint.md` pour la suite : `#374` (palmarès, prérequis #371/#373 déjà
+clos) ∥ `#376` (arbitre) ∥ `#375` (ETA, gros morceau back isolé) ;
+finitions `#378` (après #377, désormais clos) et `#380` (après #375) en
+dernier ; `#379` (même zone que #371, déjà clos) également prêt.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `.venv/bin/
+python manage.py check` (depuis la racine du repo) fiables pour les deux
+tickets, chacun vérifié indépendamment par l'agent `reviewer`. Toujours pas
+de script `type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement pour #372 (pas de QA navigateur TV réelle en session
+automatisée ; géométrie vérifiée par calcul analytique).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 18 sessions consécutives (#140-#164, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_164.md`.
+
+---
+
+**Historique — session #163 :**
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (3ᵉ session du sprint). 6/14 tickets clos au total — `#367`, `#368`
 (session #161), `#369`, `#370` (session #162), `#371`, `#373` (cette
