@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import TvIdle from './TvIdle.vue'
+import TvTicker from './TvTicker.vue'
 
 const live = useLiveStore()
 usePolling(() => live.fetchTvState(), 2000)
@@ -147,6 +148,7 @@ function loserName(): string {
             <span v-if="live.hero.court">COURT · {{ live.hero.court }}</span>
           </div>
         </div>
+        <TvTicker />
       </template>
 
       <!-- ── Scène SCOREBOARD (match lancé) ──────────────────────────────── -->
@@ -270,12 +272,7 @@ function loserName(): string {
         </div>
       </div>
 
-      <!-- Pied discret -->
-      <div class="sb-foot-discreet">
-        <span v-if="live.hero.court">COURT · {{ live.hero.court }}</span>
-        <span v-if="live.hero.clock">DURÉE · {{ live.hero.clock }}</span>
-        <span>{{ live.now }}</span>
-      </div>
+      <TvTicker />
       </template>
     </template>
   </div>
@@ -866,22 +863,4 @@ function loserName(): string {
   text-transform: uppercase;
 }
 
-/* ── Pied discret ────────────────────────────────────────────────────── */
-.sb-foot-discreet {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  padding: 0 48px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  z-index: 4;
-}
 </style>

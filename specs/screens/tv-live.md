@@ -5,6 +5,7 @@ fichiers:
   - frontend/app/src/views/tv/TvLayout.vue
   - frontend/app/src/views/tv/TvScoreboard.vue
   - frontend/app/src/views/tv/TvIdle.vue
+  - frontend/app/src/views/tv/TvTicker.vue
   - frontend/app/src/stores/live.ts
   - frontend/app/src/composables/usePolling.ts
   - frontend/app/src/composables/useScale.ts
