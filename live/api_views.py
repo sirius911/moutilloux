@@ -77,6 +77,8 @@ from live.admin_views import (
     delete_break,
     reorder_calendar,
     auto_arrange_matches,
+    # Sprint 43 — ETA à la lecture (curseur monotone)
+    compute_day_eta_map,
     # Sprint 22 — CRUD Announcement
     create_announcement,
     update_announcement,
@@ -212,7 +214,7 @@ def _format_label(m):
     return f"1 set à {m.games_to_win} · TB à {m.tb_at}"
 
 
-def _pack_match(m):
+def _pack_match(m, eta_display=None):
     if m is None:
         return None
 
@@ -231,7 +233,13 @@ def _pack_match(m):
         clock = f"{s // 60:02d}:{s % 60:02d}"
 
     scheduled_str = None
-    if m.scheduled_time:
+    if eta_display:
+        scheduled_str = eta_display
+    elif m.status in (Match.Status.LIVE, Match.Status.FINISHED) and m.started_at:
+        scheduled_str = timezone.localtime(m.started_at).strftime("%Hh%M")
+    elif m.status == Match.Status.FINISHED and m.finished_at:
+        scheduled_str = timezone.localtime(m.finished_at).strftime("%Hh%M")
+    elif m.scheduled_time:
         scheduled_str = timezone.localtime(m.scheduled_time).strftime("%Hh%M")
 
     def stage_label(match):
@@ -681,10 +689,14 @@ def api_arbitre_matches(request):
 
     packed_play_days = _pack_calendar_play_days(edition)
     next_match = get_tv_next(edition)
+    next_eta_display = None
+    if next_match is not None and next_match.scheduled_time:
+        next_play_day = PlayDay.objects.get(edition=edition, date=next_match.scheduled_time.date())
+        next_eta_display = compute_day_eta_map(next_play_day).get(next_match.id)
 
     return JsonResponse({
         "playDays": packed_play_days,
-        "next": _pack_match(next_match),
+        "next": _pack_match(next_match, eta_display=next_eta_display),
     })
 
 
@@ -1956,10 +1968,11 @@ def _pack_calendar_play_days(edition):
 
     packed_play_days = []
     for pd in play_days:
+        eta_map = compute_day_eta_map(pd)
         packed_play_days.append({
             **_pack_play_day(pd),
             "breaks": [_pack_break(b) for b in sorted(pd.breaks.all(), key=lambda b: b.order_index)],
-            "matches": [_pack_match(m) for m in matches_by_date.get(pd.date, [])],
+            "matches": [_pack_match(m, eta_display=eta_map.get(m.id)) for m in matches_by_date.get(pd.date, [])],
         })
 
     return packed_play_days
@@ -2159,12 +2172,16 @@ def api_tv_state(request):
 
     hero = get_hero_match(edition)
     next_match = get_tv_next(edition)
+    next_eta_display = None
+    if next_match is not None and next_match.scheduled_time:
+        next_play_day = PlayDay.objects.get(edition=edition, date=next_match.scheduled_time.date())
+        next_eta_display = compute_day_eta_map(next_play_day).get(next_match.id)
 
     return JsonResponse({
         "editionYear": edition.year,
         "now": timezone.localtime(timezone.now()).strftime("%Hh%M"),
         "hero": _pack_match(hero),
-        "next": _pack_match(next_match),
+        "next": _pack_match(next_match, eta_display=next_eta_display),
         "stake": _pack_tv_stake(hero),
     })
 
@@ -2287,10 +2304,12 @@ def _pack_tv_programme(edition):
         .order_by("order_index")[:6]
     )
 
+    eta_map = compute_day_eta_map(play_day)
+
     return {
         "day": day,
         "playDay": _pack_play_day(play_day),
-        "upcoming": [_pack_match(m) for m in upcoming],
+        "upcoming": [_pack_match(m, eta_display=eta_map.get(m.id)) for m in upcoming],
     }
 
 
