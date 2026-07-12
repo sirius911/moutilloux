@@ -6,6 +6,7 @@ import TvIdle from './TvIdle.vue'
 
 const live = useLiveStore()
 usePolling(() => live.fetchTvState(), 2000)
+usePolling(() => live.fetchTvIdle(), 10000)
 
 const isWarmupScene = computed(() => live.hero?.status === 'LIVE' && !live.hero?.playStartedAt)
 

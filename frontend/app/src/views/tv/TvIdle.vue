@@ -5,7 +5,6 @@ import { usePolling } from '@/composables/usePolling'
 import type { Match } from '@/types'
 
 const live = useLiveStore()
-usePolling(() => live.fetchTvIdle(), 10000)
 
 // Index de rotation par épreuve, indépendants de l'index de slide global.
 const groupsEventIndex = ref(0)
