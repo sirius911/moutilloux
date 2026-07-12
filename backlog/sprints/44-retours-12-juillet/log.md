@@ -6,3 +6,4 @@
 | #171 | 2026-07-12 | ❌ | 15 dérives (0 spec ✅, 2 ⚠️, 4 ❌) — toutes correspondent aux 9 issues déjà ouvertes | 0 | 9 |
 | #172 | 2026-07-12 | ❌ | 7 dérives (2 spec ✅, 1 ⚠️, 3 ❌) — toutes correspondent aux 7 issues déjà ouvertes (#385/#387 confirmés clos) | 0 | 7 |
 | #173 | 2026-07-13 | ❌ | 5 dérives (2 spec ✅, 1 ⚠️, 3 ❌) — 4 correspondent aux issues déjà ouvertes (#383, #384, #388, #390 ; #386/#389 confirmés clos), 1 note non ticketée (artefact rédactionnel non fonctionnel sur cycle-de-vie-epreuve.md) | 0 | 5 |
+| #174 | 2026-07-13 | ⚠️ | 3 dérives (4 spec ✅, 2 ⚠️, 0 ❌) — toutes correspondent exactement aux 3 issues déjà ouvertes (#388, #390, #391) ; #383/#384/#385/#386/#387/#389 confirmés clos et conformes | 0 | 3 |

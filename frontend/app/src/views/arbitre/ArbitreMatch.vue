@@ -112,8 +112,8 @@ const rightModelSide = computed(() => sideAt('right'))
 function playerName(side: 'A' | 'B'): string {
   if (!match.value) return side === 'A' ? 'Joueur A' : 'Joueur B'
   return side === 'A'
-    ? (match.value.sideA?.player?.fullName ?? match.value.sideALabel ?? 'Joueur A')
-    : (match.value.sideB?.player?.fullName ?? match.value.sideBLabel ?? 'Joueur B')
+    ? (match.value.sideA?.displayName ?? match.value.sideALabel ?? 'Joueur A')
+    : (match.value.sideB?.displayName ?? match.value.sideBLabel ?? 'Joueur B')
 }
 function sideSets(side: 'A' | 'B'): number {
   return side === 'A' ? (match.value?.setsA ?? 0) : (match.value?.setsB ?? 0)
@@ -205,8 +205,8 @@ const finishCandidates = computed((): { a: FinishCandidate; b: FinishCandidate }
   if (!match.value) return null
   const m = match.value
 
-  const nameA = m.sideA?.player?.fullName ?? m.sideALabel ?? 'Joueur A'
-  const nameB = m.sideB?.player?.fullName ?? m.sideBLabel ?? 'Joueur B'
+  const nameA = m.sideA?.displayName ?? m.sideALabel ?? 'Joueur A'
+  const nameB = m.sideB?.displayName ?? m.sideBLabel ?? 'Joueur B'
 
   // Déduction du meneur dans le repère modèle (A/B fixes, indépendamment du swap)
   const aLeads = m.setsA > m.setsB || (m.setsA === m.setsB && m.gamesA > m.gamesB)

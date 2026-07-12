@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { usePolling } from '@/composables/usePolling'
 import { useApi } from '@/composables/useApi'
 import { useViewport } from '@/composables/useViewport'
+import { sideName } from '@/utils/participants'
 import type { ArbitreProgramme, Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local (fusion match + pause, lecture seule) ─────────────────
@@ -124,8 +125,8 @@ function stripeColor(status: string): string {
 }
 
 function playerName(m: Match, side: 'A' | 'B'): string {
-  if (side === 'A') return m.sideA?.player?.fullName ?? m.sideALabel ?? 'TBD'
-  return m.sideB?.player?.fullName ?? m.sideBLabel ?? 'TBD'
+  if (side === 'A') return sideName(m.sideA, m.sideALabel)
+  return sideName(m.sideB, m.sideBLabel)
 }
 
 function scoreDisplay(m: Match): string {

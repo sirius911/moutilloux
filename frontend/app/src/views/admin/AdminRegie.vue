@@ -9,6 +9,7 @@ import { useEventStore } from '@/stores/event'
 import { useApi } from '@/composables/useApi'
 import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
+import { sideName } from '@/utils/participants'
 import type { Announcement, Break, CalendarDay, Match } from '@/types'
 
 const router = useRouter()
@@ -99,8 +100,8 @@ const isEmpty = computed(() => {
 
 // ── Affichage joueurs / score ────────────────────────────────────────────
 function playerName(m: Match, side: 'A' | 'B'): string {
-  if (side === 'A') return m.sideA?.player?.fullName ?? m.sideA?.displayName ?? m.sideALabel ?? 'TBD'
-  return m.sideB?.player?.fullName ?? m.sideB?.displayName ?? m.sideBLabel ?? 'TBD'
+  if (side === 'A') return sideName(m.sideA, m.sideALabel)
+  return sideName(m.sideB, m.sideBLabel)
 }
 
 function scoreDisplay(m: Match): string {

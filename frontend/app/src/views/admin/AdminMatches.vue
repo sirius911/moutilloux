@@ -8,6 +8,7 @@ import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import PlayDayModal from '@/components/modals/PlayDayModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import { sideName } from '@/utils/participants'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -343,8 +344,8 @@ function stagePillLabel(match: Match): string {
 }
 
 function playerLabel(match: Match, side: 'A' | 'B'): string {
-  if (side === 'A') return match.sideA?.player?.fullName ?? match.sideALabel ?? 'TBD'
-  return match.sideB?.player?.fullName ?? match.sideBLabel ?? 'TBD'
+  if (side === 'A') return sideName(match.sideA, match.sideALabel)
+  return sideName(match.sideB, match.sideBLabel)
 }
 
 // Identifiant du seul match "Next" — lu depuis l'état DnD local.

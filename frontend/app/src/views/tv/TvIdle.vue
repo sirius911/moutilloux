@@ -119,8 +119,8 @@ usePolling(async () => {
 
 function nextPlayerName(side: 'A' | 'B'): string {
   if (!live.next) return 'À désigner'
-  if (side === 'A') return live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? 'À désigner'
-  return live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? 'À désigner'
+  if (side === 'A') return sideName(live.next.sideA, live.next.sideALabel)
+  return sideName(live.next.sideB, live.next.sideBLabel)
 }
 
 // Score par sets d'un côté, chiffres dans l'ordre chronologique des sets :
@@ -210,11 +210,11 @@ const winnerName = computed(() => {
               <div class="tv-result-match">
                 <div :class="['tv-result-side', { win: m.winnerSide === 'A' }]">
                   <span v-if="m.sideA?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'A' }">{{ m.sideA.seedHint }}</span>
-                  <span class="tv-result-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner' }}</span>
+                  <span class="tv-result-name">{{ sideName(m.sideA, m.sideALabel) }}</span>
                 </div>
                 <div :class="['tv-result-side', { win: m.winnerSide === 'B' }]">
                   <span v-if="m.sideB?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'B' }">{{ m.sideB.seedHint }}</span>
-                  <span class="tv-result-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner' }}</span>
+                  <span class="tv-result-name">{{ sideName(m.sideB, m.sideBLabel) }}</span>
                 </div>
               </div>
               <span class="tv-result-score tab">
@@ -323,12 +323,12 @@ const winnerName = computed(() => {
               <div v-for="slot in currentBracketEvent.bracket.f" :key="slot.slot" class="tv-mini-match final">
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'Vainqueur SF1' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideA?.displayName ?? slot.match?.sideALabel ?? 'Vainqueur SF1' }}</span>
                   <span v-if="sideSetScore(slot.match, 'A')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'A') }}</span>
                 </div>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'Vainqueur SF2' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideB?.displayName ?? slot.match?.sideBLabel ?? 'Vainqueur SF2' }}</span>
                   <span v-if="sideSetScore(slot.match, 'B')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'B') }}</span>
                 </div>
               </div>
@@ -381,9 +381,9 @@ const winnerName = computed(() => {
             >
               <span class="tv-prog-time tab">~{{ m.scheduledTime ?? '—' }}</span>
               <div class="tv-prog-match">
-                <span class="tv-prog-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner' }}</span>
+                <span class="tv-prog-name">{{ sideName(m.sideA, m.sideALabel) }}</span>
                 <em class="tv-prog-vs">vs</em>
-                <span class="tv-prog-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner' }}</span>
+                <span class="tv-prog-name">{{ sideName(m.sideB, m.sideBLabel) }}</span>
               </div>
               <span class="tv-prog-group">{{ m.stageLabel }}</span>
               <span v-if="i === 0" class="tv-prog-bientot">bientôt</span>

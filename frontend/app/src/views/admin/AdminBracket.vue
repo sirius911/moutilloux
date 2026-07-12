@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import { sideName } from '@/utils/participants'
 import type { BracketSlot, Entry, Match } from '@/types'
 
 const eventStore = useEventStore()
@@ -147,8 +148,8 @@ const placedEntryIds = computed((): Set<number> => new Set(placedEntrySlots.valu
 function slotLabel(slot: BracketSlot, side: 'A' | 'B'): string {
   const m = slot.match
   if (!m) return 'Vide'
-  if (side === 'A') return m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner'
-  return m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner'
+  if (side === 'A') return sideName(m.sideA, m.sideALabel)
+  return sideName(m.sideB, m.sideBLabel)
 }
 
 // Score par sets d'un côté, chiffres dans l'ordre chronologique des sets :

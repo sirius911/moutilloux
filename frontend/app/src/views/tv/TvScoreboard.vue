@@ -49,16 +49,16 @@ function winnerName(): string {
   const m = live.finishedHero
   if (!m) return ''
   return m.winnerSide === 'A'
-    ? (m.sideA?.player?.fullName ?? m.sideALabel ?? '—')
-    : (m.sideB?.player?.fullName ?? m.sideBLabel ?? '—')
+    ? (m.sideA?.displayName ?? m.sideALabel ?? '—')
+    : (m.sideB?.displayName ?? m.sideBLabel ?? '—')
 }
 
 function loserName(): string {
   const m = live.finishedHero
   if (!m) return ''
   return m.winnerSide === 'A'
-    ? (m.sideB?.player?.fullName ?? m.sideBLabel ?? '—')
-    : (m.sideA?.player?.fullName ?? m.sideALabel ?? '—')
+    ? (m.sideB?.displayName ?? m.sideBLabel ?? '—')
+    : (m.sideA?.displayName ?? m.sideALabel ?? '—')
 }
 </script>
 
@@ -125,16 +125,16 @@ function loserName(): string {
         <div class="tv-prep-players">
           <div class="tv-prep-player">
             <div class="tv-prep-avatar tv-prep-avatar-a">
-              {{ initials(live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?') }}
+              {{ initials(live.next.sideA?.displayName ?? live.next.sideALabel ?? '?') }}
             </div>
-            <span class="tv-prep-name">{{ live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? '?' }}</span>
+            <span class="tv-prep-name">{{ live.next.sideA?.displayName ?? live.next.sideALabel ?? '?' }}</span>
           </div>
           <em class="tv-prep-vs">vs</em>
           <div class="tv-prep-player">
             <div class="tv-prep-avatar">
-              {{ initials(live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?') }}
+              {{ initials(live.next.sideB?.displayName ?? live.next.sideBLabel ?? '?') }}
             </div>
-            <span class="tv-prep-name">{{ live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? '?' }}</span>
+            <span class="tv-prep-name">{{ live.next.sideB?.displayName ?? live.next.sideBLabel ?? '?' }}</span>
           </div>
         </div>
         <div class="tv-prep-foot">
@@ -152,9 +152,9 @@ function loserName(): string {
           <span class="tv-warmup-lbl">ÉCHAUFFEMENT</span>
           <div class="tv-warmup-countdown">{{ warmupCountdown ?? 'Le match va commencer' }}</div>
           <div class="tv-warmup-players">
-            {{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}
+            {{ live.hero.sideA?.displayName ?? live.hero.sideALabel ?? '—' }}
             <em>vs</em>
-            {{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}
+            {{ live.hero.sideB?.displayName ?? live.hero.sideBLabel ?? '—' }}
           </div>
           <div class="tv-warmup-meta">
             <span v-if="live.hero.stageLabel">{{ live.hero.stageLabel }}</span>
@@ -246,7 +246,7 @@ function loserName(): string {
           </span>
           <span v-else class="serve-ball-spacer" style="width: 26px; height: 26px" />
           <span class="sb-ed-name">
-            {{ live.hero.sideA?.player?.fullName ?? live.hero.sideALabel ?? '—' }}
+            {{ live.hero.sideA?.displayName ?? live.hero.sideALabel ?? '—' }}
           </span>
           <span v-if="live.hero.sideA?.seedHint" class="sb-ed-seed">[{{ live.hero.sideA.seedHint }}]</span>
           <span class="sb-ed-rule" />
@@ -270,7 +270,7 @@ function loserName(): string {
           </span>
           <span v-else class="serve-ball-spacer" style="width: 26px; height: 26px" />
           <span class="sb-ed-name">
-            {{ live.hero.sideB?.player?.fullName ?? live.hero.sideBLabel ?? '—' }}
+            {{ live.hero.sideB?.displayName ?? live.hero.sideBLabel ?? '—' }}
           </span>
           <span v-if="live.hero.sideB?.seedHint" class="sb-ed-seed">[{{ live.hero.sideB.seedHint }}]</span>
           <span class="sb-ed-rule" />
