@@ -373,7 +373,104 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #161
+**Dernière session :** 2026-07-12 — Session #162
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(2ᵉ session du sprint). 4/14 tickets clos au total — `#367`, `#368` (session
+#161), `#369`, `#370` (cette session) ; 10 restants (`#371`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git
+merge-base --is-ancestor origin/main HEAD` positif d'emblée, aucun merge ni
+commit de rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #162 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— ⚠️ Dérive mineure, confiée cette fois à un agent `reviewer` dédié (lecture
+seule) plutôt qu'à une lecture directe : toutes les dérives relevées
+correspondent exactement aux 10 issues restantes (`#371`–`#380`, aucune
+encore implémentée), 0 dérive additionnelle surprenante, 0 nouvelle issue
+créée. Les deux tickets clos cette session (`#369`/`#370`) confirmés
+conformes au contrat `tv-state.md` §Cadences.
+
+**Backlog engine session #162 :** 2 tickets traités séquentiellement, tous
+deux des fichiers réservés à l'orchestrateur (`CLAUDE.md` §3) — implémentés
+directement en session (aucun agent `vue-screen`/`django-api`, aucun écran
+ni endpoint concerné), review indépendante confiée à l'agent `reviewer`
+avant clôture pour chacun :
+- **#369** (majeure) — `frontend/app/src/composables/usePolling.ts` — 3
+  bugs corrigés en une passe (même cause racine, décrite ensemble dans le
+  ticket) : `start()` empilait un second `setInterval` sans vérifier qu'un
+  timer tournait déjà (le premier fuyait, ni `stop()` ni `onUnmounted` ne le
+  nettoyaient) ; `onMounted` démarrait le polling même si `document.hidden`
+  était vrai au montage ; `run()` n'avait pas de garde anti-chevauchement
+  (requêtes empilées si le réseau traînait). Fix : `start()` no-op si
+  `timer !== null`, `onMounted` conditionné à `!document.hidden`, garde
+  locale `inFlight` dans `run()` (remise à `false` dans un `finally`, donc
+  pas de deadlock même si `fn` rejette systématiquement). Reviewer :
+  golden path revérifié (rotation TV ~8 s, pastille pleine avant
+  changement, cycles caché/visible répétés), `npx vue-tsc --noEmit`
+  vérifié indépendamment (0 erreur), tous les appelants du composable
+  grep-és (aucun ne dépend du comportement changé — seuls `loading`/`error`
+  consommés en pratique). Verdict : ✅ Approuvé, aucune réserve.
+- **#370** (majeure) — `frontend/app/src/stores/live.ts` (`fetchMatch`) —
+  `match.value` (ref partagé, pollé toutes les 2 s par
+  `ArbitreMatch.vue`) était écrit sans garde d'identité : une réponse
+  tardive d'un ancien match (navigation A → accueil → B avant résolution
+  de la requête de A) écrasait les données du match B fraîchement affiché,
+  effet « blink » signalé dans les retours du 2026-07-11. Fix : variable de
+  fermeture `lastRequestedMatchId` posée avant l'appel réseau, réponse
+  ignorée si une demande plus récente a pris le relais ; purge
+  `match.value = null` en tête si l'id demandé diffère du match affiché
+  (referme complètement le golden path : jamais de donnée de l'ancien
+  match affichée, même brièvement). Reviewer : golden path A→accueil→B
+  retracé ligne à ligne, absence de régression sur le polling nominal
+  confirmée (`matchId` toujours `number` côté seul appelant
+  `ArbitreMatch.vue`, pas de purge à chaque tick), `npx vue-tsc --noEmit`
+  vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, une seule
+  remarque cosmétique non bloquante (l'union de type `number | string` du
+  paramètre pourrait provoquer une purge à tort si un futur appelant
+  passait un id non casté — sans impact aujourd'hui, aucun autre appelant
+  n'existe).
+
+**Sprint 43 non clos cette session :** 10 issues encore ouvertes sur le
+milestone (`#371`–`#380`). Spec review encore ⚠️ (attendu, le reste du
+sprint n'est pas implémenté). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré par `sprint.md` pour la
+suite : `#371` (poll tv/idle porté par l'écran, prérequis de `#372`/`#374`)
+∥ `#373` et `#377` (back, indépendants) ; puis `#372`/`#374` (deux SFC TV
+nouvelles, parallélisables entre elles) ∥ `#376` (arbitre) ∥ `#375` (ETA,
+gros morceau back isolé) ; finitions `#378`/`#379`/`#380` en dernier.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable pour les
+deux tickets (0 erreur), vérifié indépendamment par l'agent `reviewer` à
+chaque fois. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front (travail
+100 % front cette session, mais aucun écran concerné — deux fichiers
+composable/store partagés, pas de QA navigateur nécessaire pour ces deux
+correctifs de plomberie).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (deux reviews de ticket + une spec review dédiée,
+nouveauté par rapport à la lecture directe des sessions précédentes) ont
+strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 16 sessions consécutives (#140-#162, sessions à vide
+comprises) depuis l'incident initial de la session #139. Conformément à la
+recommandation posée à la session #152, aucun `ScheduleWakeup` n'a été
+utilisé en attente des agents asynchrones cette session — uniquement les
+`task-notification`.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_162.md`.
+
+---
+
+**Historique — session #161 :**
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (1ère session du sprint, roadmap regarnie juste avant cette session par la
 planification du sprint 43 sur les retours du 2026-07-11). 2/14 tickets
