@@ -373,7 +373,88 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #164
+**Dernière session :** 2026-07-12 — Session #165
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(5ᵉ session du sprint). 10/14 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
+#163), `#377`, `#372` (session #164), `#374`, `#376` (cette session) ; 4
+restants (`#375`, `#378`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge
+origin/main` déjà à jour d'emblée, aucun commit de rattrapage nécessaire.
+2 commits de code cette session.
+
+**Spec review session #165 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— confiée à un agent `reviewer` dédié (lecture seule), en début de session :
+les 6 dérives relevées correspondent exactement aux 6 issues alors ouvertes
+(`#374`–`#376`, `#378`–`#380`), 0 dérive additionnelle surprenante, 0
+nouvelle issue créée. `arbitre-match.md` résorbée en cours de session par le
+ticket `#376` ; `tv-live.md`, `admin-inscriptions.md`, `planning.md` restent
+⚠️ Dérive mineure (attendu, reste du sprint non implémenté).
+
+**Backlog engine session #165 :** 2 tickets traités séquentiellement, review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#374** (majeure) — `frontend/app/src/views/tv/TvPalmares.vue` (nouveau) +
+  `TvScoreboard.vue` — nouvel écran final permanent (toutes épreuves
+  `TERMINEE`) : poules à gauche + tableau final à droite avec vainqueur mis
+  en avant (`bracket.f[0].match.winnerSide`), réutilisant le balisage/CSS de
+  `TvIdle.vue` (poules en colonne, mini-tableau inchangé). Rotation ~10s par
+  épreuve. Bascule câblée dans `TvScoreboard.vue` (hero > fin de match >
+  palmarès > carousel), préemption automatique via le mécanisme `hero`
+  existant. Confié à un agent `vue-screen`. Reviewer : bascule et
+  non-crash du vainqueur vérifiés, `npx vue-tsc --noEmit` 0 erreur. Verdict :
+  ✅ Approuvé, une remarque cosmétique non bloquante (premier tick de
+  rotation raccourci au montage si plusieurs épreuves — comportement
+  préexistant identique à `TvIdle.vue`).
+- **#376** (majeure) — `frontend/app/src/views/arbitre/ArbitreMatch.vue` —
+  indicateur de service `●` remplacé par le SVG balle de tennis (même motif
+  que la TV) aux 4 emplacements (mobile + iPad), conditions `v-if`
+  inchangées (`leftModelSide`/`rightModelSide`, respecte `swap`). Nom du
+  serveur mis en avant en accent — piège évité sur la zone mobile
+  `.arb-mobile-tap--bottom` (fond déjà accent-coloré, texte noir :
+  `color: var(--accent)` y aurait été invisible, traitement de repli
+  `font-weight: 900` + `text-shadow` blanc). Confié à un agent `vue-screen`.
+  Reviewer : non-régression de la logique `swap`/`toggle_service` confirmée
+  par grep, résidus de l'ancienne classe vérifiés absents, `npx vue-tsc
+  --noEmit` 0 erreur. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 4 issues encore ouvertes sur le
+milestone (`#375`, `#378`–`#380`). Spec review encore ⚠️ sur 4 des 5 specs
+(attendu, le reste du sprint n'est pas implémenté). Sprint reste actif, sera
+repris à la **prochaine échéance planifiée**. Ordre suggéré par `sprint.md`
+pour la suite : `#375` (ETA, gros morceau back isolé, indépendant) ; puis
+`#378` (après `#377`, désormais clos) et `#380` (après `#375`) en
+finitions ; `#379` (même zone que `#371`, déjà clos) également prêt
+indépendamment.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable pour les
+deux tickets, vérifié indépendamment par l'agent `reviewer` à chaque fois.
+Toujours pas de script `type-check`/`lint` dans `package.json`, toujours pas
+de `.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur TV/arbitre réelle en session
+automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket) ont
+strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 19 sessions consécutives (#140-#165, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_165.md`.
+
+---
+
+**Historique — session #164 :**
 **Sprint traité :** 43 — Correctifs retours du 11 juillet
 (4ᵉ session du sprint). 8/14 tickets clos au total — `#367`, `#368`
 (session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
