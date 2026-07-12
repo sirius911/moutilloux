@@ -373,7 +373,30 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #169
+**Dernière session :** 2026-07-12 — Session #170
+
+**Sprint actif :** aucun — `backlog/sprints/roadmap.md` vide (tableau sans ligne). Confirmé
+côté GitHub : `gh api repos/sirius911/moutilloux/milestones` ne retourne aucun milestone
+(ouvert ou fermé), cohérent avec la clôture du sprint 43 à la session #169. Conforme au
+protocole (§3, Étape 0) : *Roadmap vide — tous les sprints terminés. Désactiver la Routine
+manuellement sur claude.ai/code/routines.* Session à vide — aucune spec review, aucun ticket
+backlog engine, aucun commit de code (seul le log de session a été créé). Branche
+`claude/sprint/43-retours-11-juillet` déjà checked-out, working tree propre au démarrage.
+
+**Observation annexe (signalée depuis la session #144, toujours non actionnée) :** deux
+dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors de `done/` et non
+référencés par `roadmap.md` : `04-admin-panel-map/` et `10-contexte-url/`. À investiguer par
+l'utilisateur avant de les considérer comme travail réellement en attente ou comme reliquats
+à archiver.
+
+Le prochain sprint devra être planifié manuellement (`/plan-sprint`) avant toute réactivation
+utile de la Routine.
+
+Log complet : `backlog/logs/session_2026-07-12_170.md`.
+
+---
+
+**Historique — session #169 :**
 **Sprint traité :** 43 — Correctifs retours du 11 juillet — **CLOS cette
 session** (9ᵉ et dernière session du sprint). 17/17 tickets clos au total —
 `#367`, `#368` (session #161), `#369`, `#370` (session #162), `#371`,
