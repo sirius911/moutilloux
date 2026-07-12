@@ -50,6 +50,7 @@ export const useLiveStore = defineStore('live', () => {
 
   // Match unique (écran arbitre) — polling de /api/matches/<id>/
   const match = ref<Match | null>(null)
+  let lastRequestedMatchId: number | string | null = null
 
   async function fetchTvState() {
     const previousHeroId = hero.value?.id ?? null
@@ -77,7 +78,14 @@ export const useLiveStore = defineStore('live', () => {
   }
 
   async function fetchMatch(matchId: number | string) {
+    if (matchId !== match.value?.id) {
+      match.value = null
+    }
+    lastRequestedMatchId = matchId
     const data = await get<{ match: Match }>(`/api/matches/${matchId}/`)
+    if (matchId !== lastRequestedMatchId) {
+      return // réponse périmée : une demande plus récente a pris le relais
+    }
     match.value = data.match
   }
 
