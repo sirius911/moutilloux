@@ -336,8 +336,16 @@ async function confirmLaunch() {
           :class="{ locked: !isPlaying || locked }"
           @click="handleTap('right')"
         >
-          <span class="arb-mobile-tap-name">{{ playerName(rightModelSide) }}</span>
-          <span v-if="match?.server === rightModelSide" class="serve-indicator">●</span>
+          <span
+            class="arb-mobile-tap-name"
+            :class="{ 'arb-mobile-tap-name--serving': match?.server === rightModelSide }"
+          >{{ playerName(rightModelSide) }}</span>
+          <span v-if="match?.server === rightModelSide" class="serve-ball">
+            <svg viewBox="0 0 24 24" width="30" height="30" style="filter: drop-shadow(0 0 6px #E8F35A)">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+            </svg>
+          </span>
           <span class="tap-cta">+ POINT</span>
         </button>
 
@@ -382,8 +390,16 @@ async function confirmLaunch() {
           @click="handleTap('left')"
         >
           <span class="tap-cta">+ POINT</span>
-          <span v-if="match?.server === leftModelSide" class="serve-indicator">●</span>
-          <span class="arb-mobile-tap-name">{{ playerName(leftModelSide) }}</span>
+          <span v-if="match?.server === leftModelSide" class="serve-ball">
+            <svg viewBox="0 0 24 24" width="30" height="30" style="filter: drop-shadow(0 0 6px #E8F35A)">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+            </svg>
+          </span>
+          <span
+            class="arb-mobile-tap-name"
+            :class="{ 'arb-mobile-tap-name--serving': match?.server === leftModelSide }"
+          >{{ playerName(leftModelSide) }}</span>
         </button>
 
         <!-- Action principale en pied (Démarrer / Lancer) -->
@@ -427,11 +443,19 @@ async function confirmLaunch() {
       <div class="arb-score-block">
         <!-- Joueur (côté gauche affiché) -->
         <div class="arb-score-player">
-          <span class="arb-player-label">{{ playerName(leftModelSide) }}</span>
+          <span
+            class="arb-player-label"
+            :class="{ 'arb-player-label--serving': match?.server === leftModelSide }"
+          >{{ playerName(leftModelSide) }}</span>
           <div class="arb-player-meta">
             <span>SETS {{ sideSets(leftModelSide) }}</span>
             <span>JEUX {{ sideGames(leftModelSide) }}</span>
-            <span v-if="match?.server === leftModelSide" class="serve-indicator">●</span>
+            <span v-if="match?.server === leftModelSide" class="serve-ball">
+              <svg viewBox="0 0 24 24" width="34" height="34" style="filter: drop-shadow(0 0 6px #E8F35A)">
+                <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+                <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+              </svg>
+            </span>
           </div>
         </div>
 
@@ -451,9 +475,17 @@ async function confirmLaunch() {
 
         <!-- Joueur (côté droit affiché) -->
         <div class="arb-score-player arb-score-player--right">
-          <span class="arb-player-label">{{ playerName(rightModelSide) }}</span>
+          <span
+            class="arb-player-label"
+            :class="{ 'arb-player-label--serving': match?.server === rightModelSide }"
+          >{{ playerName(rightModelSide) }}</span>
           <div class="arb-player-meta">
-            <span v-if="match?.server === rightModelSide" class="serve-indicator">●</span>
+            <span v-if="match?.server === rightModelSide" class="serve-ball">
+              <svg viewBox="0 0 24 24" width="34" height="34" style="filter: drop-shadow(0 0 6px #E8F35A)">
+                <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+                <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+              </svg>
+            </span>
             <span>SETS {{ sideSets(rightModelSide) }}</span>
             <span>JEUX {{ sideGames(rightModelSide) }}</span>
           </div>
@@ -948,10 +980,14 @@ async function confirmLaunch() {
   text-transform: uppercase;
 }
 
-.serve-indicator {
-  color: var(--ball-yellow);
+.serve-ball {
+  display: flex;
+  align-items: center;
   animation: serveFloat 1.8s ease-in-out infinite;
-  font-size: 14px;
+}
+
+.arb-player-label--serving {
+  color: var(--accent);
 }
 
 .arb-score-center {
@@ -1462,6 +1498,18 @@ async function confirmLaunch() {
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.01em;
+}
+
+/* Nom du serveur mis en avant — traitement différent selon le fond de la
+   zone (top = fond neutre, bottom = fond --accent où color:accent serait
+   invisible sur du texte déjà noir). */
+.arb-mobile-tap--top .arb-mobile-tap-name--serving {
+  color: var(--accent);
+}
+
+.arb-mobile-tap--bottom .arb-mobile-tap-name--serving {
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.85), 0 0 3px rgba(255, 255, 255, 0.9);
 }
 
 /* Score central */
