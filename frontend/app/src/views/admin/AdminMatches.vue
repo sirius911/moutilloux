@@ -924,6 +924,7 @@ async function onDragEnd() {
                     {
                       'no-drag': (element.data as Match).status !== 'SCHEDULED',
                       'is-foreign': isForeign(element.data as Match),
+                      'has-event-tag': multiEvent,
                     },
                     punctualityClass((element.data as Match).id),
                   ]"
@@ -1358,6 +1359,13 @@ async function onDragEnd() {
   transition: background 100ms;
 }
 
+/* Colonne dédiée à la pastille d'épreuve (multiEvent) : insérée avant la
+   colonne des noms (1fr) plutôt que de s'y insérer comme 4e enfant, sinon
+   elle hérite de cette colonne et s'étire sur tout l'espace restant. */
+.cal-row.has-event-tag {
+  grid-template-columns: 64px 14px auto auto 1fr auto 20px;
+}
+
 .cal-row:last-child { border-bottom: none; }
 .cal-row:hover { background: var(--bg-3); }
 
@@ -1631,5 +1639,6 @@ async function onDragEnd() {
   border-radius: 99px;
   white-space: nowrap;
   flex-shrink: 0;
+  justify-self: start;
 }
 </style>
