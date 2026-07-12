@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import TvIdle from './TvIdle.vue'
+import TvPalmares from './TvPalmares.vue'
 import TvTicker from './TvTicker.vue'
 
 const live = useLiveStore()
@@ -10,6 +11,12 @@ usePolling(() => live.fetchTvState(), 2000)
 usePolling(() => live.fetchTvIdle(), 10000)
 
 const isWarmupScene = computed(() => live.hero?.status === 'LIVE' && !live.hero?.playStartedAt)
+
+// PALMARÈS : édition terminée (toutes les épreuves TERMINEE) — écran final
+// permanent qui remplace le carousel (spec tv-live.md § État PALMARÈS).
+const allEventsFinished = computed(() =>
+  live.events.length > 0 && live.events.every(e => e.status === 'TERMINEE')
+)
 
 const WARMUP_DURATION_MS = 5 * 60 * 1000 // 5 min, constante indicative (cycle-de-vie-match.md)
 
@@ -84,6 +91,12 @@ function loserName(): string {
           <span v-if="live.finishedHero.endReason === 'RETIREMENT'" class="tv-finish-retirement">ABANDON</span>
         </div>
       </div>
+    </template>
+
+    <!-- ── État vide, édition terminée → écran PALMARÈS permanent ───────── -->
+    <template v-else-if="!live.hero && allEventsFinished">
+      <div class="court-bg" />
+      <TvPalmares />
     </template>
 
     <!-- ── État vide → carrousel TvIdle ─────────────────────────────────── -->
