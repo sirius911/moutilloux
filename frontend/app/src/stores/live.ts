@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApi } from '@/composables/useApi'
-import type { Match, TvState, TvStake, TvIdleData, TvStats, TvEvent, TvProgramme, TvAnnouncement } from '@/types'
+import type { Match, TvState, TvStake, TvIdleData, TvStats, TvEvent, TvProgramme, TvAnnouncement, TvIdleSlideKind } from '@/types'
 
 export const useLiveStore = defineStore('live', () => {
   const { get } = useApi()
@@ -52,6 +52,15 @@ export const useLiveStore = defineStore('live', () => {
   const match = ref<Match | null>(null)
   let lastRequestedMatchId: number | string | null = null
 
+  // État de rotation du carousel TvIdle — hissé hors du composant pour
+  // survivre à son démontage/remontage pendant un match (spec tv-live.md
+  // §Bascule d'état : le carousel reprend là où il s'était arrêté).
+  const idleDisplayedKind = ref<TvIdleSlideKind>('tournoi')
+  const idlePagerTick = ref(0)
+  const idleGroupsEventIndex = ref(0)
+  const idleBracketEventIndex = ref(0)
+  const idleProgrammeFinishedShown = ref(false)
+
   async function fetchTvState() {
     const previousHeroId = hero.value?.id ?? null
     const data = await get<TvState>('/api/tv/state/')
@@ -93,5 +102,7 @@ export const useLiveStore = defineStore('live', () => {
     hero, next, now, editionYear, stake, finishedHero,
     stats, recentResults, events, programme, announcements,
     match, fetchTvState, fetchTvIdle, fetchMatch,
+    idleDisplayedKind, idlePagerTick, idleGroupsEventIndex,
+    idleBracketEventIndex, idleProgrammeFinishedShown,
   }
 })

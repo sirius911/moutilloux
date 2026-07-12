@@ -1,23 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
-import type { Match } from '@/types'
+import type { Match, TvIdleSlideKind } from '@/types'
 
 const live = useLiveStore()
 
-// Index de rotation par épreuve, indépendants de l'index de slide global.
-const groupsEventIndex = ref(0)
-const bracketEventIndex = ref(0)
-
-// La slide "Programme terminé" ne doit s'afficher qu'une seule fois puis
-// être sautée aux rotations suivantes tant qu'elle reste `finished`.
-const programmeFinishedShown = ref(false)
-
-type SlideKind = 'tournoi' | 'results' | 'groups' | 'bracket' | 'programme' | 'announces' | 'poster'
+// Index de rotation par épreuve, et état de la slide affichée : hissés dans
+// le store `live` (survivent au démontage/remontage de ce composant pendant
+// un match — voir #379).
 
 interface SlideDef {
-  kind: SlideKind
+  kind: TvIdleSlideKind
 }
 
 const eventsWithGroups = computed(() =>
@@ -31,19 +25,19 @@ const eventsWithBracket = computed(() =>
 const currentGroupsEvent = computed(() => {
   const list = eventsWithGroups.value
   if (list.length === 0) return null
-  return list[groupsEventIndex.value % list.length]
+  return list[live.idleGroupsEventIndex % list.length]
 })
 
 const currentBracketEvent = computed(() => {
   const list = eventsWithBracket.value
   if (list.length === 0) return null
-  return list[bracketEventIndex.value % list.length]
+  return list[live.idleBracketEventIndex % list.length]
 })
 
 const programmeVisible = computed(() => {
   const p = live.programme
   if (p.day === 'finished') {
-    return p.upcoming.length > 0 || !programmeFinishedShown.value
+    return p.upcoming.length > 0 || !live.idleProgrammeFinishedShown
   }
   return p.upcoming.length > 0
 })
@@ -76,21 +70,12 @@ const SLIDES = computed<SlideDef[]>(() => {
 // deux ticks de rotation (`advance()`), indépendamment des recalculs de
 // SLIDES déclenchés par le polling `tv/idle`. Un rafraîchissement de données
 // ne change donc jamais la slide en cours de lecture (spec tv-live §Cadre).
-const displayedKind = ref<SlideKind>('tournoi')
-
-// Compteur technique incrémenté à chaque tick de rotation ou clic `goTo`,
-// utilisé comme clé de la pastille de progression : contrairement à
-// `displayedKind`, il change même quand la slide affichée reste la même
-// (composition à une seule slide), pour que le remplissage reparte de zéro
-// à chaque cycle de 8 s (voir spec tv-live §Cadre, pastille de progression).
-const pagerTick = ref(0)
-
-const currentSlide = computed<SlideKind>(() => displayedKind.value)
+const currentSlide = computed<TvIdleSlideKind>(() => live.idleDisplayedKind)
 
 // Position de la slide affichée dans la liste fraîche, pour le pager — par
 // recherche de kind, jamais par index brut.
 const displayedIndex = computed(() => {
-  const i = SLIDES.value.findIndex(s => s.kind === displayedKind.value)
+  const i = SLIDES.value.findIndex(s => s.kind === live.idleDisplayedKind)
   return i === -1 ? 0 : i
 })
 
@@ -101,30 +86,30 @@ function advance() {
   // Position (dans la liste fraîche) de la slide actuellement affichée ; si
   // elle a disparu de la composition (devenue vide), on avance depuis la
   // position qu'elle occuperait pour rester cohérent avec l'ordre déclaré.
-  const currentIndex = list.findIndex(s => s.kind === displayedKind.value)
+  const currentIndex = list.findIndex(s => s.kind === live.idleDisplayedKind)
 
   const nextIndex = (currentIndex + 1) % list.length
   const upcomingKind = list[nextIndex].kind
 
   if (upcomingKind === 'groups') {
-    groupsEventIndex.value = (groupsEventIndex.value + 1) % Math.max(eventsWithGroups.value.length, 1)
+    live.idleGroupsEventIndex = (live.idleGroupsEventIndex + 1) % Math.max(eventsWithGroups.value.length, 1)
   }
   if (upcomingKind === 'bracket') {
-    bracketEventIndex.value = (bracketEventIndex.value + 1) % Math.max(eventsWithBracket.value.length, 1)
+    live.idleBracketEventIndex = (live.idleBracketEventIndex + 1) % Math.max(eventsWithBracket.value.length, 1)
   }
   if (upcomingKind === 'programme' && live.programme.day === 'finished') {
-    programmeFinishedShown.value = true
+    live.idleProgrammeFinishedShown = true
   }
 
-  displayedKind.value = upcomingKind
-  pagerTick.value++
+  live.idleDisplayedKind = upcomingKind
+  live.idlePagerTick++
 }
 
 function goTo(i: number) {
   const target = SLIDES.value[i]
   if (!target) return
-  displayedKind.value = target.kind
-  pagerTick.value++
+  live.idleDisplayedKind = target.kind
+  live.idlePagerTick++
 }
 
 usePolling(async () => {
@@ -463,7 +448,7 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
         >
           <em
             v-if="i === displayedIndex"
-            :key="pagerTick"
+            :key="live.idlePagerTick"
             class="tv-idle-foot-pager-fill"
           />
         </i>

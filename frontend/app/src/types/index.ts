@@ -308,6 +308,10 @@ export interface TvEvent {
 
 export type TvProgrammeDay = 'today' | 'tomorrow' | 'finished'
 
+// Slide affichée par le carousel TvIdle — état hissé dans le store `live`
+// pour survivre au démontage/remontage du composant (voir #379).
+export type TvIdleSlideKind = 'tournoi' | 'results' | 'groups' | 'bracket' | 'programme' | 'announces' | 'poster'
+
 export interface TvProgramme {
   day: TvProgrammeDay
   playDay: PlayDay | null
