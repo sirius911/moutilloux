@@ -585,8 +585,9 @@ def reopen_match(match):
     Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
     match.is_featured = True
     match.winner_side = None
+    match.finished_at = None
     match.mark_live()  # repasse LIVE (+ started_at si besoin), conserve set_scores
-    match.save(update_fields=["is_featured", "winner_side"])
+    match.save(update_fields=["is_featured", "winner_side", "finished_at"])
 
     if match.stage == Match.Stage.GROUP and match.group_id:
         from competition.standings import recalc_one_group
