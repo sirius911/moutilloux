@@ -97,8 +97,9 @@ async function confirmForfait(winner: 'A' | 'B') {
 // Tiroir « Corrections » — jeux±, sets±, serveur, inversion d'affichage
 const correctionsOpen = ref(false)
 
-// Affichage swap — état local, en lock-step avec le flag de session back (voir plan #283)
-const swapped = ref(false)
+// Affichage swap — dérivé directement du flag de session back (plan #382),
+// jamais dupliqué en état local : survit à un rechargement de page en cours de match.
+const swapped = computed(() => !!match.value?.swap)
 
 function sideAt(pos: 'left' | 'right'): 'A' | 'B' {
   const base: 'A' | 'B' = pos === 'left' ? 'A' : 'B'
@@ -125,8 +126,7 @@ function sideTbPoints(side: 'A' | 'B'): number {
 }
 
 async function handleSwap() {
-  const ok = await sendAction('swap')
-  if (ok) swapped.value = !swapped.value
+  await sendAction('swap')
 }
 
 // Toast d'erreur (action refusée par le moteur de score → message JSON renvoyé)

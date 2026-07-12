@@ -214,7 +214,7 @@ def _format_label(m):
     return f"1 set à {m.games_to_win} · TB à {m.tb_at}"
 
 
-def _pack_match(m, eta_display=None):
+def _pack_match(m, eta_display=None, swap=False):
     if m is None:
         return None
 
@@ -270,6 +270,7 @@ def _pack_match(m, eta_display=None):
         "sideALabel": m.side_a_label,
         "sideBLabel": m.side_b_label,
         "server": m.server,
+        "swap": bool(swap),
         "matchFormat": m.match_format,
         "bestOf": m.best_of,
         "gamesToWin": m.games_to_win,
@@ -631,7 +632,8 @@ def api_match_detail(request, match_id):
         ),
         pk=match_id,
     )
-    return JsonResponse({"match": _pack_match(match)})
+    swap = bool(request.session.get(f"swap_match_{match_id}", False))
+    return JsonResponse({"match": _pack_match(match, swap=swap)})
 
 
 def _pack_event_bracket(event):
