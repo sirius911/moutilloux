@@ -1318,9 +1318,32 @@ def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHA
         event.qualified_per_group = _as_choice_int(qualified_per_group, (1, 2), "Le nombre de qualifiés par poule")
     if notes is not _NOCHANGE:
         event.notes = notes or ""
+
+    third_place_activated = False
+    p3_to_delete = None
     if has_third_place is not _NOCHANGE:
-        event.has_third_place = bool(has_third_place)
+        new_value = bool(has_third_place)
+        if new_value != event.has_third_place:
+            if new_value:
+                third_place_activated = True
+            else:
+                p3 = Match.objects.filter(event=event, stage=Match.Stage.P3, bracket_slot="P3").first()
+                if p3 and p3.status != Match.Status.SCHEDULED:
+                    raise ValueError(
+                        "Impossible de désactiver la petite finale : le match P3 est déjà en cours ou terminé."
+                    )
+                p3_to_delete = p3
+        event.has_third_place = new_value
+
     event.save()
+
+    if p3_to_delete is not None:
+        p3_to_delete.delete()
+    if third_place_activated:
+        from live.bracket import ensure_p3_slot_exists, sync_p3_losers_for_event
+        ensure_p3_slot_exists(event)
+        sync_p3_losers_for_event(event)
+
     return event
 
 

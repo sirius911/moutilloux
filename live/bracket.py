@@ -49,6 +49,16 @@ def _fmt_for_stage(stage) -> str:
     return Match.Format.NORMAL_1SET
 
 
+def _rules_for_fmt(fmt):
+    if fmt == Match.Format.QF_SET5_TB_5_5:
+        return dict(games_to_win=6, tb_at=5, best_of=1)
+    if fmt == Match.Format.NORMAL_1SET:
+        return dict(games_to_win=6, tb_at=6, best_of=1)
+    if fmt == Match.Format.BO3:
+        return dict(games_to_win=6, tb_at=6, best_of=3)
+    return dict(games_to_win=5, tb_at=4, best_of=1)
+
+
 def _bracket_layout(gnames, qpg):
     """
     Retourne la liste des slots (stage, slot_name, a_label, b_label)
@@ -142,15 +152,6 @@ def ensure_final_bracket_exists(event):
     if layout is None:
         return  # configuration non supportée
 
-    def _rules_for_fmt(fmt):
-        if fmt == Match.Format.QF_SET5_TB_5_5:
-            return dict(games_to_win=6, tb_at=5, best_of=1)
-        if fmt == Match.Format.NORMAL_1SET:
-            return dict(games_to_win=6, tb_at=6, best_of=1)
-        if fmt == Match.Format.BO3:
-            return dict(games_to_win=6, tb_at=6, best_of=3)
-        return dict(games_to_win=5, tb_at=4, best_of=1)
-
     for stage, slot, a_label, b_label in layout:
         fmt = _fmt_for_stage(stage)
         rules = _rules_for_fmt(fmt)
@@ -196,31 +197,42 @@ def ensure_final_bracket_exists(event):
         )
 
     # Slot P3 (petite finale) — créé seulement si l'épreuve le demande et qu'il y a au moins 2 SF
-    sf_count = sum(1 for (stage, _, _, _) in layout if stage == Match.Stage.SF)
-    if event.has_third_place and sf_count >= 2:
-        fmt = _fmt_for_stage(Match.Stage.P3)
-        rules = _rules_for_fmt(fmt)
-        exists = Match.objects.filter(event=event, stage=Match.Stage.P3, bracket_slot="P3").exists()
-        if not exists:
-            Match.objects.create(
-                edition=event.edition,
-                event=event,
-                stage=Match.Stage.P3,
-                bracket_slot="P3",
-                match_format=fmt,
-                side_a_label="LSF1",
-                side_b_label="LSF2",
-                status=Match.Status.SCHEDULED,
-                side_a=None,
-                side_b=None,
-                games_to_win=rules["games_to_win"],
-                tb_at=rules["tb_at"],
-                best_of=rules["best_of"],
-                tb_points_to_win=7,
-                tb_win_by_two=True,
-                deciding_set_mode=Match.DecidingSetMode.FULL_SET,
-                deciding_tb_points_to_win=10,
-            )
+    ensure_p3_slot_exists(event)
+
+
+def ensure_p3_slot_exists(event):
+    """
+    Service réutilisable : crée le slot P3 (petite finale) sur le tableau
+    existant si l'épreuve le demande (event.has_third_place) et qu'il y a
+    au moins 2 demi-finales. No-op si le slot existe déjà ou si les
+    conditions ne sont pas réunies.
+    """
+    sf_count = Match.objects.filter(event=event, stage=Match.Stage.SF).count()
+    if not (event.has_third_place and sf_count >= 2):
+        return
+    if Match.objects.filter(event=event, stage=Match.Stage.P3, bracket_slot="P3").exists():
+        return
+    fmt = _fmt_for_stage(Match.Stage.P3)
+    rules = _rules_for_fmt(fmt)
+    Match.objects.create(
+        edition=event.edition,
+        event=event,
+        stage=Match.Stage.P3,
+        bracket_slot="P3",
+        match_format=fmt,
+        side_a_label="LSF1",
+        side_b_label="LSF2",
+        status=Match.Status.SCHEDULED,
+        side_a=None,
+        side_b=None,
+        games_to_win=rules["games_to_win"],
+        tb_at=rules["tb_at"],
+        best_of=rules["best_of"],
+        tb_points_to_win=7,
+        tb_win_by_two=True,
+        deciding_set_mode=Match.DecidingSetMode.FULL_SET,
+        deciding_tb_points_to_win=10,
+    )
 
 
 def recreate_final_bracket_for_event(event, force=False):
