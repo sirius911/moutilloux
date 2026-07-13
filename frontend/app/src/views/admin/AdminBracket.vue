@@ -557,7 +557,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
               @dragstart="!placedEntryIds.has(item.entry.id) && onDragStart(item.entry.id)"
             >
               <span class="qp-seed">{{ item.label }}</span>
-              <span class="qp-name">{{ item.entry.player?.fullName ?? `Équipe ${item.entry.id}` }}</span>
+              <span class="qp-name">{{ item.entry.displayName }}</span>
               <span v-if="placedEntryIds.has(item.entry.id)" class="qp-placed">Placé en {{ placedEntrySlots.get(item.entry.id) }}</span>
               <span v-else class="grip">&#8942;&#8942;</span>
             </div>
