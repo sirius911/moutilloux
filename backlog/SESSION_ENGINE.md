@@ -373,7 +373,79 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-13 — Session #175
+**Dernière session :** 2026-07-13 — Session #176
+
+**Sprint actif :** aucun — roadmap vide. **Désactiver la Routine manuellement sur
+claude.ai/code/routines.**
+
+Sprint 44 — Correctifs retours du 12 juillet — **clôturé cette session** (6ᵉ et
+dernière session du sprint). 10/10 tickets déjà clos avant cette session
+(`#383`-`#391`, `#393` — voir historique #171-#175 ci-dessous), 0 issue ouverte
+au démarrage.
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au
+démarrage, working tree propre. Parent effectif `claude/sprint/43-retours-11-
+juillet` (résolu par l'algorithme de l'Étape 0, inchangé depuis les sessions
+#171-#175). `git merge origin/claude/sprint/43-retours-11-juillet --no-edit` :
+déjà à jour, aucun commit de rattrapage nécessaire. 1 commit cette session
+(clôture), push effectué.
+
+**Spec review session #176 :** les 6 specs ciblées — confiée à un agent
+`reviewer` dédié (lecture seule), avec consigne explicite de revérifier la
+correction #393 (`AdminBracket.vue:560`, `entry.displayName`) et l'absence de
+toute autre occurrence résiduelle du motif fautif `player?.fullName ?? label
+?? fallback` dans les 10 fichiers du sweep #388. Verdict : **6/6 specs
+✅ Conforme, 0 dérive** — correction #393 confirmée présente, aucune régression,
+`npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Réserves déjà connues
+non reticketées (précédent constant depuis #173/#174) : fallbacks contextuels
+volontaires TV/Arbitre, note rédactionnelle périmée
+`cycle-de-vie-epreuve.md:330-331`.
+
+**Backlog engine session #176 :** aucun ticket à traiter — 0 issue ouverte sur
+le milestone au démarrage.
+
+**Clôture du sprint 44 (Étape 3) :** les deux conditions sont réunies (spec
+review 6/6 ✅ cette session, 0 issue ouverte sur le milestone). Actions :
+milestone GitHub `#43` fermé (`state=closed`) ; ligne supprimée de
+`backlog/sprints/roadmap.md` ; dossier `44-retours-12-juillet/` déplacé vers
+`backlog/sprints/done/` (`git mv`) ; commit `95076aa`
+(`sprint-44 🏁 Clôture — 6/6 specs conformes, 10/10 tickets clos, milestone
+fermé`).
+
+**Roadmap relue après clôture : vide.** Aucun sprint suivant planifié. La
+Routine locale doit être **désactivée manuellement sur
+claude.ai/code/routines** — prochaine échéance planifiée sans travail à faire
+tant qu'un nouveau sprint n'est pas planifié en séance manuelle
+(`anthropic-skills:plan-sprint`, hors mandat du protocole automatique).
+
+**Note protocole — PR de fin de sprint :** pas de PR automatique créée cette
+session (§4 Étape 4 : condition « sprint encore dans `roadmap.md` » non
+remplie, le sprint venant d'en être retiré). Les 16 commits locaux de la
+branche `claude/sprint/44-retours-12-juillet` sont poussés sur `origin` ; la
+création d'une PR de merge vers `main` reste une action manuelle de
+l'utilisateur.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment par l'agent `reviewer`. Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de `.claude/launch.json`
+côté front.
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` invoqué cette
+session a strictement respecté son mandat de lecture seule — pattern stable
+sur au moins 29 sessions consécutives (#140-#176, sessions à vide comprises)
+depuis l'incident initial de la session #139. Aucun `ScheduleWakeup` utilisé.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — `04-admin-panel-map/` et `10-contexte-url/`, hors de
+`done/` et non référencés par `roadmap.md`, contenu strictement identique à
+leur version dans `done/`. Toujours à investiguer par l'utilisateur.
+
+Log complet : `backlog/logs/session_2026-07-13_176.md`.
+
+---
+
+**Historique — session #175 :**
 
 **Sprint actif :** 44 — Correctifs retours du 12 juillet (5ᵉ session du sprint).
 10/10 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
