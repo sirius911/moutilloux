@@ -505,6 +505,16 @@ def finalize_match_edit(match, was_live: bool = False, was_finished: bool = Fals
     if match.status == Match.Status.FINISHED:
         match.is_featured = False
 
+    if match.status == Match.Status.SCHEDULED and was_finished:
+        # Terminé → Prévu depuis le panneau d'édition (pas via Rouvrir/LIVE) :
+        # purger les champs de fin, sinon le Tableau final le voit terminé
+        # pendant que le calendrier/TV le proposent à jouer (#403). Le score
+        # saisi est conservé (même patron que reopen_match()).
+        match.winner_side = None
+        match.finished_at = None
+        match.end_reason = None
+        match.is_walkover = False
+
     if match.status == Match.Status.CANCELED:
         match.order_index = None
         match.scheduled_time = None
