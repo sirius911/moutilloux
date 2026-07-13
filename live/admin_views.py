@@ -551,6 +551,9 @@ def start_match(match):
     if match.side_a_id is None or match.side_b_id is None:
         raise ValueError("Les deux joueurs doivent être connus avant de démarrer le match.")
 
+    if match.order_index is None:
+        raise ValueError("Le match doit être planifié (calendrier) avant de pouvoir être démarré.")
+
     Match.objects.filter(edition=match.edition, is_featured=True).update(is_featured=False)
     match.is_featured = True
     match.mark_live()  # met status=LIVE + started_at si besoin

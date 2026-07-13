@@ -122,7 +122,14 @@ statut supplémentaire :
     avec la mise en avant côté admin ([[admin-matchs]], « mettre un match en avant ») ;
   - un match de **tableau dont un slot n'est pas résolu** (side manquant) est
     **refusé par le serveur** (erreur JSON) — on ne démarre pas un match sans
-    ses deux joueurs (voir [[planning]], matchs de tableau au calendrier).
+    ses deux joueurs (voir [[planning]], matchs de tableau au calendrier) ;
+  - un match **non planifié** (`order_index` `NULL`, encore dans la pile « à
+    planifier ») est **refusé par le serveur** (erreur JSON) — on ne démarre pas
+    un match qui n'a pas de place dans le calendrier. Sans cette garde, le match
+    passerait `LIVE` avec `order_index` toujours `NULL` et deviendrait invisible
+    du calendrier **et** de la file arbitre (tous deux filtrés sur `order_index`
+    non nul) — retour terrain 2026-07-13, finale de tableau démarrée depuis
+    l'admin sans être passée par la planification.
 - **Idempotence** : démarrer un match déjà `LIVE` est sans effet (pas d'erreur).
 
 ### Lancer le jeu — échauffement → jeu (choix du serveur)
@@ -255,6 +262,7 @@ l'**annulation** et le **renvoi à la pile « à planifier »** effacent l'`orde
 | Action `démarrer` exposée aussi côté **admin** | service partagé (existe côté arbitre) |
 | Phase d'échauffement (`warmup_started_at` / `play_started_at`, refus du scoring en échauffement, action « lancer le jeu ») | migration + évolution de `mark_live` / `referee_action` (retours TV 2026-07-08) |
 | Garde « slot non résolu » sur `démarrer` (matchs de tableau) | garde de service (retours TV 2026-07-08) |
+| Garde « non planifié » sur `démarrer` (`order_index` `NULL`) | garde de service (retour terrain 2026-07-13) |
 | `end_reason` (NORMAL/WALKOVER/RETIREMENT) | migration + câblage terminer/forfait faits (#279) ; câblage abandon (RETIREMENT) fait via `finish_match_manual` / action `finish_winner` (#281) |
 | Forfait / abandon / annulation **scopés au match** | services neufs (le walkover d'entry existe côté épreuve) |
 | `reopen` **conservant `set_scores`** et repassant `LIVE` | correction de bug |
