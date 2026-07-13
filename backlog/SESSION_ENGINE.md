@@ -373,7 +373,25 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-13 — Session #177
+**Dernière session :** 2026-07-13 — Session #178
+
+**Sprint actif :** aucun — roadmap vide (0 ligne). **Désactiver la Routine
+manuellement sur claude.ai/code/routines.**
+
+Roadmap vide depuis la clôture du sprint 44 à la session #176 (même jour).
+Session #178 : lecture de `backlog/sprints/roadmap.md` conforme au protocole
+étape 0, liste vide confirmée (2e session consécutive sans sprint planifié,
+après #177) → arrêt immédiat, aucune étape 1-4 exécutée, aucun changement de
+code, aucun commit. Log : `backlog/logs/session_2026-07-13_178.md`.
+
+Point d'attention non résolu (signalé depuis la session #144) : deux dossiers
+de sprint orphelins dans `backlog/sprints/` (`04-admin-panel-map/`,
+`10-contexte-url/`), hors de `done/` et non référencés par `roadmap.md`. À
+nettoyer côté humain.
+
+---
+
+**Historique — session #177 :**
 
 **Sprint actif :** aucun — roadmap vide (0 ligne). **Désactiver la Routine
 manuellement sur claude.ai/code/routines.**
