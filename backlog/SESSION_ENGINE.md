@@ -373,7 +373,115 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-13 — Session #174
+**Dernière session :** 2026-07-13 — Session #175
+
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (5ᵉ session du sprint).
+10/10 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
+`#383`, `#384` (session #173), `#388`, `#390` (session #174), `#391`, `#393`
+(cette session, `#393` créé et clos le même jour) ; **0 issue restante** sur le
+milestone, mais sprint non clos (voir ci-dessous).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au démarrage,
+working tree propre. Parent effectif `claude/sprint/43-retours-11-juillet` (résolu
+par l'algorithme de l'Étape 0 : existe sur `origin`, pas encore ancêtre
+d'`origin/main`, inchangé depuis les sessions #171-#174). `git merge origin/
+claude/sprint/43-retours-11-juillet --no-edit` : déjà à jour, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session, push effectué.
+
+**Spec review session #175 :** les 6 specs ciblées — confiée à un agent `reviewer`
+dédié (lecture seule), en tout début de session : `specs/transverse/
+affichage-participant.md` en ⚠️ Dérive mineure (nouvelle occurrence non ticketée,
+`AdminBracket.vue:560` — panneau « Qualifiés disponibles » lisant encore
+`entry.player?.fullName ?? \`Équipe ${id}\`` au lieu d'`entry.displayName`,
+reproduisant la classe de bug « TBD » pour le Double, hors périmètre du sweep
+#388 et à tort classée « exception » aux sessions précédentes) ; les 5 autres
+specs (`tv-live.md`, `admin-tableau-final.md`, `cycle-de-vie-epreuve.md`,
+`admin-tournoi.md`, `admin-matchs.md`) désormais ✅ Conforme, confirmant
+`#383`-`#390` clos aux sessions précédentes. Réserves non bloquantes déjà
+connues, non reticketées par précédent établi : réimplémentations locales du
+fallback (au lieu de `sideName()`) sur `TvIdle.vue`/`TvPalmares.vue`/
+`TvScoreboard.vue`/`TvTicker.vue`/`ArbitreMatch.vue` — décisions volontaires
+validées par le reviewer aux sessions #173/#174 (fallback contextuel
+« Vainqueur SF1 »/« Joueur A »/`—`/`?` préservé à dessein) ; note rédactionnelle
+périmée `cycle-de-vie-epreuve.md:330-331` (signalée depuis la session #173,
+artefact cosmétique sans impact fonctionnel). 1 dérive neuve créée en issue
+GitHub : `#393`.
+
+**Backlog engine session #175 :** 2 tickets traités séquentiellement, chacun
+implémenté **directement en session par l'orchestrateur** (pas d'agent
+`vue-screen`/`django-api` dédié) et soumis à un agent `reviewer` indépendant
+avant clôture :
+- **#391** (mineure, `infra`) — `frontend/app/src/stores/event.ts` (fichier
+  partagé réservé à l'orchestrateur) — garde d'identité
+  (`if (id !== activeEventId.value) return`) ajoutée sur `fetchPlayers`,
+  `fetchGroups`, `fetchMatches`, `fetchBracket`, même patron que `fetchMatch`
+  du store `live.ts` (ticket #370, sprint 43). `fetchCalendar` volontairement
+  exclu (clé d'identité différente — édition, pas épreuve). Plan :
+  `backlog/plan/391-event-store-garde-identite.md`. Reviewer : diff conforme
+  au plan, garde posée après chaque `await` et avant chaque assignation,
+  appelants existants vérifiés (aucun ne passe un `eventId` structurellement
+  différent de l'épreuve active en usage normal), `npx vue-tsc --noEmit`
+  vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, aucune réserve.
+- **#393** (créée et close cette session) — `frontend/app/src/views/admin/
+  AdminBracket.vue` (ligne 560, panneau « Qualifiés disponibles ») —
+  `item.entry.player?.fullName ?? \`Équipe ${item.entry.id}\`` remplacé par
+  `item.entry.displayName` (champ non optionnel déjà porté par `Entry`, pas
+  besoin de `sideName()` qui s'applique à un `side` de match, pas à une
+  `Entry` isolée). Correctif d'une seule ligne, portée entièrement
+  cartographiée par le rapport de spec review qui l'a détecté — précédent
+  établi depuis la session #168 pour ce type de correctif trivial. Plan :
+  `backlog/plan/393-adminbracket-qualifies-displayname.md`. Reviewer : diff
+  limité à la ligne attendue, `Entry.displayName` confirmé non optionnel
+  (aucun risque d'`undefined` affiché), CSS et logique de drag-and-drop du
+  panneau non touchés, `npx vue-tsc --noEmit` vérifié indépendamment (0
+  erreur). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 44 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review de cette session a précédé l'implémentation et a donc trouvé
+1 spec encore ⚠️, même si le ticket correspondant (#393) a été créé et clos
+ensuite ; précédent constant depuis la session #161, jamais de fermeture le
+jour même de la résorption du dernier ticket) : 0 issue ouverte sur le
+milestone en fin de session. Sprint reste actif, sera repris à la
+**prochaine échéance planifiée** : une spec review de confirmation devrait
+trouver les 6 specs ✅ Conforme (y compris `affichage-participant.md`,
+corrigé cette session) et 0 issue ouverte → clôture du milestone attendue
+dès la prochaine session, sauf nouvelle dérive détectée.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment trois fois cette session (orchestrateur × 2 + 2 agents
+`reviewer`, une fois par ticket). Toujours pas de script `type-check`/`lint`
+dans `package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur réelle en session automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 28 sessions consécutives (#140-#175, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé pour patienter sur les agents asynchrones (tous
+invoqués en premier plan, résultat direct).
+
+**Numérotation GitHub Issues — remarque :** l'issue créée cette session a
+reçu le numéro `#393` et non `#392` comme attendu par
+`gh issue list --json number --jq 'max + 1'` — `#392` avait déjà été
+consommé entre-temps par une pull request (numérotation partagée entre
+issues et PR sur GitHub). Titre corrigé après coup. Point d'attention pour
+les sessions futures : vérifier le numéro réel après création plutôt que de
+se fier au calcul `max + 1` avant création.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans `backlog/
+sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`, contenu strictement identique à
+leur version dans `done/`. Toujours à investiguer par l'utilisateur, non
+actionné cette session (hors mandat du backlog engine automatique).
+
+Log complet : `backlog/logs/session_2026-07-13_175.md`.
+
+---
+
+**Historique — session #174 :**
 
 **Sprint actif :** 44 — Correctifs retours du 12 juillet (4ᵉ session du sprint).
 8/9 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
