@@ -163,15 +163,15 @@ function formatIsoTime(iso: string): string {
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h')
 }
 
-// ETA simplifiée V1 (cf. plan #311) : scheduledTime est une donnée figée
-// renvoyée par le backend (position planifiée), pas recalculée dynamiquement
-// en cas de retard (contrairement au moteur ETA de AdminMatches.vue).
+// scheduledTime est déjà préfixé « ~ » côté serveur pour un match SCHEDULED
+// (ETA recalculée en continu, cf. specs/technical/planning.md), et sans
+// préfixe pour l'heure réelle d'un match LIVE/FINISHED — aucun re-préfixe ici.
 function matchTimeLabel(m: Match): string {
   if (m.status === 'FINISHED') {
     const iso = m.startedAt ?? m.finishedAt
-    return iso ? formatIsoTime(iso) : (m.scheduledTime ? `~${m.scheduledTime}` : '—')
+    return iso ? formatIsoTime(iso) : (m.scheduledTime ?? '—')
   }
-  return m.scheduledTime ? `~${m.scheduledTime}` : '—'
+  return m.scheduledTime ?? '—'
 }
 </script>
 

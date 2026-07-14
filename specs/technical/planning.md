@@ -154,6 +154,13 @@ du serveur.
 Les heures publiques sont affichées **approximatives** (préfixe `~`), voir
 [[tv-live]].
 
+**Format canonique du préfixe `~` (arbitrage 2026-07-14, #398).** Le préfixe
+`~` fait partie de la chaîne `scheduledTime` renvoyée par le serveur — il
+n'est **jamais** ajouté côté client. Un client qui affiche `scheduledTime`
+l'affiche tel quel (`m.scheduledTime ?? '—'`), sans re-préfixer, sous peine
+de double tilde (`~~14h30`) sur un match `SCHEDULED`, ou d'un `~` erroné sur
+l'heure réelle d'un match `LIVE`/`FINISHED`.
+
 **Heures au-delà de minuit (arbitrage 2026-07-14, #397).** Le curseur `t` est
 un entier de minutes **continu, jamais wrappé pendant le calcul** — ancré sur
 la date de la journée (`play_day.date`/`day.date`), pas sur l'heure brute d'un

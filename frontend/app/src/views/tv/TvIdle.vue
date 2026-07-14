@@ -379,7 +379,7 @@ const winnerName = computed(() => {
               :key="m.id"
               :class="['tv-prog-row', { bientot: i === 0 }]"
             >
-              <span class="tv-prog-time tab">~{{ m.scheduledTime ?? '—' }}</span>
+              <span class="tv-prog-time tab">{{ m.scheduledTime ?? '—' }}</span>
               <div class="tv-prog-match">
                 <span class="tv-prog-name">{{ sideName(m.sideA, m.sideALabel) }}</span>
                 <em class="tv-prog-vs">vs</em>
@@ -420,7 +420,7 @@ const winnerName = computed(() => {
           :style="{ backgroundImage: `url(${live.next.posterUrl})` }"
         />
         <div v-if="live.next" class="tv-slide-poster-band">
-          <span v-if="live.next.scheduledTime" class="tv-slide-poster-time tab">~{{ live.next.scheduledTime }}</span>
+          <span v-if="live.next.scheduledTime" class="tv-slide-poster-time tab">{{ live.next.scheduledTime }}</span>
           <span class="tv-slide-poster-side">{{ nextPlayerName('A') }}</span>
           <em class="tv-slide-poster-vs">vs</em>
           <span class="tv-slide-poster-side">{{ nextPlayerName('B') }}</span>

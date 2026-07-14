@@ -119,9 +119,9 @@ function formatIsoTime(iso: string): string {
 function matchTimeLabel(m: Match): string {
   if (m.status === 'FINISHED') {
     const iso = m.startedAt ?? m.finishedAt
-    return iso ? formatIsoTime(iso) : (m.scheduledTime ? `~${m.scheduledTime}` : '—')
+    return iso ? formatIsoTime(iso) : (m.scheduledTime ?? '—')
   }
-  return m.scheduledTime ? `~${m.scheduledTime}` : '—'
+  return m.scheduledTime ?? '—'
 }
 
 function formatDate(dateStr: string): string {

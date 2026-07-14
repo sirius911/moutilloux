@@ -595,7 +595,7 @@ async function save() {
                 </label>
                 <div class="fld">
                   <span class="fld-lbl">Heure estimée</span>
-                  <span class="inp inp-ro">{{ match.scheduledTime ? '~' + match.scheduledTime : '—' }}</span>
+                  <span class="inp inp-ro">{{ match.scheduledTime ?? '—' }}</span>
                 </div>
                 <div class="fld">
                   <span class="fld-lbl">Court</span>

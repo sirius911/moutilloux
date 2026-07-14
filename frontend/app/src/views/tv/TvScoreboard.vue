@@ -119,7 +119,7 @@ function loserName(): string {
       <div v-if="live.next" class="tv-prep">
         <i class="tv-prep-bar" />
         <div class="tv-prep-head">
-          <span class="tv-prep-lbl">À PRÉPARER · ~{{ live.next.scheduledTime }}</span>
+          <span class="tv-prep-lbl">À PRÉPARER · {{ live.next.scheduledTime }}</span>
           <span class="tv-prep-stage">{{ live.next.stageLabel }}</span>
         </div>
         <div class="tv-prep-players">
