@@ -2423,7 +2423,7 @@ def api_tv_idle(request):
         .order_by("-finished_at")[:5]
     )
 
-    announcements = Announcement.objects.filter(edition=edition, is_active=True).order_by("created_at")
+    announcements = Announcement.objects.filter(edition=edition, is_active=True)
 
     return JsonResponse({
         "stats": _pack_tv_stats(edition),
