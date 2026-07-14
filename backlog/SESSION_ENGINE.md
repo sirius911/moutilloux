@@ -373,7 +373,71 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-14 — Session #186
+**Dernière session :** 2026-07-14 — Session #187
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 16/17
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410`, `#405`, `#400`, `#409`, `#407`, `#411`,
+`#406`) ; 1 restant (`#412`, `en-attente`, inchangé depuis la session #186).
+
+**Session #187.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#186) ; `git merge` no-op (déjà à jour). 2
+commits cette session (1 spec review + 1 log de session, 0 ticket — seule
+issue ouverte du sprint est `#412`, `en-attente`, exclue par construction),
+push effectué (PR #404 déjà ouverte, aucune action).
+
+**Spec review session #187** (agent `reviewer` dédié, lecture seule, lancé en
+tout premier plan — `run_in_background: false` — verdict complet attendu
+avant toute autre action ; correction stricte du point d'attention de
+séquencement récidivant en session #186) : 7 specs ciblées, 6 ✅ Conforme
+(`admin-shell.md`, `admin-tournoi.md`, `erreurs-api.md`, `planning.md`,
+`cycle-de-vie-match.md`, `cycle-de-vie-epreuve.md`), 1 ⚠️ Dérive mineure
+(`admin-regie-mobile.md`). L'unique écart relevé est exactement le contenu
+de l'issue `#412` (ouverte, `en-attente`) — confirmé inchangé, **0 dérive
+surprise**. `npx vue-tsc --noEmit`, `.venv/bin/python manage.py check` et
+`makemigrations --check --dry-run` vérifiés indépendamment (0 erreur/0
+changement chacun). Suggestion non bloquante notée (hors mandat, aucune
+action) : `stores/event.ts::generateMatches` n'a plus d'appelant, ménage
+possible pour une session future.
+
+**Backlog engine session #187** : liste des issues ouvertes du milestone —
+uniquement `#412`, label `en-attente`, exclue par construction du protocole.
+**0 ticket traité** (rien d'éligible, pas une anomalie).
+
+**Sprint 45 non clos cette session** (même situation que la session #186,
+attendue) : condition « 0 issue ouverte hors `en-attente` » remplie,
+condition « spec review ✅ Conforme sur toutes les specs » non remplie
+(`admin-regie-mobile.md` reste ⚠️ tant que `#412` est ouvert). Sprint reste
+actif. **Aucune action possible pour les sessions automatiques suivantes**
+tant que `#412` n'est pas arbitré par un humain — le statu quo (spec review
+identique, 0 ticket disponible) se reproduira indéfiniment aux prochaines
+échéances planifiées.
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+corrigé cette session — rien d'autre n'a été fait entre le lancement de
+l'agent de spec review et son retour complet (agent lancé au premier plan).
+
+**Point d'attention protocole (reviewer) :** l'unique agent `reviewer`
+invoqué cette session a strictement respecté son mandat de lecture seule —
+pattern stable sur au moins 37 sessions consécutives (#140-#187, sessions à
+vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé (pas d'attente en arrière-plan à gérer).
+
+**Point d'attention pour l'utilisateur — inchangé depuis la session #186 :
+sprint 45 nécessite une décision humaine pour se clôturer.** `#412` (teinte
+de ponctualité `AdminRegie.vue` vs. règles citées de `planning.md`) reste
+`en-attente`, jamais sélectionnée par le backlog engine — voir
+`specs/need_spec/412-adminregie-ponctualite-simplifiee.md` pour les deux
+options d'arbitrage. Sans décision, les sessions automatiques suivantes
+continueront de ne rien avoir à faire.
+
+Log complet : `backlog/logs/session_2026-07-14_187.md`.
+
+---
+
+**Historique — session #186 :**
 
 **Sprint actif :** 45 — Correctifs review globale du 13 juillet. 16/17
 tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
