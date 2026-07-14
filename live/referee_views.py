@@ -390,7 +390,7 @@ def referee_action(request, match_id: int):
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
             "status", "is_featured",
-            "winner_side", "end_reason",
+            "winner_side", "end_reason", "finished_at",
         ])
         return JsonResponse({"ok": True})
 
@@ -404,7 +404,7 @@ def referee_action(request, match_id: int):
             "server",
             "tb_active", "tb_points_a", "tb_points_b",
             "status", "is_featured",
-            "winner_side", "end_reason",
+            "winner_side", "end_reason", "finished_at",
         ])
         return JsonResponse({"ok": True})
 
@@ -465,7 +465,7 @@ def referee_action(request, match_id: int):
             "sets_a", "sets_b",
             "set_scores",
             "status", "is_featured",
-            "winner_side",
+            "winner_side", "end_reason", "finished_at",
         ])
         return JsonResponse({"ok": True})
 
@@ -490,7 +490,7 @@ def referee_action(request, match_id: int):
             "sets_a", "sets_b",
             "set_scores",
             "status", "is_featured",
-            "winner_side",
+            "winner_side", "end_reason", "finished_at",
         ])
         return JsonResponse({"ok": True})
 

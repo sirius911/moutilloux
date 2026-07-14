@@ -373,14 +373,179 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-10 — Session #160
-**Sprint traité :** aucun — `backlog/sprints/roadmap.md` toujours vide
-(sprint 42 clos à la session #159). Conformément à l'étape 0 du protocole,
-la session s'est arrêtée sans exécuter les étapes 1 à 4. Working tree propre
-au démarrage, aucun changement de code, aucun commit de code.
+**Dernière session :** 2026-07-12 — Session #170
 
-**5ᵉ session à vide consécutive depuis la clôture du sprint 42.** Aucun
-sprint suivant planifié depuis.
+**Sprint actif :** aucun — `backlog/sprints/roadmap.md` vide (tableau sans ligne). Confirmé
+côté GitHub : `gh api repos/sirius911/moutilloux/milestones` ne retourne aucun milestone
+(ouvert ou fermé), cohérent avec la clôture du sprint 43 à la session #169. Conforme au
+protocole (§3, Étape 0) : *Roadmap vide — tous les sprints terminés. Désactiver la Routine
+manuellement sur claude.ai/code/routines.* Session à vide — aucune spec review, aucun ticket
+backlog engine, aucun commit de code (seul le log de session a été créé). Branche
+`claude/sprint/43-retours-11-juillet` déjà checked-out, working tree propre au démarrage.
+
+**Observation annexe (signalée depuis la session #144, toujours non actionnée) :** deux
+dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors de `done/` et non
+référencés par `roadmap.md` : `04-admin-panel-map/` et `10-contexte-url/`. À investiguer par
+l'utilisateur avant de les considérer comme travail réellement en attente ou comme reliquats
+à archiver.
+
+Le prochain sprint devra être planifié manuellement (`/plan-sprint`) avant toute réactivation
+utile de la Routine.
+
+Log complet : `backlog/logs/session_2026-07-12_170.md`.
+
+---
+
+**Historique — session #169 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet — **CLOS cette
+session** (9ᵉ et dernière session du sprint). 17/17 tickets clos au total —
+`#367`, `#368` (session #161), `#369`, `#370` (session #162), `#371`,
+`#373` (session #163), `#377`, `#372` (session #164), `#374`, `#376`
+(session #165), `#375`, `#378` (session #166), `#382`, `#379` (session
+#167), `#380` (session #168) ; **0 issue restante** sur le milestone,
+0 nouveau ticket traité cette session (pure spec review de clôture).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge-base
+--is-ancestor origin/main HEAD` positif d'emblée, aucun commit de
+rattrapage nécessaire. 1 commit cette session (housekeeping de clôture,
+aucun code applicatif touché).
+
+**Spec review session #169 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— confiée à un agent `reviewer` dédié (lecture seule) — sont désormais
+**toutes ✅ Conforme**, confirmant `#380` (clos à la session #168 :
+`AdminMatches.vue::matchTimeDisplay` conforme à `planning.md` §« Où vit le
+calcul »). Aucune dérive bloquante ni moyenne, 0 nouvelle issue créée.
+`npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Une observation
+non bloquante et non ticketée (hors du contrat écrit de la spec) :
+`TvPalmares.vue` gère la rotation d'épreuve en `ref` local plutôt que
+hissée dans le store `live` comme `TvIdle.vue`/#379 — perdrait sa position
+au remontage de l'écran ; laissé à l'appréciation humaine.
+
+**Backlog engine session #169 :** aucun ticket à traiter (0 issue ouverte
+sur le milestone au démarrage de la session).
+
+**Sprint 43 clos cette session** — les deux conditions de l'Étape 3 sont
+réunies (spec review de cette session ✅ Conforme sur les 5 specs + 0 issue
+ouverte) : milestone GitHub fermé (`gh api … state=closed`, 15 issues
+closes / 0 ouverte), ligne supprimée de `backlog/sprints/roadmap.md`,
+dossier déplacé vers `backlog/sprints/done/43-retours-11-juillet/`.
+
+**Roadmap vide après clôture.** Aucun sprint suivant en attente. Conforme
+au protocole (§3, Étape 0) : *Roadmap vide — tous les sprints terminés.
+Désactiver la Routine manuellement sur claude.ai/code/routines.* Le
+prochain sprint devra être planifié manuellement (`/plan-sprint`) avant
+toute réactivation utile de la Routine.
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` invoqué
+cette session (spec review dédiée, lecture seule) a strictement respecté
+son mandat — pattern stable sur au moins 23 sessions consécutives
+(#140-#169, sessions à vide comprises) depuis l'incident initial de la
+session #139. Aucun `ScheduleWakeup` utilisé pour patienter sur l'agent
+asynchrone.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md`
+(vide de toute façon maintenant) : `04-admin-panel-map/` et
+`10-contexte-url/`. À investiguer par l'utilisateur avant de les considérer
+comme travail réellement en attente ou comme reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_169.md`.
+
+---
+
+**Historique — session #168 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(8ᵉ session du sprint). 15/17 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
+#163), `#377`, `#372` (session #164), `#374`, `#376` (session #165), `#375`,
+`#378` (session #166), `#382`, `#379` (session #167), `#380` (cette
+session) ; **0 issue restante** sur le milestone.
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge-base
+--is-ancestor origin/main HEAD` positif d'emblée, aucun commit de
+rattrapage nécessaire. 1 commit de code cette session.
+
+**Spec review session #168 :** les 5 specs ciblées — confiée à un agent
+`reviewer` dédié (lecture seule), en début de session, **avant** le
+traitement du ticket #380 : `tv-live.md`, `tv-state.md`, `arbitre-match.md`
+et `admin-inscriptions.md` désormais ✅ Conforme (confirme #379/#382 clos à
+la session #167) ; seul `planning.md` reste ⚠️ Dérive mineure — la dérive
+relevée (`AdminMatches.vue` affichant encore l'ETA locale au repos)
+correspond exactement à l'unique issue alors ouverte (`#380`), 0 dérive
+additionnelle surprenante, 0 nouvelle issue créée. Remarque hors-scope non
+ticketée (préexistante, sprint 15, déjà signalée en filigrane depuis
+plusieurs sessions) : nom d'action `terminer` (texte de la spec
+`arbitre-match.md`) vs `finish_winner` (code), divergence cosmétique de
+nommage sans impact fonctionnel.
+
+**Backlog engine session #168 :** 1 seul ticket restait sur le milestone
+(`#380`, mineure) — traité seul, pas de second ticket disponible :
+- **#380** (mineure) — `frontend/app/src/views/admin/AdminMatches.vue`
+  (seul fichier touché) — nouvelle fonction `matchTimeDisplay(match: Match)`
+  : pendant un drag (`dragging.value === true`) retourne la valeur du moteur
+  local `etaEngine` (préview) ; au repos retourne directement
+  `match.scheduledTime` (ETA calculée à la lecture côté serveur par
+  `compute_day_eta_map`, livrée par `#375`). Le template (`cal-time` d'une
+  ligne de match) appelle désormais cette fonction au lieu de lire
+  `computedETAs` sans condition. Les pauses (`b-${id}`) et le total de fin
+  de journée (`day-end-${id}`) — sans équivalent serveur — restent
+  intégralement sur le moteur local, de même que l'indicateur de
+  ponctualité (dérivé front, spec inchangée). Traité **directement en
+  session** (aucun agent `vue-screen` — portée d'un seul fichier, patch
+  ciblé de ~10 lignes, pas de portage d'écran). Plan écrit au préalable
+  dans `backlog/plan/380-admin-matches-eta-serveur.md` (non versionné).
+  Reviewer (agent `reviewer` indépendant) : `git diff --stat` limité au
+  seul fichier attendu ; flux `dragging`/`onDragEnd`/`reorderCalendar`
+  retracé dans le code (pas supposé) — `reorderCalendar` (`stores/
+  event.ts`) attend un `fetchCalendar()` interne avant que `onDragEnd` ne
+  repasse `dragging.value = false`, donc aucune fenêtre d'affichage
+  incohérente entre la fin du drag et les données serveur fraîches ; cas
+  d'échec du `reorderCalendar` retombe proprement sur l'état serveur réel
+  (pas de blocage sur une preview erronée) ; format `scheduledTime` du
+  serveur (`~HHhMM`/`HHhMM`) confirmé cohérent avec le reste de l'app (TV,
+  arbitre, autres écrans admin) — le changement corrige au passage une
+  incohérence de format préexistante (l'ancien moteur local affichait
+  `HH:MM`) plutôt que d'en introduire une ; `npx vue-tsc --noEmit` vérifié
+  indépendamment (0 erreur). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 NON clos cette session, malgré 0 issue ouverte** — lecture
+stricte du protocole (Étape 3) : la fermeture exige que **la spec review de
+cette session** ait rendu ✅ Conforme sur les 5 specs ciblées ; or celle-ci
+a eu lieu **avant** l'implémentation de `#380` (ordre normal du protocole,
+Étape 1 précède l'Étape 2) et a donc trouvé `planning.md` encore ⚠️. Même
+lecture stricte suivie sans exception depuis la session #161 (jamais de
+fermeture le jour même de la résorption du dernier ticket, toujours un
+passage de spec review de confirmation à la session suivante). La
+**prochaine échéance planifiée** effectuera une nouvelle spec review qui
+devrait trouver les 5 specs ✅ Conforme (0 issue ouverte en base) et
+fermera alors le sprint (milestone, suppression de la ligne roadmap,
+déplacement du dossier vers `done/`).
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment par l'agent `reviewer`. Ticket purement front, pas de
+vérification back nécessaire cette session. Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur admin réelle en session automatisée,
+flux drag-and-drop retracé analytiquement dans le code).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + une review de ticket) ont
+strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 22 sessions consécutives (#140-#168, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé pour patienter en boucle sur les agents
+asynchrones : uniquement des `ScheduleWakeup` de repli à échéance longue
+(20 min) posés une seule fois par attente, en complément de la
+task-notification normale (conforme à `feedback_schedulewakeup_reentry` —
+pas de reprogrammation du prompt de démarrage du protocole). Un
+`ScheduleWakeup(stop: true)` a été appelé par erreur en cours de session
+(sans effet visible, immédiatement suivi d'un nouveau `ScheduleWakeup` de
+repli valide) — sans conséquence sur le protocole, noté pour mémoire.
 
 **Observation annexe (signalée depuis la session #144, toujours non
 actionnée) :** deux dossiers de sprint orphelins subsistent dans
@@ -389,11 +554,560 @@ actionnée) :** deux dossiers de sprint orphelins subsistent dans
 avant de les considérer comme travail réellement en attente ou comme
 reliquats à archiver.
 
-**Roadmap vide.** Aucun sprint en attente — **désactiver la Routine
-manuellement sur claude.ai/code/routines**, ou planifier un nouveau sprint
-(`/plan-sprint`) avant la prochaine échéance.
+Log complet : `backlog/logs/session_2026-07-12_168.md`.
 
-Log complet : `backlog/logs/session_2026-07-10_160.md`.
+---
+
+**Historique — session #166 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(6ᵉ session du sprint). 12/17 tickets clos au total (le sprint est passé de
+14 à 17 tickets au fil des sessions, une nouvelle dérive ticketée par
+session en moyenne) — `#367`, `#368` (session #161), `#369`, `#370`
+(session #162), `#371`, `#373` (session #163), `#377`, `#372` (session
+#164), `#374`, `#376` (session #165), `#375`, `#378` (cette session) ; 3
+restants (`#379`, `#380`, `#382`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge-base
+--is-ancestor origin/main HEAD` positif d'emblée, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session (+ ce commit de log).
+
+**Spec review session #166 :** les 5 specs ciblées — confiée à un agent
+`reviewer` dédié (lecture seule), en début de session : `tv-live.md`,
+`tv-state.md` et `planning.md` désormais ✅ Conforme (dérives résiduelles
+correspondant exactement à `#375`/`#379`/`#380`, déjà ouvertes) ;
+`arbitre-match.md` et `admin-inscriptions.md` restent ⚠️ Dérive mineure. Une
+dérive **nouvelle et surprenante** trouvée sur `arbitre-match.md` : le flag
+`swap` (inversion des côtés) n'est stocké qu'en session Django
+(`live/referee_views.py:57-58`) et jamais exposé au front —
+`ArbitreMatch.vue` réinitialise son ref local `swapped` à chaque montage,
+désynchronisant l'affichage de la logique serveur de mapping gauche/droite
+après un reload en cours de match swappé. Issue créée : `#382` (majeure).
+Deux notes non ticketées, laissées à l'appréciation humaine : nom d'action
+`terminer` (spec) vs `finish_winner` (code), cosmétique ; bifurcation
+Retirer/Forfait selon le statut de l'épreuve dans `admin-inscriptions.md`,
+amélioration UX plausible mais divergente du texte de la spec. Housekeeping
+appliqué directement par l'orchestrateur : ajout de `TvPalmares.vue`
+(livré au ticket `#374`, session #165) à l'en-tête `fichiers:` de
+`tv-live.md`, qui ne le listait pas encore.
+
+**Backlog engine session #166 :** 2 tickets traités séquentiellement, review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#375** (majeure, `infra`) — `live/admin_views.py` (nouvelle fonction de
+  service `compute_day_eta_map` + helpers, purement additive) +
+  `live/api_views.py` (`_pack_match` gagne un paramètre optionnel
+  `eta_display=None` rétrocompatible, branché sur les 4 surfaces citées par
+  le ticket : `_pack_calendar_play_days` → calendrier admin + programme
+  arbitre, `api_tv_state`/next, `api_arbitre_matches`/next,
+  `_pack_tv_programme`/upcoming) — porte côté serveur, à la lecture,
+  l'algorithme ETA (curseur monotone) jusque-là seulement présent côté front
+  (`AdminMatches.vue::etaEngine`, désormais réduit à la preview de drag,
+  #380 branchera l'affichage au repos dessus). Simplification retenue (hors
+  issue, déduite à la planification) : LIVE/FINISHED avec `started_at`/
+  `finished_at` posé affichent directement l'heure réelle sans rejouer le
+  curseur — seul celui-ci s'applique aux SCHEDULED, ce qui évite de rejouer
+  toute la journée à chaque `_pack_match`. Confié à un agent `django-api`
+  d'après un plan détaillé écrit par l'orchestrateur
+  (`backlog/plan/375-eta-service-commun.md`, incluant le code exact des
+  fonctions). Reviewer : logique de curseur tracée à la main et comparée
+  ligne à ligne au moteur front (alignement exact, y compris le tri mixte
+  order_index global/local volontairement identique, non « corrigé ») ; 15
+  appels existants de `_pack_match(m)` sans le nouveau paramètre confirmés
+  non cassés ; pas de cycle d'import ; `manage.py check` 0 erreur (vérifié
+  indépendamment) ; smoke test réel sur la base de dev. Verdict : ⚠️ Approuvé
+  avec réserves — réserve purement procédurale (fichiers hors périmètre de
+  la spec review détectés dans l'arbre au moment de la review, exclus du
+  commit par un `git add` ciblé) ; suggestion non bloquante sur la
+  mémoïsation par requête, déjà anticipée par le ticket.
+- **#378** (mineure) — `frontend/app/src/components/modals/CreateTeamModal.vue`
+  — nouveau `computed` `playersInTeams` (dérivé de `eventStore.players`,
+  sans filtrer sur `withdrawn` pour rester cohérent avec le garde-fou
+  serveur `#377` qui n'en tient pas compte non plus), filtre étendu dans
+  `filteredForSlot()`. Confié à un agent `vue-screen` (modification ciblée
+  d'un composant existant, pas de portage d'écran). Reviewer : diff
+  strictement conforme au plan ; edge case joueur Simple confirmé non
+  affecté ; `AdminInscriptions.vue` confirmé inutile à modifier
+  (`eventStore.createTeam()` recharge déjà `players` après création) ;
+  message d'erreur serveur (filet) conservé ; `npx vue-tsc --noEmit` 0
+  erreur (vérifié indépendamment). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 3 issues encore ouvertes sur le
+milestone (`#379`, `#380`, `#382`). Spec review encore ⚠️ sur 2 des 5 specs
+(`arbitre-match.md` à cause de la nouvelle `#382`, `admin-inscriptions.md`
+sans dérive ouverte restante mais une note non actionnée). Sprint reste
+actif, sera repris à la **prochaine échéance planifiée**. Ordre suggéré :
+`#380` (après `#375`, désormais clos — AdminMatches peut consommer le
+`scheduledTime` serveur) ; `#379` (rotation carousel, indépendant) ; `#382`
+(nouveau, arbitre — resynchronisation du swap au reload, indépendant).
+
+**Point d'attention outillage :** `manage.py check` et `npx vue-tsc
+--noEmit` fiables pour les deux tickets, chacun vérifié indépendamment par
+l'agent `reviewer`. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur TV/arbitre/admin réelle en session automatisée).
+
+**Point d'attention protocole (reviewer) :** les quatre agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 20 sessions consécutives (#140-#166, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones (conformément à
+`feedback_schedulewakeup_reentry`). Nouveau point relevé cette session : le
+reviewer de #375 a correctement identifié et signalé des fichiers hors
+périmètre laissés non committés dans l'arbre de travail par l'étape de spec
+review précédente (`log.md`, `tv-live.md`) — l'orchestrateur les a exclus du
+commit du ticket via un `git add` ciblé plutôt qu'un `git add -A`, confirmant
+la valeur de la review indépendante même sur des aspects purement
+procéduraux.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_166.md`.
+
+---
+
+**Historique — session #165 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(5ᵉ session du sprint). 10/14 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
+#163), `#377`, `#372` (session #164), `#374`, `#376` (cette session) ; 4
+restants (`#375`, `#378`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git merge
+origin/main` déjà à jour d'emblée, aucun commit de rattrapage nécessaire.
+2 commits de code cette session.
+
+**Spec review session #165 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— confiée à un agent `reviewer` dédié (lecture seule), en début de session :
+les 6 dérives relevées correspondent exactement aux 6 issues alors ouvertes
+(`#374`–`#376`, `#378`–`#380`), 0 dérive additionnelle surprenante, 0
+nouvelle issue créée. `arbitre-match.md` résorbée en cours de session par le
+ticket `#376` ; `tv-live.md`, `admin-inscriptions.md`, `planning.md` restent
+⚠️ Dérive mineure (attendu, reste du sprint non implémenté).
+
+**Backlog engine session #165 :** 2 tickets traités séquentiellement, review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#374** (majeure) — `frontend/app/src/views/tv/TvPalmares.vue` (nouveau) +
+  `TvScoreboard.vue` — nouvel écran final permanent (toutes épreuves
+  `TERMINEE`) : poules à gauche + tableau final à droite avec vainqueur mis
+  en avant (`bracket.f[0].match.winnerSide`), réutilisant le balisage/CSS de
+  `TvIdle.vue` (poules en colonne, mini-tableau inchangé). Rotation ~10s par
+  épreuve. Bascule câblée dans `TvScoreboard.vue` (hero > fin de match >
+  palmarès > carousel), préemption automatique via le mécanisme `hero`
+  existant. Confié à un agent `vue-screen`. Reviewer : bascule et
+  non-crash du vainqueur vérifiés, `npx vue-tsc --noEmit` 0 erreur. Verdict :
+  ✅ Approuvé, une remarque cosmétique non bloquante (premier tick de
+  rotation raccourci au montage si plusieurs épreuves — comportement
+  préexistant identique à `TvIdle.vue`).
+- **#376** (majeure) — `frontend/app/src/views/arbitre/ArbitreMatch.vue` —
+  indicateur de service `●` remplacé par le SVG balle de tennis (même motif
+  que la TV) aux 4 emplacements (mobile + iPad), conditions `v-if`
+  inchangées (`leftModelSide`/`rightModelSide`, respecte `swap`). Nom du
+  serveur mis en avant en accent — piège évité sur la zone mobile
+  `.arb-mobile-tap--bottom` (fond déjà accent-coloré, texte noir :
+  `color: var(--accent)` y aurait été invisible, traitement de repli
+  `font-weight: 900` + `text-shadow` blanc). Confié à un agent `vue-screen`.
+  Reviewer : non-régression de la logique `swap`/`toggle_service` confirmée
+  par grep, résidus de l'ancienne classe vérifiés absents, `npx vue-tsc
+  --noEmit` 0 erreur. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 4 issues encore ouvertes sur le
+milestone (`#375`, `#378`–`#380`). Spec review encore ⚠️ sur 4 des 5 specs
+(attendu, le reste du sprint n'est pas implémenté). Sprint reste actif, sera
+repris à la **prochaine échéance planifiée**. Ordre suggéré par `sprint.md`
+pour la suite : `#375` (ETA, gros morceau back isolé, indépendant) ; puis
+`#378` (après `#377`, désormais clos) et `#380` (après `#375`) en
+finitions ; `#379` (même zone que `#371`, déjà clos) également prêt
+indépendamment.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable pour les
+deux tickets, vérifié indépendamment par l'agent `reviewer` à chaque fois.
+Toujours pas de script `type-check`/`lint` dans `package.json`, toujours pas
+de `.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement (pas de QA navigateur TV/arbitre réelle en session
+automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket) ont
+strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 19 sessions consécutives (#140-#165, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_165.md`.
+
+---
+
+**Historique — session #164 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(4ᵉ session du sprint). 8/14 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (session
+#163), `#377`, `#372` (cette session) ; 6 restants (`#374`–`#376`,
+`#378`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git
+merge-base --is-ancestor origin/main HEAD` positif d'emblée, aucun merge ni
+commit de rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #164 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— confiée à un agent `reviewer` dédié (lecture seule) : toutes les dérives
+relevées correspondent exactement aux 8 issues qui étaient encore ouvertes
+en début de session (`#372`, `#374`–`#380`), 0 dérive additionnelle
+surprenante, 0 nouvelle issue créée. `tv-state.md` bascule à ✅ Conforme
+cette session (confirme #371/#373 clos à la session #163) ; les 4 autres
+restent ⚠️ Dérive mineure (attendu, reste du sprint non implémenté).
+
+**Backlog engine session #164 :** 2 tickets traités séquentiellement, review
+indépendante confiée à l'agent `reviewer` avant clôture pour chacun :
+- **#377** (majeure) — `live/admin_views.py` — en Double, un joueur déjà
+  inscrit dans une équipe pouvait se réinscrire dans une autre équipe de la
+  même épreuve : `create_team_with_entry` ne vérifiait que `player1 !=
+  player2` (même lacune dans `add_late_entry` et `replace_entry_player`).
+  Traité **directement en session** (aucun agent `django-api` — portée trop
+  réduite, logique déjà dans les fonctions de service existantes). Fix :
+  nouvelle fonction utilitaire `_find_player_in_other_team_entry(event,
+  player1, player2, exclude_entry_id=None)` (requête `Entry` avec
+  `Q(team__player1__in=...) | Q(team__player2__in=...)`), appelée dans les
+  3 points d'entrée — `replace_entry_player` avec `exclude_entry_id=
+  entry.pk` pour ne pas se bloquer soi-même lors d'un remplacement partiel.
+  Reviewer : golden path retracé ligne à ligne (A/B puis A/C même épreuve →
+  400 ; A/D autre épreuve → accepté ; remplacement sans faux positif),
+  `manage.py check` vérifié indépendamment (0 erreur), rétrocompatibilité
+  des 3 appelants existants confirmée. Verdict : ✅ Approuvé, aucune
+  réserve.
+- **#372** (majeure) — `frontend/app/src/views/tv/TvTicker.vue` (nouveau) +
+  `TvScoreboard.vue` — nouvelle feature (aucune maquette `.jsx` de
+  référence) : banderole d'information ancrée en bas de la scène TV, active
+  pendant un match (SCOREBOARD **et** ÉCHAUFFEMENT — cette dernière n'avait
+  auparavant aucun pied de page), défilement continu des annonces actives,
+  derniers résultats et prochains matchs (données déjà pollées en continu
+  depuis #371), segment fixe à gauche (court/durée/horloge) remplaçant
+  l'ancien `.sb-foot-discreet`. Confié à un agent `vue-screen` (portée
+  suffisante — nouveau composant + édition étendue de `TvScoreboard.vue`).
+  Fix : piste doublée (`[...items, ...items]`) + `translateX(0 → -50%)` en
+  boucle linéaire infinie, durée d'animation proportionnelle au nombre
+  d'items (14s–60s), cas `items.length === 0` → segment fixe seul. Géométrie
+  vérifiée : bande à `bottom: 12px; height: 44px` (haut à 56px), 16px de
+  marge sous `.sb-ed-bottom` (`bottom: 72px`). Reviewer : diff conforme,
+  `.sb-foot-discreet` proprement retiré (CSS + grep global), `npx vue-tsc
+  --noEmit` vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé — champ
+  `fichiers:` de `specs/screens/tv-live.md` complété par l'orchestrateur
+  juste après (ajout de `TvTicker.vue`, contenu de spec non touché).
+
+**Sprint 43 non clos cette session :** 6 issues encore ouvertes sur le
+milestone (`#374`–`#376`, `#378`–`#380`). Spec review encore ⚠️ sur 4 des 5
+specs (attendu, le reste du sprint n'est pas implémenté). Sprint reste
+actif, sera repris à la **prochaine échéance planifiée**. Ordre suggéré par
+`sprint.md` pour la suite : `#374` (palmarès, prérequis #371/#373 déjà
+clos) ∥ `#376` (arbitre) ∥ `#375` (ETA, gros morceau back isolé) ;
+finitions `#378` (après #377, désormais clos) et `#380` (après #375) en
+dernier ; `#379` (même zone que #371, déjà clos) également prêt.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `.venv/bin/
+python manage.py check` (depuis la racine du repo) fiables pour les deux
+tickets, chacun vérifié indépendamment par l'agent `reviewer`. Toujours pas
+de script `type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front — vérification par type-check + revue de
+code uniquement pour #372 (pas de QA navigateur TV réelle en session
+automatisée ; géométrie vérifiée par calcul analytique).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 18 sessions consécutives (#140-#164, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_164.md`.
+
+---
+
+**Historique — session #163 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(3ᵉ session du sprint). 6/14 tickets clos au total — `#367`, `#368`
+(session #161), `#369`, `#370` (session #162), `#371`, `#373` (cette
+session) ; 8 restants (`#372`, `#374`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git
+merge-base --is-ancestor origin/main HEAD` positif d'emblée, aucun merge ni
+commit de rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #163 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— ⚠️ Dérive mineure, confiée à un agent `reviewer` dédié (lecture seule) :
+toutes les dérives relevées correspondent exactement aux 10 issues qui
+étaient encore ouvertes en début de session (`#371`–`#380`), 0 dérive
+additionnelle surprenante, 0 nouvelle issue créée.
+
+**Backlog engine session #163 :** 2 tickets traités séquentiellement, tous
+deux implémentés directement en session (aucun agent `vue-screen`/
+`django-api` — portée trop réduite pour justifier une extraction de
+service ou un portage d'écran complet), review indépendante confiée à
+l'agent `reviewer` avant clôture pour chacun :
+- **#371** (majeure) — `frontend/app/src/views/tv/TvScoreboard.vue` +
+  `TvIdle.vue` — `usePolling(() => live.fetchTvIdle(), 10000)` vivait dans
+  `TvIdle.vue`, démonté dès qu'un match est en cours (`v-else-if=
+  "!live.hero"` dans `TvScoreboard.vue`) : plus aucune donnée froide
+  (annonces, résultats, programme, épreuves) rafraîchie pendant un match,
+  alors que la banderole (#372) et le palmarès (#374) en ont besoin en
+  continu. Fix : hissage du `usePolling(fetchTvIdle, 10000)` vers
+  `TvScoreboard.vue` (écran monté en continu), `TvIdle.vue` ne fait plus
+  que consommer le store — son propre `usePolling` de rotation des slides
+  (8 s) reste inchangé. Reviewer : diff conforme au plan, aucun autre
+  appelant de `fetchTvIdle` dépendant de l'ancien cycle de vie (grep sur
+  tout `frontend/app/src/`), `usePolling.ts` relu pour confirmer
+  l'indépendance des instances (closures locales `timer`/`inFlight`, pas de
+  conflit entre le poll 2 s de `fetchTvState` et le nouveau poll 10 s),
+  `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Verdict :
+  ✅ Approuvé, aucune réserve.
+- **#373** (majeure) — `live/api_views.py` (`_pack_tv_events`) +
+  `frontend/app/src/types/index.ts` — `tv/idle` n'exposait pas le statut
+  des épreuves (`Event.status`, champ stocké dans `competition/models.py`,
+  `INSCRIPTION`/`EN_COURS`/`TERMINEE`), empêchant le front de dériver le
+  déclencheur PALMARÈS (toutes les épreuves `TERMINEE`). Fix : ajout de
+  `"status": event.status` dans `_pack_tv_events` (champ scalaire direct,
+  aucune requête supplémentaire — la queryset chargeait déjà l'objet
+  `Event`), + `status: 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'` sur le type
+  front `TvEvent`. Reviewer : diff conforme, champ confirmé non calculé
+  (`competition/models.py`), aucun consommateur cassé (`_pack_tv_events` a
+  un seul appelant, `TvEvent` pas encore lu par un écran — consommation
+  réservée à #374), `manage.py check` et `npx vue-tsc --noEmit` vérifiés
+  indépendamment (0 erreur chacun). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 8 issues encore ouvertes sur le
+milestone (`#372`, `#374`–`#380`). Spec review encore ⚠️ (attendu, le reste
+du sprint n'est pas implémenté). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré par `sprint.md` pour la
+suite : `#377` (back, garde équipe Double, indépendant) ; puis `#372`
+(banderole) et `#374` (palmarès, prérequis `#371`/`#373` désormais clos) —
+deux SFC nouvelles parallélisables entre elles ∥ `#376` (arbitre) ∥ `#375`
+(ETA, gros morceau back isolé) ; finitions `#378` (après `#377`), `#379`
+(même zone que `#371`), `#380` (après `#375`) en dernier.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` et `.venv/bin/
+python manage.py check` (depuis la racine du repo) fiables pour les deux
+tickets, chacun vérifié indépendamment par l'agent `reviewer`. Toujours pas
+de script `type-check`/`lint` dans `package.json`, toujours pas de
+`.claude/launch.json` côté front (pas de QA navigateur nécessaire — #371
+est un hissage de polling sans changement visuel, #373 une addition de
+champ JSON non encore consommée par un écran).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 17 sessions consécutives (#140-#163, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé en attente des agents asynchrones. Point mineur
+sans impact relevé par le reviewer de #371 : l'entrée de spec review dans
+`backlog/sprints/43-retours-11-juillet/log.md` était rédigée avant la
+review du ticket #371 — séquence en réalité correcte (l'Étape 1 spec
+review précède toujours l'Étape 2 backlog engine dans le protocole), pas
+d'action nécessaire.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_163.md`.
+
+---
+
+**Historique — session #162 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(2ᵉ session du sprint). 4/14 tickets clos au total — `#367`, `#368` (session
+#161), `#369`, `#370` (cette session) ; 10 restants (`#371`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (déjà checked-out au
+démarrage, working tree propre), parent effectif `main` — `git
+merge-base --is-ancestor origin/main HEAD` positif d'emblée, aucun merge ni
+commit de rattrapage nécessaire. 2 commits de code cette session.
+
+**Spec review session #162 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— ⚠️ Dérive mineure, confiée cette fois à un agent `reviewer` dédié (lecture
+seule) plutôt qu'à une lecture directe : toutes les dérives relevées
+correspondent exactement aux 10 issues restantes (`#371`–`#380`, aucune
+encore implémentée), 0 dérive additionnelle surprenante, 0 nouvelle issue
+créée. Les deux tickets clos cette session (`#369`/`#370`) confirmés
+conformes au contrat `tv-state.md` §Cadences.
+
+**Backlog engine session #162 :** 2 tickets traités séquentiellement, tous
+deux des fichiers réservés à l'orchestrateur (`CLAUDE.md` §3) — implémentés
+directement en session (aucun agent `vue-screen`/`django-api`, aucun écran
+ni endpoint concerné), review indépendante confiée à l'agent `reviewer`
+avant clôture pour chacun :
+- **#369** (majeure) — `frontend/app/src/composables/usePolling.ts` — 3
+  bugs corrigés en une passe (même cause racine, décrite ensemble dans le
+  ticket) : `start()` empilait un second `setInterval` sans vérifier qu'un
+  timer tournait déjà (le premier fuyait, ni `stop()` ni `onUnmounted` ne le
+  nettoyaient) ; `onMounted` démarrait le polling même si `document.hidden`
+  était vrai au montage ; `run()` n'avait pas de garde anti-chevauchement
+  (requêtes empilées si le réseau traînait). Fix : `start()` no-op si
+  `timer !== null`, `onMounted` conditionné à `!document.hidden`, garde
+  locale `inFlight` dans `run()` (remise à `false` dans un `finally`, donc
+  pas de deadlock même si `fn` rejette systématiquement). Reviewer :
+  golden path revérifié (rotation TV ~8 s, pastille pleine avant
+  changement, cycles caché/visible répétés), `npx vue-tsc --noEmit`
+  vérifié indépendamment (0 erreur), tous les appelants du composable
+  grep-és (aucun ne dépend du comportement changé — seuls `loading`/`error`
+  consommés en pratique). Verdict : ✅ Approuvé, aucune réserve.
+- **#370** (majeure) — `frontend/app/src/stores/live.ts` (`fetchMatch`) —
+  `match.value` (ref partagé, pollé toutes les 2 s par
+  `ArbitreMatch.vue`) était écrit sans garde d'identité : une réponse
+  tardive d'un ancien match (navigation A → accueil → B avant résolution
+  de la requête de A) écrasait les données du match B fraîchement affiché,
+  effet « blink » signalé dans les retours du 2026-07-11. Fix : variable de
+  fermeture `lastRequestedMatchId` posée avant l'appel réseau, réponse
+  ignorée si une demande plus récente a pris le relais ; purge
+  `match.value = null` en tête si l'id demandé diffère du match affiché
+  (referme complètement le golden path : jamais de donnée de l'ancien
+  match affichée, même brièvement). Reviewer : golden path A→accueil→B
+  retracé ligne à ligne, absence de régression sur le polling nominal
+  confirmée (`matchId` toujours `number` côté seul appelant
+  `ArbitreMatch.vue`, pas de purge à chaque tick), `npx vue-tsc --noEmit`
+  vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, une seule
+  remarque cosmétique non bloquante (l'union de type `number | string` du
+  paramètre pourrait provoquer une purge à tort si un futur appelant
+  passait un id non casté — sans impact aujourd'hui, aucun autre appelant
+  n'existe).
+
+**Sprint 43 non clos cette session :** 10 issues encore ouvertes sur le
+milestone (`#371`–`#380`). Spec review encore ⚠️ (attendu, le reste du
+sprint n'est pas implémenté). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré par `sprint.md` pour la
+suite : `#371` (poll tv/idle porté par l'écran, prérequis de `#372`/`#374`)
+∥ `#373` et `#377` (back, indépendants) ; puis `#372`/`#374` (deux SFC TV
+nouvelles, parallélisables entre elles) ∥ `#376` (arbitre) ∥ `#375` (ETA,
+gros morceau back isolé) ; finitions `#378`/`#379`/`#380` en dernier.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable pour les
+deux tickets (0 erreur), vérifié indépendamment par l'agent `reviewer` à
+chaque fois. Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front (travail
+100 % front cette session, mais aucun écran concerné — deux fichiers
+composable/store partagés, pas de QA navigateur nécessaire pour ces deux
+correctifs de plomberie).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (deux reviews de ticket + une spec review dédiée,
+nouveauté par rapport à la lecture directe des sessions précédentes) ont
+strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 16 sessions consécutives (#140-#162, sessions à vide
+comprises) depuis l'incident initial de la session #139. Conformément à la
+recommandation posée à la session #152, aucun `ScheduleWakeup` n'a été
+utilisé en attente des agents asynchrones cette session — uniquement les
+`task-notification`.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_162.md`.
+
+---
+
+**Historique — session #161 :**
+**Sprint traité :** 43 — Correctifs retours du 11 juillet
+(1ère session du sprint, roadmap regarnie juste avant cette session par la
+planification du sprint 43 sur les retours du 2026-07-11). 2/14 tickets
+clos — `#367`, `#368` ; 12 restants (`#369`–`#380`).
+
+**Git :** branche `claude/sprint/43-retours-11-juillet` (nouvelle branche
+cette session), parent effectif `main` (le sprint 42 précédent est déjà
+fusionné dans `main` via la PR #366, confirmé par
+`git merge-base --is-ancestor` — la branche 43 est donc créée directement
+depuis `origin/main`, working tree propre au checkout, pas de commit de
+rattrapage nécessaire). 2 commits de code cette session.
+
+**Spec review session #161 :** les 5 specs ciblées (`tv-live.md`,
+`tv-state.md`, `arbitre-match.md`, `admin-inscriptions.md`, `planning.md`)
+— ⚠️ Dérive mineure, vérifiée par lecture directe du code (pas d'agent
+dédié, review resserrée sur les zones touchées par les tickets du sprint) :
+toutes les dérives relevées correspondent exactement aux 14 issues déjà
+ouvertes lors de la planification — 0 nouvelle issue créée.
+
+**Backlog engine session #161 :** 2 tickets traités séquentiellement (même
+cause racine, notés « se closent ensemble » dans `sprint.md`) :
+- **#367** (majeure) — back : `live/referee_views.py` + migration de
+  backfill — diagnostic fait par lecture directe du code (pas d'agent
+  `django-api`, root cause déjà claire) : le moteur d'arbitrage clôt
+  automatiquement un match sur balle de match (`point_left`/`point_right`),
+  `Match.save()` (`live/models.py`) pose bien `finished_at` en mémoire mais
+  les `match.save(update_fields=[...])` qui suivaient omettaient
+  `"finished_at"` — Django ne persiste que les champs listés, la valeur
+  n'atteignait jamais la base. Fix : ajout du champ aux `update_fields`
+  concernés + migration `0024_backfill_finished_at.py`
+  (`finished_at := updated_at` pour les `FINISHED` à `NULL`), appliquée en
+  dev (31 matchs terminés, 0 `finished_at` NULL après coup). **Le reviewer a
+  relevé un gap non couvert par le plan initial** : le chemin manuel
+  « +jeu » (`game_left`/`game_right`) partage la même logique de clôture
+  automatique mais avait le même `update_fields` incomplet (`finished_at`
+  **et** `end_reason` absents) — corrigé dans le même commit avant clôture
+  du ticket. Bon exemple de la valeur du reviewer en lecture seule
+  indépendante. Verdict reviewer : ✅ Approuvé (après complément),
+  `manage.py check` vérifié indépendamment (0 erreur).
+- **#368** (mineure) — back : `live/admin_views.py`, `reopen_match` —
+  `finished_at` n'était jamais remis à `NULL` à la réouverture d'un match
+  terminé (même cause racine que #367, sens inverse). Fix : `finished_at =
+  None` posé avant `mark_live()`, ajouté à `update_fields`. Vérifié que
+  `mark_live()` ne touche pas `finished_at` (pas de conflit entre les deux
+  `save()` successifs). Verdict reviewer : ✅ Approuvé, aucune réserve.
+
+**Sprint 43 non clos cette session :** 12 issues encore ouvertes sur le
+milestone (`#369`–`#380`). Spec review encore ⚠️ (attendu, le reste du
+sprint n'est pas implémenté). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré par `sprint.md` pour la
+suite : `#369` (usePolling, fichier partagé — orchestrateur) puis `#370`
+(store live, idem) ∥ le reste des tickets back/front indépendants.
+
+**Point d'attention outillage :** `python` seul n'est pas sur le PATH de ce
+shell — nécessite `source .venv/bin/activate` (ou `.venv/bin/python`
+directement) avant tout `manage.py`. `manage.py check` fiable pour les deux
+tickets. Toujours pas de script `type-check`/`lint` dans `package.json`,
+toujours pas de `.claude/launch.json` côté front (sans objet cette session,
+travail 100 % back).
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`. À investiguer par l'utilisateur
+avant de les considérer comme travail réellement en attente ou comme
+reliquats à archiver.
+
+Log complet : `backlog/logs/session_2026-07-12_161.md`.
 
 ---
 

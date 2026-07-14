@@ -157,6 +157,7 @@ export interface Match {
 
   // Score
   server: MatchSide
+  swap: boolean
   matchFormat: string        // "GROUP_SET5_TB_4_4" | "QF_SET5_TB_5_5" | "NORMAL_1SET" | "BO3" | "MANUAL"
   bestOf: number
   gamesToWin: number
@@ -300,11 +301,16 @@ export interface TvEventGroup {
 export interface TvEvent {
   id: number
   name: string
+  status: 'INSCRIPTION' | 'EN_COURS' | 'TERMINEE'
   groups: TvEventGroup[]
   bracket: Bracket | null
 }
 
 export type TvProgrammeDay = 'today' | 'tomorrow' | 'finished'
+
+// Slide affichée par le carousel TvIdle — état hissé dans le store `live`
+// pour survivre au démontage/remontage du composant (voir #379).
+export type TvIdleSlideKind = 'tournoi' | 'results' | 'groups' | 'bracket' | 'programme' | 'announces' | 'poster'
 
 export interface TvProgramme {
   day: TvProgrammeDay

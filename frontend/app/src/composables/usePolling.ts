@@ -8,8 +8,11 @@ export function usePolling(fn: () => Promise<void>, interval: number) {
   const loading = ref(true)
   const error = ref<string | null>(null)
   let timer: ReturnType<typeof setInterval> | null = null
+  let inFlight = false
 
   async function run() {
+    if (inFlight) return
+    inFlight = true
     try {
       await fn()
       error.value = null
@@ -17,10 +20,12 @@ export function usePolling(fn: () => Promise<void>, interval: number) {
       error.value = e instanceof Error ? e.message : String(e)
     } finally {
       loading.value = false
+      inFlight = false
     }
   }
 
   function start() {
+    if (timer !== null) return
     run()
     timer = setInterval(run, interval)
   }
@@ -41,7 +46,7 @@ export function usePolling(fn: () => Promise<void>, interval: number) {
   }
 
   onMounted(() => {
-    start()
+    if (!document.hidden) start()
     document.addEventListener('visibilitychange', onVisibilityChange)
   })
   onUnmounted(() => {

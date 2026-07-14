@@ -517,6 +517,15 @@ const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<numbe
 const computedETAs = computed(() => etaEngine.value.display)
 const plannedEtaMin = computed(() => etaEngine.value.plannedMin)
 
+// Au repos, l'heure affichée vient du serveur (ETA calculée à la lecture,
+// `compute_day_eta_map` — source unique avec la TV/le programme arbitre).
+// Le moteur local (`etaEngine`) n'est plus consulté que pendant un drag, pour
+// la préview — spec planning §« Où vit le calcul ».
+function matchTimeDisplay(match: Match): string {
+  if (dragging.value) return computedETAs.value.get(`m-${match.id}`) ?? '—'
+  return match.scheduledTime ?? '—'
+}
+
 type Punctuality = 'red' | 'orange' | 'green'
 
 const punctualityByMatchId = computed<Map<number, Punctuality>>(() => {
@@ -923,7 +932,7 @@ async function onDragEnd() {
                   @keydown.enter="openMatchPanel(element.data as Match)"
                 >
                   <span class="cal-time">
-                    {{ computedETAs.get(`m-${element.data.id}`) ?? '—' }}
+                    {{ matchTimeDisplay(element.data as Match) }}
                   </span>
                   <span
                     class="cal-dot"

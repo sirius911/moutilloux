@@ -10,4 +10,3 @@
 
 | Ordre | Sprint | Fichier |
 |-------|--------|---------|
-| 1 | 43 — Correctifs retours du 11 juillet | `backlog/sprints/43-retours-11-juillet/sprint.md` |

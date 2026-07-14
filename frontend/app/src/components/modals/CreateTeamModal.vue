@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import { useEventStore } from '@/stores/event'
 import { extractApiError } from '@/lib/apiError'
@@ -25,12 +25,24 @@ function playerForId(id: number | null): Player | null {
   return eventStore.allPlayers.find((p) => p.id === id) ?? null
 }
 
+const playersInTeams = computed<Set<number>>(() => {
+  const ids = new Set<number>()
+  for (const entry of eventStore.players) {
+    if (entry.team) {
+      ids.add(entry.team.player1.id)
+      ids.add(entry.team.player2.id)
+    }
+  }
+  return ids
+})
+
 function filteredForSlot(slot: 1 | 2): Player[] {
   const otherId = slot === 1 ? player2Id.value : player1Id.value
   const q = search.value.toLowerCase()
   return eventStore.allPlayers.filter(
     (p) =>
       p.id !== otherId &&
+      !playersInTeams.value.has(p.id) &&
       (!q || p.fullName.toLowerCase().includes(q)),
   )
 }
