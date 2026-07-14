@@ -373,7 +373,121 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-14 — Session #183
+**Dernière session :** 2026-07-14 — Session #184
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 12/14
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410` avant cette session ; `#405`, `#400` cette
+session) ; 4 restants (`#406`, `#407`, `#409`, `#411` — `#411` créée cette
+session).
+
+**Session #184.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#183) ; `git merge` no-op (déjà à jour). 2
+commits cette session (2 tickets ; le log de spec review et de session sont
+committés séparément en clôture), push effectué (PR #404 déjà ouverte,
+aucune action).
+
+**Spec review session #184** (agent `reviewer` dédié, lecture seule, lancé en
+tout début de session **en parallèle** de l'implémentation directe des
+tickets — écart de séquencement noté ci-dessous) : 7 specs ciblées, 3 ✅
+Conforme (`planning.md`, `cycle-de-vie-match.md`, `cycle-de-vie-epreuve.md`),
+4 ⚠️ Dérive mineure (`admin-shell.md`, `admin-tournoi.md`,
+`admin-regie-mobile.md`, `erreurs-api.md`). Les dérives relevées
+correspondent aux issues déjà ouvertes (`#406`, `#407`, `#409`) plus `#411`
+(créée par l'orchestrateur pendant cette même session, avant le retour de
+l'agent, qui l'a retrouvée indépendamment — pas de doublon). `#400` et `#405`
+confirmés résolus par l'agent malgré le fait qu'ils n'étaient pas encore
+commités au moment de sa lecture (l'agent l'a signalé explicitement comme un
+écart par rapport au contexte transmis, sans en tirer de conclusion
+erronée). 1 extension de portée signalée en commentaire GitHub sur `#406`
+(même cause racine — `stores/event.ts` — sur le flux « Activer une édition »,
+pas seulement suppression d'épreuve). 1 note non ticketée (précédent établi
+depuis la session #179, pas d'issue) : `planning.md` référence un endpoint
+`api_tv_upcoming` inexistant et plusieurs numéros de ligne périmés dans la
+table « Contrat d'API » — dérive purement documentaire, sans impact
+fonctionnel. `npx vue-tsc --noEmit` et `.venv/bin/python manage.py check`
+vérifiés indépendamment par l'agent (0 erreur chacun).
+
+**Backlog engine session #184** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), choisis dans l'ordre suggéré en fin de
+session #183 en excluant les tickets nécessitant une coordination
+multi-session (`#407`/`#409` sur `AdminRegie.vue`, `#406` sur le fichier
+partagé `stores/event.ts`) — `#405` et `#400` étant tous deux indépendants et
+entièrement cartographiables en une passe, chacun implémenté **directement en
+session par l'orchestrateur** (portée précise, un ticket touchant un fichier
+partagé — `usePolling.ts` — l'autre un service mutualisé —
+`live/admin_views.py`), soumis à un agent `reviewer` indépendant (en
+arrière-plan) avant clôture :
+- **#405** (mineure) — sweep résiduel `extractApiError` sur 3 sites :
+  `composables/usePolling.ts:20` (fichier partagé, modifié directement),
+  `components/modals/EditMatchPanel.vue:165`, et
+  `components/modals/AddPlayerModal.vue` (parsing local remplacé par un
+  nouvel export `extractApiFields` dans `lib/apiError.ts`, généralisant le
+  support des erreurs par champ sans dupliquer le parsing). Plan :
+  `backlog/plan/405-erreurs-api-residuelles.md`. Reviewer : diff conforme au
+  plan, capacité `fieldErrors` préservée dans `AddPlayerModal.vue`, aucun des
+  9 appelants de `usePolling` ne consommait le `error` retourné (pas de
+  régression), `vue-tsc` 0 erreur revérifié indépendamment. A signalé une
+  réserve hors périmètre (`AddPlayerModal.vue:151/174`, catch d'upload photo,
+  même défaut résiduel) → ticketée séparément en `#411`. Verdict : ✅
+  Approuvé, aucune réserve dans le périmètre du ticket.
+- **#400** (mineure) — `live/admin_views.py::update_event` : refus explicite
+  (`ValueError` → 400) de l'activation de « Petite finale » quand un tableau
+  final existe déjà sans demi-finales (ex. 2 qualifiés directs, cf.
+  `live/bracket.py:119`), sans casser la pré-configuration du champ avant
+  génération du tableau (distinction via `bracket_exists`, même filtre
+  `stage__in` que `recreate_final_bracket_for_event`). Message exact demandé
+  par l'issue. Specs mises à jour (`admin-tournoi.md`,
+  `cycle-de-vie-epreuve.md`). Plan :
+  `backlog/plan/400-petite-finale-sans-demies.md`. Reviewer : distinction
+  pré-configuration/tableau généré confirmée correcte, prémisse
+  `live/bracket.py:113-120` vérifiée, aucune régression sur `#397`/`#403`
+  (même fonction), `manage.py check` et `vue-tsc` 0 erreur revérifiés
+  indépendamment. A signalé une phrase résiduelle périmée dans
+  `cycle-de-vie-epreuve.md:335-336` (contredit le paragraphe qui la précède,
+  antérieure à ce diff) → non corrigée, hors périmètre, précédent des notes
+  documentaires non ticketées. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+4 specs encore ⚠️, et 4 issues restent ouvertes) : `#406`, `#407`, `#409`,
+`#411`. Sprint reste actif, sera repris à la **prochaine échéance planifiée**.
+Ordre suggéré : `#407`/`#409` (même fichier `AdminRegie.vue` — polling +
+points manquants, à coordonner en une passe) ; `#406` (fichier partagé
+`stores/event.ts`, réservé à l'orchestrateur — étendre au flux « Activer une
+édition » en plus de la suppression, cf. commentaire GitHub de cette
+session) ; `#411` (indépendant, trivial, `AddPlayerModal.vue`, même patron
+que `#405`).
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+contrairement au protocole habituel (spec review strictement avant toute
+implémentation), l'agent de spec review de cette session a été lancé en
+parallèle du début de l'implémentation directe des tickets `#405`/`#400` par
+l'orchestrateur, par souci de parallélisation. L'agent a lu certains fichiers
+déjà modifiés (non commités au moment de sa lecture) et l'a signalé
+explicitement comme un écart par rapport au contexte transmis, sans en tirer
+de conclusion erronée — mais cela aurait pu semer la confusion dans un cas
+moins limpide. À éviter dans les sessions futures : lancer la spec review en
+série stricte avant toute implémentation, comme le prescrit le protocole.
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket, tous
+en arrière-plan) ont strictement respecté leur mandat de lecture seule,
+chacun signalant ses observations hors périmètre sans les corriger — pattern
+stable sur au moins 34 sessions consécutives (#140-#184, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` de polling actif utilisé pour attendre un agent en
+arrière-plan (un appel a été passé par erreur en tout début d'attente du
+verdict du ticket #400, puis immédiatement annulé via `stop: true` dès
+détection de l'écart au protocole — les notifications de tâche en
+arrière-plan ont suffi).
+
+Log complet : `backlog/logs/session_2026-07-14_184.md`.
+
+---
+
+**Historique — session #183 :**
 
 **Sprint actif :** 45 — Correctifs review globale du 13 juillet. 11/13
 tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
