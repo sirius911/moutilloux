@@ -373,8 +373,578 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-12 — Session #170
+**Dernière session :** 2026-07-13 — Session #178
 
+**Sprint actif :** aucun — roadmap vide (0 ligne). **Désactiver la Routine
+manuellement sur claude.ai/code/routines.**
+
+Roadmap vide depuis la clôture du sprint 44 à la session #176 (même jour).
+Session #178 : lecture de `backlog/sprints/roadmap.md` conforme au protocole
+étape 0, liste vide confirmée (2e session consécutive sans sprint planifié,
+après #177) → arrêt immédiat, aucune étape 1-4 exécutée, aucun changement de
+code, aucun commit. Log : `backlog/logs/session_2026-07-13_178.md`.
+
+Point d'attention non résolu (signalé depuis la session #144) : deux dossiers
+de sprint orphelins dans `backlog/sprints/` (`04-admin-panel-map/`,
+`10-contexte-url/`), hors de `done/` et non référencés par `roadmap.md`. À
+nettoyer côté humain.
+
+---
+
+**Historique — session #177 :**
+
+**Sprint actif :** aucun — roadmap vide (0 ligne). **Désactiver la Routine
+manuellement sur claude.ai/code/routines.**
+
+Roadmap vide depuis la clôture du sprint 44 à la session #176 (même jour).
+Session #177 : lecture de `backlog/sprints/roadmap.md` conforme au protocole
+étape 0, liste vide confirmée → arrêt immédiat, aucune étape 1-4 exécutée,
+aucun changement de code, aucun commit. Log : `backlog/logs/
+session_2026-07-13_177.md`.
+
+Point d'attention non résolu (signalé depuis la session #144) : deux dossiers
+de sprint orphelins dans `backlog/sprints/` (`04-admin-panel-map/`,
+`10-contexte-url/`), hors de `done/` et non référencés par `roadmap.md`. À
+nettoyer côté humain.
+
+---
+
+**Historique — session #176 :**
+
+**Sprint actif :** aucun — roadmap vide. **Désactiver la Routine manuellement sur
+claude.ai/code/routines.**
+
+Sprint 44 — Correctifs retours du 12 juillet — **clôturé cette session** (6ᵉ et
+dernière session du sprint). 10/10 tickets déjà clos avant cette session
+(`#383`-`#391`, `#393` — voir historique #171-#175 ci-dessous), 0 issue ouverte
+au démarrage.
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au
+démarrage, working tree propre. Parent effectif `claude/sprint/43-retours-11-
+juillet` (résolu par l'algorithme de l'Étape 0, inchangé depuis les sessions
+#171-#175). `git merge origin/claude/sprint/43-retours-11-juillet --no-edit` :
+déjà à jour, aucun commit de rattrapage nécessaire. 1 commit cette session
+(clôture), push effectué.
+
+**Spec review session #176 :** les 6 specs ciblées — confiée à un agent
+`reviewer` dédié (lecture seule), avec consigne explicite de revérifier la
+correction #393 (`AdminBracket.vue:560`, `entry.displayName`) et l'absence de
+toute autre occurrence résiduelle du motif fautif `player?.fullName ?? label
+?? fallback` dans les 10 fichiers du sweep #388. Verdict : **6/6 specs
+✅ Conforme, 0 dérive** — correction #393 confirmée présente, aucune régression,
+`npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Réserves déjà connues
+non reticketées (précédent constant depuis #173/#174) : fallbacks contextuels
+volontaires TV/Arbitre, note rédactionnelle périmée
+`cycle-de-vie-epreuve.md:330-331`.
+
+**Backlog engine session #176 :** aucun ticket à traiter — 0 issue ouverte sur
+le milestone au démarrage.
+
+**Clôture du sprint 44 (Étape 3) :** les deux conditions sont réunies (spec
+review 6/6 ✅ cette session, 0 issue ouverte sur le milestone). Actions :
+milestone GitHub `#43` fermé (`state=closed`) ; ligne supprimée de
+`backlog/sprints/roadmap.md` ; dossier `44-retours-12-juillet/` déplacé vers
+`backlog/sprints/done/` (`git mv`) ; commit `95076aa`
+(`sprint-44 🏁 Clôture — 6/6 specs conformes, 10/10 tickets clos, milestone
+fermé`).
+
+**Roadmap relue après clôture : vide.** Aucun sprint suivant planifié. La
+Routine locale doit être **désactivée manuellement sur
+claude.ai/code/routines** — prochaine échéance planifiée sans travail à faire
+tant qu'un nouveau sprint n'est pas planifié en séance manuelle
+(`anthropic-skills:plan-sprint`, hors mandat du protocole automatique).
+
+**Note protocole — PR de fin de sprint :** pas de PR automatique créée cette
+session (§4 Étape 4 : condition « sprint encore dans `roadmap.md` » non
+remplie, le sprint venant d'en être retiré). Les 16 commits locaux de la
+branche `claude/sprint/44-retours-12-juillet` sont poussés sur `origin` ; la
+création d'une PR de merge vers `main` reste une action manuelle de
+l'utilisateur.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment par l'agent `reviewer`. Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de `.claude/launch.json`
+côté front.
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` invoqué cette
+session a strictement respecté son mandat de lecture seule — pattern stable
+sur au moins 29 sessions consécutives (#140-#176, sessions à vide comprises)
+depuis l'incident initial de la session #139. Aucun `ScheduleWakeup` utilisé.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans
+`backlog/sprints/` — `04-admin-panel-map/` et `10-contexte-url/`, hors de
+`done/` et non référencés par `roadmap.md`, contenu strictement identique à
+leur version dans `done/`. Toujours à investiguer par l'utilisateur.
+
+Log complet : `backlog/logs/session_2026-07-13_176.md`.
+
+---
+
+**Historique — session #175 :**
+
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (5ᵉ session du sprint).
+10/10 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
+`#383`, `#384` (session #173), `#388`, `#390` (session #174), `#391`, `#393`
+(cette session, `#393` créé et clos le même jour) ; **0 issue restante** sur le
+milestone, mais sprint non clos (voir ci-dessous).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au démarrage,
+working tree propre. Parent effectif `claude/sprint/43-retours-11-juillet` (résolu
+par l'algorithme de l'Étape 0 : existe sur `origin`, pas encore ancêtre
+d'`origin/main`, inchangé depuis les sessions #171-#174). `git merge origin/
+claude/sprint/43-retours-11-juillet --no-edit` : déjà à jour, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session, push effectué.
+
+**Spec review session #175 :** les 6 specs ciblées — confiée à un agent `reviewer`
+dédié (lecture seule), en tout début de session : `specs/transverse/
+affichage-participant.md` en ⚠️ Dérive mineure (nouvelle occurrence non ticketée,
+`AdminBracket.vue:560` — panneau « Qualifiés disponibles » lisant encore
+`entry.player?.fullName ?? \`Équipe ${id}\`` au lieu d'`entry.displayName`,
+reproduisant la classe de bug « TBD » pour le Double, hors périmètre du sweep
+#388 et à tort classée « exception » aux sessions précédentes) ; les 5 autres
+specs (`tv-live.md`, `admin-tableau-final.md`, `cycle-de-vie-epreuve.md`,
+`admin-tournoi.md`, `admin-matchs.md`) désormais ✅ Conforme, confirmant
+`#383`-`#390` clos aux sessions précédentes. Réserves non bloquantes déjà
+connues, non reticketées par précédent établi : réimplémentations locales du
+fallback (au lieu de `sideName()`) sur `TvIdle.vue`/`TvPalmares.vue`/
+`TvScoreboard.vue`/`TvTicker.vue`/`ArbitreMatch.vue` — décisions volontaires
+validées par le reviewer aux sessions #173/#174 (fallback contextuel
+« Vainqueur SF1 »/« Joueur A »/`—`/`?` préservé à dessein) ; note rédactionnelle
+périmée `cycle-de-vie-epreuve.md:330-331` (signalée depuis la session #173,
+artefact cosmétique sans impact fonctionnel). 1 dérive neuve créée en issue
+GitHub : `#393`.
+
+**Backlog engine session #175 :** 2 tickets traités séquentiellement, chacun
+implémenté **directement en session par l'orchestrateur** (pas d'agent
+`vue-screen`/`django-api` dédié) et soumis à un agent `reviewer` indépendant
+avant clôture :
+- **#391** (mineure, `infra`) — `frontend/app/src/stores/event.ts` (fichier
+  partagé réservé à l'orchestrateur) — garde d'identité
+  (`if (id !== activeEventId.value) return`) ajoutée sur `fetchPlayers`,
+  `fetchGroups`, `fetchMatches`, `fetchBracket`, même patron que `fetchMatch`
+  du store `live.ts` (ticket #370, sprint 43). `fetchCalendar` volontairement
+  exclu (clé d'identité différente — édition, pas épreuve). Plan :
+  `backlog/plan/391-event-store-garde-identite.md`. Reviewer : diff conforme
+  au plan, garde posée après chaque `await` et avant chaque assignation,
+  appelants existants vérifiés (aucun ne passe un `eventId` structurellement
+  différent de l'épreuve active en usage normal), `npx vue-tsc --noEmit`
+  vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, aucune réserve.
+- **#393** (créée et close cette session) — `frontend/app/src/views/admin/
+  AdminBracket.vue` (ligne 560, panneau « Qualifiés disponibles ») —
+  `item.entry.player?.fullName ?? \`Équipe ${item.entry.id}\`` remplacé par
+  `item.entry.displayName` (champ non optionnel déjà porté par `Entry`, pas
+  besoin de `sideName()` qui s'applique à un `side` de match, pas à une
+  `Entry` isolée). Correctif d'une seule ligne, portée entièrement
+  cartographiée par le rapport de spec review qui l'a détecté — précédent
+  établi depuis la session #168 pour ce type de correctif trivial. Plan :
+  `backlog/plan/393-adminbracket-qualifies-displayname.md`. Reviewer : diff
+  limité à la ligne attendue, `Entry.displayName` confirmé non optionnel
+  (aucun risque d'`undefined` affiché), CSS et logique de drag-and-drop du
+  panneau non touchés, `npx vue-tsc --noEmit` vérifié indépendamment (0
+  erreur). Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 44 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review de cette session a précédé l'implémentation et a donc trouvé
+1 spec encore ⚠️, même si le ticket correspondant (#393) a été créé et clos
+ensuite ; précédent constant depuis la session #161, jamais de fermeture le
+jour même de la résorption du dernier ticket) : 0 issue ouverte sur le
+milestone en fin de session. Sprint reste actif, sera repris à la
+**prochaine échéance planifiée** : une spec review de confirmation devrait
+trouver les 6 specs ✅ Conforme (y compris `affichage-participant.md`,
+corrigé cette session) et 0 issue ouverte → clôture du milestone attendue
+dès la prochaine session, sauf nouvelle dérive détectée.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment trois fois cette session (orchestrateur × 2 + 2 agents
+`reviewer`, une fois par ticket). Toujours pas de script `type-check`/`lint`
+dans `package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA
+navigateur réelle en session automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket)
+ont strictement respecté leur mandat de lecture seule — pattern désormais
+stable sur au moins 28 sessions consécutives (#140-#175, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé pour patienter sur les agents asynchrones (tous
+invoqués en premier plan, résultat direct).
+
+**Numérotation GitHub Issues — remarque :** l'issue créée cette session a
+reçu le numéro `#393` et non `#392` comme attendu par
+`gh issue list --json number --jq 'max + 1'` — `#392` avait déjà été
+consommé entre-temps par une pull request (numérotation partagée entre
+issues et PR sur GitHub). Titre corrigé après coup. Point d'attention pour
+les sessions futures : vérifier le numéro réel après création plutôt que de
+se fier au calcul `max + 1` avant création.
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans `backlog/
+sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`, contenu strictement identique à
+leur version dans `done/`. Toujours à investiguer par l'utilisateur, non
+actionné cette session (hors mandat du backlog engine automatique).
+
+Log complet : `backlog/logs/session_2026-07-13_175.md`.
+
+---
+
+**Historique — session #174 :**
+
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (4ᵉ session du sprint).
+8/9 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
+`#383`, `#384` (session #173), `#388`, `#390` (cette session) ; 1 restant (`#391`).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au démarrage,
+working tree propre. Parent effectif `claude/sprint/43-retours-11-juillet` (résolu
+par l'algorithme de l'Étape 0 : existe sur `origin`, pas encore ancêtre
+d'`origin/main`, inchangé depuis les sessions #171-#173). `git merge origin/
+claude/sprint/43-retours-11-juillet --no-edit` : déjà à jour, aucun commit de
+rattrapage nécessaire. 2 commits de code cette session, push en cours.
+
+**Spec review session #174 :** les 6 specs ciblées — confiée à un agent `reviewer`
+dédié (lecture seule), en tout début de session : `specs/transverse/
+affichage-participant.md` et `specs/screens/admin-matchs.md` en ⚠️ Dérive mineure
+(correspondant exactement à `#388` et `#390`, alors ouverts) ; `specs/screens/
+tv-live.md`, `specs/screens/admin-tableau-final.md`, `specs/technical/
+cycle-de-vie-epreuve.md` et `specs/screens/admin-tournoi.md` désormais
+✅ Conforme (confirment `#383`-`#387`/`#389` clos aux sessions précédentes). Une
+dérive transverse additionnelle relevée hors specs listées : le store `event.ts`
+(`fetchPlayers`/`fetchGroups`/`fetchMatches`/`fetchBracket`) n'a aucune garde
+d'identité sur l'`eventId`, contrairement à `fetchMatch` du store `live.ts` —
+correspond exactement à `#391`, déjà ouvert. 3 dérives au total, **toutes**
+correspondent aux 3 issues déjà ouvertes, 0 dérive surprise, 0 nouvelle issue créée.
+
+**Backlog engine session #174 :** 2 tickets traités séquentiellement, plans et
+implémentations produits **directement en session par l'orchestrateur** (portée
+déjà entièrement cartographiée ligne par ligne par le rapport de spec review —
+précédent : session #168, ticket #380), chacun soumis à un agent `reviewer`
+indépendant avant clôture :
+- **#388** (majeure) — fin du sweep `sideName()` sur les 9 fichiers restants
+  (`TvIdle.vue`/`TvPalmares.vue` : occurrences résiduelles non couvertes par
+  #383/#384 ; `TvTicker.vue`, `TvScoreboard.vue`, `AdminBracket.vue`,
+  `AdminMatches.vue`, `AdminRegie.vue`, `ArbitreHome.vue`, `ArbitreMatch.vue`,
+  `EditMatchPanel.vue` : premier passage). Règle appliquée (`backlog/plan/
+  388-sideName-sweep-reste.md`) : fallback terminal déjà `'À désigner'` ou
+  `'TBD'` → remplacement par un appel `sideName(side, label)` ; fallback
+  contextuel volontaire (`'Vainqueur SF1'/'SF2'`, `'Joueur A'/'Joueur B'`, `'—'`,
+  `'?'`) → seul `.player?.fullName` → `.displayName` changé, fallback préservé
+  (précédent du reviewer de session #173 sur `#384`). 2 exceptions hors périmètre
+  confirmées inchangées (liste des qualifiés d'`AdminBracket.vue`, slots
+  individuels de l'onglet Affiche d'`EditMatchPanel.vue`). Reviewer : diff
+  conforme au plan fichier par fichier, plus aucune occurrence de `'TBD'` ni de
+  `player?.fullName` hors exceptions documentées, imports `sideName` ajoutés et
+  utilisés correctement, `npx vue-tsc --noEmit` vérifié indépendamment (0
+  erreur). Verdict : ✅ Approuvé, aucune réserve.
+- **#390** (mineure) — `frontend/app/src/views/admin/AdminMatches.vue` — classe
+  conditionnelle `has-event-tag` (liée au computed `multiEvent` existant) sur
+  `.cal-row`, avec une règle CSS dédiée insérant une 7e colonne `auto` avant la
+  colonne `1fr` des noms (au lieu que la pastille `.cal-event-tag` hérite de
+  cette colonne et s'étire) ; `.cal-event-tag` reçoit `justify-self: start`. Cas
+  mono-épreuve strictement inchangé (grille de base à 6 colonnes intacte).
+  Reviewer : diff limité au seul fichier attendu (+9 lignes), `.cal-row--break`
+  confirmé non affecté, `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur).
+  Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 44 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review de cette session a précédé l'implémentation et a donc trouvé
+2 specs encore ⚠️, même si les tickets correspondants ont été clos ensuite ;
+précédent constant depuis la session #161, jamais de fermeture le jour même de
+la résorption du dernier ticket) : 1 issue encore ouverte (`#391`, mineure,
+`infra` — store `event.ts`, garde d'identité, fichier partagé réservé à
+l'orchestrateur, patron du `#370`). Sprint reste actif, sera repris à la
+**prochaine échéance planifiée** : traitement direct de `#391` par
+l'orchestrateur (comme `participants.ts` à la session #172), puis spec review de
+confirmation qui devrait trouver les 6 specs ✅ Conforme et fermer le sprint.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié
+indépendamment trois fois cette session (orchestrateur + 2 agents `reviewer`,
+une fois par ticket). Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front — vérification
+par type-check + revue de code uniquement (pas de QA navigateur réelle en
+session automatisée).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket) ont
+strictement respecté leur mandat de lecture seule — pattern désormais stable
+sur au moins 27 sessions consécutives (#140-#174, sessions à vide comprises)
+depuis l'incident initial de la session #139. Aucun `ScheduleWakeup` utilisé
+pour patienter sur les agents asynchrones (tous invoqués en premier plan,
+résultat direct).
+
+**Observation annexe (signalée depuis la session #144, toujours non
+actionnée) :** deux dossiers de sprint orphelins subsistent dans `backlog/
+sprints/` — hors de `done/` et non référencés par `roadmap.md` :
+`04-admin-panel-map/` et `10-contexte-url/`, contenu strictement identique à
+leur version dans `done/`. Toujours à investiguer par l'utilisateur, non
+actionné cette session (hors mandat du backlog engine automatique).
+
+Log complet : `backlog/logs/session_2026-07-13_174.md`.
+
+---
+
+**Historique — session #173 :**
+
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (3ᵉ session du sprint).
+6/9 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (session #172),
+`#383`, `#384` (cette session) ; 3 restants (`#388`, `#390`, `#391`).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au démarrage, working
+tree propre. Parent effectif `claude/sprint/43-retours-11-juillet` (résolu par l'algorithme de
+l'Étape 0 : existe sur `origin`, pas encore ancêtre d'`origin/main`, inchangé depuis les sessions
+#171/#172). `git merge origin/claude/sprint/43-retours-11-juillet --no-edit` : déjà à jour, aucun
+commit de rattrapage nécessaire. 1 commit de code cette session, push réussi.
+
+**Spec review session #173 :** les 6 specs ciblées — confiée à un agent `reviewer` dédié
+(lecture seule), en tout début de session : `specs/transverse/affichage-participant.md`,
+`specs/screens/tv-live.md`, `specs/screens/admin-matchs.md` en ❌ Dérive bloquante (correspondant
+exactement à `#388`, `#383`/`#384` alors ouverts, `#390`) ; `specs/technical/
+cycle-de-vie-epreuve.md` en ⚠️ Dérive mineure ; `specs/screens/admin-tableau-final.md` et
+`specs/screens/admin-tournoi.md` désormais ✅ Conforme (confirment `#385`/`#386`/`#389` clos aux
+sessions #171/#172). 5 dérives relevées au total, 4 correspondant exactement aux issues déjà
+ouvertes, 1 note **non ticketée** : `cycle-de-vie-epreuve.md:330-331` contient une parenthèse
+obsolète décrivant l'ancien bug de bascule tardive de la petite finale (résolu par `#387`,
+session #171) — artefact rédactionnel sans impact fonctionnel, pas d'issue créée (précédent
+établi aux sessions #168/#169/#172 pour ce type d'observation cosmétique).
+
+**Backlog engine session #173 :** 2 tickets traités ensemble (mêmes fichiers, comme désigné par
+`sprint.md` : « même agent »), un seul agent `vue-screen` en une passe d'après deux plans
+détaillés écrits par l'orchestrateur, review indépendante confiée à l'agent `reviewer` avant
+clôture pour l'ensemble :
+- **#383** (majeure) — `frontend/app/src/views/tv/TvIdle.vue` — nouveau `winnerName` computed
+  dérivé de `bracket.f[0].match.winnerSide` via le helper `sideName()` (`@/utils/participants`,
+  créé session #172), remplace le libellé « À DÉSIGNER » codé en dur sous le trophée de la slide
+  Tableau.
+- **#384** (majeure) — `TvIdle.vue` + `TvPalmares.vue` — colonnes QF/SF/F du mini-bracket
+  conditionnées à `some(s => s.match)` (même patron qu'`AdminBracket.vue`, sessions #171/#172) ;
+  bloc « 3E PLACE » déplacé de sa colonne dédiée vers l'intérieur de la colonne Finale, sous les
+  slots F ; adoption de `sideName()` sur les noms QF/SF/P3 des deux fichiers (première
+  consommation concrète du helper #388, hors sweep complet). Écart volontaire jugé correct par le
+  reviewer : la colonne F garde son fallback historique `'Vainqueur SF1'/'SF2'` (pas de
+  `sideName()` dessus) — le motif littéral du plan (`?? 'À désigner'`) ne correspond pas à celui
+  de F, et `sideName()` aurait fait perdre ce placeholder informatif.
+
+Reviewer : diff limité aux deux fichiers attendus, fidèle aux deux plans ligne à ligne,
+`.tv-mini-col` (`flex-direction:column`) confirmé suffisant pour l'empilement du bloc P3 sans CSS
+nouvelle, `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, aucune
+réserve.
+
+**Sprint 44 non clos cette session** (attendu) : 3 issues encore ouvertes (`#388`, `#390`,
+`#391`), spec review encore ❌ sur 3 des 6 specs. Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré pour la suite : `#390` (AdminMatches, pastille
+compacte, indépendant, corrige au passage le fallback anglophone `'TBD'` relevé par le reviewer
+sur `AdminMatches.vue:346-347`) ; `#391` (store `event.ts`, garde d'identité, fichier partagé
+réservé à l'orchestrateur, patron du `#370`) ; `#388` se clôt progressivement au fil de
+l'adoption de `sideName()` dans les fichiers restants du sweep (`TvTicker.vue`,
+`TvScoreboard.vue`, `AdminRegie.vue`, `ArbitreHome.vue`, `ArbitreMatch.vue`,
+`EditMatchPanel.vue`, reste d'`AdminBracket.vue`/`AdminMatches.vue`) — pas un ticket à traiter
+d'un bloc.
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié indépendamment à deux
+reprises (spec review + review de ticket). Toujours pas de script `type-check`/`lint` dans
+`package.json`, toujours pas de `.claude/launch.json` côté front — vérification par type-check +
+revue de code uniquement (pas de QA navigateur TV réelle en session automatisée).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer` invoqués cette session
+(une spec review dédiée + une review de ticket couvrant #383/#384) ont strictement respecté leur
+mandat de lecture seule — pattern désormais stable sur au moins 26 sessions consécutives
+(#140-#173, sessions à vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé pour patienter sur les agents asynchrones (les deux invoqués en premier
+plan, résultat direct).
+
+**Observation annexe (signalée depuis la session #144, toujours non actionnée) :** deux dossiers
+de sprint orphelins subsistent dans `backlog/sprints/` — hors de `done/` et non référencés par
+`roadmap.md` : `04-admin-panel-map/` et `10-contexte-url/`, contenu strictement identique à leur
+version dans `done/`. Toujours à investiguer par l'utilisateur, non actionné cette session (hors
+mandat du backlog engine automatique).
+
+Log complet : `backlog/logs/session_2026-07-13_173.md`.
+
+---
+
+**Historique — session #172 :**
+
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (2ᵉ session du sprint).
+4/9 tickets clos — `#387`, `#385` (session #171), `#386`, `#389` (cette session) ; 5 restants
+(`#383`, `#384`, `#388`, `#390`, `#391`).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` déjà checked-out au démarrage, working
+tree propre. Parent effectif `claude/sprint/43-retours-11-juillet` (résolu par l'algorithme de
+l'Étape 0 : existe sur `origin`, pas encore ancêtre d'`origin/main`, inchangé depuis la session
+#171). `git merge origin/claude/sprint/43-retours-11-juillet --no-edit` : déjà à jour, aucun
+commit de rattrapage nécessaire cette session. 1 commit de code cette session, push réussi.
+
+**Spec review session #172 :** les 6 specs ciblées — confiée à un agent `reviewer` dédié
+(lecture seule), en tout début de session : `specs/transverse/affichage-participant.md`,
+`specs/screens/tv-live.md`, `specs/screens/admin-tableau-final.md` en ❌ Dérive bloquante ;
+`specs/technical/cycle-de-vie-epreuve.md` et `specs/screens/admin-tournoi.md` désormais
+✅ Conforme ; `specs/screens/admin-matchs.md` en ⚠️ Dérive mineure. 7 dérives relevées au total,
+**toutes** correspondent exactement aux 7 issues qui étaient encore ouvertes en début de
+session (`#383`, `#384`, `#386`, `#388`-`#391`), 0 dérive surprise, 0 nouvelle issue créée. Les
+tickets #385/#387 (clos à la session #171) sont confirmés conformes au code et à la spec. Une
+remarque non bloquante relevée sur `cycle-de-vie-epreuve.md` : les numéros de ligne cités dans
+la spec ont dérivé du code réel (fonctions présentes et correctes, seuls les repères
+numériques sont approximatifs) — suggestion de rafraîchissement, pas un défaut fonctionnel.
+
+**Préparatif orchestrateur avant le backlog engine :** création directe (hors cycle ticket, sans
+agent) de `frontend/app/src/utils/participants.ts` — helper unique `sideName(side, label?)`
+appliquant la règle `displayName` → étiquette de provenance → « À désigner »
+(`specs/transverse/affichage-participant.md`). Conforme à la désignation du `sprint.md` :
+fichier partagé, création par l'orchestrateur en premier, adoption par les écrans ensuite
+(prérequis de #388 ; le sweep proprement dit reste à faire ticket par ticket, pas encore
+adopté nulle part cette session). `npx vue-tsc --noEmit` vérifié après création : 0 erreur.
+
+**Backlog engine session #172 :** 2 tickets traités dans une seule passe (même fichier, comme
+explicitement demandé par les deux tickets GitHub eux-mêmes et par `sprint.md`), review
+indépendante confiée à l'agent `reviewer` avant clôture pour l'ensemble :
+- **#386** (majeure) + **#389** (mineure) — `frontend/app/src/views/admin/AdminBracket.vue` —
+  les colonnes Quarts (`bracket.qf?.length` → `bracket.qf?.some(s => s.match)`),
+  Demi-finales et Finale (aucune garde auparavant, ajout de `some(s => s.match)`) sont
+  désormais conditionnées à la forme réelle du tableau, même patron que la colonne P3 déjà
+  correcte — corrige la colonne Quarts fantôme qui empêchait le Double d'afficher son tableau
+  (combiné au crash déjà réglé par #385). Le bloc Petite finale est déplacé de sa colonne
+  dédiée vers l'intérieur de la colonne Finale, sous F1 (`<template v-if="bracket.p3?.some(s
+  => s.match)">` au lieu d'un `<div class="stage-col">` séparé), contenu interne identique
+  caractère pour caractère (édition d'étiquettes, drag-drop, scores) — aucun changement CSS
+  nécessaire (`.stage-col` est déjà `flex-direction:column`, empile naturellement). Deux plans
+  écrits par l'orchestrateur (`backlog/plan/386-adminbracket-colonnes-conditionnees.md`,
+  `backlog/plan/389-adminbracket-petite-finale-sous-finale.md`), appliqués par un seul agent
+  `vue-screen` en une passe. Reviewer : diff conforme aux deux plans à la ligne près, contenu
+  interne du bloc P3 vérifié identique, `.stage-col` confirmé inchangé et suffisant,
+  `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, aucune
+  réserve (une remarque cosmétique sur l'indentation du diff brut, vérifiée sans impact réel
+  par l'orchestrateur après coup — fichier bien indenté).
+
+**Point d'orchestration notable — un seul commit git pour deux tickets :** #386 et #389
+modifient des lignes imbriquées du même bloc de template ; un split a posteriori en deux
+commits propres aurait nécessité un diff/patch manuel non trivial. Choix assumé : un seul
+commit `44-386 ✅ AdminBracket : colonnes QF/SF/F conditionnées à some(match)` (`8daa161`)
+couvrant les deux tickets, chacun fermé séparément sur GitHub avec son propre commentaire de
+verdict — traçabilité GitHub intacte, seul le message de commit git ne nomme pas #389
+explicitement. Écart mineur au protocole (§2c, un commit par ticket), documenté dans le log de
+session complet.
+
+**Sprint 44 non clos cette session** (attendu) : 5 issues encore ouvertes (`#383`, `#384`,
+`#388`, `#390`, `#391`), spec review encore ❌ sur 3 des 6 specs. Sprint reste actif, sera
+repris à la **prochaine échéance planifiée**. Ordre suggéré pour la suite : `#383`+`#384`
+(TvIdle/TvPalmares, même zone mini-bracket, candidats naturels pour la prochaine paire) ;
+`#390` (AdminMatches, pastille, indépendant) — les trois adoptant `sideName()` au passage,
+désormais disponible ; `#391` (store `event.ts`, garde d'identité, fichier partagé réservé à
+l'orchestrateur) ; `#388` se clôt progressivement au fil de l'adoption du helper dans les 10
+fichiers du sweep (pas un ticket à traiter d'un bloc).
+
+**Point d'attention outillage :** `npx vue-tsc --noEmit` fiable, vérifié indépendamment par
+l'agent `reviewer` à deux reprises (implémentation + spec review). Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA navigateur admin réelle en
+session automatisée).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer` invoqués cette session
+(une spec review dédiée + une review de ticket couvrant #386/#389) ont strictement respecté
+leur mandat de lecture seule — pattern désormais stable sur au moins 25 sessions consécutives
+(#140-#172, sessions à vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé pour patienter sur les agents asynchrones (les deux invoqués en
+premier plan, résultat direct).
+
+**Observation annexe (signalée depuis la session #144, toujours non actionnée) :** deux
+dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors de `done/` et non
+référencés par `roadmap.md` : `04-admin-panel-map/` et `10-contexte-url/`, contenu strictement
+identique à leur version dans `done/`. Toujours à investiguer par l'utilisateur, non actionné
+cette session (hors mandat du backlog engine automatique).
+
+Log complet : `backlog/logs/session_2026-07-12_172.md`.
+
+---
+
+**Historique — session #171 :**
+**Sprint actif :** 44 — Correctifs retours du 12 juillet (1ʳᵉ session du sprint, planifié en
+séance à la session #170 mais roadmap encore vide au démarrage de cette Routine — le sprint
+avait été ajouté à `backlog/sprints/roadmap.md` par une session manuelle entre-temps).
+2/9 tickets clos — `#387`, `#385` ; 7 restants (`#383`, `#384`, `#386`, `#388`-`#391`).
+
+**Git :** branche `claude/sprint/44-retours-12-juillet` créée cette session (n'existait pas
+avant), parent effectif `claude/sprint/43-retours-11-juillet` (résolu par l'algorithme de
+l'Étape 0 : existe sur `origin`, pas encore ancêtre d'`origin/main`). **Point d'orchestration
+notable** : la branche 44, créée depuis `origin/claude/sprint/43-retours-11-juillet`, manquait
+au départ les 2 commits de planification du sprint 44 (`5b53f3a` specs, `2137f89` infra) —
+présents seulement sur la branche locale `claude/sprint/43-retours-11-juillet`, jamais poussés
+(la session #170, roadmap vide, n'avait rien à pousser). Repéré par l'agent `reviewer` de spec
+review (qui a lu les specs via `git show` sur l'autre branche pour rester valide malgré tout,
+et l'a signalé), corrigé par un `git merge claude/sprint/43-retours-11-juillet --ff-only` avant
+le backlog engine — fast-forward propre, aucun conflit, aucune perte. 2 commits de code cette
+session, push réussi.
+
+**Spec review session #171 :** les 6 specs ciblées — confiée à un agent `reviewer` dédié
+(lecture seule), en tout début de session : `specs/transverse/affichage-participant.md`,
+`specs/screens/tv-live.md`, `specs/screens/admin-tableau-final.md`, `specs/screens/
+admin-matchs.md` en ❌ Dérive bloquante ; `specs/technical/cycle-de-vie-epreuve.md` et
+`specs/screens/admin-tournoi.md` en ⚠️ Dérive mineure. 15 dérives relevées au total, **toutes**
+correspondent exactement aux 9 issues déjà ouvertes (`#383`-`#391`), 0 dérive surprise, 0
+nouvelle issue créée — attendu pour la 1ʳᵉ session d'un sprint tout juste planifié.
+
+**Backlog engine session #171 :** 2 tickets traités séquentiellement (majeures, sans
+dépendance sur le helper `#388` pas encore créé), review indépendante confiée à l'agent
+`reviewer` avant clôture pour chacun :
+- **#387** (majeure, `infra`) — `live/bracket.py` (nouvelle fonction module-level
+  `ensure_p3_slot_exists(event)`, extraite fidèlement du bloc inline auparavant dans
+  `ensure_final_bracket_exists` ; `_rules_for_fmt` hissée au niveau module) + `live/
+  admin_views.py` (`update_event` : activation de `has_third_place` → création immédiate du P3
+  + `sync_p3_losers_for_event` ; désactivation → suppression si `SCHEDULED`, `ValueError` →
+  400 JSON si `LIVE`/`FINISHED`, validée **avant** toute écriture). Confié à un agent
+  `django-api` d'après un plan détaillé écrit par l'orchestrateur (`backlog/plan/
+  387-petite-finale-bascule-tardive.md`). Aucune route nouvelle (`api_event_edit` existait
+  déjà), aucun changement front. Reviewer : golden path retracé à la main (activation avec
+  propagation, désactivation SCHEDULED, désactivation LIVE/FINISHED refusée avant écriture),
+  import circulaire testé manuellement (OK), seul appelant existant (`api_views.py:1670`) non
+  cassé, `manage.py check` vérifié indépendamment (0 erreur). Verdict : ✅ Approuvé, aucune
+  réserve.
+- **#385** (majeure) — `frontend/app/src/views/admin/AdminBracket.vue` — nouvelle fonction
+  `isEditingSlot(slot)` (`!!editingSlot.value && !!slot.match && editingSlot.value.matchId ===
+  slot.match.id`), remplace la garde buguée `editingSlot?.matchId === slot.match?.id` (vraie
+  quand les deux côtés sont `undefined`, càd slot sans match + aucune édition en cours) sur les
+  4 blocs QF/SF/F/P3 — c'était la cause du crash qui figeait l'écran Tableau final sur
+  l'ancienne épreuve au changement de sélecteur. Confié à un agent `vue-screen` d'après un plan
+  détaillé (`backlog/plan/385-adminbracket-crash-slot-sans-match.md`). Reviewer : scénario de
+  crash original retracé et confirmé résolu, cas d'édition en cours sur un autre slot vérifié
+  sans régression, diff strictement limité au périmètre (gardes du bouton crayon et colonne
+  Quarts fantôme #386 non touchées), `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur).
+  Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 44 non clos cette session** (attendu, 1ʳᵉ session) : 7 issues encore ouvertes
+(`#383`, `#384`, `#386`, `#388`-`#391`), spec review encore ❌/⚠️ sur les 6 specs. Sprint reste
+actif, sera repris à la **prochaine échéance planifiée**. Ordre suggéré pour la suite : #388
+(helper `participants.ts`/`sideName()`, prérequis de #383, à créer par l'orchestrateur en
+premier) ; #386+#389 (AdminBracket, même fichier que #385 cette session, une seule passe) ;
+#383+#384 (TvIdle/TvPalmares, bloqués sur #388) ; #390+#391 (indépendants, mineurs) en
+complément si la session a de la marge.
+
+**Point d'attention outillage :** `manage.py check` et `npx vue-tsc --noEmit` fiables pour les
+deux tickets, chacun vérifié indépendamment par l'agent `reviewer`. Toujours pas de script
+`type-check`/`lint` dans `package.json`, toujours pas de `.claude/launch.json` côté front —
+vérification par type-check + revue de code uniquement (pas de QA navigateur admin réelle en
+session automatisée, golden paths retracés analytiquement dans le code par le reviewer).
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer` invoqués cette session
+(une spec review dédiée + deux reviews de ticket) ont strictement respecté leur mandat de
+lecture seule — pattern désormais stable sur au moins 24 sessions consécutives (#140-#171,
+sessions à vide comprises) depuis l'incident initial de la session #139. Aucun `ScheduleWakeup`
+utilisé pour patienter sur les agents asynchrones.
+
+**Observation annexe (signalée depuis la session #144, toujours non actionnée) :** deux
+dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors de `done/` et non
+référencés par `roadmap.md`. Précision cette session : ce ne sont **pas de simples doublons
+oubliés** — `04-admin-panel-map/` et `10-contexte-url/` existent avec un contenu strictement
+identique **à la fois** à la racine de `backlog/sprints/` **et** dans `backlog/sprints/done/`
+(mêmes fichiers `log.md`/`sprint.md`, mêmes tailles, mêmes dates). Toujours à investiguer par
+l'utilisateur (résidu probable d'une archive en double plutôt qu'un sprint réellement en
+attente), mais l'hypothèse « travail non fini » semble d'autant moins probable que la version
+`done/` est bien celle attendue et complète.
+
+Log complet : `backlog/logs/session_2026-07-12_171.md`.
+
+---
+
+**Historique — session #170 :**
 **Sprint actif :** aucun — `backlog/sprints/roadmap.md` vide (tableau sans ligne). Confirmé
 côté GitHub : `gh api repos/sirius911/moutilloux/milestones` ne retourne aucun milestone
 (ouvert ou fermé), cohérent avec la clôture du sprint 43 à la session #169. Conforme au
@@ -382,15 +952,6 @@ protocole (§3, Étape 0) : *Roadmap vide — tous les sprints terminés. Désac
 manuellement sur claude.ai/code/routines.* Session à vide — aucune spec review, aucun ticket
 backlog engine, aucun commit de code (seul le log de session a été créé). Branche
 `claude/sprint/43-retours-11-juillet` déjà checked-out, working tree propre au démarrage.
-
-**Observation annexe (signalée depuis la session #144, toujours non actionnée) :** deux
-dossiers de sprint orphelins subsistent dans `backlog/sprints/` — hors de `done/` et non
-référencés par `roadmap.md` : `04-admin-panel-map/` et `10-contexte-url/`. À investiguer par
-l'utilisateur avant de les considérer comme travail réellement en attente ou comme reliquats
-à archiver.
-
-Le prochain sprint devra être planifié manuellement (`/plan-sprint`) avant toute réactivation
-utile de la Routine.
 
 Log complet : `backlog/logs/session_2026-07-12_170.md`.
 

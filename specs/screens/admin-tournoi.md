@@ -151,7 +151,7 @@ récente à la plus ancienne :
 | Catégorie | Requise en création — sélecteur des catégories existantes **avec création inline** (voir ci-dessous). **Non modifiable en édition** (l'identité d'une épreuve est édition × catégorie). |
 | Joueurs par poule | 3 ou 4 (défaut 4) |
 | Qualifiés par poule | 1 ou 2 (défaut 2) |
-| Petite finale | Optionnel — match pour la 3e place (perdants des demies). Défaut : non. Voir [[cycle-de-vie-epreuve]]. |
+| Petite finale | Optionnel — match pour la 3e place (perdants des demies). Défaut : non. **Modifiable après « Débuter »**, avec effet immédiat sur le tableau existant : activation → création du match P3 (et propagation des perdants des demies déjà jouées) ; désactivation → suppression du P3 si non commencé, **refusée** (erreur affichée dans la modale) s'il est en direct ou terminé. Voir [[cycle-de-vie-epreuve]]. |
 | Notes | Texte libre optionnel |
 
 **Création de catégorie inline**

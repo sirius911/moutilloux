@@ -169,10 +169,10 @@ async function changePlayDay(newPlayDayId: number | null) {
 }
 
 const nameA = computed(() =>
-  props.match.sideA?.player?.fullName ?? props.match.sideALabel ?? 'Joueur A'
+  props.match.sideA?.displayName ?? props.match.sideALabel ?? 'Joueur A'
 )
 const nameB = computed(() =>
-  props.match.sideB?.player?.fullName ?? props.match.sideBLabel ?? 'Joueur B'
+  props.match.sideB?.displayName ?? props.match.sideBLabel ?? 'Joueur B'
 )
 
 // Onglet Affiche — état + actions

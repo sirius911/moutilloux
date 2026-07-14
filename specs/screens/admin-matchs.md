@@ -131,7 +131,8 @@ sur son en-tête (chevron d'état) :
 - Les journées affichent **tous les matchs de l'édition** (mono-court : une seule
   séquence, toutes épreuves confondues). Les lignes des autres épreuves sont
   **atténuées** ; quand plusieurs épreuves cohabitent, chaque ligne porte le nom
-  de son épreuve.
+  de son épreuve — **pastille compacte**, dimensionnée à son contenu, jamais
+  étirée sur l'espace restant de la ligne (retours 2026-07-12).
 
 ### Ligne de match
 
@@ -143,7 +144,9 @@ sur son en-tête (chevron d'état) :
   retard ou qui s'éternise, **vert** = en cours et à l'heure. Les lignes dans
   les temps, terminées ou annulées ne portent aucune teinte.
 - **Affiche** : pastille de poule (ou d'étape pour un match de tableau),
-  « {A} vs {B} » — étiquettes de provenance si les slots ne sont pas résolus.
+  « {A} vs {B} » — noms selon [[affichage-participant]] (`displayName`, donc
+  nom d'équipe en Double) ; étiquettes de provenance si les slots ne sont pas
+  résolus, « À désigner » en dernier recours (jamais « TBD »).
 - **⚠ repos** si le match est adjacent, dans la séquence, à un autre match du même
   joueur (voir [[planning]]) — inévaluable sur des slots non résolus (best-effort,
   réévalué à la résolution).

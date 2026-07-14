@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
+import { sideName } from '@/utils/participants'
 import type { Match, TvIdleSlideKind } from '@/types'
 
 const live = useLiveStore()
@@ -118,8 +119,8 @@ usePolling(async () => {
 
 function nextPlayerName(side: 'A' | 'B'): string {
   if (!live.next) return 'À désigner'
-  if (side === 'A') return live.next.sideA?.player?.fullName ?? live.next.sideALabel ?? 'À désigner'
-  return live.next.sideB?.player?.fullName ?? live.next.sideBLabel ?? 'À désigner'
+  if (side === 'A') return sideName(live.next.sideA, live.next.sideALabel)
+  return sideName(live.next.sideB, live.next.sideBLabel)
 }
 
 // Score par sets d'un côté, chiffres dans l'ordre chronologique des sets :
@@ -132,6 +133,16 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
   }
   return closed.join(' ')
 }
+
+// Vainqueur mis en avant, dérivé du match de finale (bracket.f[0]) — même
+// logique que TvPalmares.vue:36-45.
+const finalMatch = computed(() => currentBracketEvent.value?.bracket?.f[0]?.match ?? null)
+
+const winnerName = computed(() => {
+  const m = finalMatch.value
+  if (!m || !m.winnerSide) return null
+  return sideName(m.winnerSide === 'A' ? m.sideA : m.sideB, m.winnerSide === 'A' ? m.sideALabel : m.sideBLabel)
+})
 </script>
 
 <template>
@@ -199,11 +210,11 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
               <div class="tv-result-match">
                 <div :class="['tv-result-side', { win: m.winnerSide === 'A' }]">
                   <span v-if="m.sideA?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'A' }">{{ m.sideA.seedHint }}</span>
-                  <span class="tv-result-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner' }}</span>
+                  <span class="tv-result-name">{{ sideName(m.sideA, m.sideALabel) }}</span>
                 </div>
                 <div :class="['tv-result-side', { win: m.winnerSide === 'B' }]">
                   <span v-if="m.sideB?.seedHint" class="tv-result-seed" :class="{ 'tv-result-seed--win': m.winnerSide === 'B' }">{{ m.sideB.seedHint }}</span>
-                  <span class="tv-result-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner' }}</span>
+                  <span class="tv-result-name">{{ sideName(m.sideB, m.sideBLabel) }}</span>
                 </div>
               </div>
               <span class="tv-result-score tab">
@@ -263,7 +274,7 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
           </h2>
           <div v-if="currentBracketEvent?.bracket" class="tv-mini-bracket">
             <!-- QF -->
-            <div class="tv-mini-col">
+            <div v-if="currentBracketEvent.bracket.qf?.some(s => s.match)" class="tv-mini-col">
               <div class="tv-mini-col-head">QUARTS</div>
               <div
                 v-for="slot in currentBracketEvent.bracket.qf"
@@ -273,18 +284,18 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
                 <span v-if="slot.match?.status === 'LIVE'" class="tv-mini-live">EN DIRECT</span>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
                   <span class="tv-mini-seed" :class="{ 'tv-mini-seed--win': slot.match?.winnerSide === 'A' }">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                  <span class="tv-mini-name">{{ sideName(slot.match?.sideA, slot.match?.sideALabel) }}</span>
                   <span v-if="sideSetScore(slot.match, 'A')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'A') }}</span>
                 </div>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                  <span class="tv-mini-name">{{ sideName(slot.match?.sideB, slot.match?.sideBLabel) }}</span>
                   <span v-if="sideSetScore(slot.match, 'B')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'B') }}</span>
                 </div>
               </div>
             </div>
             <!-- SF -->
-            <div class="tv-mini-col">
+            <div v-if="currentBracketEvent.bracket.sf?.some(s => s.match)" class="tv-mini-col">
               <div class="tv-mini-col-head">DEMI-FINALES</div>
               <div style="height: 24px" />
               <div
@@ -295,49 +306,49 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
               >
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
+                  <span class="tv-mini-name">{{ sideName(slot.match?.sideA, slot.match?.sideALabel) }}</span>
                   <span v-if="sideSetScore(slot.match, 'A')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'A') }}</span>
                 </div>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
+                  <span class="tv-mini-name">{{ sideName(slot.match?.sideB, slot.match?.sideBLabel) }}</span>
                   <span v-if="sideSetScore(slot.match, 'B')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'B') }}</span>
                 </div>
               </div>
             </div>
             <!-- F -->
-            <div class="tv-mini-col">
+            <div v-if="currentBracketEvent.bracket.f?.some(s => s.match)" class="tv-mini-col">
               <div class="tv-mini-col-head">FINALE</div>
               <div style="height: 80px" />
               <div v-for="slot in currentBracketEvent.bracket.f" :key="slot.slot" class="tv-mini-match final">
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'Vainqueur SF1' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideA?.displayName ?? slot.match?.sideALabel ?? 'Vainqueur SF1' }}</span>
                   <span v-if="sideSetScore(slot.match, 'A')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'A') }}</span>
                 </div>
                 <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
                   <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'Vainqueur SF2' }}</span>
+                  <span class="tv-mini-name">{{ slot.match?.sideB?.displayName ?? slot.match?.sideBLabel ?? 'Vainqueur SF2' }}</span>
                   <span v-if="sideSetScore(slot.match, 'B')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'B') }}</span>
                 </div>
               </div>
-            </div>
-            <!-- 3e place (seulement si activée) -->
-            <div v-if="currentBracketEvent.bracket.p3?.length" class="tv-mini-col">
-              <div class="tv-mini-col-head">3E PLACE</div>
-              <div style="height: 80px" />
-              <div v-for="slot in currentBracketEvent.bracket.p3" :key="slot.slot" class="tv-mini-match">
-                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
-                  <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideA?.player?.fullName ?? slot.match?.sideALabel ?? 'À désigner' }}</span>
-                  <span v-if="sideSetScore(slot.match, 'A')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'A') }}</span>
+
+              <!-- 3e place (seulement si activée), à l'intérieur de la colonne Finale -->
+              <template v-if="currentBracketEvent.bracket.p3?.some(s => s.match)">
+                <div class="tv-mini-col-head" style="margin-top: 16px">3E PLACE</div>
+                <div v-for="slot in currentBracketEvent.bracket.p3" :key="slot.slot" class="tv-mini-match">
+                  <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'A' }]">
+                    <span class="tv-mini-seed">{{ slot.match?.sideA?.seedHint ?? '' }}</span>
+                    <span class="tv-mini-name">{{ sideName(slot.match?.sideA, slot.match?.sideALabel) }}</span>
+                    <span v-if="sideSetScore(slot.match, 'A')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'A') }}</span>
+                  </div>
+                  <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
+                    <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
+                    <span class="tv-mini-name">{{ sideName(slot.match?.sideB, slot.match?.sideBLabel) }}</span>
+                    <span v-if="sideSetScore(slot.match, 'B')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'B') }}</span>
+                  </div>
                 </div>
-                <div :class="['tv-mini-slot', { win: slot.match?.winnerSide === 'B' }]">
-                  <span class="tv-mini-seed">{{ slot.match?.sideB?.seedHint ?? '' }}</span>
-                  <span class="tv-mini-name">{{ slot.match?.sideB?.player?.fullName ?? slot.match?.sideBLabel ?? 'À désigner' }}</span>
-                  <span v-if="sideSetScore(slot.match, 'B')" class="tv-mini-score tab">{{ sideSetScore(slot.match, 'B') }}</span>
-                </div>
-              </div>
+              </template>
             </div>
             <!-- Trophée -->
             <div class="tv-mini-col tv-mini-trophy-col">
@@ -347,7 +358,7 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
                 <svg viewBox="0 0 32 32" width="44" height="44" style="color: var(--accent)">
                   <path d="M6 4h20v6a8 8 0 01-8 8h-4a8 8 0 01-8-8V4zm0 0H2v3a3 3 0 003 3M26 4h4v3a3 3 0 01-3 3M12 18v4M20 18v4M9 26h14v2H9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
                 </svg>
-                <div class="tv-mini-trophy-lbl">À DÉSIGNER</div>
+                <div :class="['tv-mini-trophy-lbl', { won: winnerName }]">{{ winnerName ?? 'À DÉSIGNER' }}</div>
               </div>
             </div>
           </div>
@@ -370,9 +381,9 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
             >
               <span class="tv-prog-time tab">~{{ m.scheduledTime ?? '—' }}</span>
               <div class="tv-prog-match">
-                <span class="tv-prog-name">{{ m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner' }}</span>
+                <span class="tv-prog-name">{{ sideName(m.sideA, m.sideALabel) }}</span>
                 <em class="tv-prog-vs">vs</em>
-                <span class="tv-prog-name">{{ m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner' }}</span>
+                <span class="tv-prog-name">{{ sideName(m.sideB, m.sideBLabel) }}</span>
               </div>
               <span class="tv-prog-group">{{ m.stageLabel }}</span>
               <span v-if="i === 0" class="tv-prog-bientot">bientôt</span>

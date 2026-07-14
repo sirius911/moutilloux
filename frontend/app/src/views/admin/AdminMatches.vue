@@ -8,6 +8,7 @@ import { usePolling } from '@/composables/usePolling'
 import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import PlayDayModal from '@/components/modals/PlayDayModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import { sideName } from '@/utils/participants'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -343,8 +344,8 @@ function stagePillLabel(match: Match): string {
 }
 
 function playerLabel(match: Match, side: 'A' | 'B'): string {
-  if (side === 'A') return match.sideA?.player?.fullName ?? match.sideALabel ?? 'TBD'
-  return match.sideB?.player?.fullName ?? match.sideBLabel ?? 'TBD'
+  if (side === 'A') return sideName(match.sideA, match.sideALabel)
+  return sideName(match.sideB, match.sideBLabel)
 }
 
 // Identifiant du seul match "Next" — lu depuis l'état DnD local.
@@ -923,6 +924,7 @@ async function onDragEnd() {
                     {
                       'no-drag': (element.data as Match).status !== 'SCHEDULED',
                       'is-foreign': isForeign(element.data as Match),
+                      'has-event-tag': multiEvent,
                     },
                     punctualityClass((element.data as Match).id),
                   ]"
@@ -1357,6 +1359,13 @@ async function onDragEnd() {
   transition: background 100ms;
 }
 
+/* Colonne dédiée à la pastille d'épreuve (multiEvent) : insérée avant la
+   colonne des noms (1fr) plutôt que de s'y insérer comme 4e enfant, sinon
+   elle hérite de cette colonne et s'étire sur tout l'espace restant. */
+.cal-row.has-event-tag {
+  grid-template-columns: 64px 14px auto auto 1fr auto 20px;
+}
+
 .cal-row:last-child { border-bottom: none; }
 .cal-row:hover { background: var(--bg-3); }
 
@@ -1630,5 +1639,6 @@ async function onDragEnd() {
   border-radius: 99px;
   white-space: nowrap;
   flex-shrink: 0;
+  justify-self: start;
 }
 </style>

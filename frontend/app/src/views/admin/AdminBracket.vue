@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
+import { sideName } from '@/utils/participants'
 import type { BracketSlot, Entry, Match } from '@/types'
 
 const eventStore = useEventStore()
@@ -147,8 +148,8 @@ const placedEntryIds = computed((): Set<number> => new Set(placedEntrySlots.valu
 function slotLabel(slot: BracketSlot, side: 'A' | 'B'): string {
   const m = slot.match
   if (!m) return 'Vide'
-  if (side === 'A') return m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner'
-  return m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner'
+  if (side === 'A') return sideName(m.sideA, m.sideALabel)
+  return sideName(m.sideB, m.sideBLabel)
 }
 
 // Score par sets d'un côté, chiffres dans l'ordre chronologique des sets :
@@ -165,6 +166,10 @@ function sideSetScore(m: Match | null | undefined, side: 'A' | 'B'): string {
 // ── Reseeding — édition locale des étiquettes ─────────────────────────────
 
 const editingSlot = ref<{ matchId: number; sideALabel: string; sideBLabel: string } | null>(null)
+
+function isEditingSlot(slot: BracketSlot): boolean {
+  return !!editingSlot.value && !!slot.match && editingSlot.value.matchId === slot.match.id
+}
 
 function startEdit(slot: BracketSlot) {
   if (!slot.match || slot.match.status !== 'SCHEDULED') return
@@ -283,7 +288,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
         <div class="bracket-preview">
           <template v-if="bracket">
             <!-- Quarts -->
-            <div v-if="bracket.qf?.length" class="stage-col">
+            <div v-if="bracket.qf?.some(s => s.match)" class="stage-col">
               <h3 class="stage-title">Quarts</h3>
               <div
                 v-for="slot in bracket.qf"
@@ -302,7 +307,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -346,7 +351,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
             </div>
 
             <!-- Demi-finales -->
-            <div class="stage-col">
+            <div v-if="bracket.sf?.some(s => s.match)" class="stage-col">
               <h3 class="stage-title">Demi-finales</h3>
               <div
                 v-for="slot in bracket.sf"
@@ -365,7 +370,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -409,7 +414,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
             </div>
 
             <!-- Finale -->
-            <div class="stage-col">
+            <div v-if="bracket.f?.some(s => s.match)" class="stage-col">
               <h3 class="stage-title">Finale</h3>
               <div
                 v-for="slot in bracket.f"
@@ -428,7 +433,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
+                <template v-if="isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -469,69 +474,69 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                   </div>
                 </template>
               </div>
-            </div>
 
-            <!-- Petite finale (P3) — uniquement si un match P3 existe en base -->
-            <div v-if="bracket.p3?.some(s => s.match)" class="stage-col">
-              <h3 class="stage-title">Petite finale</h3>
-              <div
-                v-for="slot in bracket.p3"
-                :key="slot.slot"
-                class="bracket-slot"
-              >
-                <div class="slot-header">
-                  <span class="slot-label">{{ slot.slot }}</span>
-                  <button
-                    v-if="slot.match?.status === 'SCHEDULED' && editingSlot?.matchId !== slot.match?.id"
-                    class="slot-edit-btn"
-                    type="button"
-                    :title="'Modifier étiquettes'"
-                    @click="startEdit(slot)"
-                  >&#9998;</button>
-                </div>
+              <!-- Petite finale (P3) — uniquement si un match P3 existe en base, sous la finale -->
+              <template v-if="bracket.p3?.some(s => s.match)">
+                <h3 class="stage-title">Petite finale</h3>
+                <div
+                  v-for="slot in bracket.p3"
+                  :key="slot.slot"
+                  class="bracket-slot"
+                >
+                  <div class="slot-header">
+                    <span class="slot-label">{{ slot.slot }}</span>
+                    <button
+                      v-if="slot.match?.status === 'SCHEDULED' && editingSlot?.matchId !== slot.match?.id"
+                      class="slot-edit-btn"
+                      type="button"
+                      :title="'Modifier étiquettes'"
+                      @click="startEdit(slot)"
+                    >&#9998;</button>
+                  </div>
 
-                <!-- Mode édition -->
-                <template v-if="editingSlot?.matchId === slot.match?.id">
-                  <div class="slot-edit-form">
-                    <label class="slot-edit-label">
-                      <span class="slot-edit-side">A</span>
-                      <input v-model="editingSlot.sideALabel" class="slot-edit-input" type="text" placeholder="ex. LSF1" />
-                    </label>
-                    <label class="slot-edit-label">
-                      <span class="slot-edit-side">B</span>
-                      <input v-model="editingSlot.sideBLabel" class="slot-edit-input" type="text" placeholder="ex. LSF2" />
-                    </label>
-                    <div class="slot-edit-actions">
-                      <button class="adm-btn primary slot-edit-save" type="button" @click="saveEdit">Valider</button>
-                      <button class="adm-btn slot-edit-cancel" type="button" @click="cancelEdit">Annuler</button>
+                  <!-- Mode édition -->
+                  <template v-if="isEditingSlot(slot)">
+                    <div class="slot-edit-form">
+                      <label class="slot-edit-label">
+                        <span class="slot-edit-side">A</span>
+                        <input v-model="editingSlot.sideALabel" class="slot-edit-input" type="text" placeholder="ex. LSF1" />
+                      </label>
+                      <label class="slot-edit-label">
+                        <span class="slot-edit-side">B</span>
+                        <input v-model="editingSlot.sideBLabel" class="slot-edit-input" type="text" placeholder="ex. LSF2" />
+                      </label>
+                      <div class="slot-edit-actions">
+                        <button class="adm-btn primary slot-edit-save" type="button" @click="saveEdit">Valider</button>
+                        <button class="adm-btn slot-edit-cancel" type="button" @click="cancelEdit">Annuler</button>
+                      </div>
                     </div>
-                  </div>
-                </template>
+                  </template>
 
-                <!-- Affichage normal -->
-                <template v-else>
-                  <div
-                    class="slot-side"
-                    :class="{ empty: !slot.match?.sideA, winner: slot.match?.winnerSide === 'A' }"
-                    @dragover.prevent
-                    @drop="onDropToSlot(slot, 'A')"
-                  >
-                    <span>{{ slotLabel(slot, 'A') }}</span>
-                    <span v-if="sideSetScore(slot.match, 'A')" class="slot-score">{{ sideSetScore(slot.match, 'A') }}</span>
-                    <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
-                  </div>
-                  <div
-                    class="slot-side"
-                    :class="{ empty: !slot.match?.sideB, winner: slot.match?.winnerSide === 'B' }"
-                    @dragover.prevent
-                    @drop="onDropToSlot(slot, 'B')"
-                  >
-                    <span>{{ slotLabel(slot, 'B') }}</span>
-                    <span v-if="sideSetScore(slot.match, 'B')" class="slot-score">{{ sideSetScore(slot.match, 'B') }}</span>
-                    <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
-                  </div>
-                </template>
-              </div>
+                  <!-- Affichage normal -->
+                  <template v-else>
+                    <div
+                      class="slot-side"
+                      :class="{ empty: !slot.match?.sideA, winner: slot.match?.winnerSide === 'A' }"
+                      @dragover.prevent
+                      @drop="onDropToSlot(slot, 'A')"
+                    >
+                      <span>{{ slotLabel(slot, 'A') }}</span>
+                      <span v-if="sideSetScore(slot.match, 'A')" class="slot-score">{{ sideSetScore(slot.match, 'A') }}</span>
+                      <button v-if="slot.match?.sideA" class="slot-clear" @click="clearSlot(slot, 'A')">✕</button>
+                    </div>
+                    <div
+                      class="slot-side"
+                      :class="{ empty: !slot.match?.sideB, winner: slot.match?.winnerSide === 'B' }"
+                      @dragover.prevent
+                      @drop="onDropToSlot(slot, 'B')"
+                    >
+                      <span>{{ slotLabel(slot, 'B') }}</span>
+                      <span v-if="sideSetScore(slot.match, 'B')" class="slot-score">{{ sideSetScore(slot.match, 'B') }}</span>
+                      <button v-if="slot.match?.sideB" class="slot-clear" @click="clearSlot(slot, 'B')">✕</button>
+                    </div>
+                  </template>
+                </div>
+              </template>
             </div>
           </template>
         </div>
@@ -552,7 +557,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
               @dragstart="!placedEntryIds.has(item.entry.id) && onDragStart(item.entry.id)"
             >
               <span class="qp-seed">{{ item.label }}</span>
-              <span class="qp-name">{{ item.entry.player?.fullName ?? `Équipe ${item.entry.id}` }}</span>
+              <span class="qp-name">{{ item.entry.displayName }}</span>
               <span v-if="placedEntryIds.has(item.entry.id)" class="qp-placed">Placé en {{ placedEntrySlots.get(item.entry.id) }}</span>
               <span v-else class="grip">&#8942;&#8942;</span>
             </div>

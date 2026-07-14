@@ -153,13 +153,16 @@ export const useEventStore = defineStore('event', () => {
   async function fetchPlayers(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
-    players.value = await get<Entry[]>(`/api/events/${id}/players/`)
+    const data = await get<Entry[]>(`/api/events/${id}/players/`)
+    if (id !== activeEventId.value) return // réponse périmée : l'épreuve active a changé entre-temps
+    players.value = data
   }
 
   async function fetchGroups(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
     const data = await get<{ locked: boolean; groups: Group[] }>(`/api/events/${id}/groups/`)
+    if (id !== activeEventId.value) return // réponse périmée : l'épreuve active a changé entre-temps
     groups.value = data.groups
     groupsLocked.value = data.locked
   }
@@ -167,7 +170,9 @@ export const useEventStore = defineStore('event', () => {
   async function fetchMatches(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
-    kanban.value = await get<KanbanData>(`/api/events/${id}/matches/`)
+    const data = await get<KanbanData>(`/api/events/${id}/matches/`)
+    if (id !== activeEventId.value) return // réponse périmée : l'épreuve active a changé entre-temps
+    kanban.value = data
   }
 
   async function fetchCalendar(editionId?: number) {
@@ -179,7 +184,9 @@ export const useEventStore = defineStore('event', () => {
   async function fetchBracket(eventId?: number) {
     const id = eventId ?? activeEventId.value
     if (!id) return
-    bracket.value = await get<Bracket>(`/api/events/${id}/bracket/`)
+    const data = await get<Bracket>(`/api/events/${id}/bracket/`)
+    if (id !== activeEventId.value) return // réponse périmée : l'épreuve active a changé entre-temps
+    bracket.value = data
   }
 
   // ── Mutations — Phase 2 (inscriptions) ────────────────────────────────

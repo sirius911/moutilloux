@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useLiveStore } from '@/stores/live'
+import { sideName } from '@/utils/participants'
 import type { Match } from '@/types'
 
 const live = useLiveStore()
@@ -11,8 +12,8 @@ interface TickerItem {
 }
 
 function winnerLoserNames(m: Match): { winner: string; loser: string } {
-  const a = m.sideA?.player?.fullName ?? m.sideALabel ?? '—'
-  const b = m.sideB?.player?.fullName ?? m.sideBLabel ?? '—'
+  const a = m.sideA?.displayName ?? m.sideALabel ?? '—'
+  const b = m.sideB?.displayName ?? m.sideBLabel ?? '—'
   return m.winnerSide === 'A' ? { winner: a, loser: b } : { winner: b, loser: a }
 }
 
@@ -35,8 +36,8 @@ const items = computed<TickerItem[]>(() => {
   }
 
   for (const m of live.programme.upcoming) {
-    const a = m.sideA?.player?.fullName ?? m.sideALabel ?? 'À désigner'
-    const b = m.sideB?.player?.fullName ?? m.sideBLabel ?? 'À désigner'
+    const a = sideName(m.sideA, m.sideALabel)
+    const b = sideName(m.sideB, m.sideBLabel)
     list.push({ key: `p-${m.id}`, text: `À venir ~${m.scheduledTime ?? '—'} · ${a} vs ${b}` })
   }
 
