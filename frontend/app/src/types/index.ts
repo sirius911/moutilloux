@@ -243,6 +243,8 @@ export interface Break {
 export interface CalendarDay extends PlayDay {
   breaks: Break[]
   matches: Match[]
+  estimatedEnd: string      // "HH:MM" — fin de journée estimée, calculée serveur (wrappée 24h)
+  estimatedEndMin: number   // même curseur non wrappé (peut dépasser 1440) — comparaison capacité
 }
 
 export interface CalendarData {

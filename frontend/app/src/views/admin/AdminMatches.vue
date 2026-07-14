@@ -437,12 +437,19 @@ function timeToMin(t: string): number {
 }
 
 function minToTime(min: number): string {
-  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+  const wrapped = ((min % 1440) + 1440) % 1440
+  return `${String(Math.floor(wrapped / 60)).padStart(2, '0')}:${String(wrapped % 60).padStart(2, '0')}`
 }
 
-function isoToMin(iso: string): number {
+// Minutes écoulées depuis minuit de `dayDateStr` (peut dépasser 1440 ou être
+// négatif si `iso` tombe un autre jour — match rejoué/reporté). Le wrap 24h
+// ne se fait qu'à l'affichage, via `minToTime`.
+function isoToMin(iso: string, dayDateStr: string): number {
   const d = new Date(iso)
-  return d.getHours() * 60 + d.getMinutes()
+  const dayStart = new Date(`${dayDateStr}T00:00:00`)
+  const dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diffDays = Math.round((dateOnly.getTime() - dayStart.getTime()) / 86400000)
+  return diffDays * 1440 + d.getHours() * 60 + d.getMinutes()
 }
 
 // Compare `dateStr` (YYYY-MM-DD) à la date locale du jour — même convention que
@@ -473,9 +480,10 @@ function durFor(match: Match): number {
 // Calcule les heures estimées pour chaque match et pause de chaque journée.
 // Clés : m-{id} (match), b-{id} (pause), day-end-{id} (fin de journée).
 // Les pauses obtiennent leur ETA à leur position réelle dans la séquence unifiée.
-const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<number, number> }>(() => {
+const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<number, number>; dayEndMin: Map<number, number> }>(() => {
   const result = new Map<string, string>()
   const plannedMin = new Map<number, number>()
+  const dayEndMin = new Map<number, number>()
   const now = new Date()
   const nowMin = now.getHours() * 60 + now.getMinutes()
 
@@ -490,14 +498,14 @@ const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<numbe
         const dur = durFor(m)
         plannedMin.set(m.id, cursor)
         if (m.status === 'FINISHED' && m.finishedAt) {
-          const displayMin = m.startedAt ? isoToMin(m.startedAt) : isoToMin(m.finishedAt)
+          const displayMin = m.startedAt ? isoToMin(m.startedAt, day.date) : isoToMin(m.finishedAt, day.date)
           result.set(`m-${m.id}`, minToTime(displayMin))
-          const ft = isoToMin(m.finishedAt)
+          const ft = isoToMin(m.finishedAt, day.date)
           cursor = Math.max(cursor + dur, ft)
         } else if (m.status === 'LIVE') {
-          const displayMin = m.startedAt ? isoToMin(m.startedAt) : cursor
+          const displayMin = m.startedAt ? isoToMin(m.startedAt, day.date) : cursor
           result.set(`m-${m.id}`, minToTime(displayMin))
-          const liveEnd = m.startedAt ? isoToMin(m.startedAt) + dur : cursor + dur
+          const liveEnd = m.startedAt ? isoToMin(m.startedAt, day.date) + dur : cursor + dur
           cursor = anchorNow ? Math.max(cursor + dur, liveEnd, nowMin) : Math.max(cursor + dur, liveEnd)
         } else {
           result.set(`m-${m.id}`, `~${minToTime(cursor)}`)
@@ -510,9 +518,10 @@ const etaEngine = computed<{ display: Map<string, string>; plannedMin: Map<numbe
     }
 
     result.set(`day-end-${day.id}`, minToTime(cursor))
+    dayEndMin.set(day.id, cursor)
   }
 
-  return { display: result, plannedMin }
+  return { display: result, plannedMin, dayEndMin }
 })
 
 const computedETAs = computed(() => etaEngine.value.display)
@@ -546,7 +555,7 @@ const punctualityByMatchId = computed<Map<number, Punctuality>>(() => {
       if (m.status === 'SCHEDULED') {
         if (nowMin > planned + 5) result.set(m.id, 'red')
       } else if (m.status === 'LIVE') {
-        const startedMin = m.startedAt ? isoToMin(m.startedAt) : null
+        const startedMin = m.startedAt ? isoToMin(m.startedAt, day.date) : null
         const lateStart = startedMin !== null && startedMin > planned + 5
         const overrun = startedMin !== null && nowMin > startedMin + dur + 5
         result.set(m.id, lateStart || overrun ? 'orange' : 'green')
@@ -562,14 +571,21 @@ function punctualityClass(matchId: number): string {
   return p ? `punct--${p}` : ''
 }
 
+// Au repos, la fin de journée vient du serveur (même source unique que
+// `matchTimeDisplay`) ; le moteur local n'est consulté que pendant un drag,
+// pour la préview — spec planning §« Où vit le calcul ».
 function dayEndEstimate(day: CalendarDay): string | null {
-  return computedETAs.value.get(`day-end-${day.id}`) ?? null
+  if (dragging.value) return computedETAs.value.get(`day-end-${day.id}`) ?? null
+  return day.estimatedEnd ?? null
 }
 
+// Compare sur le curseur non wrappé (pas la chaîne affichée) : une journée
+// qui déborde après minuit doit rester détectée en dépassement de capacité
+// même si son affichage wrappe à une petite heure (ex. fin "01:20").
 function capacityOver(day: CalendarDay): boolean {
-  const end = dayEndEstimate(day)
-  if (!end) return false
-  return timeToMin(end) > timeToMin(day.targetEndTime)
+  const endMin = dragging.value ? etaEngine.value.dayEndMin.get(day.id) : day.estimatedEndMin
+  if (endMin === undefined) return false
+  return endMin > timeToMin(day.targetEndTime)
 }
 
 function formatDate(dateStr: string): string {

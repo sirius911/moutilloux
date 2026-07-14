@@ -1970,9 +1970,11 @@ def _pack_calendar_play_days(edition):
 
     packed_play_days = []
     for pd in play_days:
-        eta_map = compute_day_eta_map(pd)
+        eta_map, day_end, day_end_min = compute_day_eta_map(pd, include_day_end=True)
         packed_play_days.append({
             **_pack_play_day(pd),
+            "estimatedEnd": day_end,
+            "estimatedEndMin": day_end_min,
             "breaks": [_pack_break(b) for b in sorted(pd.breaks.all(), key=lambda b: b.order_index)],
             "matches": [_pack_match(m, eta_display=eta_map.get(m.id)) for m in matches_by_date.get(pd.date, [])],
         })
