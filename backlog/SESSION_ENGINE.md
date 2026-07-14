@@ -385,7 +385,8 @@ session).
 checked-out, aucun commit de rattrapage nécessaire. Parent effectif
 `claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
 inchangé depuis les sessions #179-#181) ; `git merge` no-op (déjà à jour). 3
-commits cette session (1 spec review + 2 tickets), push en cours.
+commits cette session (1 spec review + 2 tickets), push effectué (PR #404
+déjà ouverte, aucune action).
 
 **Spec review session #182** (agent `reviewer` dédié, lecture seule, en tout
 début de session) : 7 specs ciblées, 1 ✅ Conforme (`cycle-de-vie-match.md`),
