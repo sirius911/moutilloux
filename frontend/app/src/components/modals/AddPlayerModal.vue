@@ -148,7 +148,7 @@ async function save() {
         try {
           await uploadPhoto(props.editing.id)
         } catch (photoErr) {
-          const msg = photoErr instanceof Error ? photoErr.message : 'Erreur inconnue.'
+          const msg = extractApiError(photoErr, 'Erreur inconnue.')
           error.value = `Joueur enregistré, mais l'envoi de la photo a échoué : ${msg}. Réessayez depuis la fiche.`
           emit('saved')
           return
@@ -171,7 +171,7 @@ async function save() {
         try {
           await uploadPhoto(res.playerId)
         } catch (photoErr) {
-          const msg = photoErr instanceof Error ? photoErr.message : 'Erreur inconnue.'
+          const msg = extractApiError(photoErr, 'Erreur inconnue.')
           error.value = `Joueur enregistré, mais l'envoi de la photo a échoué : ${msg}. Réessayez depuis la fiche.`
           await eventStore.fetchAllPlayers()
           emit('saved')
