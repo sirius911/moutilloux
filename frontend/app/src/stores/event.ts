@@ -132,8 +132,9 @@ export const useEventStore = defineStore('event', () => {
     activeEdition.value = data.activeEdition
     events.value = data.events
     editions.value = data.editions ?? []
-    if (!activeEventId.value && data.events.length > 0) {
-      activeEventId.value = data.events[0].id
+    const stillValid = activeEventId.value !== null && data.events.some((e) => e.id === activeEventId.value)
+    if (!stillValid) {
+      activeEventId.value = data.events.length > 0 ? data.events[0].id : null
     }
   }
 
