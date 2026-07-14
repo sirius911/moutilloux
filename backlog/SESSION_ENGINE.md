@@ -373,13 +373,83 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-14 — Session #181
+**Dernière session :** 2026-07-14 — Session #182
 
-**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 7/11 tickets
-clos (`#403`, `#397`, `#394`, `#399`, `#401` avant cette session ; `#398`,
-`#402` cette session) ; 7 restants (`#395`, `#396`, `#400`, `#405`, `#406`,
-`#407`, `#408` — `#406`/`#407` créés en spec review, `#408` créé par un
-reviewer, tous les trois cette session).
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 9/13 tickets
+clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402` avant cette
+session ; `#395`, `#396` cette session) ; 7 restants (`#400`, `#405`, `#406`,
+`#407`, `#408`, `#409`, `#410` — `#409`/`#410` créés en spec review cette
+session).
+
+**Session #182.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#181) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push en cours.
+
+**Spec review session #182** (agent `reviewer` dédié, lecture seule, en tout
+début de session) : 7 specs ciblées, 1 ✅ Conforme (`cycle-de-vie-match.md`),
+6 ⚠️ Dérive mineure. 5 des 7 dérives correspondent exactement aux 5 issues
+déjà ouvertes (`#395`, `#396`, `#400`, `#407`, `#408`). **2 dérives nouvelles
+et surprises** : score du match live épinglé sans les points
+(`AdminRegie.vue:108-112`, sets/jeux affichés mais jamais
+`displayPointA`/`displayPointB`, contrairement à `admin-regie-mobile.md` et
+au plan `backlog/plan/340-adminregie-ecran-complet.md`) → `#409` ; repli de
+`_pack_match` sans le préfixe `~` canonique quand `eta_display` n'est pas
+fourni par l'appelant (`live/api_views.py:242-243`, impact nul aujourd'hui,
+piège latent pour un futur écran) → `#410`. Aucune régression sur #398/#402
+(session #181). `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur).
+
+**Backlog engine session #182** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), dans l'ordre suggéré en fin de session
+#181 (`#395`/`#396`, indépendants, triviaux), chacun implémenté
+**directement en session par l'orchestrateur** (un seul fichier de code par
+ticket), soumis à un agent `reviewer` indépendant avant clôture :
+- **#395** (mineure) — `live/models.py:303` :
+  `Announcement.Meta.ordering` passé à `["-created_at"]` + migration
+  `0025_alter_announcement_options.py`. Plan :
+  `backlog/plan/395-announcement-ordering-tete-liste.md`. Reviewer : a trouvé
+  le correctif **incomplet** — `live/api_views.py:2426` (`api_tv_idle`,
+  alimente la slide TV et le ticker) portait un `.order_by("created_at")`
+  explicite écrasant le nouvel ordre du modèle ; seules les vues admin
+  étaient effectivement corrigées. Retiré par l'orchestrateur avant clôture,
+  `manage.py check` revérifié (0 erreur). Verdict final : ✅ Approuvé.
+- **#396** (mineure) — `frontend/app/src/views/admin/AdminTournoi.vue` :
+  `fmtDate` (ISO brut) remplacée par `formatPeriod(startIso, endIso)` —
+  format français, année élidée sur la date de début si même année civile.
+  Plan : `backlog/plan/396-admintournoi-dates-francais.md`. Reviewer : a
+  trouvé un écart à l'exemple exact de la spec (« 25 mai → 02 juin 2026 ») —
+  `day: 'numeric'` produisait `"2 juin 2026"` (non zéro-préfixé) au lieu de
+  `"02 juin 2026"`. Corrigé (`day: '2-digit'`), revérifié par un script Node
+  isolé confirmant l'exemple exact. `npx vue-tsc --noEmit` revérifié (0
+  erreur). Verdict final : ✅ Approuvé.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review a précédé l'implémentation et a donc trouvé 6 specs encore
+⚠️, précédent constant depuis la session #161) : 7 issues encore ouvertes en
+fin de session (`#400`, `#405`, `#406`, `#407`, `#408`, `#409`, `#410`).
+Sprint reste actif, sera repris à la **prochaine échéance planifiée**. Ordre
+suggéré : `#405` (sweep erreurs API résiduel, indépendant, 3 fichiers
+triviaux) ; `#408` (indépendant, trivial, `AdminGroups.vue`) ; `#407`/`#409`
+(même fichier `AdminRegie.vue` — polling + points manquants, à coordonner en
+une passe) ; `#400` (petite finale sans demies, back) ; `#410` (`_pack_match`
+repli sans `~`, back, trivial) ; `#406` (fichier partagé `stores/event.ts`,
+réservé à l'orchestrateur).
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` de la review
+de tickets a, pour la première fois depuis plusieurs sessions, trouvé des
+réserves **dans le périmètre même** des tickets examinés (pas hors
+périmètre) — mandat de lecture seule toujours respecté (signalé sans
+corriger), corrections appliquées par l'orchestrateur. Pattern de lecture
+seule strict stable sur au moins 32 sessions consécutives (#140-#182,
+sessions à vide comprises) depuis l'incident initial de la session #139.
+Aucun `ScheduleWakeup` utilisé.
+
+Log complet : `backlog/logs/session_2026-07-14_182.md`.
+
+---
+
+**Historique — session #181 :**
 
 **Session #181.** Working tree propre au démarrage, branche déjà
 checked-out, aucun commit de rattrapage nécessaire. Parent effectif
