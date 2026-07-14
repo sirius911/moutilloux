@@ -4,6 +4,7 @@ import ModalShell from '@/components/ui/ModalShell.vue'
 import Segmented from '@/components/ui/Segmented.vue'
 import CameraCaptureModal from '@/components/modals/CameraCaptureModal.vue'
 import { useApi } from '@/composables/useApi'
+import { extractApiError, extractApiFields } from '@/lib/apiError'
 import { useViewport } from '@/composables/useViewport'
 import { useEventStore } from '@/stores/event'
 import type { Player } from '@/types'
@@ -182,19 +183,9 @@ async function save() {
     emit('saved')
     emit('close')
   } catch (e) {
-    const raw = e instanceof Error ? e.message : 'Erreur inconnue.'
-    const jsonStart = raw.indexOf(' — ')
-    if (jsonStart !== -1) {
-      try {
-        const parsed = JSON.parse(raw.slice(jsonStart + 3))
-        if (parsed.fields) fieldErrors.value = parsed.fields
-        error.value = parsed.error ?? raw
-      } catch {
-        error.value = raw
-      }
-    } else {
-      error.value = raw
-    }
+    const fields = extractApiFields(e)
+    if (fields) fieldErrors.value = fields
+    error.value = extractApiError(e, 'Erreur inconnue.')
   } finally {
     saving.value = false
   }

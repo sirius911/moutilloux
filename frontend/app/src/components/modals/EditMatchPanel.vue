@@ -162,7 +162,7 @@ async function changePlayDay(newPlayDayId: number | null) {
     await eventStore.reorderCalendar(editionId, payload)
     selectedPlayDayId.value = newPlayDayId
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur lors du déplacement.'
+    error.value = extractApiError(e, 'Erreur lors du déplacement.')
   } finally {
     saving.value = false
   }
