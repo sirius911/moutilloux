@@ -240,7 +240,7 @@ def _pack_match(m, eta_display=None, swap=False):
     elif m.status == Match.Status.FINISHED and m.finished_at:
         scheduled_str = timezone.localtime(m.finished_at).strftime("%Hh%M")
     elif m.scheduled_time:
-        scheduled_str = timezone.localtime(m.scheduled_time).strftime("%Hh%M")
+        scheduled_str = "~" + timezone.localtime(m.scheduled_time).strftime("%Hh%M")
 
     def stage_label(match):
         labels = {
