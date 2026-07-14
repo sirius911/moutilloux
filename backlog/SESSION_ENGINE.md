@@ -373,7 +373,61 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-13 — Session #178
+**Dernière session :** 2026-07-14 — Session #179
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. Planifié
+après la session #178 (roadmap vide) via `anthropic-skills:plan-sprint`
+(commit `68b5a0d`, hors mandat du protocole automatique). 3/10 tickets clos
+(`#403` avant cette session, `#397`/`#394` cette session) ; 7 restants
+(`#395`, `#396`, `#398`, `#399`, `#400`, `#401`, `#402`).
+
+**Session #179 — reprise d'une interruption.** Au démarrage, working tree
+sale sur `claude/sprint/45-review-globale-13-juillet` : la spec review de
+session #179 était déjà écrite (ligne `log.md` non committée) et
+l'implémentation de deux tickets déjà en cours mais ni committée ni close
+— #397 (staged) et #394 (unstaged), plans (`backlog/plan/397-…md`,
+`backlog/plan/394-…md`) déjà rédigés. Plutôt que le commit générique
+`🚧 état sauvegardé` prévu par §Étape 0, les diffs ont été relus intégralement
+contre leurs plans, vérifiés (`npx vue-tsc --noEmit` 0 erreur, `python
+manage.py check` 0 erreur, rétrocompatibilité de `compute_day_eta_map`
+confirmée par grep sur ses 3 autres appelants), scindés proprement en deux
+commits par ticket (`types/index.ts` modifiait les deux tickets dans des
+hunks disjoints, séparés via `git add -p`), chacun fermé sur GitHub avec un
+commentaire de verdict :
+- **#397** (`d19feff`) — heures au-delà de minuit wrappées 24h à l'affichage
+  uniquement, curseur continu ancré sur `play_day.date`/`day.date` pendant le
+  calcul ; calendrier expose désormais `estimatedEnd`/`estimatedEndMin`
+  calculés serveur (source au repos, moteur front seulement pendant un
+  drag). Arbitrage documenté dans `specs/technical/planning.md`.
+- **#394** (`dc2eb8d`) — `AdminLayout.vue` charge lui-même
+  Inscriptions/Poules/Tableau final dès l'arrivée sur le shell (état neutre
+  tant que non chargé, jamais « 0 » par défaut) ; `kanban`/`fetchMatches`/
+  `KanbanData` supprimés du store `event.ts` (chemin mort confirmé sans
+  lecteur restant) ; `matchCount` dérivé du calendrier filtré sur l'épreuve
+  active.
+
+Spec review de session #179 (effectuée avant l'implémentation, committée en
+`4b68787`) : 6 specs ciblées, ⚠️ (1 ✅, 6 ⚠️), 0 dérive surprise — les 10
+dérives correspondent exactement aux 10 issues déjà ouvertes. Une note non
+ticketée : fraîcheur documentaire `planning.md:260` (endpoint
+`play-days/generate` marqué « à créer » alors que livré) — précédent établi
+pour ce type d'observation cosmétique, pas d'issue créée.
+
+**Sprint 45 non clos** (attendu) : 7 issues encore ouvertes. Sera repris à la
+**prochaine échéance planifiée**. Log complet :
+`backlog/logs/session_2026-07-14_179.md`.
+
+**Point d'attention protocole (reprise d'interruption) :** écart assumé au
+texte littéral de §Étape 0 (commit de rattrapage générique) — préféré une
+reprise fidèle au grain habituel (un commit par ticket, review avant
+clôture) car les plans et diffs de la session interrompue étaient complets et
+vérifiables. À rapprocher du point d'attention `ScheduleWakeup`/agents
+asynchrones (aucun utilisé cette session, cohérent avec le pattern stable
+depuis la session #139).
+
+---
+
+**Historique — session #178 :**
 
 **Sprint actif :** aucun — roadmap vide (0 ligne). **Désactiver la Routine
 manuellement sur claude.ai/code/routines.**
@@ -388,6 +442,10 @@ Point d'attention non résolu (signalé depuis la session #144) : deux dossiers
 de sprint orphelins dans `backlog/sprints/` (`04-admin-panel-map/`,
 `10-contexte-url/`), hors de `done/` et non référencés par `roadmap.md`. À
 nettoyer côté humain.
+
+Sprint 45 planifié après cette session (hors mandat automatique, via
+`anthropic-skills:plan-sprint`) — roadmap non vide à la session suivante
+(#179).
 
 ---
 
