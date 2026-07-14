@@ -373,7 +373,114 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-14 — Session #184
+**Dernière session :** 2026-07-14 — Session #185
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 14/16
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410`, `#405`, `#400` avant cette session ; `#409`,
+`#407` cette session) ; 2 restants (`#406`, `#411`).
+
+**Session #185.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#184) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push effectué (PR #404
+déjà ouverte, aucune action).
+
+**Spec review session #185** (agent `reviewer` dédié, lecture seule, lancé en
+tout début de session, **strictement avant toute implémentation** — correction
+du point d'attention de la session #184) : 7 specs ciblées, 4 ✅ Conforme
+(`admin-tournoi.md`, `planning.md`, `cycle-de-vie-match.md`,
+`cycle-de-vie-epreuve.md` — cette dernière avec une note documentaire non
+bloquante), 3 ⚠️ Dérive mineure (`admin-shell.md`, `admin-regie-mobile.md` ×2,
+`erreurs-api.md`). Les 4 dérives relevées correspondent exactement aux 4
+issues déjà ouvertes en début de session (`#406`, `#407`, `#409`, `#411`),
+**0 dérive surprise**. 1 note non ticketée (dérive documentaire pure :
+`cycle-de-vie-epreuve.md:335-336` conserve une parenthèse périmée décrivant
+le comportement pré-#400, en contradiction avec le paragraphe qui la précède
+déjà à jour — précédent établi depuis les sessions #179/#180/#183/#184, pas
+d'issue créée pour la fraîcheur documentaire). `npx vue-tsc --noEmit` et
+`.venv/bin/python manage.py check` vérifiés indépendamment (0 erreur chacun,
+pas d'outil de lint configuré dans le projet).
+
+**Backlog engine session #185** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), choisis dans l'ordre suggéré en fin de
+session #184 (`#407`/`#409`, même fichier `AdminRegie.vue`, coordonnés en une
+seule passe), implémentés **directement en session par l'orchestrateur**
+(portée précise, fichier non partagé), soumis à un agent `reviewer`
+indépendant (en arrière-plan) avant clôture — deux commits séparés malgré une
+implémentation en une seule passe, en isolant chirurgicalement les hunks
+disjoints du diff pour préserver un commit par ticket :
+- **#409** (mineure) — `AdminRegie.vue::scoreDisplay` : ajout des points
+  (`displayPointA`/`displayPointB`) au segment jeux en cours d'un match
+  `LIVE`, ex. `6-4 3-2 (3-2, 30-15)`, conforme à `admin-regie-mobile.md`.
+  Plan : `backlog/plan/409-adminregie-score-points.md`. Vérifié en preview
+  réelle (serveurs démarrés via `.claude/launch.json`, match live id 53 de
+  la donnée de seed) : capture d'écran confirmant l'affichage des points.
+  Reviewer : diff conforme, `FINISHED` non affecté, `vue-tsc` 0 erreur
+  revérifié. Verdict : ✅ Approuvé, aucune réserve.
+- **#407** (mineure) — `AdminRegie.vue` : second `usePolling(..., 2000)`
+  dédié au score du match live épinglé, via `GET /api/matches/<id>/`
+  (endpoint existant, même route que `ArbitreMatch.vue`/
+  `stores/live.ts::fetchMatch`) ; le poll calendrier (5s) reste seul
+  responsable de la détection d'un nouveau match live, conforme au texte
+  exact de la spec. Plan : `backlog/plan/407-adminregie-polling-2s-live.md`.
+  Reviewer : a confirmé par lecture de `usePolling.ts` que le placement du
+  nouveau `usePolling(...)` avant la déclaration de `liveMatch` dans le
+  fichier source n'est pas un bug d'ordre (exécution seulement à
+  `onMounted`, après évaluation complète du script). A signalé une réserve
+  **dans le périmètre** : `liveScoreData` ne se réinitialisait que si l'id
+  du match live devenait `null`, pas s'il changeait d'une valeur à une
+  autre (fenêtre transitoire ≤2s, nom du nouveau match live avec le score
+  de l'ancien) → corrigée par l'orchestrateur avant clôture (garde
+  `id !== liveScoreData.value?.id` ajoutée, même pattern que
+  `stores/live.ts:89-91`), `vue-tsc` et rendu preview revérifiés après
+  correction. Verdict final : ✅ Approuvé.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+3 specs encore ⚠️, et 2 issues restent ouvertes) : `#406`, `#411`. Sprint
+reste actif, sera repris à la **prochaine échéance planifiée**. Ordre
+suggéré : `#411` (indépendant, trivial, `AddPlayerModal.vue`, même patron que
+`#405` déjà résolu) ; `#406` (fichier partagé `stores/event.ts`, réservé à
+l'orchestrateur — `activeEventId` non réaligné à la suppression de l'épreuve
+active, extension de portée déjà notée en commentaire GitHub sur le flux
+« Activer une édition »). Ces deux derniers tickets clôtureront
+vraisemblablement le sprint 45 si aucune dérive surprise n'apparaît en spec
+review de la prochaine session.
+
+**Point d'attention outillage — limite de vérification empirique du
+polling :** les deux serveurs (`.claude/launch.json`) ont été démarrés et le
+rendu réel confirmé par capture d'écran (`/admin/regie`, match live réel).
+En revanche, `document.hidden` valait `true` dans cet environnement de
+preview (tab non focus), ce qui met en pause `usePolling` par design — le
+taux de 2s introduit par `#407` n'a donc pas pu être observé empiriquement
+(seulement vérifié par lecture de code + reviewer indépendant + appel direct
+à l'endpoint confirmant la forme de réponse attendue). Premier point
+d'attention de ce type noté depuis l'ajout de `.claude/launch.json`
+(session #180) — les sessions précédentes n'avaient pas eu besoin de
+vérifier un taux de polling précis, seulement un rendu.
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+correction appliquée par rapport à la session #184 — la spec review a été
+lancée en tout début de session et son verdict complet attendu **avant**
+toute implémentation de ticket, conformément au protocole. Aucune confusion
+liée au séquencement cette fois.
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + une review de tickets
+groupée, tous en arrière-plan, en série stricte) ont strictement respecté
+leur mandat de lecture seule, chacun signalant ses observations (y compris
+la réserve dans le périmètre de `#407`) sans les corriger — pattern stable
+sur au moins 35 sessions consécutives (#140-#185, sessions à vide comprises)
+depuis l'incident initial de la session #139. Aucun `ScheduleWakeup` de
+polling actif utilisé pour attendre un agent en arrière-plan (les
+notifications de tâche en arrière-plan ont suffi dans les deux cas).
+
+Log complet : `backlog/logs/session_2026-07-14_185.md`.
+
+---
+
+**Historique — session #184 :**
 
 **Sprint actif :** 45 — Correctifs review globale du 13 juillet. 12/14
 tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
