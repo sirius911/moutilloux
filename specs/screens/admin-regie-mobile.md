@@ -3,6 +3,7 @@ type: screen
 module: admin/regie-mobile
 fichiers:
   - frontend/app/src/router/index.ts
+  - frontend/app/src/views/admin/AdminRegie.vue
   - frontend/app/src/stores/event.ts
   - frontend/app/src/stores/live.ts
   - live/api_views.py
@@ -33,8 +34,23 @@ annonces.
   séquence ordonnée matchs + pauses), en liste verticale.
 - Par ligne : heure estimée `~HH:MM` (réelle si terminé), puce d'état
   (Terminé / En cours / Next / Planifié), **teinte de ponctualité**
-  (rouge / orange / vert, règles de [[planning]]), joueurs (ou étiquettes de
-  provenance), étape.
+  (vert / orange / rouge, heuristique simplifiée ci-dessous), joueurs
+  (ou étiquettes de provenance), étape.
+- **Teinte de ponctualité — heuristique simplifiée propre à cet écran**
+  (arbitrage 2026-07-14, #412 ; décision initiale plan #340 § 3). La régie
+  n'applique **pas** le moteur ETA ni les règles de l'« Indicateur de
+  ponctualité » de [[planning]], dont la surface est le calendrier admin
+  ([[admin-matchs]]). Elle compare l'heure actuelle à l'heure planifiée
+  affichée du match (`scheduledTime`, préfixe `~` ignoré, ancrée sur la date
+  de la journée courante), pour les seuls matchs `SCHEDULED` :
+  - **vert** — heure planifiée pas encore dépassée ;
+  - **orange** — dépassée de 0 à 15 min ;
+  - **rouge** — dépassée de plus de 15 min.
+  `LIVE`, `FINISHED`, `CANCELED` : aucune teinte — le match en cours est de
+  toute façon épinglé hors du fil. Limite assumée : les heures au-delà de
+  minuit (arbitrage #397, [[planning]]) ne sont pas gérées par cette
+  heuristique — un match planifié après minuit peut se teinter à tort en
+  fin de soirée.
 - Le match **en cours** est épinglé en tête avec son score live (sets, jeux,
   points — depuis `_pack_match`, mêmes règles d'affichage que partout :
   `displayPointA/B`).
