@@ -3,7 +3,7 @@
 // contextuelle par match (7 actions réutilisant des services existants),
 // section Annonces TV. Voir specs/screens/admin-regie-mobile.md et
 // backlog/plan/340-adminregie-ecran-complet.md.
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { useApi } from '@/composables/useApi'
@@ -386,7 +386,7 @@ async function fetchAnnouncements() {
   }
 }
 
-onMounted(fetchAnnouncements)
+watch(() => eventStore.activeEdition?.id, fetchAnnouncements, { immediate: true })
 
 async function addAnnouncement() {
   if (!eventStore.activeEdition || !newAnnouncementMessage.value.trim()) return
