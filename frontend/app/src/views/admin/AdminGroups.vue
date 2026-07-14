@@ -436,7 +436,7 @@ async function executeDeleteGroup() {
                     En cours · {{ m.gamesA }}-{{ m.gamesB }}
                   </template>
                   <template v-else-if="m.status === 'SCHEDULED'">
-                    {{ m.scheduledTime ? new Date(m.scheduledTime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'À venir' }}
+                    {{ m.scheduledTime ?? 'À venir' }}
                   </template>
                   <template v-else>
                     Annulé
