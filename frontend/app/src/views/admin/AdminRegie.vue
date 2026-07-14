@@ -107,7 +107,7 @@ function playerName(m: Match, side: 'A' | 'B'): string {
 
 function scoreDisplay(m: Match): string {
   const sets = m.setScores?.map(s => `${s.a}-${s.b}`).join(' ') ?? ''
-  const current = m.status === 'LIVE' ? ` (${m.gamesA}-${m.gamesB})` : ''
+  const current = m.status === 'LIVE' ? ` (${m.gamesA}-${m.gamesB}, ${m.displayPointA}-${m.displayPointB})` : ''
   return (sets + current).trim()
 }
 
