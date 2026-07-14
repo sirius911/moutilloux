@@ -40,6 +40,24 @@ async function refreshCalendar() {
   if (eventStore.activeEdition) await eventStore.fetchCalendar(eventStore.activeEdition.id)
 }
 
+// ── Score du match en cours — rafraîchi à 2 s (même taux qu'Arbitre/TV) ────
+// Le calendrier (5 s) suffit pour détecter qu'un match devient/cesse d'être
+// LIVE ; le score du match déjà épinglé a besoin d'un taux plus rapide.
+const liveScoreData = ref<Match | null>(null)
+
+usePolling(async () => {
+  const id = liveMatch.value?.id
+  if (!id) {
+    liveScoreData.value = null
+    return
+  }
+  if (id !== liveScoreData.value?.id) {
+    liveScoreData.value = null
+  }
+  const data = await get<{ match: Match }>(`/api/matches/${id}/`)
+  liveScoreData.value = data.match
+}, 2000)
+
 // ── Journée courante + match en cours (même esprit qu'ArbitreHome.vue) ─────
 function isToday(dateStr: string): boolean {
   const now = new Date()
@@ -456,7 +474,7 @@ async function confirmDeleteAnnouncement() {
           </div>
           <div class="regie-live-meta">
             <span class="regie-live-stage">{{ liveMatch.stageLabel }}</span>
-            <span class="regie-live-score tab">{{ scoreDisplay(liveMatch) }}</span>
+            <span class="regie-live-score tab">{{ scoreDisplay(liveScoreData ?? liveMatch) }}</span>
           </div>
         </section>
 
