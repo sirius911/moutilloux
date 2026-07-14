@@ -373,7 +373,90 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-14 — Session #187
+**Dernière session :** 2026-07-14 — Session #188
+
+**Sprint actif :** aucun — **roadmap vide.** Sprint 45 — Correctifs review
+globale du 13 juillet — clos cette session (17/17 tickets, `#412` inclus).
+Dossier archivé dans `backlog/sprints/done/45-review-globale-13-juillet/`.
+**La Routine SESSION_ENGINE doit être désactivée manuellement sur
+claude.ai/code/routines** (rien à traiter aux prochaines échéances tant
+qu'un nouveau sprint n'est pas planifié dans `backlog/sprints/roadmap.md`).
+
+**Session #188.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#187) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 1 clôture de sprint/milestone + 1 log
+de session), push effectué (PR #404 déjà ouverte, aucune action nouvelle —
+dernier push sur cette branche avant fermeture définitive de la PR par
+l'utilisateur, hors mandat automatique).
+
+**Spec review session #188** (agent `reviewer` dédié, lecture seule, lancé en
+tout premier plan — `run_in_background: false` — verdict complet attendu
+avant toute autre action) : 7 specs ciblées, **7/7 ✅ Conforme** — première
+fois depuis l'ouverture du sprint (session #179) que toutes les specs sont
+conformes simultanément. `admin-regie-mobile.md` bascule de ⚠️ à ✅ : entre la
+session #187 et celle-ci, une session interactive humaine a arbitré `#412`
+(Option A — commit `eeb8814`, hors périmètre SESSION_ENGINE), mettant à jour
+le texte de la spec pour documenter la teinte de ponctualité simplifiée
+d'`AdminRegie.vue` au lieu de renvoyer aux règles complètes de
+`planning.md`, et retirant le label `en-attente` de l'issue avec
+l'instruction explicite « la prochaine session SESSION_ENGINE peut
+sélectionner et clore #412 ». **0 dérive surprise.** `npx vue-tsc --noEmit`,
+`.venv/bin/python manage.py check` et `makemigrations --check --dry-run`
+vérifiés indépendamment (0 erreur/0 changement chacun). 4 observations
+documentaires hors mandat notées, non ticketées (lacunes de traçabilité
+pures, aucune divergence de comportement) : cas 403 absent du tableau de
+contrat `erreurs-api.md` ; en-têtes `fichiers:` incomplets sur
+`admin-tournoi.md` (`StartEventModal.vue`) et `cycle-de-vie-match.md`/
+`cycle-de-vie-epreuve.md` (`EditMatchPanel.vue`) ; CLAUDE.md §4 périmé sur
+le TODO redirection 401 (déjà implémentée) ; script `type-check` toujours
+absent de `package.json` (TODO déjà connu).
+
+**Backlog engine session #188** : `#412` désormais éligible (label
+`en-attente` retiré hors session) — seul ticket ouvert du sprint. **1 ticket
+traité**, cas particulier : le correctif (mise à jour de la spec) avait déjà
+été appliqué avant cette session par une décision humaine ; le rôle de cette
+session s'est limité à vérifier (spec review dédiée confirmant
+`admin-regie-mobile.md` `✅ Conforme`) et clôturer — aucune modification de
+code, plan de clôture documenté dans `backlog/plan/412-…md` (non versionné),
+issue fermée via `gh issue close` avec le verdict complet en commentaire.
+
+**Sprint 45 clos cette session** : les deux conditions de l'Étape 3 sont
+réunies pour la première fois (spec review `✅ Conforme` sur les 7 specs ; 0
+issue `sprint-45` ouverte hors `en-attente`). Milestone GitHub `#44` fermé.
+Ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/`. **Roadmap relue après clôture : vide** — aucun
+sprint suivant à démarrer, conformément à l'Étape 3 (qui aurait de toute
+façon interdit d'enchaîner dans la même session).
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+respecté — rien d'autre n'a été fait entre le lancement de l'agent de spec
+review et son retour complet (agent lancé au premier plan, aucune
+implémentation de code cette session de toute façon, `#412` étant déjà
+résolu en amont).
+
+**Point d'attention protocole (reviewer) :** l'unique agent `reviewer`
+invoqué cette session a strictement respecté son mandat de lecture seule —
+pattern stable sur au moins 38 sessions consécutives (#140-#188, sessions à
+vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé (agent lancé au premier plan, pas d'attente en
+arrière-plan à gérer).
+
+**Point d'attention pour l'utilisateur — roadmap vide, action requise.**
+Le sprint 45 est clos et il n'y a plus aucun sprint planifié dans
+`backlog/sprints/roadmap.md`. Deux options : (1) désactiver la Routine
+SESSION_ENGINE sur claude.ai/code/routines tant qu'aucun nouveau sprint
+n'est prêt, ou (2) planifier un nouveau sprint (`/plan-sprint`) avant la
+prochaine échéance planifiée pour que la Routine ait de nouveau du travail
+à traiter. Sans l'un ou l'autre, les prochaines exécutions constateront une
+roadmap vide et s'arrêteront sans rien faire.
+
+Log complet : `backlog/logs/session_2026-07-14_188.md`.
+
+---
+
+**Historique — session #187 :**
 
 **Sprint actif :** 45 — Correctifs review globale du 13 juillet. 16/17
 tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
