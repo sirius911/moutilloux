@@ -214,14 +214,6 @@ export interface Bracket {
   p3: BracketSlot[]        // 1 slot (petite finale)
 }
 
-// ─── Kanban ─────────────────────────────────────────────────────────────────
-
-export interface KanbanData {
-  backlog: Match[]          // SCHEDULED sans orderIndex
-  queue: Match[]            // SCHEDULED avec orderIndex (ordonné)
-  finished: Match[]         // FINISHED
-}
-
 // ─── Calendrier ──────────────────────────────────────────────────────────────
 
 export interface PlayDay {
