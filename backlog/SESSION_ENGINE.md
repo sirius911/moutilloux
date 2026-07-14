@@ -373,7 +373,873 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-13 — Session #178
+**Dernière session :** 2026-07-14 — Session #188
+
+**Sprint actif :** aucun — **roadmap vide.** Sprint 45 — Correctifs review
+globale du 13 juillet — clos cette session (17/17 tickets, `#412` inclus).
+Dossier archivé dans `backlog/sprints/done/45-review-globale-13-juillet/`.
+**La Routine SESSION_ENGINE doit être désactivée manuellement sur
+claude.ai/code/routines** (rien à traiter aux prochaines échéances tant
+qu'un nouveau sprint n'est pas planifié dans `backlog/sprints/roadmap.md`).
+
+**Session #188.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#187) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 1 clôture de sprint/milestone + 1 log
+de session), push effectué (PR #404 déjà ouverte, aucune action nouvelle —
+dernier push sur cette branche avant fermeture définitive de la PR par
+l'utilisateur, hors mandat automatique).
+
+**Spec review session #188** (agent `reviewer` dédié, lecture seule, lancé en
+tout premier plan — `run_in_background: false` — verdict complet attendu
+avant toute autre action) : 7 specs ciblées, **7/7 ✅ Conforme** — première
+fois depuis l'ouverture du sprint (session #179) que toutes les specs sont
+conformes simultanément. `admin-regie-mobile.md` bascule de ⚠️ à ✅ : entre la
+session #187 et celle-ci, une session interactive humaine a arbitré `#412`
+(Option A — commit `eeb8814`, hors périmètre SESSION_ENGINE), mettant à jour
+le texte de la spec pour documenter la teinte de ponctualité simplifiée
+d'`AdminRegie.vue` au lieu de renvoyer aux règles complètes de
+`planning.md`, et retirant le label `en-attente` de l'issue avec
+l'instruction explicite « la prochaine session SESSION_ENGINE peut
+sélectionner et clore #412 ». **0 dérive surprise.** `npx vue-tsc --noEmit`,
+`.venv/bin/python manage.py check` et `makemigrations --check --dry-run`
+vérifiés indépendamment (0 erreur/0 changement chacun). 4 observations
+documentaires hors mandat notées, non ticketées (lacunes de traçabilité
+pures, aucune divergence de comportement) : cas 403 absent du tableau de
+contrat `erreurs-api.md` ; en-têtes `fichiers:` incomplets sur
+`admin-tournoi.md` (`StartEventModal.vue`) et `cycle-de-vie-match.md`/
+`cycle-de-vie-epreuve.md` (`EditMatchPanel.vue`) ; CLAUDE.md §4 périmé sur
+le TODO redirection 401 (déjà implémentée) ; script `type-check` toujours
+absent de `package.json` (TODO déjà connu).
+
+**Backlog engine session #188** : `#412` désormais éligible (label
+`en-attente` retiré hors session) — seul ticket ouvert du sprint. **1 ticket
+traité**, cas particulier : le correctif (mise à jour de la spec) avait déjà
+été appliqué avant cette session par une décision humaine ; le rôle de cette
+session s'est limité à vérifier (spec review dédiée confirmant
+`admin-regie-mobile.md` `✅ Conforme`) et clôturer — aucune modification de
+code, plan de clôture documenté dans `backlog/plan/412-…md` (non versionné),
+issue fermée via `gh issue close` avec le verdict complet en commentaire.
+
+**Sprint 45 clos cette session** : les deux conditions de l'Étape 3 sont
+réunies pour la première fois (spec review `✅ Conforme` sur les 7 specs ; 0
+issue `sprint-45` ouverte hors `en-attente`). Milestone GitHub `#44` fermé.
+Ligne supprimée de `backlog/sprints/roadmap.md`, dossier déplacé vers
+`backlog/sprints/done/`. **Roadmap relue après clôture : vide** — aucun
+sprint suivant à démarrer, conformément à l'Étape 3 (qui aurait de toute
+façon interdit d'enchaîner dans la même session).
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+respecté — rien d'autre n'a été fait entre le lancement de l'agent de spec
+review et son retour complet (agent lancé au premier plan, aucune
+implémentation de code cette session de toute façon, `#412` étant déjà
+résolu en amont).
+
+**Point d'attention protocole (reviewer) :** l'unique agent `reviewer`
+invoqué cette session a strictement respecté son mandat de lecture seule —
+pattern stable sur au moins 38 sessions consécutives (#140-#188, sessions à
+vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé (agent lancé au premier plan, pas d'attente en
+arrière-plan à gérer).
+
+**Point d'attention pour l'utilisateur — roadmap vide, action requise.**
+Le sprint 45 est clos et il n'y a plus aucun sprint planifié dans
+`backlog/sprints/roadmap.md`. Deux options : (1) désactiver la Routine
+SESSION_ENGINE sur claude.ai/code/routines tant qu'aucun nouveau sprint
+n'est prêt, ou (2) planifier un nouveau sprint (`/plan-sprint`) avant la
+prochaine échéance planifiée pour que la Routine ait de nouveau du travail
+à traiter. Sans l'un ou l'autre, les prochaines exécutions constateront une
+roadmap vide et s'arrêteront sans rien faire.
+
+Log complet : `backlog/logs/session_2026-07-14_188.md`.
+
+---
+
+**Historique — session #187 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 16/17
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410`, `#405`, `#400`, `#409`, `#407`, `#411`,
+`#406`) ; 1 restant (`#412`, `en-attente`, inchangé depuis la session #186).
+
+**Session #187.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#186) ; `git merge` no-op (déjà à jour). 2
+commits cette session (1 spec review + 1 log de session, 0 ticket — seule
+issue ouverte du sprint est `#412`, `en-attente`, exclue par construction),
+push effectué (PR #404 déjà ouverte, aucune action).
+
+**Spec review session #187** (agent `reviewer` dédié, lecture seule, lancé en
+tout premier plan — `run_in_background: false` — verdict complet attendu
+avant toute autre action ; correction stricte du point d'attention de
+séquencement récidivant en session #186) : 7 specs ciblées, 6 ✅ Conforme
+(`admin-shell.md`, `admin-tournoi.md`, `erreurs-api.md`, `planning.md`,
+`cycle-de-vie-match.md`, `cycle-de-vie-epreuve.md`), 1 ⚠️ Dérive mineure
+(`admin-regie-mobile.md`). L'unique écart relevé est exactement le contenu
+de l'issue `#412` (ouverte, `en-attente`) — confirmé inchangé, **0 dérive
+surprise**. `npx vue-tsc --noEmit`, `.venv/bin/python manage.py check` et
+`makemigrations --check --dry-run` vérifiés indépendamment (0 erreur/0
+changement chacun). Suggestion non bloquante notée (hors mandat, aucune
+action) : `stores/event.ts::generateMatches` n'a plus d'appelant, ménage
+possible pour une session future.
+
+**Backlog engine session #187** : liste des issues ouvertes du milestone —
+uniquement `#412`, label `en-attente`, exclue par construction du protocole.
+**0 ticket traité** (rien d'éligible, pas une anomalie).
+
+**Sprint 45 non clos cette session** (même situation que la session #186,
+attendue) : condition « 0 issue ouverte hors `en-attente` » remplie,
+condition « spec review ✅ Conforme sur toutes les specs » non remplie
+(`admin-regie-mobile.md` reste ⚠️ tant que `#412` est ouvert). Sprint reste
+actif. **Aucune action possible pour les sessions automatiques suivantes**
+tant que `#412` n'est pas arbitré par un humain — le statu quo (spec review
+identique, 0 ticket disponible) se reproduira indéfiniment aux prochaines
+échéances planifiées.
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+corrigé cette session — rien d'autre n'a été fait entre le lancement de
+l'agent de spec review et son retour complet (agent lancé au premier plan).
+
+**Point d'attention protocole (reviewer) :** l'unique agent `reviewer`
+invoqué cette session a strictement respecté son mandat de lecture seule —
+pattern stable sur au moins 37 sessions consécutives (#140-#187, sessions à
+vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` utilisé (pas d'attente en arrière-plan à gérer).
+
+**Point d'attention pour l'utilisateur — inchangé depuis la session #186 :
+sprint 45 nécessite une décision humaine pour se clôturer.** `#412` (teinte
+de ponctualité `AdminRegie.vue` vs. règles citées de `planning.md`) reste
+`en-attente`, jamais sélectionnée par le backlog engine — voir
+`specs/need_spec/412-adminregie-ponctualite-simplifiee.md` pour les deux
+options d'arbitrage. Sans décision, les sessions automatiques suivantes
+continueront de ne rien avoir à faire.
+
+Log complet : `backlog/logs/session_2026-07-14_187.md`.
+
+---
+
+**Historique — session #186 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 16/17
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410`, `#405`, `#400`, `#409`, `#407` avant cette
+session ; `#411`, `#406` cette session) ; 1 restant (`#412`, `en-attente`,
+créée cette session).
+
+**Session #186.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#185) ; `git merge` no-op (déjà à jour). 4
+commits cette session (2 tickets + 1 need_spec + 1 spec review), push
+effectué (PR #404 déjà ouverte, aucune action).
+
+**Spec review session #186** (agent `reviewer` dédié, lecture seule, lancé en
+tout début de session — mais **pas strictement en série avant
+l'implémentation**, voir point d'attention protocole ci-dessous) : 7 specs
+ciblées, 6 ✅ Conforme (`admin-shell.md`, `admin-tournoi.md`,
+`erreurs-api.md`, `planning.md`, `cycle-de-vie-match.md`,
+`cycle-de-vie-epreuve.md`), 1 ⚠️ Dérive mineure (`admin-regie-mobile.md`).
+Les 2 dérives non-surprises correspondaient exactement aux 2 issues déjà
+ouvertes (`#406`, `#411`). 1 dérive surprise — mais ticketée cette fois
+(`#412`), rupture du précédent des sessions #183/#184/#185 qui l'avaient
+relevée sans créer d'issue (« note documentaire, hors mandat automatique ») :
+`AdminRegie.vue::punctualityClass` implémente un algorithme à 2
+couleurs/tolérance à paliers, alors que `admin-regie-mobile.md:35-36` renvoie
+explicitement aux règles à 3 couleurs/tolérance 5 min de `planning.md` — ce
+n'est pas une simple fraîcheur documentaire (le texte de la spec promet des
+règles que le code ne suit pas), et c'est devenu le seul verdict ⚠️ restant,
+bloquant la clôture stricte du sprint. Ticketée en `#412` avec le label
+`en-attente` (arbitrage humain nécessaire — documenter la simplification ou
+aligner le code — hors mandat des agents automatisés, spec en lecture seule
+sur le contenu), accompagnée de `specs/need_spec/412-…md`. `npx vue-tsc
+--noEmit`, `.venv/bin/python manage.py check` et
+`makemigrations --check --dry-run` vérifiés indépendamment (0 erreur/0
+changement chacun).
+
+**Backlog engine session #186** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`), dans l'ordre suggéré en fin de session #185, chacun
+implémenté **directement en session par l'orchestrateur** (portée précise,
+cartographiée avant implémentation), soumis à un agent `reviewer` indépendant
+(en arrière-plan) avant clôture :
+- **#411** (mineure) — `AddPlayerModal.vue` : les deux blocs
+  `catch (photoErr)` de l'upload photo (édition et création) utilisent
+  désormais `extractApiError(photoErr, 'Erreur inconnue.')` au lieu du
+  parsing manuel `instanceof Error`, même pattern que le reste du fichier
+  (import déjà présent, hérité du `#405` antérieur). Plan :
+  `backlog/plan/411-addplayermodal-photo-erreur-brute.md`. Reviewer : diff
+  conforme, aucun site `instanceof Error` résiduel dans le fichier, `vue-tsc`
+  0 erreur revérifié. Verdict : ✅ Approuvé, aucune réserve.
+- **#406** (mineure, `infra`) — `stores/event.ts::fetchEditions` (fichier
+  partagé, modifié directement) : revalidation systématique de
+  `activeEventId` contre le nouveau tableau `events` reçu (au lieu de ne
+  l'initialiser que s'il était `null`) — bascule sur la première épreuve
+  restante, ou `null`, dès que l'épreuve active n'y figure plus. Couvre les
+  deux flux (suppression d'épreuve active **et** activation d'une édition
+  différente, extension de portée notée en commentaire GitHub sur ce ticket
+  depuis la session #184), car `events` est toujours scopé à l'édition
+  active côté serveur (`live/api_views.py::api_editions`, vérifié
+  directement). Plan : `backlog/plan/406-eventstore-active-event-bascule.md`.
+  Reviewer : tous les appelants de `fetchEditions()` passés en revue, aucune
+  régression (notamment `startEvent` qui compare
+  `activeEventId.value === eventId` juste après un `fetchEditions()`),
+  hypothèse serveur confirmée par lecture indépendante, `vue-tsc` 0 erreur
+  revérifié. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 45 non clos cette session** — et **ne pourra pas se clôturer
+automatiquement** tant que `#412` n'est pas résolu par un humain (voir point
+d'attention ci-dessous) : 0 issue `sprint-45` ouverte hors `en-attente`
+(condition remplie), mais la spec review rend `admin-regie-mobile.md` en ⚠️
+tant que `#412` reste ouvert (condition non remplie — lecture stricte de
+l'Étape 3, les deux conditions sont requises). Sprint reste actif.
+
+**Point d'attention protocole (séquencement spec review / implémentation) —
+RÉCIDIVE de l'écart de la session #184, malgré la correction actée en
+session #185.** L'agent de spec review a été lancé en tâche de fond en
+début de session, mais l'orchestrateur a enchaîné la lecture des issues
+`#411`/`#406` puis leur implémentation directe **avant** le retour de
+l'agent, au lieu d'attendre son verdict complet en série stricte comme
+prescrit. Comme en session #184, l'agent a géré la situation sans confusion
+(il a explicitement noté le repo changer en cours de lecture et relu l'état
+final avant de conclure), donc aucun impact réel sur la qualité du rapport —
+mais c'est la deuxième récidive de ce point d'attention précis. À renforcer
+pour les sessions futures : ne rien faire d'autre, y compris la simple
+lecture d'issues GitHub, entre le lancement de l'agent de spec review et son
+retour.
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + une review de tickets
+groupée, tous en arrière-plan) ont strictement respecté leur mandat de
+lecture seule — pattern stable sur au moins 36 sessions consécutives
+(#140-#186, sessions à vide comprises) depuis l'incident initial de la
+session #139. Un seul `ScheduleWakeup` posé cette session, en filet de
+sécurité (1200 s) pendant l'attente des deux agents en arrière-plan, jamais
+utilisé pour du polling actif (les notifications de tâche ont suffi).
+
+**Point d'attention pour l'utilisateur — sprint 45 nécessite une décision
+humaine pour se clôturer.** `#412` (teinte de ponctualité `AdminRegie.vue`
+vs. règles citées de `planning.md`) est ticketée avec le label `en-attente`
+et ne sera jamais sélectionnée par le backlog engine automatique — seule une
+session interactive peut arbitrer entre documenter la simplification dans
+`admin-regie-mobile.md` ou aligner le code sur `planning.md` (voir
+`specs/need_spec/412-adminregie-ponctualite-simplifiee.md` pour le détail des
+deux options). Sans cette décision, les sessions automatiques suivantes
+reproduiront indéfiniment le même verdict `admin-regie-mobile.md` ⚠️, sans
+tickets à traiter, sans pouvoir clore le sprint.
+
+Log complet : `backlog/logs/session_2026-07-14_186.md`.
+
+---
+
+**Historique — session #185 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 14/16
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410`, `#405`, `#400` avant cette session ; `#409`,
+`#407` cette session) ; 2 restants (`#406`, `#411`).
+
+**Session #185.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#184) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push effectué (PR #404
+déjà ouverte, aucune action).
+
+**Spec review session #185** (agent `reviewer` dédié, lecture seule, lancé en
+tout début de session, **strictement avant toute implémentation** — correction
+du point d'attention de la session #184) : 7 specs ciblées, 4 ✅ Conforme
+(`admin-tournoi.md`, `planning.md`, `cycle-de-vie-match.md`,
+`cycle-de-vie-epreuve.md` — cette dernière avec une note documentaire non
+bloquante), 3 ⚠️ Dérive mineure (`admin-shell.md`, `admin-regie-mobile.md` ×2,
+`erreurs-api.md`). Les 4 dérives relevées correspondent exactement aux 4
+issues déjà ouvertes en début de session (`#406`, `#407`, `#409`, `#411`),
+**0 dérive surprise**. 1 note non ticketée (dérive documentaire pure :
+`cycle-de-vie-epreuve.md:335-336` conserve une parenthèse périmée décrivant
+le comportement pré-#400, en contradiction avec le paragraphe qui la précède
+déjà à jour — précédent établi depuis les sessions #179/#180/#183/#184, pas
+d'issue créée pour la fraîcheur documentaire). `npx vue-tsc --noEmit` et
+`.venv/bin/python manage.py check` vérifiés indépendamment (0 erreur chacun,
+pas d'outil de lint configuré dans le projet).
+
+**Backlog engine session #185** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), choisis dans l'ordre suggéré en fin de
+session #184 (`#407`/`#409`, même fichier `AdminRegie.vue`, coordonnés en une
+seule passe), implémentés **directement en session par l'orchestrateur**
+(portée précise, fichier non partagé), soumis à un agent `reviewer`
+indépendant (en arrière-plan) avant clôture — deux commits séparés malgré une
+implémentation en une seule passe, en isolant chirurgicalement les hunks
+disjoints du diff pour préserver un commit par ticket :
+- **#409** (mineure) — `AdminRegie.vue::scoreDisplay` : ajout des points
+  (`displayPointA`/`displayPointB`) au segment jeux en cours d'un match
+  `LIVE`, ex. `6-4 3-2 (3-2, 30-15)`, conforme à `admin-regie-mobile.md`.
+  Plan : `backlog/plan/409-adminregie-score-points.md`. Vérifié en preview
+  réelle (serveurs démarrés via `.claude/launch.json`, match live id 53 de
+  la donnée de seed) : capture d'écran confirmant l'affichage des points.
+  Reviewer : diff conforme, `FINISHED` non affecté, `vue-tsc` 0 erreur
+  revérifié. Verdict : ✅ Approuvé, aucune réserve.
+- **#407** (mineure) — `AdminRegie.vue` : second `usePolling(..., 2000)`
+  dédié au score du match live épinglé, via `GET /api/matches/<id>/`
+  (endpoint existant, même route que `ArbitreMatch.vue`/
+  `stores/live.ts::fetchMatch`) ; le poll calendrier (5s) reste seul
+  responsable de la détection d'un nouveau match live, conforme au texte
+  exact de la spec. Plan : `backlog/plan/407-adminregie-polling-2s-live.md`.
+  Reviewer : a confirmé par lecture de `usePolling.ts` que le placement du
+  nouveau `usePolling(...)` avant la déclaration de `liveMatch` dans le
+  fichier source n'est pas un bug d'ordre (exécution seulement à
+  `onMounted`, après évaluation complète du script). A signalé une réserve
+  **dans le périmètre** : `liveScoreData` ne se réinitialisait que si l'id
+  du match live devenait `null`, pas s'il changeait d'une valeur à une
+  autre (fenêtre transitoire ≤2s, nom du nouveau match live avec le score
+  de l'ancien) → corrigée par l'orchestrateur avant clôture (garde
+  `id !== liveScoreData.value?.id` ajoutée, même pattern que
+  `stores/live.ts:89-91`), `vue-tsc` et rendu preview revérifiés après
+  correction. Verdict final : ✅ Approuvé.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+3 specs encore ⚠️, et 2 issues restent ouvertes) : `#406`, `#411`. Sprint
+reste actif, sera repris à la **prochaine échéance planifiée**. Ordre
+suggéré : `#411` (indépendant, trivial, `AddPlayerModal.vue`, même patron que
+`#405` déjà résolu) ; `#406` (fichier partagé `stores/event.ts`, réservé à
+l'orchestrateur — `activeEventId` non réaligné à la suppression de l'épreuve
+active, extension de portée déjà notée en commentaire GitHub sur le flux
+« Activer une édition »). Ces deux derniers tickets clôtureront
+vraisemblablement le sprint 45 si aucune dérive surprise n'apparaît en spec
+review de la prochaine session.
+
+**Point d'attention outillage — limite de vérification empirique du
+polling :** les deux serveurs (`.claude/launch.json`) ont été démarrés et le
+rendu réel confirmé par capture d'écran (`/admin/regie`, match live réel).
+En revanche, `document.hidden` valait `true` dans cet environnement de
+preview (tab non focus), ce qui met en pause `usePolling` par design — le
+taux de 2s introduit par `#407` n'a donc pas pu être observé empiriquement
+(seulement vérifié par lecture de code + reviewer indépendant + appel direct
+à l'endpoint confirmant la forme de réponse attendue). Premier point
+d'attention de ce type noté depuis l'ajout de `.claude/launch.json`
+(session #180) — les sessions précédentes n'avaient pas eu besoin de
+vérifier un taux de polling précis, seulement un rendu.
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+correction appliquée par rapport à la session #184 — la spec review a été
+lancée en tout début de session et son verdict complet attendu **avant**
+toute implémentation de ticket, conformément au protocole. Aucune confusion
+liée au séquencement cette fois.
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + une review de tickets
+groupée, tous en arrière-plan, en série stricte) ont strictement respecté
+leur mandat de lecture seule, chacun signalant ses observations (y compris
+la réserve dans le périmètre de `#407`) sans les corriger — pattern stable
+sur au moins 35 sessions consécutives (#140-#185, sessions à vide comprises)
+depuis l'incident initial de la session #139. Aucun `ScheduleWakeup` de
+polling actif utilisé pour attendre un agent en arrière-plan (les
+notifications de tâche en arrière-plan ont suffi dans les deux cas).
+
+Log complet : `backlog/logs/session_2026-07-14_185.md`.
+
+---
+
+**Historique — session #184 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 12/14
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396`, `#408`, `#410` avant cette session ; `#405`, `#400` cette
+session) ; 4 restants (`#406`, `#407`, `#409`, `#411` — `#411` créée cette
+session).
+
+**Session #184.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#183) ; `git merge` no-op (déjà à jour). 2
+commits cette session (2 tickets ; le log de spec review et de session sont
+committés séparément en clôture), push effectué (PR #404 déjà ouverte,
+aucune action).
+
+**Spec review session #184** (agent `reviewer` dédié, lecture seule, lancé en
+tout début de session **en parallèle** de l'implémentation directe des
+tickets — écart de séquencement noté ci-dessous) : 7 specs ciblées, 3 ✅
+Conforme (`planning.md`, `cycle-de-vie-match.md`, `cycle-de-vie-epreuve.md`),
+4 ⚠️ Dérive mineure (`admin-shell.md`, `admin-tournoi.md`,
+`admin-regie-mobile.md`, `erreurs-api.md`). Les dérives relevées
+correspondent aux issues déjà ouvertes (`#406`, `#407`, `#409`) plus `#411`
+(créée par l'orchestrateur pendant cette même session, avant le retour de
+l'agent, qui l'a retrouvée indépendamment — pas de doublon). `#400` et `#405`
+confirmés résolus par l'agent malgré le fait qu'ils n'étaient pas encore
+commités au moment de sa lecture (l'agent l'a signalé explicitement comme un
+écart par rapport au contexte transmis, sans en tirer de conclusion
+erronée). 1 extension de portée signalée en commentaire GitHub sur `#406`
+(même cause racine — `stores/event.ts` — sur le flux « Activer une édition »,
+pas seulement suppression d'épreuve). 1 note non ticketée (précédent établi
+depuis la session #179, pas d'issue) : `planning.md` référence un endpoint
+`api_tv_upcoming` inexistant et plusieurs numéros de ligne périmés dans la
+table « Contrat d'API » — dérive purement documentaire, sans impact
+fonctionnel. `npx vue-tsc --noEmit` et `.venv/bin/python manage.py check`
+vérifiés indépendamment par l'agent (0 erreur chacun).
+
+**Backlog engine session #184** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), choisis dans l'ordre suggéré en fin de
+session #183 en excluant les tickets nécessitant une coordination
+multi-session (`#407`/`#409` sur `AdminRegie.vue`, `#406` sur le fichier
+partagé `stores/event.ts`) — `#405` et `#400` étant tous deux indépendants et
+entièrement cartographiables en une passe, chacun implémenté **directement en
+session par l'orchestrateur** (portée précise, un ticket touchant un fichier
+partagé — `usePolling.ts` — l'autre un service mutualisé —
+`live/admin_views.py`), soumis à un agent `reviewer` indépendant (en
+arrière-plan) avant clôture :
+- **#405** (mineure) — sweep résiduel `extractApiError` sur 3 sites :
+  `composables/usePolling.ts:20` (fichier partagé, modifié directement),
+  `components/modals/EditMatchPanel.vue:165`, et
+  `components/modals/AddPlayerModal.vue` (parsing local remplacé par un
+  nouvel export `extractApiFields` dans `lib/apiError.ts`, généralisant le
+  support des erreurs par champ sans dupliquer le parsing). Plan :
+  `backlog/plan/405-erreurs-api-residuelles.md`. Reviewer : diff conforme au
+  plan, capacité `fieldErrors` préservée dans `AddPlayerModal.vue`, aucun des
+  9 appelants de `usePolling` ne consommait le `error` retourné (pas de
+  régression), `vue-tsc` 0 erreur revérifié indépendamment. A signalé une
+  réserve hors périmètre (`AddPlayerModal.vue:151/174`, catch d'upload photo,
+  même défaut résiduel) → ticketée séparément en `#411`. Verdict : ✅
+  Approuvé, aucune réserve dans le périmètre du ticket.
+- **#400** (mineure) — `live/admin_views.py::update_event` : refus explicite
+  (`ValueError` → 400) de l'activation de « Petite finale » quand un tableau
+  final existe déjà sans demi-finales (ex. 2 qualifiés directs, cf.
+  `live/bracket.py:119`), sans casser la pré-configuration du champ avant
+  génération du tableau (distinction via `bracket_exists`, même filtre
+  `stage__in` que `recreate_final_bracket_for_event`). Message exact demandé
+  par l'issue. Specs mises à jour (`admin-tournoi.md`,
+  `cycle-de-vie-epreuve.md`). Plan :
+  `backlog/plan/400-petite-finale-sans-demies.md`. Reviewer : distinction
+  pré-configuration/tableau généré confirmée correcte, prémisse
+  `live/bracket.py:113-120` vérifiée, aucune régression sur `#397`/`#403`
+  (même fonction), `manage.py check` et `vue-tsc` 0 erreur revérifiés
+  indépendamment. A signalé une phrase résiduelle périmée dans
+  `cycle-de-vie-epreuve.md:335-336` (contredit le paragraphe qui la précède,
+  antérieure à ce diff) → non corrigée, hors périmètre, précédent des notes
+  documentaires non ticketées. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+4 specs encore ⚠️, et 4 issues restent ouvertes) : `#406`, `#407`, `#409`,
+`#411`. Sprint reste actif, sera repris à la **prochaine échéance planifiée**.
+Ordre suggéré : `#407`/`#409` (même fichier `AdminRegie.vue` — polling +
+points manquants, à coordonner en une passe) ; `#406` (fichier partagé
+`stores/event.ts`, réservé à l'orchestrateur — étendre au flux « Activer une
+édition » en plus de la suppression, cf. commentaire GitHub de cette
+session) ; `#411` (indépendant, trivial, `AddPlayerModal.vue`, même patron
+que `#405`).
+
+**Point d'attention protocole (séquencement spec review / implémentation) :**
+contrairement au protocole habituel (spec review strictement avant toute
+implémentation), l'agent de spec review de cette session a été lancé en
+parallèle du début de l'implémentation directe des tickets `#405`/`#400` par
+l'orchestrateur, par souci de parallélisation. L'agent a lu certains fichiers
+déjà modifiés (non commités au moment de sa lecture) et l'a signalé
+explicitement comme un écart par rapport au contexte transmis, sans en tirer
+de conclusion erronée — mais cela aurait pu semer la confusion dans un cas
+moins limpide. À éviter dans les sessions futures : lancer la spec review en
+série stricte avant toute implémentation, comme le prescrit le protocole.
+
+**Point d'attention protocole (reviewer) :** les trois agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket, tous
+en arrière-plan) ont strictement respecté leur mandat de lecture seule,
+chacun signalant ses observations hors périmètre sans les corriger — pattern
+stable sur au moins 34 sessions consécutives (#140-#184, sessions à vide
+comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` de polling actif utilisé pour attendre un agent en
+arrière-plan (un appel a été passé par erreur en tout début d'attente du
+verdict du ticket #400, puis immédiatement annulé via `stop: true` dès
+détection de l'écart au protocole — les notifications de tâche en
+arrière-plan ont suffi).
+
+Log complet : `backlog/logs/session_2026-07-14_184.md`.
+
+---
+
+**Historique — session #183 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 11/13
+tickets clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402`,
+`#395`, `#396` avant cette session ; `#408`, `#410` cette session) ; 5
+restants (`#400`, `#405`, `#406`, `#407`, `#409`).
+
+**Session #183.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#182) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push effectué (PR #404
+déjà ouverte, aucune action).
+
+**Spec review session #183** (agent `reviewer` dédié, lecture seule, en tout
+début de session) : 7 specs ciblées, 5 ✅ Conforme (`admin-shell.md`,
+`erreurs-api.md`, `planning.md`, `cycle-de-vie-match.md`,
+`cycle-de-vie-epreuve.md`), 2 ⚠️ Dérive mineure (`admin-tournoi.md`,
+`admin-regie-mobile.md`). Les 7 dérives relevées correspondent **exactement**
+aux 7 issues déjà ouvertes en début de session (`#400`, `#405`, `#406`,
+`#407`, `#408`, `#409`, `#410`), **0 dérive surprise actionnable** — première
+session sans nouvelle issue créée en spec review depuis la session #180. 1
+note non ticketée (précédent établi, pas d'issue) : la teinte de ponctualité
+d'`AdminRegie.vue:149-163` implémente une heuristique volontairement
+simplifiée par rapport aux règles `[[planning]]` référencées par
+`admin-regie-mobile.md` — décision déjà documentée dans
+`backlog/plan/340-adminregie-ecran-complet.md:142-149` mais jamais répercutée
+dans le texte de la spec d'écran elle-même ; suggestion de mise à jour
+documentaire pour une session future, hors mandat automatique (agents en
+lecture seule sur le contenu des specs). `npx vue-tsc --noEmit` et
+`.venv/bin/python manage.py check` vérifiés indépendamment (0 erreur
+chacun).
+
+**Backlog engine session #183** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), choisis pour leur cause racine
+commune identifiée par la spec review de cette même session (`#410`
+back/`#408` front, tous deux liés au repli de `_pack_match` sans
+`eta_display` consommé par `api_event_groups`), chacun implémenté
+**directement en session par l'orchestrateur** (un seul fichier de code par
+ticket, portée déjà entièrement cartographiée par le corps des deux issues
+et le rapport de spec review), soumis à un agent `reviewer` indépendant
+(en arrière-plan, en parallèle) avant clôture :
+- **#410** (mineure, `infra`) — `live/api_views.py:242-243` (`_pack_match`) :
+  la branche de repli `elif m.scheduled_time:` porte désormais le préfixe
+  `~` canonique (règle #398), au même titre que la branche `eta_display`.
+  Plan : `backlog/plan/410-pack-match-repli-tilde.md`. Reviewer : tous les
+  appelants sans `eta_display` passés en revue (lignes 517, 611, 1118, 1265,
+  1284, 1346, 2032/2033, 2430) — aucun impact négatif, front déjà
+  compatible avec la présence du tilde (`AdminRegie.vue:155` le strip déjà
+  avant parsing numérique, fix #402). `vue-tsc` et `manage.py check`
+  revérifiés indépendamment (0 erreur chacun). Verdict : ✅ Approuvé, aucune
+  réserve dans le périmètre du ticket.
+- **#408** (mineure) — `frontend/app/src/views/admin/AdminGroups.vue:439` :
+  `new Date(m.scheduledTime).toLocaleTimeString(...)` (produisait « Invalid
+  Date » sur le format serveur non-ISO) remplacé par l'affichage brut
+  `m.scheduledTime ?? 'À venir'`, même patron que `AdminMatches.vue:537`.
+  Plan : `backlog/plan/408-admingroups-invalid-date.md`. Reviewer : diff
+  conforme, aucun `new Date(` résiduel dans le fichier, rendu `~14h30`
+  cohérent avec le reste de l'admin après le fix `#410` de la même session.
+  `vue-tsc` revérifié indépendamment (0 erreur). Verdict : ✅ Approuvé,
+  aucune réserve.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review a trouvé 2 specs encore ⚠️, et 5 issues restent ouvertes) :
+`#400`, `#405`, `#406`, `#407`, `#409`. Sprint reste actif, sera repris à la
+**prochaine échéance planifiée**. Ordre suggéré : `#405` (sweep erreurs API
+résiduel, indépendant, 3 fichiers triviaux — `usePolling.ts`,
+`AddPlayerModal.vue`, `EditMatchPanel.vue`) ; `#407`/`#409` (même fichier
+`AdminRegie.vue` — polling + points manquants, à coordonner en une passe) ;
+`#400` (petite finale sans demies, back, `live/bracket.py:203-214`,
+`ensure_p3_slot_exists` — no-op silencieux à remplacer par un refus
+explicite) ; `#406` (fichier partagé `stores/event.ts`, réservé à
+l'orchestrateur — `deleteEvent()` ne réinitialise pas `activeEventId` si
+l'épreuve supprimée était active).
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket en
+arrière-plan, en parallèle) ont strictement respecté leur mandat de lecture
+seule, chacun signalant ses observations hors périmètre sans les corriger —
+pattern stable sur au moins 33 sessions consécutives (#140-#183, sessions à
+vide comprises) depuis l'incident initial de la session #139. Aucun
+`ScheduleWakeup` de polling actif utilisé (un appel erroné a été passé puis
+immédiatement annulé via `stop: true` avant la fin de session — les
+notifications de tâche en arrière-plan suffisaient).
+
+Log complet : `backlog/logs/session_2026-07-14_183.md`.
+
+---
+
+**Historique — session #182 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 9/13 tickets
+clos (`#403`, `#397`, `#394`, `#399`, `#401`, `#398`, `#402` avant cette
+session ; `#395`, `#396` cette session) ; 7 restants (`#400`, `#405`, `#406`,
+`#407`, `#408`, `#409`, `#410` — `#409`/`#410` créés en spec review cette
+session).
+
+**Session #182.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#181) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push effectué (PR #404
+déjà ouverte, aucune action).
+
+**Spec review session #182** (agent `reviewer` dédié, lecture seule, en tout
+début de session) : 7 specs ciblées, 1 ✅ Conforme (`cycle-de-vie-match.md`),
+6 ⚠️ Dérive mineure. 5 des 7 dérives correspondent exactement aux 5 issues
+déjà ouvertes (`#395`, `#396`, `#400`, `#407`, `#408`). **2 dérives nouvelles
+et surprises** : score du match live épinglé sans les points
+(`AdminRegie.vue:108-112`, sets/jeux affichés mais jamais
+`displayPointA`/`displayPointB`, contrairement à `admin-regie-mobile.md` et
+au plan `backlog/plan/340-adminregie-ecran-complet.md`) → `#409` ; repli de
+`_pack_match` sans le préfixe `~` canonique quand `eta_display` n'est pas
+fourni par l'appelant (`live/api_views.py:242-243`, impact nul aujourd'hui,
+piège latent pour un futur écran) → `#410`. Aucune régression sur #398/#402
+(session #181). `npx vue-tsc --noEmit` vérifié indépendamment (0 erreur).
+
+**Backlog engine session #182** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures), dans l'ordre suggéré en fin de session
+#181 (`#395`/`#396`, indépendants, triviaux), chacun implémenté
+**directement en session par l'orchestrateur** (un seul fichier de code par
+ticket), soumis à un agent `reviewer` indépendant avant clôture :
+- **#395** (mineure) — `live/models.py:303` :
+  `Announcement.Meta.ordering` passé à `["-created_at"]` + migration
+  `0025_alter_announcement_options.py`. Plan :
+  `backlog/plan/395-announcement-ordering-tete-liste.md`. Reviewer : a trouvé
+  le correctif **incomplet** — `live/api_views.py:2426` (`api_tv_idle`,
+  alimente la slide TV et le ticker) portait un `.order_by("created_at")`
+  explicite écrasant le nouvel ordre du modèle ; seules les vues admin
+  étaient effectivement corrigées. Retiré par l'orchestrateur avant clôture,
+  `manage.py check` revérifié (0 erreur). Verdict final : ✅ Approuvé.
+- **#396** (mineure) — `frontend/app/src/views/admin/AdminTournoi.vue` :
+  `fmtDate` (ISO brut) remplacée par `formatPeriod(startIso, endIso)` —
+  format français, année élidée sur la date de début si même année civile.
+  Plan : `backlog/plan/396-admintournoi-dates-francais.md`. Reviewer : a
+  trouvé un écart à l'exemple exact de la spec (« 25 mai → 02 juin 2026 ») —
+  `day: 'numeric'` produisait `"2 juin 2026"` (non zéro-préfixé) au lieu de
+  `"02 juin 2026"`. Corrigé (`day: '2-digit'`), revérifié par un script Node
+  isolé confirmant l'exemple exact. `npx vue-tsc --noEmit` revérifié (0
+  erreur). Verdict final : ✅ Approuvé.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review a précédé l'implémentation et a donc trouvé 6 specs encore
+⚠️, précédent constant depuis la session #161) : 7 issues encore ouvertes en
+fin de session (`#400`, `#405`, `#406`, `#407`, `#408`, `#409`, `#410`).
+Sprint reste actif, sera repris à la **prochaine échéance planifiée**. Ordre
+suggéré : `#405` (sweep erreurs API résiduel, indépendant, 3 fichiers
+triviaux) ; `#408` (indépendant, trivial, `AdminGroups.vue`) ; `#407`/`#409`
+(même fichier `AdminRegie.vue` — polling + points manquants, à coordonner en
+une passe) ; `#400` (petite finale sans demies, back) ; `#410` (`_pack_match`
+repli sans `~`, back, trivial) ; `#406` (fichier partagé `stores/event.ts`,
+réservé à l'orchestrateur).
+
+**Point d'attention protocole (reviewer) :** l'agent `reviewer` de la review
+de tickets a, pour la première fois depuis plusieurs sessions, trouvé des
+réserves **dans le périmètre même** des tickets examinés (pas hors
+périmètre) — mandat de lecture seule toujours respecté (signalé sans
+corriger), corrections appliquées par l'orchestrateur. Pattern de lecture
+seule strict stable sur au moins 32 sessions consécutives (#140-#182,
+sessions à vide comprises) depuis l'incident initial de la session #139.
+Aucun `ScheduleWakeup` utilisé.
+
+Log complet : `backlog/logs/session_2026-07-14_182.md`.
+
+---
+
+**Historique — session #181 :**
+
+**Session #181.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#180) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push en cours.
+
+**Spec review session #181** (agent `reviewer` dédié, lecture seule, en tout
+début de session) : 7 specs ciblées, 2 ✅ Conforme, 5 ⚠️ Dérive mineure. 6 des
+7 dérives relevées correspondent exactement aux 6 issues déjà ouvertes
+(`#395`, `#396`, `#398`, `#400`, `#402`, `#405`) — `#394`/`#397`/`#399`/
+`#401`/`#403` reconfirmés fixés sans régression. **2 dérives nouvelles et
+surprises** (une première depuis plusieurs sessions consécutives à 0
+surprise) : bascule d'épreuve active non immédiate après suppression
+d'édition (`stores/event.ts:130-138`, rattrapage seulement au clic suivant
+via le guard router, pas immédiat comme l'exige `admin-shell.md`) → `#406` ;
+polling `AdminRegie.vue` à taux unique 5 s au lieu de 2 s sur le match live
+épinglé, contrairement à `admin-regie-mobile.md` → `#407`. `npx vue-tsc
+--noEmit` vérifié indépendamment (0 erreur) ; pas de suite de tests backend
+exploitable (`tests.py` vides dans `live`/`competition`/`core`).
+
+**Backlog engine session #181** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures — plus de majeure restante depuis la
+session #180), dans l'ordre suggéré par `sprint.md` (`#398` avant `#402`,
+dépendance de format), chacun implémenté **directement en session par
+l'orchestrateur** après cartographie précise du code source (portée
+multi-fichiers non triviale, décision de format à trancher — cf. précédent
+sessions #172-180 pour les tickets déjà entièrement mappés), soumis à un
+agent `reviewer` indépendant avant clôture :
+- **#398** (mineure, `infra`) — cause racine identifiée par lecture directe
+  de `_pack_match`/`compute_day_eta_map` (`live/api_views.py`,
+  `live/admin_views.py`) : le serveur préfixe déjà `~` sur `scheduledTime`
+  pour un match `SCHEDULED` (ETA) et ne préfixe jamais l'heure réelle d'un
+  match `LIVE`/`FINISHED` — `AdminMatches.vue:537` respectait déjà la règle,
+  6 autres consommateurs la violaient (`EditMatchPanel.vue`,
+  `AdminRegie.vue`, `ArbitreHome.vue`, `TvTicker.vue`, `TvIdle.vue` ×2,
+  `TvScoreboard.vue`), produisant `~~14h30` ou un `~` erroné sur une heure
+  réelle. Correction : suppression des 6 re-préfixes clients, aucun
+  changement backend. Règle documentée dans `specs/technical/planning.md`
+  (nouveau paragraphe « Format canonique du préfixe ~ »). Plan :
+  `backlog/plan/398-double-tilde-scheduledtime.md`. Reviewer : diff conforme
+  fichier par fichier, `AdminMatches.vue:537` confirmé non touché
+  (référence), grep de contrôle propre, `vue-tsc` 0 erreur vérifié
+  indépendamment. Verdict : ✅ Approuvé, aucune réserve.
+- **#402** (mineure) — dépendait de `#398` (traité juste avant). Cause
+  racine : `AdminRegie.vue::punctualityClass` parsait
+  `scheduledTime.split(':')` alors que le format réel est `"~HHhMM"` (tilde
+  + séparateur `h`, jamais `:`) → `NaN` systématique → teinte de
+  ponctualité jamais affichée. Correction d'une ligne :
+  `.replace(/^~/, '').split('h')`. Seuils et garde de statut inchangés
+  (simplification assumée hors périmètre, conforme au texte de l'issue).
+  Plan : `backlog/plan/402-adminregie-punctuality-parsing.md`. Reviewer :
+  diff limité à 1 ligne, format serveur confirmé par lecture de
+  `_min_to_hhmm`, `vue-tsc` 0 erreur vérifié indépendamment. A signalé un
+  bug distinct hors périmètre (`AdminGroups.vue:439` — `new Date()` sur un
+  format non-ISO `"HHhMM"` produit une heure invalide à l'écran pour un
+  match de poule planifié) → ticketé séparément en `#408` plutôt que traité
+  dans ce ticket. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review a précédé l'implémentation et a donc trouvé 5 specs encore
+⚠️, précédent constant depuis la session #161) : 7 issues encore ouvertes en
+fin de session (`#395`, `#396`, `#400`, `#405`, `#406`, `#407`, `#408`).
+Sprint reste actif, sera repris à la **prochaine échéance planifiée**. Ordre
+suggéré : `#395`/`#396`/`#400` (indépendants, triviaux, dans le sillage des
+sessions #180) ; `#405` (sweep erreurs API résiduel, indépendant) ; `#406`
+(fichier partagé `stores/event.ts`, réservé à l'orchestrateur) ; `#407`
+(indépendant, `AdminRegie.vue`) ; `#408` (indépendant, trivial,
+`AdminGroups.vue`, même patron que `#398`/`AdminMatches.vue:537`).
+
+**Point d'attention outillage :** `.claude/launch.json` toujours présent
+(ajouté avant la session #180), mais **pas utilisé cette session** — les
+deux tickets ont été vérifiés par lecture de code + `vue-tsc` +
+`reviewer` indépendant uniquement, sans QA navigateur réelle (contrairement
+à la session #180 qui avait démarré les serveurs). Portée des deux tickets
+jugée suffisamment couverte par la revue de code (correctifs mécaniques
+d'affichage, cause racine remontée jusqu'au format serveur par lecture
+directe) ; pas de régression attendue nécessitant une vérification visuelle.
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket) ont
+strictement respecté leur mandat de lecture seule, et ont chacun signalé un
+problème hors périmètre plutôt que de le corriger eux-mêmes (`#406`/`#407`
+en spec review, `#408` en review de ticket) — pattern stable sur au moins 31
+sessions consécutives (#140-#181, sessions à vide comprises) depuis
+l'incident initial de la session #139. Aucun `ScheduleWakeup` utilisé.
+
+Log complet : `backlog/logs/session_2026-07-14_181.md`.
+
+---
+
+**Historique — session #180 :**
+
+**Session #180.** Working tree propre au démarrage, branche déjà checked-out,
+aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0 :
+`git merge-base --is-ancestor` renvoie faux — probablement un squash-merge en
+amont — mais `git merge` s'est révélé un no-op, le contenu étant déjà présent
+dans l'historique de la branche courante). 3 commits cette session (1 spec
+review + 2 tickets), push effectué.
+
+**Spec review session #180** (agent `reviewer` dédié, lecture seule, en tout
+début de session) : 7 specs ciblées, 2 ✅ Conforme (`admin-shell.md` —
+`#394` reconfirmé fixé ; `cycle-de-vie-match.md` — `#403` reconfirmé fixé), 5
+⚠️ Dérive mineure (`admin-tournoi.md`, `admin-regie-mobile.md`,
+`erreurs-api.md`, `planning.md`, `cycle-de-vie-epreuve.md`). Les 7 dérives
+relevées correspondent **exactement** aux 7 issues déjà ouvertes en début de
+session, 0 dérive surprise, 0 nouvelle issue créée à ce stade.
+`npx vue-tsc --noEmit` et `python manage.py check` vérifiés indépendamment (0
+erreur chacun).
+
+**Backlog engine session #180** : 2 tickets traités séquentiellement (les 2
+majeures restantes, aucune issue `à-reprendre`), chacun implémenté
+**directement en session par l'orchestrateur** (portée déjà entièrement
+cartographiée ligne par ligne par le rapport de spec review — précédent
+constant depuis les sessions #172-175), soumis à un agent `reviewer`
+indépendant avant clôture :
+- **#401** (majeure) — `frontend/app/src/views/admin/AdminRegie.vue` —
+  `onMounted(fetchAnnouncements)` remplacé par
+  `watch(() => eventStore.activeEdition?.id, fetchAnnouncements, { immediate:
+  true })`, même pattern qu'`AdminTournoi.vue`. Plan :
+  `backlog/plan/401-adminregie-annonces-watch-activeedition.md`. Reviewer :
+  diff conforme, aucune régression (le montage initial se comporte comme
+  l'ancien `onMounted`), `vue-tsc` 0 erreur. Verdict : ✅ Approuvé.
+- **#399** (majeure) — sweep sur 5 fichiers : `PlayDayModal.vue` (3 sites) et
+  `AdminMatches.vue` (6 sites) — `e.message` brut remplacé par
+  `extractApiError(e, fallback)` ; `ArbitreMatch.vue`, `AdminRegie.vue`,
+  `AdminBracket.vue` — fonction locale `extractError` supprimée au profit de
+  l'import partagé (fallback par défaut `'Action impossible.'` identique,
+  aucun changement de message). Plan : `backlog/plan/399-extractapierror-sweep.md`.
+  Reviewer : diff conforme aux 5 fichiers, `grep` de contrôle propre
+  (`extractError`/`e.message` résiduels), `vue-tsc` 0 erreur. A signalé 3
+  sites d'affichage brut hors périmètre exact du ticket (`usePolling.ts:20`,
+  `AddPlayerModal.vue:185`, `EditMatchPanel.vue:165`) → ticketés séparément en
+  **#405** plutôt que traités dans ce ticket. Verdict : ✅ Approuvé.
+
+**Point d'attention outillage — nouveauté cette session :**
+`.claude/launch.json` existe désormais (ajouté au commit `25239a7`, juste
+après la planification du sprint 45), configurant deux serveurs (`django-
+backend` :8000, `vite-frontend` :5173). C'est la **première session** depuis
+le début du suivi de ce point d'attention (sessions #172-#179 notaient
+explicitement son absence) où une vérification navigateur réelle a pu être
+faite : les deux serveurs ont été démarrés via le Preview, `#401` vérifié en
+rechargeant directement `/admin/regie` (l'annonce s'affiche dès le premier
+rendu), `#399` vérifié en naviguant vers `/admin/tournoi` puis
+`/admin/events/3/matches` (rendu correct, aucune erreur console). Tentative
+infructueuse de déclencher le golden path exact du 409 (suppression d'une
+journée avec pause) : les 3 journées de la donnée de seed sont toutes
+archivées (matchs terminés), le bouton Supprimer déjà désactivé par une garde
+front sans rapport avec ce ticket — compensé par la revue de code et
+`vue-tsc`.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review a précédé l'implémentation et a donc trouvé 5 specs encore
+⚠️, précédent constant depuis la session #161) : 6 issues encore ouvertes en
+fin de session (`#395`, `#396`, `#398`, `#400`, `#402`, `#405`). Sprint reste
+actif, sera repris à la **prochaine échéance planifiée**. Ordre suggéré :
+`#398` (format canonique du « ~ », avant `#402` qui en dépend) ; `#402` (même
+fichier qu'`#401` déjà clos) ; `#395`/`#396`/`#400` (indépendants, triviaux) ;
+`#405` (nouveau, mineur, indépendant).
+
+Log complet : `backlog/logs/session_2026-07-14_180.md`.
+
+---
+
+**Historique — session #179 :**
+
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. Planifié
+après la session #178 (roadmap vide) via `anthropic-skills:plan-sprint`
+(commit `68b5a0d`, hors mandat du protocole automatique). 3/10 tickets clos
+(`#403` avant cette session, `#397`/`#394` cette session) ; 7 restants
+(`#395`, `#396`, `#398`, `#399`, `#400`, `#401`, `#402`).
+
+**Session #179 — reprise d'une interruption.** Au démarrage, working tree
+sale sur `claude/sprint/45-review-globale-13-juillet` : la spec review de
+session #179 était déjà écrite (ligne `log.md` non committée) et
+l'implémentation de deux tickets déjà en cours mais ni committée ni close
+— #397 (staged) et #394 (unstaged), plans (`backlog/plan/397-…md`,
+`backlog/plan/394-…md`) déjà rédigés. Plutôt que le commit générique
+`🚧 état sauvegardé` prévu par §Étape 0, les diffs ont été relus intégralement
+contre leurs plans, vérifiés (`npx vue-tsc --noEmit` 0 erreur, `python
+manage.py check` 0 erreur, rétrocompatibilité de `compute_day_eta_map`
+confirmée par grep sur ses 3 autres appelants), scindés proprement en deux
+commits par ticket (`types/index.ts` modifiait les deux tickets dans des
+hunks disjoints, séparés via `git add -p`), chacun fermé sur GitHub avec un
+commentaire de verdict :
+- **#397** (`d19feff`) — heures au-delà de minuit wrappées 24h à l'affichage
+  uniquement, curseur continu ancré sur `play_day.date`/`day.date` pendant le
+  calcul ; calendrier expose désormais `estimatedEnd`/`estimatedEndMin`
+  calculés serveur (source au repos, moteur front seulement pendant un
+  drag). Arbitrage documenté dans `specs/technical/planning.md`.
+- **#394** (`dc2eb8d`) — `AdminLayout.vue` charge lui-même
+  Inscriptions/Poules/Tableau final dès l'arrivée sur le shell (état neutre
+  tant que non chargé, jamais « 0 » par défaut) ; `kanban`/`fetchMatches`/
+  `KanbanData` supprimés du store `event.ts` (chemin mort confirmé sans
+  lecteur restant) ; `matchCount` dérivé du calendrier filtré sur l'épreuve
+  active.
+
+Spec review de session #179 (effectuée avant l'implémentation, committée en
+`4b68787`) : 6 specs ciblées, ⚠️ (1 ✅, 6 ⚠️), 0 dérive surprise — les 10
+dérives correspondent exactement aux 10 issues déjà ouvertes. Une note non
+ticketée : fraîcheur documentaire `planning.md:260` (endpoint
+`play-days/generate` marqué « à créer » alors que livré) — précédent établi
+pour ce type d'observation cosmétique, pas d'issue créée.
+
+**Sprint 45 non clos** (attendu) : 7 issues encore ouvertes. Sera repris à la
+**prochaine échéance planifiée**. Log complet :
+`backlog/logs/session_2026-07-14_179.md`.
+
+**Point d'attention protocole (reprise d'interruption) :** écart assumé au
+texte littéral de §Étape 0 (commit de rattrapage générique) — préféré une
+reprise fidèle au grain habituel (un commit par ticket, review avant
+clôture) car les plans et diffs de la session interrompue étaient complets et
+vérifiables. À rapprocher du point d'attention `ScheduleWakeup`/agents
+asynchrones (aucun utilisé cette session, cohérent avec le pattern stable
+depuis la session #139).
+
+---
+
+**Historique — session #178 :**
 
 **Sprint actif :** aucun — roadmap vide (0 ligne). **Désactiver la Routine
 manuellement sur claude.ai/code/routines.**
@@ -388,6 +1254,10 @@ Point d'attention non résolu (signalé depuis la session #144) : deux dossiers
 de sprint orphelins dans `backlog/sprints/` (`04-admin-panel-map/`,
 `10-contexte-url/`), hors de `done/` et non référencés par `roadmap.md`. À
 nettoyer côté humain.
+
+Sprint 45 planifié après cette session (hors mandat automatique, via
+`anthropic-skills:plan-sprint`) — roadmap non vide à la session suivante
+(#179).
 
 ---
 

@@ -162,7 +162,7 @@ async function changePlayDay(newPlayDayId: number | null) {
     await eventStore.reorderCalendar(editionId, payload)
     selectedPlayDayId.value = newPlayDayId
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Erreur lors du déplacement.'
+    error.value = extractApiError(e, 'Erreur lors du déplacement.')
   } finally {
     saving.value = false
   }
@@ -595,7 +595,7 @@ async function save() {
                 </label>
                 <div class="fld">
                   <span class="fld-lbl">Heure estimée</span>
-                  <span class="inp inp-ro">{{ match.scheduledTime ? '~' + match.scheduledTime : '—' }}</span>
+                  <span class="inp inp-ro">{{ match.scheduledTime ?? '—' }}</span>
                 </div>
                 <div class="fld">
                   <span class="fld-lbl">Court</span>

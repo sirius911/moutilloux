@@ -3,13 +3,14 @@
 // contextuelle par match (7 actions réutilisant des services existants),
 // section Annonces TV. Voir specs/screens/admin-regie-mobile.md et
 // backlog/plan/340-adminregie-ecran-complet.md.
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEventStore } from '@/stores/event'
 import { useApi } from '@/composables/useApi'
 import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
 import { sideName } from '@/utils/participants'
+import { extractApiError } from '@/lib/apiError'
 import type { Announcement, Break, CalendarDay, Match } from '@/types'
 
 const router = useRouter()
@@ -38,6 +39,24 @@ usePolling(async () => {
 async function refreshCalendar() {
   if (eventStore.activeEdition) await eventStore.fetchCalendar(eventStore.activeEdition.id)
 }
+
+// ── Score du match en cours — rafraîchi à 2 s (même taux qu'Arbitre/TV) ────
+// Le calendrier (5 s) suffit pour détecter qu'un match devient/cesse d'être
+// LIVE ; le score du match déjà épinglé a besoin d'un taux plus rapide.
+const liveScoreData = ref<Match | null>(null)
+
+usePolling(async () => {
+  const id = liveMatch.value?.id
+  if (!id) {
+    liveScoreData.value = null
+    return
+  }
+  if (id !== liveScoreData.value?.id) {
+    liveScoreData.value = null
+  }
+  const data = await get<{ match: Match }>(`/api/matches/${id}/`)
+  liveScoreData.value = data.match
+}, 2000)
 
 // ── Journée courante + match en cours (même esprit qu'ArbitreHome.vue) ─────
 function isToday(dateStr: string): boolean {
@@ -106,7 +125,7 @@ function playerName(m: Match, side: 'A' | 'B'): string {
 
 function scoreDisplay(m: Match): string {
   const sets = m.setScores?.map(s => `${s.a}-${s.b}`).join(' ') ?? ''
-  const current = m.status === 'LIVE' ? ` (${m.gamesA}-${m.gamesB})` : ''
+  const current = m.status === 'LIVE' ? ` (${m.gamesA}-${m.gamesB}, ${m.displayPointA}-${m.displayPointB})` : ''
   return (sets + current).trim()
 }
 
@@ -118,9 +137,9 @@ function formatIsoTime(iso: string): string {
 function matchTimeLabel(m: Match): string {
   if (m.status === 'FINISHED') {
     const iso = m.startedAt ?? m.finishedAt
-    return iso ? formatIsoTime(iso) : (m.scheduledTime ? `~${m.scheduledTime}` : '—')
+    return iso ? formatIsoTime(iso) : (m.scheduledTime ?? '—')
   }
-  return m.scheduledTime ? `~${m.scheduledTime}` : '—'
+  return m.scheduledTime ?? '—'
 }
 
 function formatDate(dateStr: string): string {
@@ -151,7 +170,7 @@ function rowStatusClass(m: Match, isNext: boolean): string {
 function punctualityClass(m: Match): string | null {
   if (m.status === 'LIVE' || m.status === 'FINISHED' || m.status === 'CANCELED') return null
   if (!m.scheduledTime || !currentDay.value) return null
-  const [hh, mm] = m.scheduledTime.split(':').map(Number)
+  const [hh, mm] = m.scheduledTime.replace(/^~/, '').split('h').map(Number)
   if (Number.isNaN(hh) || Number.isNaN(mm)) return null
   const scheduled = new Date(currentDay.value.date + 'T00:00:00')
   scheduled.setHours(hh, mm, 0, 0)
@@ -170,25 +189,13 @@ function showError(msg: string) {
   errorTimer = setTimeout(() => { error.value = '' }, 4000)
 }
 
-function extractError(e: unknown): string {
-  const raw = e instanceof Error ? e.message : String(e)
-  const sep = raw.indexOf('— ')
-  const tail = sep >= 0 ? raw.slice(sep + 2) : raw
-  try {
-    const parsed = JSON.parse(tail)
-    if (parsed && typeof parsed.error === 'string') return parsed.error
-    if (parsed && parsed.ok === false && typeof parsed.error === 'string') return parsed.error
-  } catch { /* corps non-JSON : on garde le fallback */ }
-  return 'Action impossible.'
-}
-
 async function refereeAction(matchId: number, action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
     await post(`/api/matches/${matchId}/action/`, { action, ...extra })
     await refreshCalendar()
     return true
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
     return false
   }
 }
@@ -234,7 +241,7 @@ async function doStart() {
     startConfirmOpen.value = false
     closeSheet()
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
   }
 }
 
@@ -258,7 +265,7 @@ async function confirmFeature() {
     featureConfirmOpen.value = false
     closeSheet()
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
   }
 }
 
@@ -362,7 +369,7 @@ async function saveScoreForm() {
     scoreFormOpen.value = false
     closeSheet()
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
   }
 }
 
@@ -382,11 +389,11 @@ async function fetchAnnouncements() {
     )
     announcements.value = data.announcements
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 
-onMounted(fetchAnnouncements)
+watch(() => eventStore.activeEdition?.id, fetchAnnouncements, { immediate: true })
 
 async function addAnnouncement() {
   if (!eventStore.activeEdition || !newAnnouncementMessage.value.trim()) return
@@ -398,7 +405,7 @@ async function addAnnouncement() {
     newAnnouncementMessage.value = ''
     await fetchAnnouncements()
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 
@@ -408,7 +415,7 @@ async function toggleAnnouncement(a: Announcement) {
     await post(`/api/announcements/${a.id}/edit/`, { isActive: !a.isActive })
     await fetchAnnouncements()
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 
@@ -423,7 +430,7 @@ async function confirmDeleteAnnouncement() {
     deleteAnnouncementTarget.value = null
     await fetchAnnouncements()
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 </script>
@@ -467,7 +474,7 @@ async function confirmDeleteAnnouncement() {
           </div>
           <div class="regie-live-meta">
             <span class="regie-live-stage">{{ liveMatch.stageLabel }}</span>
-            <span class="regie-live-score tab">{{ scoreDisplay(liveMatch) }}</span>
+            <span class="regie-live-score tab">{{ scoreDisplay(liveScoreData ?? liveMatch) }}</span>
           </div>
         </section>
 

@@ -1,4 +1,5 @@
 import { ref, onMounted, onUnmounted } from 'vue'
+import { extractApiError } from '@/lib/apiError'
 
 /**
  * Lance `fn` immédiatement, puis toutes les `interval` ms.
@@ -17,7 +18,7 @@ export function usePolling(fn: () => Promise<void>, interval: number) {
       await fn()
       error.value = null
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e)
+      error.value = extractApiError(e, 'Erreur de synchronisation.')
     } finally {
       loading.value = false
       inFlight = false

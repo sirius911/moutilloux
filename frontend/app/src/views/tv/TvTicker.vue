@@ -38,7 +38,7 @@ const items = computed<TickerItem[]>(() => {
   for (const m of live.programme.upcoming) {
     const a = sideName(m.sideA, m.sideALabel)
     const b = sideName(m.sideB, m.sideBLabel)
-    list.push({ key: `p-${m.id}`, text: `À venir ~${m.scheduledTime ?? '—'} · ${a} vs ${b}` })
+    list.push({ key: `p-${m.id}`, text: `À venir ${m.scheduledTime ?? '—'} · ${a} vs ${b}` })
   }
 
   return list

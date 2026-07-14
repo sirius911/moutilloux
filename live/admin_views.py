@@ -505,6 +505,16 @@ def finalize_match_edit(match, was_live: bool = False, was_finished: bool = Fals
     if match.status == Match.Status.FINISHED:
         match.is_featured = False
 
+    if match.status == Match.Status.SCHEDULED and was_finished:
+        # Terminé → Prévu depuis le panneau d'édition (pas via Rouvrir/LIVE) :
+        # purger les champs de fin, sinon le Tableau final le voit terminé
+        # pendant que le calendrier/TV le proposent à jouer (#403). Le score
+        # saisi est conservé (même patron que reopen_match()).
+        match.winner_side = None
+        match.finished_at = None
+        match.end_reason = None
+        match.is_walkover = False
+
     if match.status == Match.Status.CANCELED:
         match.order_index = None
         match.scheduled_time = None
@@ -1328,6 +1338,15 @@ def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHA
         new_value = bool(has_third_place)
         if new_value != event.has_third_place:
             if new_value:
+                bracket_exists = Match.objects.filter(
+                    event=event,
+                    stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+                ).exists()
+                sf_count = Match.objects.filter(event=event, stage=Match.Stage.SF).count()
+                if bracket_exists and sf_count < 2:
+                    raise ValueError(
+                        "Ce tableau n'a pas de demi-finales : pas de match de 3e place possible."
+                    )
                 third_place_activated = True
             else:
                 p3 = Match.objects.filter(event=event, stage=Match.Stage.P3, bracket_slot="P3").first()
@@ -1698,16 +1717,21 @@ def _eta_duration_for(match, default_duration_min):
     return default_duration_min
 
 
-def _dt_to_min(dt):
+def _dt_to_min(dt, anchor_date):
+    """Minutes écoulées depuis minuit d'`anchor_date` (peut dépasser 1440 ou
+    être négatif si `dt` tombe un autre jour — cas d'un match rejoué/reporté).
+    Le wrap 24h ne se fait qu'à l'affichage, via `_min_to_hhmm`."""
     local = timezone.localtime(dt)
-    return local.hour * 60 + local.minute
+    diff_days = (local.date() - anchor_date).days
+    return diff_days * 1440 + local.hour * 60 + local.minute
 
 
 def _min_to_hhmm(minutes):
-    return f"{minutes // 60:02d}h{minutes % 60:02d}"
+    wrapped = minutes % 1440
+    return f"{wrapped // 60:02d}h{wrapped % 60:02d}"
 
 
-def compute_day_eta_map(play_day, now=None):
+def compute_day_eta_map(play_day, now=None, include_day_end=False):
     """
     Calcule l'ETA « à la lecture » de chaque match SCHEDULED planifié de
     `play_day`, en rejouant le curseur monotone de la journée (matchs +
@@ -1717,11 +1741,21 @@ def compute_day_eta_map(play_day, now=None):
     identique au tri du front).
 
     Ne retourne que les matchs SCHEDULED (seuls à avoir besoin du curseur) :
-    {match_id: "~HHhMM"}. Les LIVE/FINISHED n'en ont pas besoin — leur heure
-    affichée est directement `started_at`/`finished_at` (voir `_pack_match`).
+    {match_id: "~HHhMM"}, heures wrappées 24h (curseur interne continu, non
+    wrappé, ancré sur `play_day.date` — cf. `_dt_to_min`). Les LIVE/FINISHED
+    n'en ont pas besoin — leur heure affichée est directement
+    `started_at`/`finished_at` (voir `_pack_match`).
 
     `now` : instant de référence (par défaut `timezone.localtime(timezone.now())`),
     paramétrable pour les tests.
+
+    `include_day_end` : si `True`, retourne un tuple `(eta_map, "HH:MM", minutes)`
+    où le 2e élément est l'heure de fin de journée estimée pour l'affichage
+    (dernier curseur, wrappé, même format que `startTime`/`targetEndTime`) et
+    le 3e le même curseur **non wrappé** (peut dépasser 1440 — nécessaire
+    pour comparer correctement à `targetEndTime` quand la journée déborde sur
+    le lendemain, cf. `capacityOver` côté front) — sinon retourne seulement
+    `eta_map` (rétrocompatible).
     """
     if now is None:
         now = timezone.localtime(timezone.now())
@@ -1758,14 +1792,19 @@ def compute_day_eta_map(play_day, now=None):
             result[m.id] = cursor
             cursor += dur
         elif m.status == Match.Status.LIVE:
-            started_min = _dt_to_min(m.started_at) if m.started_at else cursor
+            started_min = _dt_to_min(m.started_at, play_day.date) if m.started_at else cursor
             live_end = started_min + dur
             cursor = max(cursor + dur, live_end, now_min) if anchor_now else max(cursor + dur, live_end)
         elif m.status == Match.Status.FINISHED:
-            finished_min = _dt_to_min(m.finished_at) if m.finished_at else cursor + dur
+            finished_min = _dt_to_min(m.finished_at, play_day.date) if m.finished_at else cursor + dur
             cursor = max(cursor + dur, finished_min)
 
-    return {mid: f"~{_min_to_hhmm(mn)}" for mid, mn in result.items()}
+    eta_map = {mid: f"~{_min_to_hhmm(mn)}" for mid, mn in result.items()}
+    if include_day_end:
+        wrapped_end = cursor % 1440
+        day_end = f"{wrapped_end // 60:02d}:{wrapped_end % 60:02d}"
+        return eta_map, day_end, cursor
+    return eta_map
 
 
 # ── Sprint 22 — CRUD Announcement ─────────────────────────────────────────────

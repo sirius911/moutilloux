@@ -12,6 +12,8 @@ const authStore = useAuthStore()
 
 const editionsLoaded = ref(false)
 const playersLoaded = ref(false)
+const entriesLoaded = ref(false)
+const eventGroupsLoaded = ref(false)
 
 async function handleLogout() {
   await authStore.logout()
@@ -45,26 +47,60 @@ watch(
   { immediate: true },
 )
 
+// Compteurs Inscriptions/Poules/Tableau final : chargés par le shell lui-même
+// (pas seulement par l'écran correspondant), pour que la sidebar affiche les
+// comptes réels dès l'arrivée sur Tournoi/Joueurs. État neutre tant que non
+// chargé : `entriesLoaded`/`eventGroupsLoaded` (players/groups démarrent à
+// `[]`, pas `null`) ; `eventStore.bracket` démarre déjà à `null`, pas besoin
+// de flag dédié.
+watch(
+  () => eventStore.activeEventId,
+  (id) => {
+    entriesLoaded.value = false
+    eventGroupsLoaded.value = false
+    if (!id) return
+    eventStore.fetchPlayers(id).then(() => { entriesLoaded.value = true }).catch(() => {})
+    eventStore.fetchGroups(id).then(() => { eventGroupsLoaded.value = true }).catch(() => {})
+    eventStore.fetchBracket(id).catch(() => {})
+  },
+  { immediate: true },
+)
+
+// Planning : dérivé du calendrier (édition entière), filtré sur l'épreuve
+// active. Dépend aussi de l'édition (deep-link `:eventId` où l'édition n'est
+// pas encore résolue au premier passage du watcher ci-dessus).
+watch(
+  () => [eventStore.activeEventId, eventStore.activeEdition?.id] as const,
+  ([id, editionId]) => {
+    if (id && editionId) eventStore.fetchCalendar(editionId).catch(() => {})
+  },
+  { immediate: true },
+)
+
 const navItems = computed(() => {
-  const kanban = eventStore.kanban
   const bracket = eventStore.bracket
-  const matchCount = kanban === null
+  const eid = eventStore.activeEventId
+  const cal = eventStore.calendar
+  // Total = tous les matchs rattachés à l'épreuve, quel que soit leur statut
+  // (planifiés, non planifiés, annulés) — cf. plan 394.
+  const matchCount = cal === null || eid === null
     ? null
-    : kanban.backlog.length + kanban.queue.length + kanban.finished.length
+    : cal.playDays.flatMap(d => d.matches).filter(m => m.eventId === eid).length
+      + cal.unscheduled.filter(m => m.eventId === eid).length
+      + cal.canceled.filter(m => m.eventId === eid).length
   const countMatches = (slots: BracketSlot[]) =>
     slots.filter(s => s.match !== null).length
   const bracketCount = bracket === null
     ? null
     : countMatches(bracket.qf) + countMatches(bracket.sf) + countMatches(bracket.f)
 
-  const eid = eventStore.activeEventId
   const base = eid ? `/admin/events/${eid}` : null
 
   return [
     { path: '/admin/tournoi',                   label: 'Tournoi',       icon: '🏛', count: editionsLoaded.value ? eventStore.events.length : null },
     { path: '/admin/players',                   label: 'Joueurs',       icon: '👤', count: playersLoaded.value ? eventStore.allPlayers.length : null },
-    { path: base ? `${base}/inscriptions` : '', label: 'Inscriptions',  icon: '📝', count: eventStore.players.length },
-    { path: base ? `${base}/groups` : '',       label: 'Poules',        icon: '⊞',  count: eventStore.groups.length },
+    { path: base ? `${base}/inscriptions` : '', label: 'Inscriptions',  icon: '📝', count: entriesLoaded.value ? eventStore.players.length : null },
+    { path: base ? `${base}/groups` : '',       label: 'Poules',        icon: '⊞',  count: eventGroupsLoaded.value ? eventStore.groups.length : null },
     { path: base ? `${base}/matches` : '',      label: 'Planning',      icon: '⚡', count: matchCount },
     { path: base ? `${base}/bracket` : '',      label: 'Tableau final', icon: '🏆', count: bracketCount },
   ]

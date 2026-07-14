@@ -154,6 +154,23 @@ du serveur.
 Les heures publiques sont affichées **approximatives** (préfixe `~`), voir
 [[tv-live]].
 
+**Format canonique du préfixe `~` (arbitrage 2026-07-14, #398).** Le préfixe
+`~` fait partie de la chaîne `scheduledTime` renvoyée par le serveur — il
+n'est **jamais** ajouté côté client. Un client qui affiche `scheduledTime`
+l'affiche tel quel (`m.scheduledTime ?? '—'`), sans re-préfixer, sous peine
+de double tilde (`~~14h30`) sur un match `SCHEDULED`, ou d'un `~` erroné sur
+l'heure réelle d'un match `LIVE`/`FINISHED`.
+
+**Heures au-delà de minuit (arbitrage 2026-07-14, #397).** Le curseur `t` est
+un entier de minutes **continu, jamais wrappé pendant le calcul** — ancré sur
+la date de la journée (`play_day.date`/`day.date`), pas sur l'heure brute d'un
+`started_at`/`finished_at` qui pourrait tomber un autre jour (match
+rejoué/reporté). Le **wrap 24h ne se fait qu'à l'affichage** : une ETA à 1541
+min s'affiche « ~01h41 », pas « ~25h41 ». Pas de mention « +1 jour » — aucune
+autre surface du produit n'affiche de badge de jour. Cette règle s'applique
+identiquement côté serveur (`_min_to_hhmm`, `_dt_to_min`) et côté front
+(`AdminMatches.vue::minToTime`, `isoToMin`, préview de drag uniquement).
+
 ---
 
 ## Indicateur de ponctualité (rouge / orange / vert)
@@ -227,6 +244,16 @@ matchs de poule, avec les particularités suivantes :
 Fin estimée d'une journée = valeur finale du curseur ETA. Si elle dépasse
 `target_end_time`, la journée est **surlignée** (« dépasse HH:MM »), **sans
 blocage** : on n'empêche pas d'ajouter des matchs au-delà de la cible.
+
+**Source au repos (#397).** Comme pour `scheduledTime`, le calendrier
+(`GET /api/editions/<id>/calendar/`) expose la fin de journée calculée côté
+serveur sur chaque `PlayDay` packée : `estimatedEnd` (`"HH:MM"`, wrappée 24h,
+pour l'affichage) et `estimatedEndMin` (le même curseur **non wrappé**,
+utilisé pour la comparaison à `target_end_time` — une journée qui déborde
+après minuit doit rester détectée en dépassement même si son affichage
+wrappe à une petite heure). Le moteur front (`AdminMatches.vue::etaEngine`)
+ne recalcule ces deux valeurs que pour la **préview pendant un drag** ; au
+repos, l'écran lit `estimatedEnd`/`estimatedEndMin`.
 
 ---
 

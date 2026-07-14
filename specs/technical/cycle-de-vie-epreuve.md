@@ -323,7 +323,12 @@ forfait ou d'arbitrage. Même geste que le remplissage manuel existant
   agit immédiatement sur le tableau existant :
   - **activation** → le match P3 est créé sur-le-champ (squelette étiqueté
     « LSF1 » / « LSF2 »), et les perdants des demi-finales déjà terminées y
-    sont propagés dans la foulée (`sync_p3_losers_for_event`) ;
+    sont propagés dans la foulée (`sync_p3_losers_for_event`) ; **refusée**
+    (erreur JSON, message affiché dans la modale Épreuve) si un tableau final
+    existe déjà et n'a pas de demi-finales (ex. 2 qualifiés directs → finale
+    directe sans SF) — sans tableau généré, l'activation est acceptée sans
+    effet immédiat (le P3 sera créé si le tableau généré ensuite a bien
+    ≥2 demi-finales) ;
   - **désactivation** → le match P3 est supprimé s'il est encore `SCHEDULED` ;
     **refusée** (erreur JSON, message affiché dans la modale Épreuve) s'il est
     `LIVE` ou `FINISHED`.

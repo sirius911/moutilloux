@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApi } from '@/composables/useApi'
-import type { Edition, Event, Entry, Group, KanbanData, Bracket, Player, Category, Court, CategoryMode, CalendarData, PlayDay, Break } from '@/types'
+import type { Edition, Event, Entry, Group, Bracket, Player, Category, Court, CategoryMode, CalendarData, PlayDay, Break } from '@/types'
 
 export interface PlayerEditPayload {
   first_name?: string
@@ -118,7 +118,6 @@ export const useEventStore = defineStore('event', () => {
   const players = ref<Entry[]>([])
   const groups = ref<Group[]>([])
   const groupsLocked = ref(false)
-  const kanban = ref<KanbanData | null>(null)
   const calendar = ref<CalendarData | null>(null)
   const bracket = ref<Bracket | null>(null)
 
@@ -133,8 +132,9 @@ export const useEventStore = defineStore('event', () => {
     activeEdition.value = data.activeEdition
     events.value = data.events
     editions.value = data.editions ?? []
-    if (!activeEventId.value && data.events.length > 0) {
-      activeEventId.value = data.events[0].id
+    const stillValid = activeEventId.value !== null && data.events.some((e) => e.id === activeEventId.value)
+    if (!stillValid) {
+      activeEventId.value = data.events.length > 0 ? data.events[0].id : null
     }
   }
 
@@ -165,14 +165,6 @@ export const useEventStore = defineStore('event', () => {
     if (id !== activeEventId.value) return // réponse périmée : l'épreuve active a changé entre-temps
     groups.value = data.groups
     groupsLocked.value = data.locked
-  }
-
-  async function fetchMatches(eventId?: number) {
-    const id = eventId ?? activeEventId.value
-    if (!id) return
-    const data = await get<KanbanData>(`/api/events/${id}/matches/`)
-    if (id !== activeEventId.value) return // réponse périmée : l'épreuve active a changé entre-temps
-    kanban.value = data
   }
 
   async function fetchCalendar(editionId?: number) {
@@ -265,18 +257,15 @@ export const useEventStore = defineStore('event', () => {
 
   async function generateMatches(eventId: number) {
     await post(`/api/events/${eventId}/matches/generate/`, {})
-    await fetchMatches(eventId)
     await fetchGroups(eventId)
   }
 
   async function editMatch(eventId: number, matchId: number, payload: MatchEditPayload) {
     await post(`/api/matches/${matchId}/edit/`, payload)
-    await fetchMatches(eventId)
   }
 
   async function featureMatch(eventId: number, matchId: number) {
     await post(`/api/matches/${matchId}/feature/`, {})
-    await fetchMatches(eventId)
   }
 
   async function startMatch(matchId: number) {
@@ -412,7 +401,6 @@ export const useEventStore = defineStore('event', () => {
     if (!id) return
     await fetchGroups(id)
     await fetchPlayers(id)
-    await fetchMatches(id)
     await fetchBracket(id)
   }
 
@@ -504,10 +492,10 @@ export const useEventStore = defineStore('event', () => {
   return {
     // State
     activeEdition, editions, events, activeEventId,
-    allPlayers, players, groups, groupsLocked, kanban, calendar, bracket,
+    allPlayers, players, groups, groupsLocked, calendar, bracket,
     categories, courts,
     // Fetch
-    fetchEditions, fetchAllPlayers, fetchPlayers, fetchGroups, fetchMatches, fetchCalendar, fetchBracket,
+    fetchEditions, fetchAllPlayers, fetchPlayers, fetchGroups, fetchCalendar, fetchBracket,
     fetchCategories, fetchCourts,
     // Mutations — P2 inscriptions
     editPlayer, createTeam, addRegistration, addRegistrationsBulk, removeRegistration,

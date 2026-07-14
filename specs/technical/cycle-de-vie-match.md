@@ -202,6 +202,20 @@ statut supplémentaire :
   ré-ouverture d'urgence côté épreuve ([[cycle-de-vie-epreuve]], « Rouvrir »)
   partage cette contrainte.
 
+### Édition manuelle du statut — `FINISHED → SCHEDULED` (arbitrage 2026-07-14, #403)
+
+- **Qui** : l'admin, via le panneau d'édition (onglet Planning → Statut) —
+  chemin distinct de « Rouvrir » (qui vise `LIVE`, pas `SCHEDULED`).
+- **Effet** (`finalize_match_edit`, **Option A**) : purge `winner_side`,
+  `finished_at`, `end_reason` **et `is_walkover`** — sinon le Tableau final
+  continue de l'afficher terminé (il teste `winner_side`) pendant que le
+  calendrier/`tv/idle` le proposent à jouer (badge « BIENTÔT »). Le **score
+  saisi est conservé** (`sets_a/b`, `games_a/b`, `points_a/b`, `set_scores`),
+  même patron que « Rouvrir ». Option B (interdire la transition) écartée :
+  le menu déroulant du panneau d'édition permet déjà de choisir librement un
+  statut, une purge silencieuse et cohérente est moins surprenante qu'un
+  refus non explicité.
+
 ---
 
 ## Répartition des pouvoirs

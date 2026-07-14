@@ -27,3 +27,23 @@ export function extractApiError(e: unknown, fallback = 'Action impossible.'): st
   }
   return fallback
 }
+
+/**
+ * Extrait les erreurs de champ (`{ "fields": { "nom_du_champ": [...] } }`)
+ * d'une exception levée par `useApi`, pour un affichage par-champ (en plus
+ * du message global renvoyé par `extractApiError`).
+ */
+export function extractApiFields(e: unknown): Record<string, string[]> | undefined {
+  const raw = e instanceof Error ? e.message : String(e)
+  const sep = raw.indexOf('— ')
+  const tail = sep >= 0 ? raw.slice(sep + 2) : raw
+  try {
+    const parsed = JSON.parse(tail)
+    if (parsed && typeof parsed.fields === 'object' && parsed.fields !== null) {
+      return parsed.fields
+    }
+  } catch {
+    /* corps non-JSON */
+  }
+  return undefined
+}

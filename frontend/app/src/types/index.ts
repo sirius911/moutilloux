@@ -214,14 +214,6 @@ export interface Bracket {
   p3: BracketSlot[]        // 1 slot (petite finale)
 }
 
-// ─── Kanban ─────────────────────────────────────────────────────────────────
-
-export interface KanbanData {
-  backlog: Match[]          // SCHEDULED sans orderIndex
-  queue: Match[]            // SCHEDULED avec orderIndex (ordonné)
-  finished: Match[]         // FINISHED
-}
-
 // ─── Calendrier ──────────────────────────────────────────────────────────────
 
 export interface PlayDay {
@@ -243,6 +235,8 @@ export interface Break {
 export interface CalendarDay extends PlayDay {
   breaks: Break[]
   matches: Match[]
+  estimatedEnd: string      // "HH:MM" — fin de journée estimée, calculée serveur (wrappée 24h)
+  estimatedEndMin: number   // même curseur non wrappé (peut dépasser 1440) — comparaison capacité
 }
 
 export interface CalendarData {

@@ -240,7 +240,7 @@ def _pack_match(m, eta_display=None, swap=False):
     elif m.status == Match.Status.FINISHED and m.finished_at:
         scheduled_str = timezone.localtime(m.finished_at).strftime("%Hh%M")
     elif m.scheduled_time:
-        scheduled_str = timezone.localtime(m.scheduled_time).strftime("%Hh%M")
+        scheduled_str = "~" + timezone.localtime(m.scheduled_time).strftime("%Hh%M")
 
     def stage_label(match):
         labels = {
@@ -1970,9 +1970,11 @@ def _pack_calendar_play_days(edition):
 
     packed_play_days = []
     for pd in play_days:
-        eta_map = compute_day_eta_map(pd)
+        eta_map, day_end, day_end_min = compute_day_eta_map(pd, include_day_end=True)
         packed_play_days.append({
             **_pack_play_day(pd),
+            "estimatedEnd": day_end,
+            "estimatedEndMin": day_end_min,
             "breaks": [_pack_break(b) for b in sorted(pd.breaks.all(), key=lambda b: b.order_index)],
             "matches": [_pack_match(m, eta_display=eta_map.get(m.id)) for m in matches_by_date.get(pd.date, [])],
         })
@@ -2421,7 +2423,7 @@ def api_tv_idle(request):
         .order_by("-finished_at")[:5]
     )
 
-    announcements = Announcement.objects.filter(edition=edition, is_active=True).order_by("created_at")
+    announcements = Announcement.objects.filter(edition=edition, is_active=True)
 
     return JsonResponse({
         "stats": _pack_tv_stats(edition),

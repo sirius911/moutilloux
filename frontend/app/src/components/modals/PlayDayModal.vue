@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import ModalShell from '@/components/ui/ModalShell.vue'
 import { useEventStore } from '@/stores/event'
+import { extractApiError } from '@/lib/apiError'
 import type { CalendarDay } from '@/types'
 
 const emit = defineEmits<{ close: [] }>()
@@ -115,7 +116,7 @@ async function confirmGenerate() {
     })
     closeGenerate()
   } catch (e) {
-    generateError.value = e instanceof Error ? e.message : 'Erreur lors de la génération.'
+    generateError.value = extractApiError(e, 'Erreur lors de la génération.')
   } finally {
     generating.value = false
   }
@@ -162,7 +163,7 @@ async function saveForm() {
     }
     closeForm()
   } catch (e) {
-    formError.value = e instanceof Error ? e.message : 'Erreur lors de l\'enregistrement.'
+    formError.value = extractApiError(e, 'Erreur lors de l\'enregistrement.')
   } finally {
     saving.value = false
   }
@@ -181,7 +182,7 @@ async function confirmDelete(id: number) {
     await eventStore.deletePlayDay(id)
     confirmDeleteId.value = null
   } catch (e) {
-    deleteError.value[id] = e instanceof Error ? e.message : 'Erreur lors de la suppression.'
+    deleteError.value[id] = extractApiError(e, 'Erreur lors de la suppression.')
   } finally {
     deleting.value[id] = false
   }
