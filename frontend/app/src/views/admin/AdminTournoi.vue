@@ -122,8 +122,18 @@ type ConfirmAction =
 const confirmState = ref<ConfirmAction | null>(null)
 const startConfirm = ref<Event | null>(null)
 
-function fmtDate(iso: string | null): string {
-  return iso ? iso.slice(0, 10) : '—'
+function formatPeriod(startIso: string | null, endIso: string | null): string {
+  if (!startIso || !endIso) return '—'
+  const start = new Date(startIso)
+  const end = new Date(endIso)
+  const sameYear = start.getFullYear() === end.getFullYear()
+  const startFmt = start.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: sameYear ? undefined : 'numeric',
+  })
+  const endFmt = end.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+  return `${startFmt} → ${endFmt}`
 }
 
 function eventBadgeLabel(ev: Event): string {
@@ -224,7 +234,7 @@ async function handleConfirm() {
         <div v-else class="adm-edition-body">
           <!-- Période -->
           <div v-if="activeEdition.startDt || activeEdition.endDt" class="adm-edition-period">
-            {{ fmtDate(activeEdition.startDt) }} → {{ fmtDate(activeEdition.endDt) }}
+            {{ formatPeriod(activeEdition.startDt, activeEdition.endDt) }}
           </div>
 
           <!-- Stats édition (toutes épreuves confondues) -->
@@ -431,7 +441,7 @@ async function handleConfirm() {
                 </div>
               </td>
               <td class="tab">{{ e.year }}</td>
-              <td class="tab adm-dates">{{ fmtDate(e.startDt) }} → {{ fmtDate(e.endDt) }}</td>
+              <td class="tab adm-dates">{{ formatPeriod(e.startDt, e.endDt) }}</td>
               <td class="tab">{{ e.eventsCount }}</td>
               <td>
                 <span :class="['adm-pill', e.isActive ? '' : 'adm-pill-ghost']">
