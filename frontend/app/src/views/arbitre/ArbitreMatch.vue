@@ -7,6 +7,7 @@ import { useScale } from '@/composables/useScale'
 import { useApi } from '@/composables/useApi'
 import { useViewport } from '@/composables/useViewport'
 import { useWakeLock } from '@/composables/useWakeLock'
+import { extractApiError } from '@/lib/apiError'
 import type { ArbitreProgramme } from '@/types'
 
 const props = defineProps<{ matchId: number }>()
@@ -138,17 +139,6 @@ function showError(msg: string) {
   errorTimer = setTimeout(() => { error.value = '' }, 4000)
 }
 
-function extractError(e: unknown): string {
-  const raw = e instanceof Error ? e.message : String(e)
-  const sep = raw.indexOf('— ')
-  const tail = sep >= 0 ? raw.slice(sep + 2) : raw
-  try {
-    const parsed = JSON.parse(tail)
-    if (parsed && typeof parsed.error === 'string') return parsed.error
-  } catch { /* corps non-JSON : on garde le fallback */ }
-  return 'Action impossible.'
-}
-
 async function sendAction(action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
     await post(`/api/matches/${props.matchId}/action/`, { action, ...extra })
@@ -157,7 +147,7 @@ async function sendAction(action: string, extra: Record<string, unknown> = {}): 
     await live.fetchMatch(props.matchId)
     return true
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
     return false
   }
 }

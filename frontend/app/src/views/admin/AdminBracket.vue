@@ -5,6 +5,7 @@ import { useEventStore } from '@/stores/event'
 import { usePolling } from '@/composables/usePolling'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { sideName } from '@/utils/participants'
+import { extractApiError } from '@/lib/apiError'
 import type { BracketSlot, Entry, Match } from '@/types'
 
 const eventStore = useEventStore()
@@ -44,17 +45,6 @@ const hasBracket = computed(() =>
     .some((s) => s.match),
 )
 
-function extractError(e: unknown): string {
-  const raw = e instanceof Error ? e.message : String(e)
-  const sep = raw.indexOf('— ')
-  const tail = sep >= 0 ? raw.slice(sep + 2) : raw
-  try {
-    const parsed = JSON.parse(tail)
-    if (parsed && typeof parsed.error === 'string') return parsed.error
-  } catch { /* message non-JSON : on retombe sur le générique */ }
-  return 'Action impossible.'
-}
-
 function setActiveEvent(id: string) {
   const numId = parseInt(id, 10)
   if (!isNaN(numId)) router.push({ params: { ...route.params, eventId: numId } })
@@ -88,7 +78,7 @@ async function createOrRecreate() {
     await createBracketNow()
     error.value = ''
   } catch (e) {
-    error.value = extractError(e)
+    error.value = extractApiError(e)
   }
 }
 
@@ -107,7 +97,7 @@ async function confirmRecreate() {
   } catch (e) {
     // Règle serveur : refus si un match du tableau est déjà LIVE/FINISHED —
     // le message reste affiché dans la modale, qui ne se ferme pas.
-    recreateError.value = extractError(e)
+    recreateError.value = extractApiError(e)
   }
 }
 
@@ -192,7 +182,7 @@ async function saveEdit() {
     editingSlot.value = null
     error.value = ''
   } catch (e) {
-    error.value = extractError(e)
+    error.value = extractApiError(e)
   }
 }
 
@@ -214,7 +204,7 @@ async function onDropToSlot(slot: BracketSlot, side: 'A' | 'B') {
     await eventStore.assignBracket(eventStore.activeEventId, slot.match.id, side, draggingEntryId)
     error.value = ''
   } catch (e) {
-    error.value = extractError(e)
+    error.value = extractApiError(e)
   } finally {
     draggingEntryId = null
   }
@@ -226,7 +216,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
     await eventStore.clearBracket(eventStore.activeEventId, slot.match.id, side)
     error.value = ''
   } catch (e) {
-    error.value = extractError(e)
+    error.value = extractApiError(e)
   }
 }
 </script>

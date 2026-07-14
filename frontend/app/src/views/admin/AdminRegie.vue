@@ -10,6 +10,7 @@ import { useApi } from '@/composables/useApi'
 import { usePolling } from '@/composables/usePolling'
 import { useScale } from '@/composables/useScale'
 import { sideName } from '@/utils/participants'
+import { extractApiError } from '@/lib/apiError'
 import type { Announcement, Break, CalendarDay, Match } from '@/types'
 
 const router = useRouter()
@@ -170,25 +171,13 @@ function showError(msg: string) {
   errorTimer = setTimeout(() => { error.value = '' }, 4000)
 }
 
-function extractError(e: unknown): string {
-  const raw = e instanceof Error ? e.message : String(e)
-  const sep = raw.indexOf('— ')
-  const tail = sep >= 0 ? raw.slice(sep + 2) : raw
-  try {
-    const parsed = JSON.parse(tail)
-    if (parsed && typeof parsed.error === 'string') return parsed.error
-    if (parsed && parsed.ok === false && typeof parsed.error === 'string') return parsed.error
-  } catch { /* corps non-JSON : on garde le fallback */ }
-  return 'Action impossible.'
-}
-
 async function refereeAction(matchId: number, action: string, extra: Record<string, unknown> = {}): Promise<boolean> {
   try {
     await post(`/api/matches/${matchId}/action/`, { action, ...extra })
     await refreshCalendar()
     return true
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
     return false
   }
 }
@@ -234,7 +223,7 @@ async function doStart() {
     startConfirmOpen.value = false
     closeSheet()
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
   }
 }
 
@@ -258,7 +247,7 @@ async function confirmFeature() {
     featureConfirmOpen.value = false
     closeSheet()
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
   }
 }
 
@@ -362,7 +351,7 @@ async function saveScoreForm() {
     scoreFormOpen.value = false
     closeSheet()
   } catch (e) {
-    showError(extractError(e))
+    showError(extractApiError(e))
   }
 }
 
@@ -382,7 +371,7 @@ async function fetchAnnouncements() {
     )
     announcements.value = data.announcements
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 
@@ -398,7 +387,7 @@ async function addAnnouncement() {
     newAnnouncementMessage.value = ''
     await fetchAnnouncements()
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 
@@ -408,7 +397,7 @@ async function toggleAnnouncement(a: Announcement) {
     await post(`/api/announcements/${a.id}/edit/`, { isActive: !a.isActive })
     await fetchAnnouncements()
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 
@@ -423,7 +412,7 @@ async function confirmDeleteAnnouncement() {
     deleteAnnouncementTarget.value = null
     await fetchAnnouncements()
   } catch (e) {
-    announceError.value = extractError(e)
+    announceError.value = extractApiError(e)
   }
 }
 </script>

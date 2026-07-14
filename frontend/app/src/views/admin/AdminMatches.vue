@@ -9,6 +9,7 @@ import EditMatchPanel from '@/components/modals/EditMatchPanel.vue'
 import PlayDayModal from '@/components/modals/PlayDayModal.vue'
 import ConfirmModal from '@/components/ui/ConfirmModal.vue'
 import { sideName } from '@/utils/participants'
+import { extractApiError } from '@/lib/apiError'
 import type { Match, Break, CalendarDay } from '@/types'
 
 // ── Type union local ───────────────────────────────────────────────────────
@@ -241,7 +242,7 @@ async function addPause(dayId: number) {
   try {
     await eventStore.createBreak(dayId, { durationMin: 15 })
   } catch (e) {
-    bannerError.value = e instanceof Error ? e.message : 'Erreur lors de l\'ajout de la pause.'
+    bannerError.value = extractApiError(e, 'Erreur lors de l\'ajout de la pause.')
   } finally {
     addingPause.value[dayId] = false
   }
@@ -253,7 +254,7 @@ async function deletePause(breakId: number) {
   try {
     await eventStore.deleteBreak(breakId)
   } catch (e) {
-    bannerError.value = e instanceof Error ? e.message : 'Erreur lors de la suppression de la pause.'
+    bannerError.value = extractApiError(e, 'Erreur lors de la suppression de la pause.')
   } finally {
     deletingBreak.value[breakId] = false
   }
@@ -281,7 +282,7 @@ async function confirmStartEdit(day: CalendarDay) {
     await eventStore.updatePlayDay(day.id, { startTime: editingStartValue.value })
     editingStartDayId.value = null
   } catch (e) {
-    startError.value[day.id] = e instanceof Error ? e.message : 'Erreur lors de la mise à jour.'
+    startError.value[day.id] = extractApiError(e, 'Erreur lors de la mise à jour.')
   } finally {
     savingStart.value[day.id] = false
   }
@@ -300,7 +301,7 @@ async function doStartMatch(matchId: number) {
   try {
     await eventStore.startMatch(matchId)
   } catch (e) {
-    bannerError.value = e instanceof Error ? e.message : 'Erreur lors du démarrage du match.'
+    bannerError.value = extractApiError(e, 'Erreur lors du démarrage du match.')
   } finally {
     starting.value[matchId] = false
   }
@@ -602,7 +603,7 @@ async function preArrange() {
   try {
     await eventStore.autoArrangeMatches(eventStore.activeEventId)
   } catch (e) {
-    bannerError.value = e instanceof Error ? e.message : 'Erreur lors de la pré-pose.'
+    bannerError.value = extractApiError(e, 'Erreur lors de la pré-pose.')
   } finally {
     arranging.value = false
   }
@@ -670,7 +671,7 @@ async function onDragEnd() {
   try {
     await eventStore.reorderCalendar(editionId, buildReorderPayload())
   } catch (e) {
-    bannerError.value = e instanceof Error ? e.message : 'Erreur lors du réordonnancement.'
+    bannerError.value = extractApiError(e, 'Erreur lors du réordonnancement.')
     await eventStore.fetchCalendar()
   } finally {
     dragging.value = false
