@@ -373,14 +373,105 @@ et exécute le protocole complet (étapes 0 à 4).
 
 > Mis à jour automatiquement en fin de session.
 
-**Dernière session :** 2026-07-14 — Session #180
+**Dernière session :** 2026-07-14 — Session #181
 
-**Sprint actif :** 45 — Correctifs review globale du 13 juillet. Planifié
-après la session #178 (roadmap vide) via `anthropic-skills:plan-sprint`
-(commit `68b5a0d`, hors mandat du protocole automatique). 5/11 tickets clos
-(`#403` avant la session #179, `#397`/`#394` session #179, `#401`/`#399`
-session #180) ; 6 restants (`#395`, `#396`, `#398`, `#400`, `#402`, `#405` —
-`#405` créé cette session).
+**Sprint actif :** 45 — Correctifs review globale du 13 juillet. 7/11 tickets
+clos (`#403`, `#397`, `#394`, `#399`, `#401` avant cette session ; `#398`,
+`#402` cette session) ; 7 restants (`#395`, `#396`, `#400`, `#405`, `#406`,
+`#407`, `#408` — `#406`/`#407` créés en spec review, `#408` créé par un
+reviewer, tous les trois cette session).
+
+**Session #181.** Working tree propre au démarrage, branche déjà
+checked-out, aucun commit de rattrapage nécessaire. Parent effectif
+`claude/sprint/44-retours-12-juillet` (résolu par l'algorithme de l'Étape 0,
+inchangé depuis les sessions #179-#180) ; `git merge` no-op (déjà à jour). 3
+commits cette session (1 spec review + 2 tickets), push en cours.
+
+**Spec review session #181** (agent `reviewer` dédié, lecture seule, en tout
+début de session) : 7 specs ciblées, 2 ✅ Conforme, 5 ⚠️ Dérive mineure. 6 des
+7 dérives relevées correspondent exactement aux 6 issues déjà ouvertes
+(`#395`, `#396`, `#398`, `#400`, `#402`, `#405`) — `#394`/`#397`/`#399`/
+`#401`/`#403` reconfirmés fixés sans régression. **2 dérives nouvelles et
+surprises** (une première depuis plusieurs sessions consécutives à 0
+surprise) : bascule d'épreuve active non immédiate après suppression
+d'édition (`stores/event.ts:130-138`, rattrapage seulement au clic suivant
+via le guard router, pas immédiat comme l'exige `admin-shell.md`) → `#406` ;
+polling `AdminRegie.vue` à taux unique 5 s au lieu de 2 s sur le match live
+épinglé, contrairement à `admin-regie-mobile.md` → `#407`. `npx vue-tsc
+--noEmit` vérifié indépendamment (0 erreur) ; pas de suite de tests backend
+exploitable (`tests.py` vides dans `live`/`competition`/`core`).
+
+**Backlog engine session #181** : 2 tickets traités séquentiellement (aucune
+issue `à-reprendre`, toutes mineures — plus de majeure restante depuis la
+session #180), dans l'ordre suggéré par `sprint.md` (`#398` avant `#402`,
+dépendance de format), chacun implémenté **directement en session par
+l'orchestrateur** après cartographie précise du code source (portée
+multi-fichiers non triviale, décision de format à trancher — cf. précédent
+sessions #172-180 pour les tickets déjà entièrement mappés), soumis à un
+agent `reviewer` indépendant avant clôture :
+- **#398** (mineure, `infra`) — cause racine identifiée par lecture directe
+  de `_pack_match`/`compute_day_eta_map` (`live/api_views.py`,
+  `live/admin_views.py`) : le serveur préfixe déjà `~` sur `scheduledTime`
+  pour un match `SCHEDULED` (ETA) et ne préfixe jamais l'heure réelle d'un
+  match `LIVE`/`FINISHED` — `AdminMatches.vue:537` respectait déjà la règle,
+  6 autres consommateurs la violaient (`EditMatchPanel.vue`,
+  `AdminRegie.vue`, `ArbitreHome.vue`, `TvTicker.vue`, `TvIdle.vue` ×2,
+  `TvScoreboard.vue`), produisant `~~14h30` ou un `~` erroné sur une heure
+  réelle. Correction : suppression des 6 re-préfixes clients, aucun
+  changement backend. Règle documentée dans `specs/technical/planning.md`
+  (nouveau paragraphe « Format canonique du préfixe ~ »). Plan :
+  `backlog/plan/398-double-tilde-scheduledtime.md`. Reviewer : diff conforme
+  fichier par fichier, `AdminMatches.vue:537` confirmé non touché
+  (référence), grep de contrôle propre, `vue-tsc` 0 erreur vérifié
+  indépendamment. Verdict : ✅ Approuvé, aucune réserve.
+- **#402** (mineure) — dépendait de `#398` (traité juste avant). Cause
+  racine : `AdminRegie.vue::punctualityClass` parsait
+  `scheduledTime.split(':')` alors que le format réel est `"~HHhMM"` (tilde
+  + séparateur `h`, jamais `:`) → `NaN` systématique → teinte de
+  ponctualité jamais affichée. Correction d'une ligne :
+  `.replace(/^~/, '').split('h')`. Seuils et garde de statut inchangés
+  (simplification assumée hors périmètre, conforme au texte de l'issue).
+  Plan : `backlog/plan/402-adminregie-punctuality-parsing.md`. Reviewer :
+  diff limité à 1 ligne, format serveur confirmé par lecture de
+  `_min_to_hhmm`, `vue-tsc` 0 erreur vérifié indépendamment. A signalé un
+  bug distinct hors périmètre (`AdminGroups.vue:439` — `new Date()` sur un
+  format non-ISO `"HHhMM"` produit une heure invalide à l'écran pour un
+  match de poule planifié) → ticketé séparément en `#408` plutôt que traité
+  dans ce ticket. Verdict : ✅ Approuvé, aucune réserve.
+
+**Sprint 45 non clos cette session** (attendu, lecture stricte de l'Étape 3 —
+la spec review a précédé l'implémentation et a donc trouvé 5 specs encore
+⚠️, précédent constant depuis la session #161) : 7 issues encore ouvertes en
+fin de session (`#395`, `#396`, `#400`, `#405`, `#406`, `#407`, `#408`).
+Sprint reste actif, sera repris à la **prochaine échéance planifiée**. Ordre
+suggéré : `#395`/`#396`/`#400` (indépendants, triviaux, dans le sillage des
+sessions #180) ; `#405` (sweep erreurs API résiduel, indépendant) ; `#406`
+(fichier partagé `stores/event.ts`, réservé à l'orchestrateur) ; `#407`
+(indépendant, `AdminRegie.vue`) ; `#408` (indépendant, trivial,
+`AdminGroups.vue`, même patron que `#398`/`AdminMatches.vue:537`).
+
+**Point d'attention outillage :** `.claude/launch.json` toujours présent
+(ajouté avant la session #180), mais **pas utilisé cette session** — les
+deux tickets ont été vérifiés par lecture de code + `vue-tsc` +
+`reviewer` indépendant uniquement, sans QA navigateur réelle (contrairement
+à la session #180 qui avait démarré les serveurs). Portée des deux tickets
+jugée suffisamment couverte par la revue de code (correctifs mécaniques
+d'affichage, cause racine remontée jusqu'au format serveur par lecture
+directe) ; pas de régression attendue nécessitant une vérification visuelle.
+
+**Point d'attention protocole (reviewer) :** les deux agents `reviewer`
+invoqués cette session (une spec review dédiée + deux reviews de ticket) ont
+strictement respecté leur mandat de lecture seule, et ont chacun signalé un
+problème hors périmètre plutôt que de le corriger eux-mêmes (`#406`/`#407`
+en spec review, `#408` en review de ticket) — pattern stable sur au moins 31
+sessions consécutives (#140-#181, sessions à vide comprises) depuis
+l'incident initial de la session #139. Aucun `ScheduleWakeup` utilisé.
+
+Log complet : `backlog/logs/session_2026-07-14_181.md`.
+
+---
+
+**Historique — session #180 :**
 
 **Session #180.** Working tree propre au démarrage, branche déjà checked-out,
 aucun commit de rattrapage nécessaire. Parent effectif
