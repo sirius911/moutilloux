@@ -152,7 +152,7 @@ function rowStatusClass(m: Match, isNext: boolean): string {
 function punctualityClass(m: Match): string | null {
   if (m.status === 'LIVE' || m.status === 'FINISHED' || m.status === 'CANCELED') return null
   if (!m.scheduledTime || !currentDay.value) return null
-  const [hh, mm] = m.scheduledTime.split(':').map(Number)
+  const [hh, mm] = m.scheduledTime.replace(/^~/, '').split('h').map(Number)
   if (Number.isNaN(hh) || Number.isNaN(mm)) return null
   const scheduled = new Date(currentDay.value.date + 'T00:00:00')
   scheduled.setHours(hh, mm, 0, 0)
