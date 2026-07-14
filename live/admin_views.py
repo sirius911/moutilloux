@@ -1338,6 +1338,15 @@ def update_event(event, group_size_default=_NOCHANGE, qualified_per_group=_NOCHA
         new_value = bool(has_third_place)
         if new_value != event.has_third_place:
             if new_value:
+                bracket_exists = Match.objects.filter(
+                    event=event,
+                    stage__in=[Match.Stage.QF, Match.Stage.SF, Match.Stage.F, Match.Stage.P3],
+                ).exists()
+                sf_count = Match.objects.filter(event=event, stage=Match.Stage.SF).count()
+                if bracket_exists and sf_count < 2:
+                    raise ValueError(
+                        "Ce tableau n'a pas de demi-finales : pas de match de 3e place possible."
+                    )
                 third_place_activated = True
             else:
                 p3 = Match.objects.filter(event=event, stage=Match.Stage.P3, bracket_slot="P3").first()
