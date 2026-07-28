@@ -138,10 +138,13 @@ async function save() {
       await eventStore.editPlayer(props.editing.id, {
         first_name: firstName.value,
         last_name: lastName.value,
-        gender: gender.value || undefined,
-        birth_year: birthYear.value ? parseInt(birthYear.value, 10) : undefined,
-        email: email.value || undefined,
-        phone: phone.value || undefined,
+        // En édition, un champ vidé doit être EFFACÉ : on envoie `null` (et non
+        // `undefined`, qui serait omis du JSON et laissé intact par le merge
+        // partiel du backend).
+        gender: gender.value || null,
+        birth_year: birthYear.value ? parseInt(birthYear.value, 10) : null,
+        email: email.value || null,
+        phone: phone.value || null,
         attitudes: attitudes.value,
       })
       if (hasPhotoChange.value) {

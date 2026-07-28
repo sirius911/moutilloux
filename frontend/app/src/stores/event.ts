@@ -6,11 +6,13 @@ import type { Edition, Event, Entry, Group, Bracket, Player, Category, Court, Ca
 export interface PlayerEditPayload {
   first_name?: string
   last_name?: string
-  gender?: 'M' | 'F' | 'O'
-  birth_year?: number
-  phone?: string
-  email?: string
-  license_number?: string
+  // `null` = effacer explicitement le champ (le backend fait un merge partiel :
+  // un champ absent est conservé, un champ à null est vidé). Cf. api_player_edit.
+  gender?: 'M' | 'F' | 'O' | null
+  birth_year?: number | null
+  phone?: string | null
+  email?: string | null
+  license_number?: string | null
   attitudes?: string[]
 }
 
