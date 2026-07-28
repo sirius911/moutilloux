@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApi } from '@/composables/useApi'
-import type { Edition, Event, Entry, Group, Bracket, Player, Category, Court, CategoryMode, CalendarData, PlayDay, Break } from '@/types'
+import type { Edition, Event, Entry, Group, Bracket, Player, Category, Court, CategoryMode, CalendarData, PlayDay } from '@/types'
 
 export interface PlayerEditPayload {
   first_name?: string
@@ -260,11 +260,13 @@ export const useEventStore = defineStore('event', () => {
     await fetchGroups(eventId)
   }
 
-  async function editMatch(eventId: number, matchId: number, payload: MatchEditPayload) {
+  // `_eventId` est conservé dans la signature (4 sites d'appel le passent) mais
+  // n'est pas utilisé : l'endpoint est adressé par `matchId` seul.
+  async function editMatch(_eventId: number, matchId: number, payload: MatchEditPayload) {
     await post(`/api/matches/${matchId}/edit/`, payload)
   }
 
-  async function featureMatch(eventId: number, matchId: number) {
+  async function featureMatch(_eventId: number, matchId: number) {
     await post(`/api/matches/${matchId}/feature/`, {})
   }
 

@@ -56,7 +56,7 @@ async function apiFetch<T>(
   const contentType = res.headers.get('content-type') ?? ''
   if (!contentType.includes('application/json')) {
     const text = await res.text()
-    throw new Error(`Réponse non-JSON pour ${path}`)
+    throw new Error(`Réponse non-JSON pour ${path} — ${text.slice(0, 200)}`)
   }
 
   return res.json() as Promise<T>

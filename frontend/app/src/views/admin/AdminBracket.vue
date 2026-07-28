@@ -297,7 +297,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="isEditingSlot(slot)">
+                <template v-if="editingSlot && isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -360,7 +360,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="isEditingSlot(slot)">
+                <template v-if="editingSlot && isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -423,7 +423,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                 </div>
 
                 <!-- Mode édition -->
-                <template v-if="isEditingSlot(slot)">
+                <template v-if="editingSlot && isEditingSlot(slot)">
                   <div class="slot-edit-form">
                     <label class="slot-edit-label">
                       <span class="slot-edit-side">A</span>
@@ -485,7 +485,7 @@ async function clearSlot(slot: BracketSlot, side: 'A' | 'B') {
                   </div>
 
                   <!-- Mode édition -->
-                  <template v-if="isEditingSlot(slot)">
+                  <template v-if="editingSlot && isEditingSlot(slot)">
                     <div class="slot-edit-form">
                       <label class="slot-edit-label">
                         <span class="slot-edit-side">A</span>
