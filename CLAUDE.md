@@ -38,7 +38,7 @@ uniquement par `/api/auth/…`.
 | Front              | Vue 3 + Vite + TypeScript + Vue Router + Pinia                           |
 | Inspiration UI     | Le React `frontend/design/` (mock) — CSS réutilisé tel quel, JSX porté en SFC `.vue` |
 | Temps réel         | Polling HTTP, pas de WebSockets — code actuel ~2 s (arbitre/scoreboard/calendrier) / ~5 s (file arbitre, poules TV) ; cible ~4 s bracket (TV + admin) déjà appliquée, poules TV pas encore migrée |
-| Config initiale    | Éditions / catégories / courts via l'admin Django (`/admin/`), pas d'UI dédiée |
+| Config initiale    | Éditions / catégories / courts via l'admin Django (`/django-admin/`), pas d'UI dédiée |
 | Séquencement       | Phases dans l'ordre 1 → 8                                                 |
 
 ## 3. Règles d'orchestration

@@ -66,10 +66,15 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'moutilloux.urls'
 
+# Build de production de la SPA Vue (`cd frontend/app && npm run build`).
+# Django sert ce dossier pour permettre un usage en réseau local sans
+# dev server Vite : un seul process, un seul port.
+SPA_DIST_DIR = BASE_DIR / 'frontend' / 'app' / 'dist'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [SPA_DIST_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,6 +132,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -136,6 +142,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = "/admin/"
+LOGIN_REDIRECT_URL = "/django-admin/"
 LOGOUT_REDIRECT_URL = "/"
 

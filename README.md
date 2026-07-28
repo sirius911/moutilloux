@@ -143,11 +143,15 @@ Le site est ensuite accessible à cette adresse :
 http://127.0.0.1:8000/
 ```
 
-L’administration Django est accessible à cette adresse :
+L’administration Django native est accessible à cette adresse :
 
 ```text
-http://127.0.0.1:8000/admin/
+http://127.0.0.1:8000/django-admin/
 ```
+
+> `/admin/` est réservé aux écrans d’administration de la SPA Vue : les deux
+> partagent le même port dès qu’on sert le build (voir « Utilisation sur le
+> réseau local »).
 
 ---
 
@@ -202,9 +206,9 @@ Routes principales de la SPA :
 /admin/…      panneau d’administration — superuser requis
 ```
 
-> Ne pas confondre `/admin/` **de la SPA** (port 5173) avec l’administration
-> Django native (`http://127.0.0.1:8000/admin/`), utilisée pour la
-> configuration initiale (éditions, catégories, courts).
+> Ne pas confondre `/admin/` **de la SPA** avec l’administration Django native
+> (`/django-admin/`), utilisée pour la configuration initiale
+> (éditions, catégories, courts).
 
 ### 4. Vérification des types
 
@@ -223,25 +227,56 @@ Le build de production se fait avec `npm run build` (type-check inclus).
 
 ## Utilisation sur le réseau local
 
-Pour rendre le site accessible depuis un autre ordinateur, une tablette ou une télévision du même réseau local, lancer le serveur avec :
+Mode d’emploi pour rendre l’application accessible depuis les autres machines du
+réseau (TV, tablettes arbitre, poste admin) — typiquement un serveur sur
+Raspberry Pi le jour du tournoi.
+
+En réseau local, **on ne lance pas le dev server Vite** : on construit la SPA une
+fois et Django la sert lui-même. Un seul process, un seul port, pas de Node au
+runtime.
+
+### 1. Construire la SPA
 
 ```bash
+cd frontend/app && npm ci && npm run build
+```
+
+Le build atterrit dans `frontend/app/dist/` (non versionné : à refaire sur la
+machine serveur après chaque `git pull`).
+
+### 2. Lancer Django en écoute sur le réseau
+
+Il faut autoriser l’adresse de la machine dans `DJANGO_ALLOWED_HOSTS`, et la
+déclarer dans `DJANGO_CSRF_TRUSTED_ORIGINS` (sinon toutes les écritures —
+saisie de score, inscriptions — échouent en 403).
+
+```bash
+DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,192.168.1.23,moutilloux.local \
+DJANGO_CSRF_TRUSTED_ORIGINS=http://192.168.1.23:8000,http://moutilloux.local:8000 \
 python manage.py runserver 0.0.0.0:8000
 ```
 
-Il faut aussi autoriser l’adresse IP de la machine dans les paramètres Django.
-
-Exemple avec une adresse IP locale :
-
-```bash
-DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,192.168.1.23 python manage.py runserver 0.0.0.0:8000
-```
-
-Le site sera alors accessible depuis une autre machine avec une adresse du type :
+### 3. Accéder depuis les autres machines
 
 ```text
-http://192.168.1.23:8000/
+http://192.168.1.23:8000/tv/live     affichage TV
+http://192.168.1.23:8000/arbitre/    tablettes arbitre
+http://192.168.1.23:8000/admin/      panneau d’administration (SPA)
+http://192.168.1.23:8000/django-admin/   configuration initiale (Django natif)
 ```
+
+### Points d’attention
+
+- **Adresse IP fixe.** Si le serveur prend une IP différente au prochain
+  démarrage, `ALLOWED_HOSTS` ne correspond plus. Réserver une IP dans la box, ou
+  utiliser le nom mDNS (`<hostname>.local`), reconnu par macOS et iOS.
+- **`DJANGO_DEBUG` reste à `True`.** Le projet n’a pas encore de service de
+  fichiers statiques hors DEBUG : avec `DEBUG=False`, les CSS de
+  `/django-admin/` ne sont plus servis (les photos et affiches, elles, restent
+  servies). Acceptable sur un réseau fermé ; à revoir avant toute exposition
+  publique — de même que `DJANGO_SECRET_KEY`, qui doit alors être une vraie clé.
+- **`runserver` est un serveur de développement.** Il tient sans problème une TV
+  et quelques tablettes en polling ; ce n’est pas un serveur de production.
 
 ---
 
