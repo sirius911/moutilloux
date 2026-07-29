@@ -133,6 +133,12 @@ Password again:
 
 Cet utilisateur permettra d’accéder à l’interface d’administration.
 
+> Le compte **arbitre** (utilisateur `arbitre`, mot de passe `arbitre`, membre du
+> groupe « Arbitre ») est créé automatiquement par les migrations
+> (`live/0026_referee_account`) : rien à faire pour lui. Si le compte existe
+> déjà, la migration ne touche pas à son mot de passe. Identifiants triviaux :
+> acceptable sur un réseau fermé uniquement.
+
 ---
 
 ## Lancer le serveur de développement
@@ -356,7 +362,8 @@ Recréer la base à partir des migrations :
 python manage.py migrate
 ```
 
-Recréer un compte administrateur :
+Recréer un compte administrateur (le compte arbitre, lui, est recréé
+automatiquement par les migrations) :
 
 ```bash
 python manage.py createsuperuser
