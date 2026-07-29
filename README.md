@@ -87,7 +87,17 @@ pip freeze > requirements.txt
 
 ## Configuration de la base de données
 
-Par défaut, le projet utilise une base de données SQLite locale.
+Le projet utilise une base de données SQLite locale, **choisie selon
+l’environnement** via la variable `MOUTILLOUX_ENV` :
+
+| `MOUTILLOUX_ENV` | Fichier          | Usage                                    |
+|------------------|------------------|------------------------------------------|
+| `dev` (défaut)   | `db.dev.sqlite3` | Base de travail, jetable                 |
+| `prod`           | `db.sqlite3`     | Données réelles du tournoi (jour J)      |
+
+Sans la variable, on est en `dev` : les données réelles ne peuvent pas être
+altérées par accident. Les tests (`python manage.py test`) n’utilisent aucun de
+ces fichiers — Django crée une base SQLite en mémoire, détruite en fin de run.
 
 La base de données réelle n’est pas fournie dans le dépôt GitHub.  
 Elle est reconstruite automatiquement à partir des migrations Django.
@@ -98,13 +108,9 @@ Créer les tables de la base de données :
 python manage.py migrate
 ```
 
-Cette commande crée notamment le fichier local :
+Cette commande crée notamment le fichier local (`db.dev.sqlite3` en dev).
 
-```text
-db.sqlite3
-```
-
-Ce fichier ne doit pas être envoyé sur GitHub.
+Aucun fichier `*.sqlite3` ne doit être envoyé sur GitHub.
 
 ---
 
@@ -228,8 +234,8 @@ Le build de production se fait avec `npm run build` (type-check inclus).
 ## Utilisation sur le réseau local
 
 Mode d’emploi pour rendre l’application accessible depuis les autres machines du
-réseau (TV, tablettes arbitre, poste admin) — typiquement un serveur sur
-Raspberry Pi le jour du tournoi.
+réseau (TV, tablettes arbitre, poste admin) — le jour du tournoi, le serveur est
+le Mac de l’organisateur.
 
 En réseau local, **on ne lance pas le dev server Vite** : on construit la SPA une
 fois et Django la sert lui-même. Un seul process, un seul port, pas de Node au
@@ -250,7 +256,12 @@ Il faut autoriser l’adresse de la machine dans `DJANGO_ALLOWED_HOSTS`, et la
 déclarer dans `DJANGO_CSRF_TRUSTED_ORIGINS` (sinon toutes les écritures —
 saisie de score, inscriptions — échouent en 403).
 
+Il faut aussi passer `MOUTILLOUX_ENV=prod` pour servir les données réelles du
+tournoi (`db.sqlite3`) — sans la variable, le serveur tourne sur la base de
+développement.
+
 ```bash
+MOUTILLOUX_ENV=prod \
 DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,192.168.1.23,moutilloux.local \
 DJANGO_CSRF_TRUSTED_ORIGINS=http://192.168.1.23:8000,http://moutilloux.local:8000 \
 python manage.py runserver 0.0.0.0:8000
@@ -285,10 +296,14 @@ http://192.168.1.23:8000/django-admin/   configuration initiale (Django natif)
 Le projet peut utiliser les variables d’environnement suivantes :
 
 ```text
+MOUTILLOUX_ENV
 DJANGO_SECRET_KEY
 DJANGO_DEBUG
 DJANGO_ALLOWED_HOSTS
 ```
+
+`MOUTILLOUX_ENV` choisit la base de données (`dev` par défaut → `db.dev.sqlite3` ;
+`prod` → `db.sqlite3`, les données réelles). Voir « Base de données ».
 
 Exemple en développement :
 
@@ -310,6 +325,8 @@ Les fichiers suivants ne sont volontairement pas envoyés sur GitHub :
 _env/
 db.sqlite3
 db.sqlite3-journal
+db.*.sqlite3
+db.*.sqlite3-journal
 .env
 *.log
 __pycache__/
@@ -326,10 +343,11 @@ Cela permet d’éviter de publier :
 
 ## Remettre la base de données à zéro en développement
 
-Supprimer la base locale :
+Supprimer la base de développement (les données réelles, dans `db.sqlite3`,
+ne sont pas concernées) :
 
 ```bash
-rm db.sqlite3
+rm db.dev.sqlite3
 ```
 
 Recréer la base à partir des migrations :

@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -91,11 +93,32 @@ WSGI_APPLICATION = 'moutilloux.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+#
+# La base dépend de l'environnement (MOUTILLOUX_ENV) :
+#   - dev (défaut) → db.dev.sqlite3, base de travail jetable ;
+#   - prod         → db.sqlite3, les données réelles du tournoi.
+# Le serveur du tournoi se lance avec MOUTILLOUX_ENV=prod ; sans la variable,
+# impossible de toucher aux données réelles par accident.
+# Les tests (`manage.py test`) n'utilisent aucun de ces fichiers : le test
+# runner Django crée une base SQLite en mémoire, détruite en fin de run.
+
+MOUTILLOUX_ENV = os.environ.get("MOUTILLOUX_ENV", "dev")
+
+_DB_FILES = {
+    "dev": "db.dev.sqlite3",
+    "prod": "db.sqlite3",
+}
+
+if MOUTILLOUX_ENV not in _DB_FILES:
+    raise ImproperlyConfigured(
+        f"MOUTILLOUX_ENV={MOUTILLOUX_ENV!r} inconnu (valeurs possibles : "
+        f"{', '.join(sorted(_DB_FILES))})"
+    )
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / _DB_FILES[MOUTILLOUX_ENV],
     }
 }
 
