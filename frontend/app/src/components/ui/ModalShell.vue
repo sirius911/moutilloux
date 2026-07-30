@@ -70,9 +70,9 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   overflow: hidden;
 }
 
-.mdl-sm  { width: 420px; }
-.mdl-md  { width: 580px; }
-.mdl-lg  { width: 740px; }
+.mdl-sm  { width: min(420px, calc(100vw - 32px)); }
+.mdl-md  { width: min(580px, calc(100vw - 32px)); }
+.mdl-lg  { width: min(740px, calc(100vw - 32px)); }
 
 .mdl-head {
   display: flex;
@@ -150,5 +150,31 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
   padding: 16px 28px;
   border-top: 1px solid var(--line-1);
   flex-shrink: 0;
+}
+
+/* ── Mobile (< 600 px) : bottom-sheet plein largeur ──────────────────── */
+@media (max-width: 599px) {
+  .mdl-bg { align-items: flex-end; }
+
+  .mdl-sm,
+  .mdl-md,
+  .mdl-lg { width: 100%; }
+
+  .mdl {
+    max-height: 92dvh;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+
+  .mdl-head { padding: 20px 20px 16px; }
+
+  .mdl-body {
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .mdl-foot { padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); }
 }
 </style>

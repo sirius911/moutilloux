@@ -502,4 +502,17 @@ onUnmounted(() => {
 }
 
 .photo-input-hidden { display: none; }
+
+/* ── Mobile (< 600 px) ───────────────────────────────────────────────── */
+@media (max-width: 599px) {
+  .fld-grid { grid-template-columns: 1fr; }
+
+  /* < 16px, iOS Safari zoome automatiquement au focus du champ */
+  .inp { font-size: 16px; }
+
+  /* Le segmenté Genre (4 options) est trop large pour 393 px : autoriser
+     le passage à la ligne des options. */
+  .fld :deep(.seg) { flex-wrap: wrap; }
+  .fld :deep(.seg-opt) { flex: 1 1 auto; }
+}
 </style>

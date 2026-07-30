@@ -3,9 +3,14 @@ type: transverse
 module: mobile
 fichiers:
   - frontend/app/src/composables/useScale.ts
+  - frontend/app/src/composables/useViewport.ts
   - frontend/app/src/router/index.ts
   - frontend/app/src/views/arbitre/ArbitreMatch.vue
   - frontend/app/src/views/arbitre/ArbitreHome.vue
+  - frontend/app/src/views/LoginView.vue
+  - frontend/app/src/views/admin/AdminLayout.vue
+  - frontend/app/src/views/admin/AdminPlayers.vue
+  - frontend/app/src/components/ui/ModalShell.vue
   - frontend/app/index.html
   - frontend/app/vite.config.ts
 ---
@@ -30,7 +35,9 @@ TV 1080p).
 | **Arbitre — saisie** (`/arbitre/:matchId`) | ✓ variante mobile | scoring point par point au téléphone ([[arbitre-match]]) |
 | **Arbitre — accueil** (`/arbitre`) | ✓ variante mobile | programme du jour + accès au match (liste verticale, déjà proche d'un layout mobile) |
 | **Admin — régie** (`/admin/regie`) | ✓ écran dédié | les gestes chauds de l'organisateur ([[admin-regie-mobile]]) |
-| Admin complet (poules, seeding, drag du calendrier, affiches) | ✗ | reste desktop — le drag-and-drop n'a pas de bonne traduction tactile étroite |
+| **Login** (`/login`) | ✓ responsive fluide | se connecter depuis n'importe quel appareil ([[login]]) |
+| **Admin — Joueurs** (`/admin/players`) | ✓ responsive fluide | corriger/compléter une fiche joueur (photo comprise) depuis le téléphone ([[admin-joueurs]]) ; le shell admin fournit la navigation mobile ([[admin-shell]]) |
+| Admin complet hors Joueurs (poules, seeding, drag du calendrier, affiches) | ✗ | reste desktop — le drag-and-drop n'a pas de bonne traduction tactile étroite ; accessible via le drawer mais non adapté |
 | TV | ✗ | cible 1080p uniquement |
 
 ## Sélection de scène
@@ -44,6 +51,22 @@ TV 1080p).
   responsive fluide.
 - La régie admin est une **route dédiée** (`/admin/regie`, garde `isAdmin`) —
   pas une adaptation des écrans admin existants.
+
+## Deux régimes de rendu mobile
+
+Toutes les surfaces mobiles partagent le même seuil (**largeur < 600 px**,
+composable `useViewport`), mais pas le même régime de rendu :
+
+- **Scène fixe scalée** (`useScale`) — les écrans arbitre : une seconde scène
+  portrait ~390 × 844 mise à l'échelle. Adapté aux écrans « cockpit » denses et
+  non défilants.
+- **Pages fluides en media queries** — Login et Admin Joueurs : ce sont des
+  pages défilantes classiques, le letterboxing n'y a pas de sens. La variante
+  mobile est du CSS responsive (`@media (max-width: 599px)`), plus un
+  basculement de rendu par `useViewport` quand la structure change
+  (table → cartes). Deux garde-fous iOS systématiques : inputs à **16 px**
+  minimum (sinon Safari zoome au focus) et hauteurs en **`100dvh`** plutôt
+  que `100vh` (barre d'adresse).
 
 ## PWA minimale
 
@@ -72,5 +95,6 @@ TV 1080p).
 ## Hors périmètre
 
 - Mode hors-ligne / rejeu de taps (inchangé, v1 en ligne).
-- Admin complet responsive.
+- Admin complet responsive (seuls Login et Joueurs sont adaptés ; le reste de
+  l'admin demeure desktop).
 - Notifications push.

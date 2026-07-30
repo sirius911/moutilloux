@@ -160,3 +160,17 @@ montage de la page, de manière non bloquante. Si ces données ne sont pas encor
 un état neutre est affiché (vide ou squelette). Si le chargement échoue, ces zones restent
 neutres sans message d'erreur visible — ces informations sont indicatives et ne bloquent
 pas l'usage du formulaire.
+
+---
+
+## Variante mobile (< 600 px)
+
+Page fluide en media queries (voir [[mobile]], « Deux régimes de rendu ») :
+
+- La carte occupe toute la largeur et toute la hauteur de l'écran (plus de
+  cadre flottant) ; le formulaire est centré verticalement.
+- L'**aside droite** (citation, statistiques, pied serveur) est masquée — elle
+  est purement décorative.
+- Les champs passent à 16 px (anti-zoom iOS) ; la hauteur utilise `100dvh`.
+- Aucun changement de comportement : mêmes flux, mêmes erreurs, mêmes
+  redirections que la version desktop.

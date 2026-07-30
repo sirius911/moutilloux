@@ -15,6 +15,10 @@ const playersLoaded = ref(false)
 const entriesLoaded = ref(false)
 const eventGroupsLoaded = ref(false)
 
+// Drawer de navigation mobile (< 600 px) — fermé à chaque navigation.
+const menuOpen = ref(false)
+watch(() => route.path, () => { menuOpen.value = false })
+
 async function handleLogout() {
   await authStore.logout()
   router.push('/login')
@@ -109,8 +113,21 @@ const navItems = computed(() => {
 
 <template>
   <div class="admin-shell light-scope">
+    <!-- Barre supérieure mobile (< 600 px) -->
+    <header class="admin-topbar">
+      <button class="tb-burger" type="button" aria-label="Ouvrir le menu" @click="menuOpen = true">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="sb-logo-badge">M</div>
+      <span class="tb-title">MOUTILLOUX</span>
+    </header>
+
+    <div v-if="menuOpen" class="sb-backdrop" @click="menuOpen = false" />
+
     <!-- Sidebar -->
-    <aside class="admin-sidebar">
+    <aside class="admin-sidebar" :class="{ open: menuOpen }">
       <!-- Logo -->
       <div class="sb-logo">
         <div class="sb-logo-badge">M</div>
@@ -301,5 +318,71 @@ const navItems = computed(() => {
   overflow-y: auto;
   min-width: 0;
   min-height: 0;
+}
+
+/* ── Topbar + drawer mobile ──────────────────────────────────────────── */
+.admin-topbar { display: none; }
+.sb-backdrop { display: none; }
+
+@media (max-width: 599px) {
+  .admin-shell {
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  .admin-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--line-1);
+    position: sticky;
+    top: 0;
+    z-index: 90;
+  }
+
+  .tb-burger {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r-sm);
+    background: var(--bg-3);
+    border: 1px solid var(--line-2);
+    color: var(--ink-1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tb-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ink-0);
+  }
+
+  .sb-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 110;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(300px, 84vw);
+    z-index: 120;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.25);
+  }
+
+  .admin-sidebar.open { transform: translateX(0); }
 }
 </style>

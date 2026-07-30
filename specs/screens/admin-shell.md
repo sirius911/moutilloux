@@ -86,6 +86,21 @@ modale Épreuve (voir [[admin-tournoi]]) et le court unique est seedé en base.
 Affiche l'écran de la route courante. Elle défile indépendamment de la sidebar,
 qui reste fixe.
 
+### Variante mobile (< 600 px)
+
+Le shell fournit la navigation mobile des écrans admin adaptés au téléphone
+(aujourd'hui : Joueurs, voir [[mobile]]) :
+
+- La sidebar est remplacée par une **barre supérieure** collante (bouton
+  hamburger + pastille logo + nom du tournoi).
+- Le hamburger ouvre la sidebar en **drawer** (panneau latéral glissant,
+  ~300 px, au-dessus d'un voile sombre). Contenu identique à la sidebar
+  desktop : bloc marque, six entrées avec compteurs, pied (Voir les
+  résultats, Déconnexion).
+- Le drawer se ferme au tap sur le voile et à chaque navigation.
+- Les écrans non adaptés restent accessibles par le drawer mais conservent
+  leur mise en page desktop (hors périmètre, [[mobile]]).
+
 ---
 
 ## Flux : changement d'épreuve

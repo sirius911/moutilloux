@@ -56,6 +56,24 @@ Il n'y a **pas** d'action de suppression de fiche : une fiche joueur, une fois
 créée, est conservée (elle peut être référencée par des inscriptions et des
 matchs passés).
 
+### Variante mobile (< 600 px)
+
+L'écran est une surface mobile (voir [[mobile]]) : corriger ou compléter une
+fiche joueur — photo comprise — doit pouvoir se faire au téléphone.
+
+- La **table** est remplacée par une **liste de cartes** (bascule par
+  `useViewport`) : avatar (42 px), nom complet, ligne secondaire
+  « Genre · Âge » (seules les infos renseignées, sinon « — »), bouton
+  **Éditer**. Téléphone et email ne sont pas affichés dans la liste — ils
+  restent accessibles dans la modale d'édition.
+- Mêmes états vides que la table, même recherche (pleine largeur, champ 16 px).
+- L'en-tête s'empile si nécessaire ; l'action « + Ajouter un joueur » reste
+  visible sans défilement.
+- La **modale Fiche joueur** s'affiche en bottom-sheet pleine largeur, grille
+  de champs sur une colonne (comportement porté par le `ModalShell` commun,
+  voir [[mobile]]). Le bouton « Prendre une photo » y déclenche l'input natif
+  `capture` (fonctionne en HTTP, contrairement à `getUserMedia`).
+
 ---
 
 ## Modale Fiche joueur (création / édition)

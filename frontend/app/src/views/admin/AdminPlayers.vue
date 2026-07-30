@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useEventStore } from '@/stores/event'
+import { useViewport } from '@/composables/useViewport'
 import AddPlayerModal from '@/components/modals/AddPlayerModal.vue'
 import type { Player } from '@/types'
 
 const eventStore = useEventStore()
+const { isMobile } = useViewport()
 const search = ref('')
 const showAddPlayer = ref(false)
 const editingPlayer = ref<Player | null>(null)
@@ -44,6 +46,14 @@ function initials(name: string): string {
 
 function genderLabel(g: string | undefined | null) {
   return g === 'M' ? 'Homme' : g === 'F' ? 'Femme' : g === 'O' ? 'Autre' : '—'
+}
+
+// Ligne secondaire des cartes mobile : genre · âge (uniquement les infos connues).
+function cardMeta(p: Player): string {
+  const parts: string[] = []
+  if (p.gender) parts.push(genderLabel(p.gender))
+  if (p.birthYear) parts.push(`${new Date().getFullYear() - p.birthYear} ans`)
+  return parts.join(' · ') || '—'
 }
 </script>
 
@@ -88,8 +98,31 @@ function genderLabel(g: string | undefined | null) {
           </div>
         </div>
 
+        <!-- Mobile : liste de cartes tactiles -->
+        <div v-if="isMobile" class="player-cards">
+          <div v-for="p in filtered" :key="p.id" class="player-card">
+            <div
+              class="avatar"
+              :class="{ 'has-photo': p.photoUrl }"
+              :style="!p.photoUrl ? { background: avatarColor(p.fullName) } : undefined"
+            >
+              <img v-if="p.photoUrl" :src="p.photoUrl" :alt="p.fullName" />
+              <template v-else>{{ initials(p.fullName) }}</template>
+            </div>
+            <div class="pc-info">
+              <span class="player-name">{{ p.fullName }}</span>
+              <span class="player-meta">{{ cardMeta(p) }}</span>
+            </div>
+            <button class="row-btn" type="button" @click="openEdit(p)">Éditer</button>
+          </div>
+          <div v-if="filtered.length === 0 && !search.trim()" class="empty-card">
+            Aucun joueur dans le registre. Ajoutez votre premier joueur.
+          </div>
+          <div v-else-if="filtered.length === 0" class="empty-card">Aucun joueur trouvé</div>
+        </div>
+
         <!-- Table -->
-        <div class="table-wrap">
+        <div v-else class="table-wrap">
           <table class="data-table">
             <thead>
               <tr>
@@ -299,5 +332,68 @@ function genderLabel(g: string | undefined | null) {
   text-align: center;
   padding: 48px !important;
   color: var(--ink-3);
+}
+
+/* ── Cartes joueur (mobile) ──────────────────────────────────────────── */
+.player-cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.player-card:last-child { border-bottom: none; }
+
+.player-card .avatar {
+  width: 42px;
+  height: 42px;
+  font-size: 14px;
+}
+
+.pc-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pc-info .player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cible tactile plus généreuse que le bouton de ligne desktop */
+.player-card .row-btn { padding: 9px 14px; }
+
+.empty-card {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--ink-3);
+  font-size: 14px;
+}
+
+/* ── Mobile (< 600 px) ───────────────────────────────────────────────── */
+@media (max-width: 599px) {
+  .page-header {
+    padding: 20px 16px 16px;
+    flex-wrap: wrap;
+  }
+
+  .page-content { padding: 16px; }
+
+  .toolbar { padding: 12px 16px; }
+
+  .search-wrap { max-width: none; }
+
+  /* < 16px, iOS Safari zoome automatiquement au focus du champ */
+  .search-input { font-size: 16px; }
 }
 </style>

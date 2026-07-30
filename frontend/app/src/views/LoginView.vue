@@ -433,4 +433,38 @@ async function submit() {
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/* ── Mobile (< 600 px) — page fluide, cible iPhone (specs/transverse/mobile.md) ── */
+@media (max-width: 599px) {
+  .lgn {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: auto;
+  }
+
+  .lgn-wrap {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    grid-template-columns: 1fr;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .lgn-card {
+    padding: 40px 24px 32px;
+    justify-content: center;
+  }
+
+  .lgn-side {
+    display: none;
+  }
+
+  /* < 16px, iOS Safari zoome automatiquement au focus du champ */
+  .inp {
+    font-size: 16px;
+  }
+}
 </style>
