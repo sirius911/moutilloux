@@ -42,21 +42,22 @@ const warmupCountdown = computed(() => {
   return `${m}:${String(s).padStart(2, '0')}`
 })
 
-// Cycle d'affichage du panneau d'enjeu (spec tv-live.md § enjeu du match) :
-// entrée/sortie 1 s (fondu + glissement hors écran) → maintien 8 s → masqué
-// 8 s. Le toggle a lieu toutes les 9 s (transition + maintien), l'animation
-// étant portée par la transition CSS.
-const STAKE_FADE_MS = 1000
-const STAKE_HOLD_MS = 8000
-const stakeVisible = ref(true)
-let stakeTimer: ReturnType<typeof setInterval> | null = null
+// Cycle d'affichage des panneaux superposés à l'affiche — enjeu (gauche) et
+// « À préparer » (droite), synchronisés (spec tv-live.md) : entrée/sortie 1 s
+// (fondu + glissement hors écran, chacun par son bord) → maintien 8 s →
+// masqué 8 s. Le toggle a lieu toutes les 9 s (transition + maintien),
+// l'animation étant portée par la transition CSS.
+const PANEL_FADE_MS = 1000
+const PANEL_HOLD_MS = 8000
+const panelsVisible = ref(true)
+let panelsTimer: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
-  stakeTimer = setInterval(() => {
-    stakeVisible.value = !stakeVisible.value
-  }, STAKE_FADE_MS + STAKE_HOLD_MS)
+  panelsTimer = setInterval(() => {
+    panelsVisible.value = !panelsVisible.value
+  }, PANEL_FADE_MS + PANEL_HOLD_MS)
 })
 onUnmounted(() => {
-  if (stakeTimer) clearInterval(stakeTimer)
+  if (panelsTimer) clearInterval(panelsTimer)
 })
 
 function initials(name: string): string {
@@ -143,8 +144,9 @@ function loserName(): string {
       />
       <div v-else class="court-bg" />
 
-      <!-- Carte « À préparer » (PrepPanel) — partagée entre échauffement et scoreboard -->
-      <div v-if="live.next" class="tv-prep">
+      <!-- Carte « À préparer » (PrepPanel) — partagée entre échauffement et
+           scoreboard. Même cycle que le panneau d'enjeu, sortie par la droite. -->
+      <div v-if="live.next" class="tv-prep" :class="{ 'tv-prep-hidden': !panelsVisible }">
         <i class="tv-prep-bar" />
         <div class="tv-prep-head">
           <span class="tv-prep-lbl">À PRÉPARER · {{ live.next.scheduledTime }}</span>
@@ -153,14 +155,24 @@ function loserName(): string {
         <div class="tv-prep-players">
           <div class="tv-prep-player">
             <div class="tv-prep-avatar tv-prep-avatar-a">
-              {{ initials(prepName(live.next.sideA, live.next.sideALabel)) }}
+              <img
+                v-if="live.next.sideA?.player?.photoUrl"
+                :src="live.next.sideA.player.photoUrl"
+                alt=""
+              />
+              <template v-else>{{ initials(prepName(live.next.sideA, live.next.sideALabel)) }}</template>
             </div>
             <span class="tv-prep-name">{{ prepName(live.next.sideA, live.next.sideALabel) }}</span>
           </div>
           <em class="tv-prep-vs">vs</em>
           <div class="tv-prep-player">
             <div class="tv-prep-avatar">
-              {{ initials(prepName(live.next.sideB, live.next.sideBLabel)) }}
+              <img
+                v-if="live.next.sideB?.player?.photoUrl"
+                :src="live.next.sideB.player.photoUrl"
+                alt=""
+              />
+              <template v-else>{{ initials(prepName(live.next.sideB, live.next.sideBLabel)) }}</template>
             </div>
             <span class="tv-prep-name">{{ prepName(live.next.sideB, live.next.sideBLabel) }}</span>
           </div>
@@ -200,7 +212,7 @@ function loserName(): string {
       <div
         v-if="live.stake?.kind === 'group' && live.stake.standings.length > 0"
         class="stake-panel"
-        :class="{ 'stake-panel-hidden': !stakeVisible }"
+        :class="{ 'stake-panel-hidden': !panelsVisible }"
       >
         <div class="stake-group">
           <h2 class="stake-title">
@@ -442,12 +454,15 @@ function loserName(): string {
   gap: 12px;
   z-index: 6;
   color: var(--ink-0);
-  animation: tv-prep-in 0.6s cubic-bezier(0.2, 0.7, 0.3, 1);
+  /* Même cycle que .stake-panel (1 s), sortie par le bord opposé. */
+  transition: opacity 1s ease, transform 1s cubic-bezier(0.4, 0, 0.7, 1);
 }
 
-@keyframes tv-prep-in {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: none; }
+/* Sortie : la carte glisse hors de l'écran par la droite en s'effaçant
+   (ancrée à right: 56px, large de 480px → +560px la sort entièrement). */
+.tv-prep-hidden {
+  opacity: 0;
+  transform: translateX(560px);
 }
 
 .tv-prep-bar {
@@ -509,8 +524,16 @@ function loserName(): string {
   font-size: 14px;
   letter-spacing: 0.04em;
   flex-shrink: 0;
+  overflow: hidden;
   background: rgba(255, 255, 255, 0.12);
   color: var(--ink-0);
+}
+
+/* Photo de profil (initiales en repli quand le joueur n'a pas de photo) */
+.tv-prep-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .tv-prep-avatar-a {

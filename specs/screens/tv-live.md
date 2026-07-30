@@ -159,12 +159,19 @@ dépend de la phase du hero :
 Carte **flottante en haut à droite** (~480 px, portée du `PrepPanel` du mock),
 **uniquement s'il existe un next** (défini par [[tv-state]]) :
 
-- avatars/initiales des deux joueurs **empilés** (une ligne par joueur, « vs »
-  entre les deux) : les noms s'affichent **en entier**, en **« Prénom Nom »**
-  (retours 2026-07-30 : c'est une carte de convocation, pas un classement —
-  à rebours du « Nom Prénom » du reste de la TV). Doubles : nom d'équipe,
-  règle [[affichage-participant]] inchangée. Étiquette de poule/étape,
-  heure estimée (`~HH:MM`), et l'appel « Présentez-vous au juge-arbitre ».
+- **photos de profil** des deux joueurs (initiales en repli sans photo ;
+  doubles : initiales du nom d'équipe), **empilés** (une ligne par joueur,
+  « vs » entre les deux) : les noms s'affichent **en entier**, en
+  **« Prénom Nom »** (retours 2026-07-30 : c'est une carte de convocation,
+  pas un classement — à rebours du « Nom Prénom » du reste de la TV).
+  Doubles : nom d'équipe, règle [[affichage-participant]] inchangée.
+  Étiquette de poule/étape, heure estimée (`~HH:MM`), et l'appel
+  « Présentez-vous au juge-arbitre ».
+- La carte suit le **même cycle d'affichage que le panneau d'enjeu**
+  (retours 2026-07-30), synchronisée avec lui : entrée 1 s, maintien 8 s,
+  sortie 1 s, masquée 8 s — mais glisse par le **bord droit** (le panneau
+  d'enjeu sort par la gauche). L'affiche du match est ainsi dévoilée par
+  fenêtres régulières.
 - But : laisser les joueurs suivants se préparer pendant le match en cours.
 - Remplace l'ancien bandeau pleine largeur au-dessus de la bande de score
   (portage dégradé du design, retiré).
@@ -190,8 +197,9 @@ le match, le serveur n'est pas encore choisi — voir [[cycle-de-vie-match]]) :
   d'une affiche générée est souvent sa zone la plus claire (le « VS ») —
   sans masquer les joueurs de part et d'autre (retours 2026-07-29).
 - Sous le compte à rebours : joueurs (« {A} vs {B} »), étape, court.
-- La carte « À préparer » reste affichée s'il existe un next, ainsi que la
-  **banderole d'information** (voir État SCOREBOARD).
+- La carte « À préparer » reste présente s'il existe un next (avec son cycle
+  d'affichage — voir État SCOREBOARD), ainsi que la **banderole
+  d'information** (voir État SCOREBOARD).
 - La scène bascule sur le SCOREBOARD au poll où `playStartedAt` se remplit.
 
 ---
