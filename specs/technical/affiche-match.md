@@ -69,10 +69,18 @@ avant choix → nouveau lot de 2, l'ancien est purgé. **Retirer l'affiche** →
    job déjà `RUNNING`. Refus 400 avec message explicite sinon.
 2. Le serveur crée le `PosterJob` (`PENDING`) et lance la génération **dans un
    thread** (pas de Celery dans le projet) : construction du prompt (module
-   extrait du script — mêmes contraintes : titre seul texte autorisé, zone
-   basse 25-30 % réservée au score, adjectifs jamais écrits), appel
-   `images.edit` (n=2, 1536×1024, quality medium), écriture des candidates,
-   `DONE` (ou `ERROR` + message).
+   extrait du script — contraintes : titre seul texte autorisé, **moitié
+   basse ~55 % réservée au score**, joueurs/titre dans la moitié haute en
+   évitant les 10 % supérieurs, adjectifs jamais écrits), appel
+   `images.edit` (n=2, 1536×1024, quality medium), **recadrage 16:9 en
+   conservant le haut** (`crop_to_tv_aspect`, 1536×1024 → 1536×864 — la
+   seule taille paysage de l'API est en 3:2 alors que la TV est en 16:9 ;
+   sans recadrage, le `cover` ancré en haut jetait les ~15 % bas de l'image,
+   précisément la réserve de score — retours 2026-07-30), écriture des
+   candidates, `DONE` (ou `ERROR` + message). Les candidates vues dans
+   l'admin sont donc **exactement** le cadre rendu par la TV. Le parc
+   d'affiches antérieur au recadrage reste en 3:2 (rogné à l'affichage,
+   comme avant).
 3. Le front **polle** `GET /api/matches/<id>/poster/` (~2 s pendant un job) :
    `{ posterUrl, job: {status, error, candidates: [urls]} | null }`.
 4. `POST /api/matches/<id>/poster/select/` — body `{candidate}` → copie vers

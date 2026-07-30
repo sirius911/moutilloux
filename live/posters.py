@@ -19,10 +19,12 @@ import os
 import random
 import threading
 import uuid
+from io import BytesIO
 from pathlib import Path
 
 from django.conf import settings
 from django.core.files.base import ContentFile
+from PIL import Image
 
 from live.models import Match, PosterJob
 
@@ -53,7 +55,9 @@ def build_prompt(names: list[str], sexes: list[str], adjectives: list[str]) -> s
     Construit le prompt "affiche de jeu de combat arcade" envoyé à
     `images.edit`. Contraintes conservées (spec affiche-match.md) :
     - le seul texte autorisé sur l'affiche est le titre du duel ;
-    - la zone basse (25-30 % de la hauteur) reste libre pour le score ;
+    - la moitié basse (~55 % de la hauteur générée) reste libre pour le
+      score : l'image 3:2 est ensuite recadrée en 16:9 par le haut
+      (`crop_to_tv_aspect`) et la bande de score TV couvre 42 % de l'écran ;
     - les adjectifs d'attitude ne doivent jamais être écrits sur l'affiche.
     """
     players = []
@@ -137,18 +141,44 @@ Contraintes très importantes sur le texte :
 
 Format :
 - affiche horizontale, format paysage ;
-- composition pensée pour un affichage web en direct pendant un match ;
-- les joueurs doivent être principalement dans la moitié haute et au centre gauche / centre droit ;
-- le titre "{title}" doit être placé dans la moitié haute ou au centre, mais pas dans la zone basse réservée au score ;
-- réserver toute la partie basse de l'image, environ 25 à 30 % de la hauteur, comme zone libre pour afficher le score en direct ;
-- dans cette zone basse, ne mettre aucun visage, aucune main, aucune raquette importante, aucun texte important ;
-- la zone basse doit être visuellement propre, sombre ou légèrement dégradée, avec éventuellement le terrain de tennis en arrière-plan ;
+- composition pensée pour un affichage TV en direct : une large bande de score est incrustée par-dessus toute la partie basse de l'image pendant le match ;
+- concentrer les joueurs et leurs visages dans la moitié haute de l'image, au centre gauche / centre droit, en évitant les 10 % tout en haut (un bandeau d'interface s'y superpose) ;
+- le titre "{title}" doit être placé dans la moitié haute, sous les 10 % supérieurs, jamais dans la zone basse réservée au score ;
+- réserver toute la moitié basse de l'image, environ 55 % de la hauteur, comme zone libre pour le score en direct ;
+- dans cette zone basse, ne mettre aucun visage, aucune main, aucune raquette importante, aucun texte : les corps des joueurs peuvent s'y prolonger en s'assombrissant ;
+- la zone basse doit être visuellement calme, sombre ou légèrement dégradée, avec éventuellement le terrain de tennis en arrière-plan ;
 - cette zone basse doit pouvoir recevoir un score affiché par-dessus sans cacher les joueurs ;
 - ne pas écrire le score dans l'image ;
-- image finale propre, spectaculaire, amusante, prête pour un live web.
+- image finale propre, spectaculaire, amusante, prête pour un direct TV.
 """.strip()
 
     return prompt
+
+
+# ── Recadrage 16:9 ───────────────────────────────────────────────────────────
+
+# La seule taille paysage de l'API gpt-image est 1536×1024 (3:2), mais la TV
+# affiche l'affiche plein écran en 16:9 (`cover` ancré en haut) : le bandeau
+# bas d'une image 3:2 n'y est jamais rendu. On recadre donc chaque image dès
+# la génération, en conservant le haut (1536×1024 → 1536×864) : les candidates
+# vues dans l'admin sont exactement le rendu TV, et le rognage n'emporte plus
+# la réserve de score demandée au prompt.
+TV_ASPECT = 16 / 9
+
+
+def crop_to_tv_aspect(image_bytes: bytes) -> bytes:
+    """
+    Recadre une image PNG au ratio 16:9 en conservant le haut. Une image
+    déjà au ratio 16:9 (ou plus panoramique) est renvoyée telle quelle.
+    """
+    with Image.open(BytesIO(image_bytes)) as img:
+        target_height = round(img.width / TV_ASPECT)
+        if img.height <= target_height:
+            return image_bytes
+        cropped = img.crop((0, 0, img.width, target_height))
+        out = BytesIO()
+        cropped.save(out, format="PNG")
+        return out.getvalue()
 
 
 # ── Résolution des joueurs d'un match ────────────────────────────────────────
@@ -308,7 +338,7 @@ def _run_poster_job(job_id: int) -> None:
             if not image_data.b64_json:
                 raise RuntimeError("L'API n'a pas renvoyé d'image en base64.")
 
-            image_bytes = base64.b64decode(image_data.b64_json)
+            image_bytes = crop_to_tv_aspect(base64.b64decode(image_data.b64_json))
             filename = f"job{job.pk}_{index}_{uuid.uuid4().hex[:8]}.png"
             file_path = candidates_dir / filename
             file_path.write_bytes(image_bytes)

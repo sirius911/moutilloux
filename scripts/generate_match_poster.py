@@ -50,7 +50,7 @@ def _bootstrap_django() -> None:
 
 _bootstrap_django()
 
-from live.posters import build_prompt  # noqa: E402  (après bootstrap Django)
+from live.posters import build_prompt, crop_to_tv_aspect  # noqa: E402  (après bootstrap Django)
 
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -190,7 +190,7 @@ def generate_posters(
                 if not image_data.b64_json:
                     raise RuntimeError("L'API n'a pas renvoyé d'image en base64.")
 
-                image_bytes = base64.b64decode(image_data.b64_json)
+                image_bytes = crop_to_tv_aspect(base64.b64decode(image_data.b64_json))
 
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"match_poster_{timestamp}_{batch_index}_{image_index}_{uuid.uuid4().hex[:8]}.png"
