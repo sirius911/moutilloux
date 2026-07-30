@@ -258,13 +258,26 @@ machine serveur après chaque `git pull`).
 
 ### 2. Lancer Django en écoute sur le réseau
 
-Il faut autoriser l’adresse de la machine dans `DJANGO_ALLOWED_HOSTS`, et la
-déclarer dans `DJANGO_CSRF_TRUSTED_ORIGINS` (sinon toutes les écritures —
-saisie de score, inscriptions — échouent en 403).
+Le script `serve_prod.sh` fait tout : il détecte l’adresse IP du Mac et son nom
+mDNS, configure `MOUTILLOUX_ENV=prod` (données réelles), `DJANGO_ALLOWED_HOSTS`
+et `DJANGO_CSRF_TRUSTED_ORIGINS`, vérifie que le build SPA existe, affiche les
+URL à ouvrir sur les autres machines, puis lance le serveur.
 
-Il faut aussi passer `MOUTILLOUX_ENV=prod` pour servir les données réelles du
-tournoi (`db.sqlite3`) — sans la variable, le serveur tourne sur la base de
-développement.
+```bash
+./serve_prod.sh
+```
+
+Le port par défaut est 8000 (`./serve_prod.sh 9000` pour en changer).
+
+> macOS n’a pas `hostname -I` : le script détecte l’IP avec
+> `ipconfig getifaddr $(route -n get default | awk '/interface:/{print $2}')`
+> et le nom mDNS avec `scutil --get LocalHostName`.
+
+À la main, l’équivalent (nécessaire hors macOS) : autoriser l’adresse de la
+machine dans `DJANGO_ALLOWED_HOSTS` et la déclarer dans
+`DJANGO_CSRF_TRUSTED_ORIGINS` (sinon toutes les écritures — saisie de score,
+inscriptions — échouent en 403), et passer `MOUTILLOUX_ENV=prod` pour servir
+les données réelles (`db.sqlite3`).
 
 ```bash
 MOUTILLOUX_ENV=prod \
