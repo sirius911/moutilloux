@@ -284,7 +284,7 @@ def _run_poster_job(job_id: int) -> None:
 
         prompt = build_prompt(names, sexes, adjectives)
 
-        opened_files = [player.photo.open("rb") for player in players]
+        opened_files = [open(player.photo.path, "rb") for player in players]
         try:
             client = OpenAI()
             result = client.images.edit(
