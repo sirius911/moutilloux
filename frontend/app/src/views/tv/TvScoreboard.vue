@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import type { Entry } from '@/types'
 import { useLiveStore } from '@/stores/live'
 import { usePolling } from '@/composables/usePolling'
 import TvIdle from './TvIdle.vue'
@@ -60,6 +61,15 @@ onUnmounted(() => {
 
 function initials(name: string): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
+}
+
+// Carte « À préparer » : noms en « Prénom Nom » (retours 2026-07-30) — à
+// rebours du reste de la TV qui affiche « Nom Prénom » (_pack_match). C'est
+// une carte de convocation, pas un classement. Doubles : nom d'équipe
+// (displayName), règle affichage-participant inchangée.
+function prepName(side: Entry | null, fallback: string | null): string {
+  if (side?.player) return `${side.player.firstName} ${side.player.lastName}`.trim()
+  return side?.displayName ?? fallback ?? '?'
 }
 
 function winnerName(): string {
@@ -143,16 +153,16 @@ function loserName(): string {
         <div class="tv-prep-players">
           <div class="tv-prep-player">
             <div class="tv-prep-avatar tv-prep-avatar-a">
-              {{ initials(live.next.sideA?.displayName ?? live.next.sideALabel ?? '?') }}
+              {{ initials(prepName(live.next.sideA, live.next.sideALabel)) }}
             </div>
-            <span class="tv-prep-name">{{ live.next.sideA?.displayName ?? live.next.sideALabel ?? '?' }}</span>
+            <span class="tv-prep-name">{{ prepName(live.next.sideA, live.next.sideALabel) }}</span>
           </div>
           <em class="tv-prep-vs">vs</em>
           <div class="tv-prep-player">
             <div class="tv-prep-avatar">
-              {{ initials(live.next.sideB?.displayName ?? live.next.sideBLabel ?? '?') }}
+              {{ initials(prepName(live.next.sideB, live.next.sideBLabel)) }}
             </div>
-            <span class="tv-prep-name">{{ live.next.sideB?.displayName ?? live.next.sideBLabel ?? '?' }}</span>
+            <span class="tv-prep-name">{{ prepName(live.next.sideB, live.next.sideBLabel) }}</span>
           </div>
         </div>
         <div class="tv-prep-foot">
@@ -419,7 +429,7 @@ function loserName(): string {
   position: absolute;
   top: 130px;
   right: 56px;
-  width: 360px;
+  width: 480px;
   background: rgba(8, 12, 16, 0.78);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -472,29 +482,31 @@ function loserName(): string {
   letter-spacing: 0.04em;
 }
 
+/* Joueurs empilés (un par ligne) : la pleine largeur de la carte est donnée
+   aux noms, affichés en entier (retours 2026-07-30). */
 .tv-prep-players {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
 }
 
 .tv-prep-player {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
+  gap: 12px;
   min-width: 0;
 }
 
 .tv-prep-avatar {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.04em;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.12);
@@ -507,9 +519,10 @@ function loserName(): string {
 }
 
 .tv-prep-name {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: 0.04em;
+  /* Garde-fou (noms d'équipe très longs) — les noms de joueurs tiennent. */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -521,6 +534,8 @@ function loserName(): string {
   color: var(--ink-3);
   letter-spacing: 0.16em;
   font-weight: 500;
+  /* Aligné sous les noms (avatar 44px + gap 12px) */
+  margin-left: 56px;
 }
 
 .tv-prep-foot {

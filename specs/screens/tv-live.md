@@ -156,10 +156,14 @@ dépend de la phase du hero :
 
 ### Droite : la carte « À préparer » (PrepPanel)
 
-Carte **flottante en haut à droite** (~360 px, portée du `PrepPanel` du mock),
+Carte **flottante en haut à droite** (~480 px, portée du `PrepPanel` du mock),
 **uniquement s'il existe un next** (défini par [[tv-state]]) :
 
-- avatars/initiales des deux joueurs, « {A} vs {B} », étiquette de poule/étape,
+- avatars/initiales des deux joueurs **empilés** (une ligne par joueur, « vs »
+  entre les deux) : les noms s'affichent **en entier**, en **« Prénom Nom »**
+  (retours 2026-07-30 : c'est une carte de convocation, pas un classement —
+  à rebours du « Nom Prénom » du reste de la TV). Doubles : nom d'équipe,
+  règle [[affichage-participant]] inchangée. Étiquette de poule/étape,
   heure estimée (`~HH:MM`), et l'appel « Présentez-vous au juge-arbitre ».
 - But : laisser les joueurs suivants se préparer pendant le match en cours.
 - Remplace l'ancien bandeau pleine largeur au-dessus de la bande de score
