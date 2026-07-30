@@ -41,6 +41,23 @@ const warmupCountdown = computed(() => {
   return `${m}:${String(s).padStart(2, '0')}`
 })
 
+// Cycle d'affichage du panneau d'enjeu (spec tv-live.md § enjeu du match) :
+// entrée/sortie 1 s (fondu + glissement hors écran) → maintien 8 s → masqué
+// 8 s. Le toggle a lieu toutes les 9 s (transition + maintien), l'animation
+// étant portée par la transition CSS.
+const STAKE_FADE_MS = 1000
+const STAKE_HOLD_MS = 8000
+const stakeVisible = ref(true)
+let stakeTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => {
+  stakeTimer = setInterval(() => {
+    stakeVisible.value = !stakeVisible.value
+  }, STAKE_FADE_MS + STAKE_HOLD_MS)
+})
+onUnmounted(() => {
+  if (stakeTimer) clearInterval(stakeTimer)
+})
+
 function initials(name: string): string {
   return name.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2)
 }
@@ -111,6 +128,7 @@ function loserName(): string {
       <div
         v-if="live.hero?.posterUrl"
         class="hero-poster-bg"
+        :class="{ 'hero-poster-bg-score': !isWarmupScene }"
         :style="{ backgroundImage: `url(${live.hero.posterUrl})` }"
       />
       <div v-else class="court-bg" />
@@ -166,8 +184,14 @@ function loserName(): string {
 
       <!-- ── Scène SCOREBOARD (match lancé) ──────────────────────────────── -->
       <template v-else>
-      <!-- Zone d'enjeu (centre de l'écran) — classement de poule, sinon phase en grand -->
-      <div v-if="live.stake?.kind === 'group'" class="stake-panel">
+      <!-- Zone d'enjeu (centre de l'écran) — classement de poule, sinon phase en grand.
+           Classement vide (aucun standing calculé) → panneau masqué, jamais de
+           cadre vide à l'antenne (spec tv-live.md § enjeu du match). -->
+      <div
+        v-if="live.stake?.kind === 'group' && live.stake.standings.length > 0"
+        class="stake-panel"
+        :class="{ 'stake-panel-hidden': !stakeVisible }"
+      >
         <div class="stake-group">
           <h2 class="stake-title">
             POULE {{ live.stake.groupName }}
@@ -231,57 +255,55 @@ function loserName(): string {
       <!-- Bande basse broadcast : deux lignes joueur, jeux géants rattachés à leur ligne -->
       <div class="sb-ed-bottom">
         <div class="sb-ed-cols-head">
-          <span class="sb-ed-col-head sb-ed-col-head-sets">SETS</span>
-          <span class="sb-ed-col-head sb-ed-col-head-games">JEUX · SET {{ live.hero.setScores.length + 1 }}</span>
           <span class="sb-ed-col-head sb-ed-col-head-pts">POINTS</span>
+          <span class="sb-ed-col-head sb-ed-col-head-games">JEUX · SET {{ live.hero.setScores.length + 1 }}</span>
+          <span class="sb-ed-col-head sb-ed-col-head-sets">SETS</span>
         </div>
 
         <!-- Côté A -->
         <div class="sb-ed-line">
-          <span v-if="live.hero.server === 'A'" class="serve-ball">
-            <svg viewBox="0 0 24 24" width="26" height="26" style="filter: drop-shadow(0 0 6px #E8F35A)">
-              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
-              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
-            </svg>
-          </span>
-          <span v-else class="serve-ball-spacer" style="width: 26px; height: 26px" />
           <span class="sb-ed-name">
             {{ live.hero.sideA?.displayName ?? live.hero.sideALabel ?? '—' }}
           </span>
           <span v-if="live.hero.sideA?.seedHint" class="sb-ed-seed">[{{ live.hero.sideA.seedHint }}]</span>
+          <span v-if="live.hero.server === 'A'" class="serve-ball">
+            <svg viewBox="0 0 24 24" width="52" height="52" style="filter: drop-shadow(0 0 6px #E8F35A)">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+            </svg>
+          </span>
           <span class="sb-ed-rule" />
-          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
-          <span class="sb-ed-games tab">{{ live.hero.gamesA }}</span>
           <span
             class="sb-ed-pts tab"
             :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointA === 'AV' }"
           >
             {{ live.hero.tbActive ? live.hero.tbPointsA : live.hero.displayPointA }}
           </span>
+          <span class="sb-ed-games tab">{{ live.hero.gamesA }}</span>
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.a > s.b).length }}</b></span>
         </div>
 
         <!-- Côté B -->
         <div class="sb-ed-line">
-          <span v-if="live.hero.server === 'B'" class="serve-ball">
-            <svg viewBox="0 0 24 24" width="26" height="26" style="filter: drop-shadow(0 0 6px #E8F35A)">
-              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
-              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
-            </svg>
-          </span>
-          <span v-else class="serve-ball-spacer" style="width: 26px; height: 26px" />
           <span class="sb-ed-name">
             {{ live.hero.sideB?.displayName ?? live.hero.sideBLabel ?? '—' }}
           </span>
           <span v-if="live.hero.sideB?.seedHint" class="sb-ed-seed">[{{ live.hero.sideB.seedHint }}]</span>
+          <span v-if="live.hero.server === 'B'" class="serve-ball">
+            <svg viewBox="0 0 24 24" width="52" height="52" style="filter: drop-shadow(0 0 6px #E8F35A)">
+              <circle cx="12" cy="12" r="10" fill="#E8F35A"/>
+              <path d="M2.5 12c4-1 8.5-1 12.5 3 1.5 1.5 4.5 2.5 6.5 2.5M2.5 12c4 1 8.5 1 12.5-3 1.5-1.5 4.5-2.5 6.5-2.5" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"/>
+            </svg>
+          </span>
           <span class="sb-ed-rule" />
-          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
-          <span class="sb-ed-games tab">{{ live.hero.gamesB }}</span>
           <span
             class="sb-ed-pts tab"
             :class="{ 'accent-text': !live.hero.tbActive && live.hero.displayPointB === 'AV' }"
           >
             {{ live.hero.tbActive ? live.hero.tbPointsB : live.hero.displayPointB }}
           </span>
+          <span class="sb-ed-games tab">{{ live.hero.gamesB }}</span>
+          <span class="sb-ed-mini">SETS&nbsp;<b class="tab">{{ live.hero.setScores.filter(s => s.b > s.a).length }}</b></span>
         </div>
       </div>
 
@@ -308,6 +330,27 @@ function loserName(): string {
   background-position: center top;
   background-repeat: no-repeat;
   background-color: var(--bg-0);
+}
+
+/* Scrim de lisibilité : assombrit les zones de texte (header en haut, bande
+   de score en bas) sans masquer le centre de l'affiche. */
+.hero-poster-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(4, 8, 12, 0.82) 0%, rgba(4, 8, 12, 0.35) 110px, transparent 220px),
+    linear-gradient(0deg, rgba(4, 8, 12, 0.94) 0%, rgba(4, 8, 12, 0.78) 300px, rgba(4, 8, 12, 0.35) 440px, transparent 580px);
+}
+
+/* En scène SCOREBOARD, la bande de score commence à ~455px du bas : la rampe
+   doit être à ≥0,75 dès le haut de la bande (en-têtes de colonnes compris —
+   retours 2026-07-29), sinon la ligne A et les en-têtes tombent sur la zone
+   la plus vive de l'affiche. L'affiche reste dégagée au centre de la scène. */
+.hero-poster-bg-score::after {
+  background:
+    linear-gradient(180deg, rgba(4, 8, 12, 0.82) 0%, rgba(4, 8, 12, 0.35) 110px, transparent 220px),
+    linear-gradient(0deg, rgba(4, 8, 12, 0.94) 0%, rgba(4, 8, 12, 0.86) 300px, rgba(4, 8, 12, 0.75) 470px, rgba(4, 8, 12, 0.3) 580px, transparent 700px);
 }
 
 /* ── Header ─────────────────────────────────────────────────────────── */
@@ -550,17 +593,18 @@ function loserName(): string {
 }
 
 .sb-ed-col-head {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: var(--ink-3);
+  color: var(--ink-1);
   text-align: right;
   text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
 }
 
+.sb-ed-col-head-pts { min-width: 160px; }
+.sb-ed-col-head-games { min-width: 130px; }
 .sb-ed-col-head-sets { min-width: 90px; }
-.sb-ed-col-head-games { min-width: 160px; }
-.sb-ed-col-head-pts { min-width: 130px; }
 
 .sb-ed-line {
   display: flex;
@@ -577,6 +621,7 @@ function loserName(): string {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--ink-0);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 0, 0, 0.6);
 }
 
 .sb-ed-seed {
@@ -607,22 +652,22 @@ function loserName(): string {
   margin-left: 4px;
 }
 
-.sb-ed-games {
+.sb-ed-pts {
   font-size: 160px;
   line-height: 0.85;
   font-weight: 800;
   letter-spacing: -0.04em;
   color: var(--ink-0);
-  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.9), 0 8px 40px rgba(0, 0, 0, 0.7), 0 0 30px var(--accent-glow);
   min-width: 160px;
   text-align: right;
 }
 
-.sb-ed-pts {
+.sb-ed-games {
   font-size: 80px;
   font-weight: 800;
   color: var(--ink-1);
-  text-shadow: 0 0 30px var(--accent-glow);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
   letter-spacing: -0.02em;
   min-width: 130px;
   text-align: right;
@@ -633,12 +678,13 @@ function loserName(): string {
 .serve-ball {
   display: flex;
   align-items: center;
+  /* Centrage vertical sur le nom (64px) : la ligne est alignée en baseline,
+     le centre optique des capitales est ~23px au-dessus. Balle 52px → demi-
+     hauteur 26 → décalage +3. Décalage via position (pas transform :
+     serveFloat anime déjà transform). */
+  position: relative;
+  top: 3px;
   animation: serveFloat 1.8s ease-in-out infinite;
-}
-
-.serve-ball-spacer {
-  display: inline-block;
-  visibility: hidden;
 }
 
 /* ── Zone d'enjeu (secondaire, ancrée à gauche) ──────────────────────── */
@@ -653,12 +699,21 @@ function loserName(): string {
   flex-direction: column;
   justify-content: center;
   overflow-y: auto;
-  background: rgba(8, 12, 16, 0.55);
+  background: rgba(8, 12, 16, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--r-md);
   padding: 24px 24px;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  transition: opacity 1s ease, transform 1s cubic-bezier(0.4, 0, 0.7, 1);
+}
+
+/* Sortie : le panneau glisse hors de l'écran par la gauche en s'effaçant
+   (ancré à left: 48px, large de 480px → -560px le sort entièrement). */
+.stake-panel-hidden {
+  opacity: 0;
+  transform: translateX(-560px);
 }
 
 .stake-title {
@@ -752,6 +807,7 @@ function loserName(): string {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-0);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), 0 0 60px rgba(0, 0, 0, 0.6);
 }
 
 /* ── Photo finish (fin de match, ~30 s) ───────────────────────────────── */
@@ -765,6 +821,15 @@ function loserName(): string {
   justify-content: center;
   gap: 16px;
   text-align: center;
+  /* Halo sombre derrière le bloc vainqueur : « VICTOIRE », « bat … » et la
+     durée doivent rester lisibles sur le centre d'une affiche générée (et ne
+     pas se confondre avec le texte incrusté de l'affiche à la même hauteur). */
+  background: radial-gradient(
+    ellipse 75% 55% at 50% 50%,
+    rgba(4, 8, 12, 0.82) 0%,
+    rgba(4, 8, 12, 0.5) 60%,
+    transparent 80%
+  );
 }
 
 .tv-finish-lbl {
@@ -781,7 +846,7 @@ function loserName(): string {
   font-weight: 800;
   letter-spacing: -0.04em;
   color: var(--ink-0);
-  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), 0 8px 60px rgba(0, 0, 0, 0.75);
   max-width: 1700px;
 }
 
@@ -833,6 +898,15 @@ function loserName(): string {
   justify-content: center;
   gap: 16px;
   text-align: center;
+  /* Halo sombre derrière le bloc central : le compte à rebours doit rester
+     lisible sur le centre d'une affiche générée (souvent la zone la plus
+     claire — le « VS »), sans masquer les joueurs de part et d'autre. */
+  background: radial-gradient(
+    ellipse 62% 42% at 50% 50%,
+    rgba(4, 8, 12, 0.8) 0%,
+    rgba(4, 8, 12, 0.5) 55%,
+    transparent 78%
+  );
 }
 
 .tv-warmup-lbl {

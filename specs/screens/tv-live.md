@@ -66,15 +66,19 @@ joueur**, l'association joueur ↔ score est **structurelle**. Aucun chiffre
 « flottant » rattaché par une convention de position (retours 2026-07-10 :
 les jeux géants centrés, détachés des noms, étaient inattribuables).
 
-- Chaque ligne, de gauche à droite : balle de service côté serveur, nom
-  (nom d'équipe en Double — règle [[affichage-participant]]), tête de série,
-  puis les colonnes de score alignées
-  à droite : **sets gagnés**, **jeux du set en cours en très grand**
-  (l'élément dominant de la scène), **points du jeu en cours**.
-- Les colonnes sont surmontées d'en-têtes explicites — **« SETS »,
-  « JEUX · SET {n} », « POINTS »** : l'étiquette lève l'ambiguïté points/jeux
+- Chaque ligne, de gauche à droite : nom (nom d'équipe en Double — règle
+  [[affichage-participant]]), tête de série, **balle de service à droite du
+  nom** côté serveur (retours 2026-07-28 ; à gauche elle décalait
+  l'alignement des noms), puis les colonnes de score alignées à droite :
+  **points du jeu en cours en très grand** (l'élément dominant de la scène),
+  **jeux du set en cours**, **sets gagnés** (retours 2026-07-28 : l'info la
+  plus vivante — le point — porte la taille dominante, l'ordre va du plus
+  volatil au plus acquis).
+- Les colonnes sont surmontées d'en-têtes explicites — **« POINTS »,
+  « JEUX · SET {n} », « SETS »** : l'étiquette lève l'ambiguïté points/jeux
   pour un spectateur qui arrive en cours de match, l'alignement en colonnes
-  lève l'ambiguïté joueur/score.
+  lève l'ambiguïté joueur/score. Les en-têtes doivent rester **lisibles sur
+  une affiche générée** (pas de gris trop faible — retours 2026-07-28).
 - Les points affichent **`displayPointA/B`** de `_pack_match`
   (`0/15/30/40/AV`, égalité `40/40`, points bruts en tie-break) — le front ne
   recalcule **jamais** le libellé depuis les points bruts.
@@ -113,6 +117,14 @@ Si le match a une **affiche générée** (`hero.posterUrl`, voir
 bande de score se compose par-dessus. Sans affiche, le fond de court
 demeure.
 
+Un **scrim de lisibilité** (dégradés sombres) assombrit les zones de texte
+sans masquer le centre de l'affiche : le bandeau haut, et **toute la bande de
+score — en-têtes de colonnes compris** (retours 2026-07-29 : la rampe
+s'arrêtait sous les en-têtes, illisibles sur la zone la plus vive de
+l'affiche). En scène SCOREBOARD, la rampe basse est opaque à ~75 % dès le
+haut de la bande ; en ÉCHAUFFEMENT (pas de bande), elle reste plus courte
+pour laisser l'affiche respirer.
+
 ### L'enjeu du match (au-dessus de la bande de score)
 
 L'**enjeu du match** (décision 4 de [[tv-map]], amendée par la décision 13)
@@ -124,7 +136,14 @@ dépend de la phase du hero :
   la poule est **terminée**, voir [[cycle-de-vie-epreuve]]), les deux joueurs
   du match mis en évidence. Le public voit ce que le match peut changer.
   Données fournies par [[tv-state]] (`stake`) ; si l'enjeu n'est pas
-  disponible, le panneau est masqué — jamais d'erreur visible.
+  disponible **ou si le classement est vide** (`standings: []` — aucun
+  standing encore calculé, cas du premier match d'une poule), le panneau est
+  masqué — jamais de cadre vide ni d'erreur visible (retours 2026-07-29).
+  Le panneau n'est **pas affiché en permanence** (retours 2026-07-28 : il
+  recouvrait constamment l'affiche du match) : il apparaît par **cycles** —
+  entrée de **1 s** (fondu + glissement depuis le bord gauche), maintien
+  **8 s**, sortie de **1 s** (il glisse hors de l'écran par la gauche en
+  s'effaçant), puis masqué **8 s** avant de réapparaître.
 - **Match de tableau** (QF/SF/F/P3) → **pas de panneau** : la **phase du
   match en grand** (`stageLabel` : « Quart de finale », « Demi-finale »,
   « Finale », « 3e place »), centrée au-dessus de la bande de score. Le
@@ -162,6 +181,10 @@ le match, le serveur n'est pas encore choisi — voir [[cycle-de-vie-match]]) :
   (5 min, constante), dérivé de `warmupStartedAt` — même source que la tablette
   arbitre, donc synchronisé. À 0:00, le compte à rebours laisse place à un
   libellé d'imminence (« Le match va commencer ») — rien d'automatique.
+  Un **halo sombre** (dégradé radial) sous le bloc central garantit la
+  lisibilité du compte à rebours et des libellés sur toute affiche — le centre
+  d'une affiche générée est souvent sa zone la plus claire (le « VS ») —
+  sans masquer les joueurs de part et d'autre (retours 2026-07-29).
 - Sous le compte à rebours : joueurs (« {A} vs {B} »), étape, court.
 - La carte « À préparer » reste affichée s'il existe un next, ainsi que la
   **banderole d'information** (voir État SCOREBOARD).
@@ -181,7 +204,11 @@ Quand le `hero` disparaît du poll alors que la TV affichait un match :
    pendant **~30 s** : l'affiche du match en fond plein écran, « VICTOIRE »,
    le **nom du vainqueur en très grand**, le **score par sets** (`setScores`),
    la durée du match. Si `endReason = RETIREMENT`, la mention « Abandon »
-   accompagne le score (figé en l'état).
+   accompagne le score (figé en l'état). Comme en ÉCHAUFFEMENT, un **halo
+   sombre** sous le bloc central assure la lisibilité des textes secondaires
+   (« VICTOIRE », « bat … », durée) sur l'affiche, et évite qu'ils se
+   confondent avec le texte incrusté de l'affiche à la même hauteur
+   (retours 2026-07-29).
 3. Après ~30 s, fondu vers le CAROUSEL.
 
 Règles :
@@ -290,7 +317,7 @@ d'[[admin-panel-map]] / [[planning]]).
 |---|---|
 | Aucune édition active | Carousel réduit à la slide Tournoi avec la marque et l'horloge (état neutre). |
 | Édition active sans aucun match | Slide Tournoi seule (les autres sont sautées). |
-| Match de poule LIVE sans classement résolu | Scoreboard sans panneau d'enjeu (masqué). Un match de tableau affiche toujours sa phase (dérivée de `stage`, jamais indisponible). |
+| Match de poule LIVE sans classement résolu (`stake` absent **ou** `standings` vides) | Scoreboard sans panneau d'enjeu (masqué — jamais de cadre vide). Un match de tableau affiche toujours sa phase (dérivée de `stage`, jamais indisponible). |
 | Match en échauffement sans affiche | Fond de court + bloc central seul (ÉCHAUFFEMENT, compte à rebours, joueurs, étape/court) — pas de noms en très grand. |
 | Fin de match : le fetch one-shot échoue | Pas de scène vainqueur, carousel direct (jamais d'erreur visible). |
 | Toutes les épreuves de l'édition `TERMINÉE` | PALMARÈS permanent à la place du carousel ; une réouverture de match reprend l'antenne (préemption). |
